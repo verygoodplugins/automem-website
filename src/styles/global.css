@@ -1,0 +1,53 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  :root {
+    --color-bg: #2D2B28;
+    --color-surface: #3A3734;
+    --color-border: #4A4744;
+    --color-text: #F5F3EF;
+    --color-muted: #9B9996;
+    --color-accent: #E3A857;
+    --color-blue: #5C9FD8;
+    --color-green: #4AA181;
+    --color-primary: #E3A857;
+    --color-secondary: #5C9FD8;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased bg-automem-bgdark text-automem-text;
+  }
+
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-automem-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-automem-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-automem-muted;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-automem-accent to-automem-blue bg-clip-text text-transparent;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-automem-accent to-automem-green;
+  }
+}

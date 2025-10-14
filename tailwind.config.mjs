@@ -4,11 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        'automem': {
-          'primary': '#0066FF',
-          'secondary': '#00D4FF',
-          'dark': '#001733',
-          'light': '#E6F2FF'
+        automem: {
+          bgdark: '#2D2B28',
+          surface: '#3A3734',
+          border: '#4A4744',
+          text: '#F5F3EF',
+          muted: '#9B9996',
+          accent: '#E3A857',
+          blue: '#5C9FD8',
+          green: '#4AA181',
+          primary: '#E3A857',
+          secondary: '#5C9FD8',
+          dark: '#2D2B28',
+          light: '#F5F3EF'
         }
       },
       fontFamily: {

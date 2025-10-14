@@ -12,7 +12,7 @@ export default defineConfig({
     mdx(),
     sitemap()
   ],
-  output: 'hybrid',
+  output: 'static',
   adapter: cloudflare({
     mode: 'directory'
   }),

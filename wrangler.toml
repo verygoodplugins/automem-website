@@ -1,0 +1,20 @@
+name = "automem-website"
+compatibility_date = "2024-10-14"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Pages configuration
+[[build.upload]]
+format = "directory"
+path = "dist"
+
+# Environment variables (example)
+[env.production.vars]
+PUBLIC_API_URL = "https://api.automem.ai"
+PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"
+
+[env.preview.vars]
+PUBLIC_API_URL = "https://staging-api.automem.ai"
+PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"

@@ -1,0 +1,196 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/global.css';
+---
+
+<Layout title="Home">
+  <main>
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-automem-surface/30 to-automem-bgdark">
+      <div class="max-w-6xl mx-auto text-center">
+        <div class="flex items-center justify-center gap-4 mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-automem-accent w-12 h-12 md:w-16 md:h-16">
+            <path d="M12 8V4H8"></path>
+            <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+            <path d="M2 14h2"></path>
+            <path d="M20 14h2"></path>
+            <path d="M15 13v2"></path>
+            <path d="M9 13v2"></path>
+          </svg>
+          <h1 class="text-5xl md:text-7xl font-bold">
+            <span class="gradient-text">automem.ai</span>
+          </h1>
+        </div>
+        <p class="text-xl md:text-2xl text-automem-text/90 mb-8 max-w-3xl mx-auto">
+          Deploy once, remember everywhere. Works with every AI.
+        </p>
+        <p class="text-lg text-automem-muted mb-12 max-w-2xl mx-auto">
+          The only universal memory layer for AI assistants. One-click deployment, cross-device sync, works with Claude, Cursor, and any MCP-compatible LLM. Your AI's memory follows you everywhere for just $5/month.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/docs" class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition">
+            Get Started
+          </a>
+          <a href="https://github.com/verygoodplugins/automem" class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition">
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features -->
+    <section class="py-20 px-6">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-16">Why AutoMem?</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="text-center p-6">
+            <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4">
+              <span>🌐</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-automem-text">Universal MCP Compatibility</h3>
+            <p class="text-automem-muted">
+              Works with ANY MCP-compatible LLM. Claude Desktop, Cursor, GitHub Copilot - even future AI tools automatically work. Not vendor-locked.
+            </p>
+          </div>
+          <div class="text-center p-6">
+            <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4">
+              <span>🚀</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-automem-text">One-Click Deploy</h3>
+            <p class="text-automem-muted">
+              Railway deployment with a single command. Docker containerized. Once deployed, accessible from ALL devices and services. $5/month.
+            </p>
+          </div>
+          <div class="text-center p-6">
+            <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4">
+              <span>🧠</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-automem-text">Graph-Based Memory</h3>
+            <p class="text-automem-muted">
+              Powered by FalkorDB + Qdrant. Creates rich semantic relationships between memories. Knowledge graphs with 11 relationship types, not just vector search.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Competitive Advantage -->
+    <section class="py-20 px-6 bg-gradient-to-b from-automem-accent/10 to-transparent">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-8 text-automem-text">The Only Memory Solution That...</h2>
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border">
+            <div class="text-2xl mb-3">✅</div>
+            <h3 class="font-semibold mb-2 text-automem-text">Works with any MCP LLM</h3>
+            <p class="text-sm text-automem-muted">Not locked to Claude or Cursor. Any MCP-enabled AI instantly works.</p>
+          </div>
+          <div class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border">
+            <div class="text-2xl mb-3">✅</div>
+            <h3 class="font-semibold mb-2 text-automem-text">Deploys to cloud in one click</h3>
+            <p class="text-sm text-automem-muted">No complex setup. Railway deployment takes seconds.</p>
+          </div>
+          <div class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border">
+            <div class="text-2xl mb-3">✅</div>
+            <h3 class="font-semibold mb-2 text-automem-text">Syncs across all devices</h3>
+            <p class="text-sm text-automem-muted">Same memory on desktop, laptop, mobile. True cross-device AI.</p>
+          </div>
+          <div class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border">
+            <div class="text-2xl mb-3">✅</div>
+            <h3 class="font-semibold mb-2 text-automem-text">Costs only $5/month</h3>
+            <p class="text-sm text-automem-muted">Railway hosting + databases. Unlimited memories, massive value.</p>
+          </div>
+        </div>
+        <p class="text-center mt-12 text-automem-muted max-w-2xl mx-auto">
+          <strong class="text-automem-text">Note:</strong> ChatGPT Desktop doesn't support MCP servers - only OAuth connectors controlled by OpenAI. AutoMem's MCP architecture is a fundamental competitive advantage.
+        </p>
+      </div>
+    </section>
+
+    <!-- Architecture Preview -->
+    <section class="py-20 px-6 bg-automem-surface/30">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-16 text-automem-text">Built for Performance</h2>
+        <div class="bg-automem-surface rounded-xl shadow-lg p-8 border border-automem-border">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h3 class="text-2xl font-semibold mb-4 text-automem-text">Lightning Fast</h3>
+              <ul class="space-y-3 text-automem-muted">
+                <li class="flex items-start">
+                  <span class="text-automem-accent mr-2">⚡</span>
+                  <span>Single queries in 20-50ms</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-automem-accent mr-2">⚡</span>
+                  <span>Complex graph traversals under 200ms</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-automem-accent mr-2">⚡</span>
+                  <span>Hybrid semantic + keyword search</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-automem-accent mr-2">⚡</span>
+                  <span>Automatic consolidation & importance decay</span>
+                </li>
+              </ul>
+              <h3 class="text-2xl font-semibold mb-4 mt-8 text-automem-text">Memory Types</h3>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">Decision</span>
+                <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">Pattern</span>
+                <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm">Insight</span>
+                <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">Preference</span>
+                <span class="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded-full text-sm">Style</span>
+                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm">Habit</span>
+                <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-full text-sm">Context</span>
+              </div>
+            </div>
+            <div class="bg-black/80 rounded-lg p-4 border border-automem-border">
+              <pre class="text-xs text-green-400 font-mono overflow-x-auto">{`# Store with importance scoring
+POST /memory
+{
+  "content": "Prefers TypeScript with strict mode",
+  "type": "Preference",
+  "tags": ["coding", "typescript"],
+  "importance": 0.9,
+  "metadata": {
+    "rationale": "Type safety prevents bugs"
+  }
+}
+
+# Hybrid search: semantic + tags + time
+GET /recall?query="what language"&tags=coding
+
+# Associate memories (knowledge graph)
+POST /associate
+{
+  "memory1_id": "abc123",
+  "memory2_id": "def456",
+  "type": "RELATES_TO",
+  "strength": 0.85
+}
+
+# All queries return in ~25ms`}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-4xl font-bold mb-6 text-automem-text">Ready to Give Your AI Perfect Memory?</h2>
+        <p class="text-lg text-automem-muted mb-8">
+          Join developers building truly intelligent AI agents with AutoMem
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/docs/quickstart" class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition">
+            Quick Start Guide
+          </a>
+          <a href="https://railway.com/deploy/yD_u9d?referralCode=VuFE6g" class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition">
+            Deploy on Railway
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

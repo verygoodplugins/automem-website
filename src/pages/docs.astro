@@ -1,0 +1,136 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/global.css';
+---
+
+<Layout title="Documentation - AutoMem">
+  <main class="min-h-screen py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-5xl font-bold mb-6">
+        <span class="gradient-text">Documentation</span>
+      </h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 mb-12">
+        Everything you need to get started with AutoMem
+      </p>
+
+      <!-- Quick Links -->
+      <div class="grid md:grid-cols-2 gap-6 mb-16">
+        <a href="/docs/quickstart" class="group block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition">
+          <h3 class="text-2xl font-semibold mb-3 group-hover:text-automem-primary transition">🚀 Quick Start</h3>
+          <p class="text-gray-600 dark:text-gray-400">Get AutoMem running in under 5 minutes with Railway deployment</p>
+        </a>
+        
+        <a href="/docs/installation" class="group block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition">
+          <h3 class="text-2xl font-semibold mb-3 group-hover:text-automem-primary transition">⚙️ Installation</h3>
+          <p class="text-gray-600 dark:text-gray-400">Configure AutoMem for Claude Desktop, Cursor, and other MCP clients</p>
+        </a>
+
+        <a href="/docs/features" class="group block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition">
+          <h3 class="text-2xl font-semibold mb-3 group-hover:text-automem-primary transition">✨ Features</h3>
+          <p class="text-gray-600 dark:text-gray-400">Explore memory types, knowledge graphs, and advanced capabilities</p>
+        </a>
+
+        <a href="https://github.com/verygoodplugins/automem" target="_blank" class="group block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition">
+          <h3 class="text-2xl font-semibold mb-3 group-hover:text-automem-primary transition">📖 GitHub</h3>
+          <p class="text-gray-600 dark:text-gray-400">View source code, contribute, and report issues</p>
+        </a>
+      </div>
+
+      <!-- Architecture Overview -->
+      <section class="mb-16">
+        <h2 class="text-3xl font-bold mb-6">Architecture Overview</h2>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-semibold mb-2">🗄️ Storage Layer</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-2">
+                <strong>FalkorDB:</strong> Graph database for memory relationships and knowledge graphs
+              </p>
+              <p class="text-gray-600 dark:text-gray-400">
+                <strong>Qdrant:</strong> Vector database for semantic similarity search with OpenAI embeddings
+              </p>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-semibold mb-2">🔌 Integration Layer</h3>
+              <p class="text-gray-600 dark:text-gray-400">
+                <strong>MCP Server:</strong> Model Context Protocol server exposing 6 tools (store, recall, update, delete, associate, health check)
+              </p>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-semibold mb-2">🤖 Client Support</h3>
+              <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+                <li>Claude Desktop (Anthropic)</li>
+                <li>Cursor IDE</li>
+                <li>GitHub Copilot (via MCP)</li>
+                <li>Any future MCP-compatible LLM</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-semibold mb-2">☁️ Deployment Options</h3>
+              <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+                <li><strong>Railway:</strong> One-click deploy (~$5/month)</li>
+                <li><strong>Docker:</strong> Self-hosted with docker-compose</li>
+                <li><strong>Local:</strong> Python development server</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Key Concepts -->
+      <section>
+        <h2 class="text-3xl font-bold mb-6">Key Concepts</h2>
+        <div class="space-y-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-2">Memory Types</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-3">
+              AutoMem categorizes memories into 7 semantic types for better organization and retrieval:
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">Decision</span>
+              <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">Pattern</span>
+              <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm">Insight</span>
+              <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">Preference</span>
+              <span class="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded-full text-sm">Style</span>
+              <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm">Habit</span>
+              <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-full text-sm">Context</span>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-2">Importance Scoring</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Memories are scored 0.0-1.0 based on relevance. Importance automatically decays over time unless reinforced, mimicking human memory.
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-2">Knowledge Graphs</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-3">
+              Memories can be linked with 11 relationship types:
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-500 font-mono">
+              RELATES_TO, LEADS_TO, EVOLVED_INTO, DERIVED_FROM, EXEMPLIFIES, CONTRADICTS, REINFORCES, INVALIDATED_BY, OCCURRED_BEFORE, PART_OF, PREFERS_OVER
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-2">Automatic Consolidation</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Background scheduler automatically:
+            </p>
+            <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 mt-2 space-y-1">
+              <li><strong>Decay:</strong> Reduces importance of old, unused memories (hourly)</li>
+              <li><strong>Creative clustering:</strong> Groups related memories (every 6 hours)</li>
+              <li><strong>Forgetting:</strong> Removes low-importance memories (daily)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+

@@ -1,0 +1,196 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/global.css';
+---
+
+<Layout title="Quick Start - AutoMem">
+  <main class="min-h-screen py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <a href="/docs" class="text-automem-primary hover:underline mb-4 inline-block">← Back to Documentation</a>
+      
+      <h1 class="text-5xl font-bold mb-6">
+        <span class="gradient-text">Quick Start</span>
+      </h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 mb-12">
+        Get AutoMem running in under 5 minutes
+      </p>
+
+      <!-- Step 1: Deploy -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Step 1: Deploy AutoMem</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          Click the button below to deploy AutoMem to Railway. You'll need a Railway account (free to sign up).
+        </p>
+        
+        <a href="https://railway.com/deploy/yD_u9d?referralCode=VuFE6g" 
+           target="_blank"
+           class="inline-block gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition mb-4">
+          Deploy to Railway →
+        </a>
+
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            <strong>Cost:</strong> Railway charges approximately $5/month for AutoMem (includes FalkorDB + Qdrant + API service)
+          </p>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 class="text-lg font-semibold mb-3">What Railway Will Set Up:</h3>
+          <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2">
+            <li>FalkorDB instance (graph database)</li>
+            <li>Qdrant instance (vector database)</li>
+            <li>AutoMem API service with automatic health checks</li>
+            <li>SSL certificate for secure connections</li>
+            <li>Environment variables automatically configured</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Step 2: Get Credentials -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Step 2: Get Your Credentials</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          After deployment completes:
+        </p>
+        
+        <ol class="list-decimal list-inside space-y-3 text-gray-600 dark:text-gray-400">
+          <li>Go to your Railway project dashboard</li>
+          <li>Click on the <strong>automem</strong> service</li>
+          <li>Go to the <strong>Variables</strong> tab</li>
+          <li>Find and copy these values:
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+              <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_API_KEY</code></li>
+              <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">OPENAI_API_KEY</code> (you'll set this)</li>
+            </ul>
+          </li>
+          <li>Note your AutoMem endpoint URL (shown in the Settings tab)</li>
+        </ol>
+
+        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 mt-4">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            <strong>Tip:</strong> Your endpoint URL will look like <code>https://automem-production-XXXX.up.railway.app</code>
+          </p>
+        </div>
+      </section>
+
+      <!-- Step 3: Configure MCP Client -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Step 3: Configure Your MCP Client</h2>
+        
+        <div class="mb-6">
+          <p class="text-gray-600 dark:text-gray-400 mb-4">
+            Choose your AI assistant:
+          </p>
+
+          <!-- Claude Desktop -->
+          <details class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-4">
+            <summary class="cursor-pointer font-semibold text-lg">Claude Desktop Configuration</summary>
+            <div class="mt-4 space-y-3">
+              <p class="text-gray-600 dark:text-gray-400">
+                Edit <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">~/Library/Application Support/Claude/claude_desktop_config.json</code>
+              </p>
+              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"><code>{`{
+  "mcpServers": {
+    "automem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@verygoodplugins/mcp-automem@latest"
+      ],
+      "env": {
+        "AUTOMEM_ENDPOINT": "https://your-railway-url.up.railway.app",
+        "AUTOMEM_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}`}</code></pre>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Replace <code>your-railway-url</code> and <code>your-api-key-here</code> with your actual values. Then restart Claude Desktop.
+              </p>
+            </div>
+          </details>
+
+          <!-- Cursor -->
+          <details class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-4">
+            <summary class="cursor-pointer font-semibold text-lg">Cursor IDE Configuration</summary>
+            <div class="mt-4 space-y-3">
+              <p class="text-gray-600 dark:text-gray-400">
+                Add to <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">~/.cursor/mcp.json</code>
+              </p>
+              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"><code>{`{
+  "mcpServers": {
+    "automem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@verygoodplugins/mcp-automem@latest"
+      ],
+      "env": {
+        "AUTOMEM_ENDPOINT": "https://your-railway-url.up.railway.app",
+        "AUTOMEM_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}`}</code></pre>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Replace the placeholders and restart Cursor. The MCP tools will appear in the tools panel.
+              </p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- Step 4: Test -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Step 4: Test It Out</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          Try these commands in your AI assistant:
+        </p>
+
+        <div class="space-y-4">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <p class="font-semibold mb-2">Store a memory:</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+              "Remember that I prefer TypeScript over JavaScript for new projects"
+            </p>
+          </div>
+
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <p class="font-semibold mb-2">Recall memories:</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+              "What programming language should I use for my new project?"
+            </p>
+          </div>
+
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <p class="font-semibold mb-2">Check memory health:</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+              "Check the status of my AutoMem service"
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            <strong>Success!</strong> Your AI now has persistent memory across all devices and conversations. Memories are automatically synced and available everywhere.
+          </p>
+        </div>
+      </section>
+
+      <!-- Next Steps -->
+      <section>
+        <h2 class="text-3xl font-bold mb-4">Next Steps</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <a href="/docs/features" class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition">
+            <h3 class="font-semibold mb-2">Explore Features →</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Learn about memory types, knowledge graphs, and advanced capabilities</p>
+          </a>
+          <a href="https://github.com/verygoodplugins/automem" target="_blank" class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition">
+            <h3 class="font-semibold mb-2">View Source Code →</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Contribute to AutoMem or run it locally for development</p>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
