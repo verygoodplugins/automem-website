@@ -7,7 +7,16 @@ The official website for AutoMem.AI - Intelligent Memory Service for AI Agents.
 - **Framework**: Astro 4.16
 - **Styling**: Tailwind CSS
 - **Deployment**: Cloudflare Pages
+- **Database**: Cloudflare D1 (for waitlist)
 - **Content**: MDX for documentation
+
+## Features
+
+- ✨ Landing page with hero section and feature showcase
+- 📧 Email waitlist signup with D1 database storage
+- 📚 Documentation structure with MDX support
+- ⚡ Edge-optimized with Cloudflare Pages
+- 🎨 Custom AutoMem branding and color scheme
 
 ## Development
 
@@ -24,6 +33,22 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+## Waitlist Setup
+
+The site includes an email waitlist system powered by Cloudflare D1:
+
+```bash
+# Create D1 database
+npx wrangler d1 create automem-waitlist
+
+# Apply schema
+npx wrangler d1 execute automem-waitlist --file=./schema/d1-schema.sql
+
+# Update wrangler.toml with your database ID
+```
+
+See [WAITLIST_SETUP.md](./WAITLIST_SETUP.md) for detailed instructions.
 
 ## Deployment to Cloudflare Pages
 
@@ -43,9 +68,6 @@ npm run preview
 ```bash
 # Build the project
 npm run build
-
-# Install Wrangler CLI (if not installed)
-npm install -g wrangler
 
 # Deploy to Cloudflare Pages
 npx wrangler pages deploy dist --project-name=automem-website
@@ -97,6 +119,7 @@ For production deployments, you may need to set:
 
 - `PUBLIC_API_URL`: AutoMem API endpoint
 - `PUBLIC_GITHUB_URL`: GitHub repository URL
+- `EMAIL_SERVICE_WEBHOOK`: (Optional) Webhook URL for external email service
 
 These can be set in the Cloudflare Pages dashboard under Settings > Environment variables.
 
@@ -105,13 +128,19 @@ These can be set in the Cloudflare Pages dashboard under Settings > Environment 
 ```
 automem-website/
 ├── src/
-│   ├── components/    # Reusable components
+│   ├── components/    # Reusable components (EmailSignup.astro)
 │   ├── layouts/       # Page layouts
 │   ├── pages/        # Route pages
 │   └── styles/       # Global styles
 ├── public/           # Static assets
+├── functions/        # Cloudflare Pages Functions
+│   └── api/         # API endpoints
+│       └── signup.js # Waitlist signup handler
+├── schema/          # Database schemas
+│   └── d1-schema.sql # D1 waitlist table
 ├── astro.config.mjs  # Astro configuration
-└── tailwind.config.mjs # Tailwind configuration
+├── tailwind.config.mjs # Tailwind configuration
+└── wrangler.toml    # Cloudflare configuration
 ```
 
 ## Adding Content

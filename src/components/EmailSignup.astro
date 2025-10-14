@@ -1,0 +1,117 @@
+---
+// EmailSignup Component
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+
+<div id="signup-form" class="w-full max-w-md mx-auto">
+  <form id="waitlist-form" class="flex flex-col sm:flex-row gap-3">
+    <input
+      type="email"
+      id="email-input"
+      placeholder="Enter your email"
+      required
+      class="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:border-automem-primary transition"
+    />
+    <button
+      type="submit"
+      id="submit-btn"
+      class="gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+    >
+      Get Early Access
+    </button>
+  </form>
+  <div id="message" class="mt-3 text-sm text-center hidden"></div>
+  <div id="count" class="mt-2 text-xs text-gray-500 text-center hidden"></div>
+  {siteKey && (
+    <div class="mt-4">
+      <div class="cf-turnstile" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
+    </div>
+  )}
+</div>
+
+{siteKey && (
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+)}
+<script>
+  const form = document.getElementById('waitlist-form');
+  const emailInput = document.getElementById('email-input');
+  const submitBtn = document.getElementById('submit-btn');
+  const message = document.getElementById('message');
+  const count = document.getElementById('count');
+  let turnstileToken = '';
+
+  // Callback invoked by Turnstile when ready/solved
+  window.__turnstileCb = function(token) {
+    turnstileToken = token || '';
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = (emailInput && 'value' in emailInput ? emailInput.value : '').trim();
+    if (!email) return;
+
+    // Disable form
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitBtn) submitBtn.textContent = 'Joining...';
+    
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          email,
+          source: window.location.pathname,
+          turnstileToken
+        })
+      });
+
+      const data = await response.json();
+      
+      // Show message
+      if (message) message.classList.remove('hidden');
+      
+      if (data.success) {
+        if (message) {
+          message.classList.remove('text-red-600');
+          message.classList.add('text-green-600');
+          message.textContent = data.message || 'Successfully joined the waitlist!';
+        }
+        
+        if (data.position && count) {
+          count.classList.remove('hidden');
+          count.textContent = `You're among the first ${data.position}`;
+        }
+        
+        // Clear form
+        if (emailInput && 'value' in emailInput) emailInput.value = '';
+        
+        // Track conversion if analytics present
+        if (typeof window.gtag !== 'undefined') {
+          window.gtag('event', 'conversion', {
+            'event_category': 'Waitlist',
+            'event_label': 'Homepage Signup'
+          });
+        }
+      } else {
+        if (message) {
+          message.classList.remove('text-green-600');
+          message.classList.add('text-red-600');
+          message.textContent = data.error || 'Something went wrong. Please try again.';
+        }
+      }
+    } catch (error) {
+      if (message) {
+        message.classList.remove('hidden', 'text-green-600');
+        message.classList.add('text-red-600');
+        message.textContent = 'Network error. Please try again.';
+      }
+    } finally {
+      // Re-enable form
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitBtn) submitBtn.textContent = 'Get Early Access';
+    }
+  });
+</script>
