@@ -6,6 +6,14 @@ import '../styles/global.css';
 ---
 
 <Layout title="Home">
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div id="toast-inner" class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-white">
+      <span id="toast-message"></span>
+      <button id="toast-close" aria-label="Close" class="ml-2 text-white/90 hover:text-white">&times;</button>
+    </div>
+  </div>
+
   <main>
     <!-- Hero Section -->
     <section class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-automem-surface/30 to-automem-bgdark">
@@ -212,4 +220,57 @@ POST /associate
       </div>
     </section>
   </main>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search || '');
+      let message = '';
+      let variant = 'success';
+
+      if (params.get('confirmed') === '1') {
+        message = "Email confirmed. You're on the list!";
+        variant = 'success';
+      } else if (params.get('unsubscribed') === '1') {
+        message = 'You have been unsubscribed.';
+        variant = 'warn';
+      }
+
+      if (!message) return;
+
+      // Clean the URL (remove params)
+      params.delete('confirmed');
+      params.delete('unsubscribed');
+      const newQuery = params.toString();
+      const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '') + window.location.hash;
+      window.history.replaceState({}, '', newUrl);
+
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toast-inner');
+      const msgEl = document.getElementById('toast-message');
+      const closeBtn = document.getElementById('toast-close');
+
+      if (!toast || !inner || !msgEl || !closeBtn) return;
+
+      msgEl.textContent = message;
+
+      // Reset classes then apply variant
+      inner.className = 'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-white';
+      if (variant === 'success') {
+        inner.classList.add('bg-green-600', 'border-green-500', 'dark:bg-green-700');
+      } else {
+        inner.classList.add('bg-amber-600', 'border-amber-500', 'dark:bg-amber-700');
+      }
+
+      toast.classList.remove('hidden');
+
+      let hideTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 6000);
+
+      closeBtn.addEventListener('click', () => {
+        clearTimeout(hideTimer);
+        toast.classList.add('hidden');
+      });
+    })();
+  </script>
 </Layout>
