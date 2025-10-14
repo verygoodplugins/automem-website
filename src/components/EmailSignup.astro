@@ -32,13 +32,11 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     </a>
   </div>
   <div class="mt-4">
-    <div id="turnstile-container" class="cf-turnstile" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
+    <div id="turnstile-container" class="turnstile-slot" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
   </div>
 </div>
 
-{siteKey && (
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-)}
+
 <script>
   const form = document.getElementById('waitlist-form');
   const emailInput = document.getElementById('email-input');
