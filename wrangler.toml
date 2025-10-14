@@ -9,20 +9,21 @@ command = "npm run build"
 [[d1_databases]]
 binding = "D1"
 database_name = "automem-waitlist"
-database_id = "YOUR_DATABASE_ID_HERE" # Replace with actual ID after creating
+database_id = "71da6056-2641-488b-a82d-ee44618bfb56" # Replace with actual ID after creating
 
 # Environment variables (example)
 [env.production.vars]
 PUBLIC_API_URL = "https://api.automem.ai"
 PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"
 # EMAIL_SERVICE_WEBHOOK = "https://your-email-service.com/webhook" # Optional
-# PUBLIC_TURNSTILE_SITE_KEY = "" # Optional
-# TURNSTILE_SECRET_KEY = ""    # Optional
+# PUBLIC_TURNSTILE_SITE_KEY = "" # Optional (set in Pages env)
+# TURNSTILE_SECRET_KEY = ""    # Optional (set in Pages env)
 # DOUBLE_OPT_IN = "false"
 # RESEND_API_KEY = ""
 # FROM_EMAIL = "no-reply@automem.ai"
 # FROM_NAME = "AutoMem"
 # BASE_URL = "https://automem.ai"
+# ADMIN_TOKEN = "" # Set in Pages env
 
 [env.preview.vars]
 PUBLIC_API_URL = "https://staging-api.automem.ai"
