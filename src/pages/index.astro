@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ChatDemo from '../components/ChatDemo.astro';
 import '../styles/global.css';
 ---
 
@@ -71,6 +72,19 @@ import '../styles/global.css';
             </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Live Demo -->
+    <section class="py-20 px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl font-bold mb-4 text-automem-text">See It In Action</h2>
+          <p class="text-automem-muted max-w-2xl mx-auto">
+            Watch how AutoJack uses AutoMem to recall your preferences and context, making every interaction feel natural and personalized.
+          </p>
+        </div>
+        <ChatDemo />
       </div>
     </section>
 
