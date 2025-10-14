@@ -98,25 +98,17 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
 
     // Optional: Double opt-in email via Resend
-    if (String(env.DOUBLE_OPT_IN || 'false').toLowerCase() === 'true' && env.RESEND_API_KEY) {
+    const isOptIn = String(env.DOUBLE_OPT_IN || 'false').toLowerCase() === 'true';
+    if (isOptIn && env.RESEND_API_KEY) {
       const { createToken } = await import('../lib/tokens.js');
+      const { buildConfirmEmail } = await import('../lib/email.js');
       const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
       const token = await createToken(normalizedEmail, secret, 60 * 60 * 24 * 3); // 3 days
       const originUrl = new URL(request.url);
       const base = env.BASE_URL || `${originUrl.protocol}//${originUrl.host}`;
       const confirmUrl = `${base}/confirm?token=${encodeURIComponent(token)}`;
       const unsubscribeUrl = `${base}/unsubscribe?token=${encodeURIComponent(token)}`;
-
-      const subject = 'Confirm your email for AutoMem';
-      const html = `
-        <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px">
-          <h2>Confirm your email</h2>
-          <p>Click the button below to confirm your email address.</p>
-          <p><a href="${confirmUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Confirm Email</a></p>
-          <p>If you didn’t request this, you can ignore this email.</p>
-          <p style="margin-top:24px;font-size:12px;color:#666">Or copy and paste this link:<br/><span>${confirmUrl}</span></p>
-          <p style="margin-top:24px;font-size:12px;color:#666">Unsubscribe: <a href="${unsubscribeUrl}">${unsubscribeUrl}</a></p>
-        </div>`;
+      const { subject, html, text } = buildConfirmEmail({ baseUrl: base, confirmUrl, unsubscribeUrl, userEmail: normalizedEmail });
 
       const fromEmail = env.FROM_EMAIL || 'no-reply@automem.ai';
       const fromName = env.FROM_NAME || 'AutoMem';
@@ -130,7 +122,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
           from: `${fromName} <${fromEmail}>`,
           to: [normalizedEmail],
           subject,
-          html
+          html,
+          text
         })
       }).then(async (res) => {
         if (!res.ok) {
@@ -141,6 +134,29 @@ export async function onRequestPost({ request, env, waitUntil }) {
       if (typeof waitUntil === 'function') waitUntil(p);
     }
 
+    // Optional: Send welcome email immediately if not double opt-in
+    if (!isOptIn && env.RESEND_API_KEY && String(env.SEND_WELCOME_EMAIL || 'true').toLowerCase() !== 'false') {
+      const { createToken } = await import('../lib/tokens.js');
+      const { buildWelcomeEmail } = await import('../lib/email.js');
+      const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
+      const token = await createToken(normalizedEmail, secret, 60 * 60 * 24 * 30); // 30 days
+      const originUrl = new URL(request.url);
+      const base = env.BASE_URL || `${originUrl.protocol}//${originUrl.host}`;
+      const unsubscribeUrl = `${base}/unsubscribe?token=${encodeURIComponent(token)}`;
+      const { subject, html, text } = buildWelcomeEmail({ baseUrl: base, unsubscribeUrl, userEmail: normalizedEmail });
+      const fromEmail = env.FROM_EMAIL || 'no-reply@automem.ai';
+      const fromName = env.FROM_NAME || 'AutoMem';
+      const p = fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ from: `${fromName} <${fromEmail}>`, to: [normalizedEmail], subject, html, text })
+      }).catch(() => {});
+      if (typeof waitUntil === 'function') waitUntil(p);
+    }
+
     // Track signup count
     const count = await db.prepare(
       'SELECT COUNT(*) as total FROM waitlist'
@@ -148,7 +164,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: isDoubleOptIn
+      message: isOptIn
         ? 'Check your email to confirm your signup.'
         : 'Welcome to the AutoMem waitlist!',
       position: count.total

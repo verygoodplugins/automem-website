@@ -48,9 +48,6 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
           </a>
         </div>
 
-        <div class="mt-10">
-          <EmailSignup />
-        </div>
       </div>
     </section>
     
@@ -252,6 +249,7 @@ POST /associate
         if (e) e.preventDefault();
         if (!modal) return;
         modal.classList.remove('hidden');
+        try { window.dispatchEvent(new CustomEvent('github:modal-open')); } catch {}
       }
       function closeModal() {
         if (!modal) return;

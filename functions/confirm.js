@@ -23,6 +23,33 @@ export async function onRequestGet({ request, env }) {
       'UPDATE waitlist SET confirmed = 1 WHERE email = ?'
     ).bind(email.toLowerCase()).run();
 
+    // Optional: Send welcome email after confirmation
+    try {
+      const shouldSend = String(env.SEND_WELCOME_EMAIL || 'true').toLowerCase() !== 'false';
+      if (shouldSend && env.RESEND_API_KEY) {
+        const { createToken } = await import('./lib/tokens.js');
+        const { buildWelcomeEmail } = await import('./lib/email.js');
+        const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
+        const token = await createToken(email.toLowerCase(), secret, 60 * 60 * 24 * 30);
+        const originUrl = new URL(request.url);
+        const base = env.BASE_URL || `${originUrl.protocol}//${originUrl.host}`;
+        const unsubscribeUrl = `${base}/unsubscribe?token=${encodeURIComponent(token)}`;
+        const { subject, html, text } = buildWelcomeEmail({ baseUrl: base, unsubscribeUrl, userEmail: email.toLowerCase() });
+
+        const fromEmail = env.FROM_EMAIL || 'no-reply@automem.ai';
+        const fromName = env.FROM_NAME || 'AutoMem';
+        // Fire-and-forget
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ from: `${fromName} <${fromEmail}>`, to: [email.toLowerCase()], subject, html, text })
+        }).catch(() => {});
+      }
+    } catch {}
+
     // Optionally redirect to homepage with a toast param
     const base = env.BASE_URL || `${url.protocol}//${url.host}`;
     const redirect = new URL(base);

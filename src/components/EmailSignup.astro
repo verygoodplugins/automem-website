@@ -22,11 +22,9 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   </form>
   <div id="message" class="mt-3 text-sm text-center hidden"></div>
   <div id="count" class="mt-2 text-xs text-gray-500 text-center hidden"></div>
-  {siteKey && (
-    <div class="mt-4">
-      <div class="cf-turnstile" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
-    </div>
-  )}
+  <div class="mt-4">
+    <div id="turnstile-container" class="cf-turnstile" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
+  </div>
 </div>
 
 {siteKey && (
@@ -39,11 +37,73 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   const message = document.getElementById('message');
   const count = document.getElementById('count');
   let turnstileToken = '';
+  const tsContainer = document.getElementById('turnstile-container');
+  let siteKeyFromAttr = (tsContainer?.getAttribute?.('data-sitekey') || '').trim();
+  let runtimeSiteKey = '';
+  const hasTurnstile = true; // we always render the container; decide key at runtime
 
   // Callback invoked by Turnstile when ready/solved
   window.__turnstileCb = function(token) {
     turnstileToken = token || '';
   }
+
+  function ensureScriptLoaded() {
+    return new Promise((resolve) => {
+      if (window.turnstile) return resolve();
+      const existing = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve());
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      s.async = true;
+      s.defer = true;
+      s.onload = () => resolve();
+      document.head.appendChild(s);
+    });
+  }
+
+  let configPromise = null;
+
+  async function fetchSiteKey() {
+    if (siteKeyFromAttr) return siteKeyFromAttr;
+    if (runtimeSiteKey) return runtimeSiteKey;
+    if (!configPromise) {
+      configPromise = fetch('/api/public-config').then(r => r.json()).catch(() => ({}));
+    }
+    const cfg = await configPromise;
+    runtimeSiteKey = (cfg && (cfg.turnstileSiteKey || cfg.siteKey || '')) || '';
+    return runtimeSiteKey;
+  }
+
+  async function ensureWidgetRendered() {
+    if (!hasTurnstile) return;
+    await ensureScriptLoaded();
+    // Wait a tick so modal becomes visible
+    await new Promise(r => setTimeout(r, 0));
+    try {
+      const key = await fetchSiteKey();
+      if (!key) return; // no key available
+      // If not rendered yet (no iframe), render programmatically
+      const already = tsContainer && tsContainer.querySelector && tsContainer.querySelector('iframe');
+      if (!already && window.turnstile && tsContainer) {
+        window.turnstile.render(tsContainer, {
+          sitekey: key,
+          callback: window.__turnstileCb,
+          theme: 'auto'
+        });
+      } else if (window.turnstile) {
+        // Reset to ensure a fresh challenge
+        try { window.turnstile.reset(); } catch {}
+      }
+    } catch {}
+  }
+
+  // When modal opens, ensure the widget is rendered (or reset)
+  window.addEventListener('github:modal-open', () => {
+    ensureWidgetRendered();
+  });
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -56,6 +116,19 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     if (submitBtn) submitBtn.textContent = 'Joining...';
     
     try {
+      if (hasTurnstile && !turnstileToken) {
+        if (message) {
+          message.classList.remove('hidden');
+          message.classList.remove('text-green-600');
+          message.classList.add('text-red-600');
+          message.textContent = 'Please complete the verification.';
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Get Early Access';
+        }
+        return;
+      }
       const response = await fetch('/api/signup', {
         method: 'POST',
         headers: {

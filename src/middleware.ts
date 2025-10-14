@@ -20,6 +20,18 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
       return mod.onRequestGet({ request, env });
     }
 
+    // Public runtime config for client (Turnstile site key)
+    if (pathname === '/api/public-config' && request.method === 'GET') {
+      const body = JSON.stringify({ turnstileSiteKey: env.PUBLIC_TURNSTILE_SITE_KEY || '' });
+      return new Response(body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     // Confirm/Unsubscribe
     if (pathname === '/confirm' && request.method === 'GET') {
       const { onRequestGet } = await import('../functions/confirm.js');

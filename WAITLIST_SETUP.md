@@ -79,6 +79,7 @@ In Cloudflare Pages dashboard, add:
 - `PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: Enable Turnstile bot protection
 - `DOUBLE_OPT_IN`: If `true`, requires email confirmation
 - `RESEND_API_KEY`, `FROM_EMAIL`, `FROM_NAME`, `BASE_URL`: For sending confirmation emails and building links
+- `SEND_WELCOME_EMAIL`: If `true` (default), sends a welcome email with repo/docs links after signup (or after confirmation when double opt-in is enabled)
 
 ## Features
 
@@ -256,3 +257,31 @@ If `RESEND_API_KEY` is not set, users are added unconfirmed and no email is sent
 ## Bot Protection (Turnstile)
 
 If `PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set, the signup form renders a Turnstile widget and `/api/signup` verifies the token server-side. Missing or invalid tokens are rejected.
+After confirmation, a welcome email is sent if `SEND_WELCOME_EMAIL` is not set to `false`.
+## Broadcasts (Manual)
+
+Send a fun Day 1 follow‑up email to confirmed subscribers.
+
+```bash
+# Dry run: preview count + sample recipients
+curl -X POST https://automem.ai/admin/broadcast \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": "day1",
+    "dryRun": true,
+    "confirmedOnly": true,
+    "limit": 0
+  }'
+
+# Send to everyone confirmed (careful!)
+curl -X POST https://automem.ai/admin/broadcast \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": "day1",
+    "confirmedOnly": true
+  }'
+```
+
+Advanced: override subject/html/text in the JSON body to send a custom message.
