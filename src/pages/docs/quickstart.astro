@@ -21,6 +21,12 @@ import '../../styles/global.css';
         <p class="text-gray-600 dark:text-gray-400 mb-4">
           Click the button below to deploy AutoMem to Railway. You'll need a Railway account (free to sign up).
         </p>
+
+        <div class="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 p-4 mb-6">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            ⚠️ <strong>Important:</strong> Qdrant (vector database) is hosted separately on Qdrant Cloud's free tier. The Railway template only includes memory-service and FalkorDB. You'll connect Qdrant after deployment in Step 3.
+          </p>
+        </div>
         
         <a href="https://railway.com/deploy/automem-ai-memory-service"
            target="_blank"
@@ -30,7 +36,7 @@ import '../../styles/global.css';
 
         <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4">
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Cost:</strong> Railway charges approximately $5/month for AutoMem (includes FalkorDB + Qdrant + API service)
+            <strong>Cost:</strong> Railway charges approximately $5/month for AutoMem (includes FalkorDB + memory API service). Qdrant Cloud offers a free tier for the vector database.
           </p>
         </div>
 
@@ -38,11 +44,13 @@ import '../../styles/global.css';
           <h3 class="text-lg font-semibold mb-3">What Railway Will Set Up:</h3>
           <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2">
             <li>FalkorDB instance (graph database)</li>
-            <li>Qdrant instance (vector database)</li>
             <li>AutoMem API service with automatic health checks</li>
             <li>SSL certificate for secure connections</li>
-            <li>Environment variables automatically configured</li>
+            <li>Environment variables pre-configured (you'll add Qdrant credentials in Step 3)</li>
           </ul>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+            <strong>Note:</strong> You should see exactly 2 services in Railway: <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">memory-service</code> and <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">falkordb</code>
+          </p>
         </div>
       </section>
 
@@ -73,9 +81,68 @@ import '../../styles/global.css';
         </div>
       </section>
 
-      <!-- Step 3: Configure MCP Client -->
+      <!-- Step 3: Set up Qdrant Cloud -->
       <section class="mb-12">
-        <h2 class="text-3xl font-bold mb-4">Step 3: Configure Your MCP Client</h2>
+        <h2 class="text-3xl font-bold mb-4">Step 3: Set up Qdrant Cloud</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          Qdrant is the vector database that powers AutoMem's semantic search. It's hosted separately on Qdrant Cloud's free tier.
+        </p>
+
+        <ol class="list-decimal list-inside space-y-4 text-gray-600 dark:text-gray-400">
+          <li>
+            <strong>Create a free Qdrant Cloud account:</strong>
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+              <li>Go to <a href="https://cloud.qdrant.io/" target="_blank" class="text-automem-primary hover:underline">https://cloud.qdrant.io/</a></li>
+              <li>Sign up (it's free, no credit card required)</li>
+            </ul>
+          </li>
+          
+          <li>
+            <strong>Create a cluster:</strong>
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+              <li>Click "Create Cluster"</li>
+              <li>Choose the <strong>Free tier</strong> (1GB storage, perfect for personal use)</li>
+              <li>Select a region close to your Railway deployment</li>
+              <li>Wait for the cluster to be provisioned (~2 minutes)</li>
+            </ul>
+          </li>
+
+          <li>
+            <strong>Get your credentials:</strong>
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+              <li>Click on your cluster name</li>
+              <li>Copy the <strong>Cluster URL</strong> (looks like <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333</code>)</li>
+              <li>Copy the <strong>API Key</strong> from the "Access" tab</li>
+            </ul>
+          </li>
+
+          <li>
+            <strong>Add credentials to Railway:</strong>
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+              <li>Go back to your Railway project</li>
+              <li>Click on the <strong>memory-service</strong></li>
+              <li>Go to <strong>Variables</strong> tab</li>
+              <li>Add these two variables:
+                <div class="bg-gray-900 text-green-400 p-3 rounded-lg mt-2 text-sm">
+                  <div>QDRANT_URL=https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333</div>
+                  <div>QDRANT_API_KEY=your-api-key-here</div>
+                </div>
+              </li>
+              <li>The service will automatically restart with the new configuration</li>
+            </ul>
+          </li>
+        </ol>
+
+        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            <strong>Success!</strong> Your AutoMem service is now connected to both FalkorDB (graph) and Qdrant (vector) databases.
+          </p>
+        </div>
+      </section>
+
+      <!-- Step 4: Configure MCP Client -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Step 4: Configure Your MCP Client</h2>
         
         <div class="mb-6">
           <p class="text-gray-600 dark:text-gray-400 mb-4">
@@ -140,9 +207,9 @@ import '../../styles/global.css';
         </div>
       </section>
 
-      <!-- Step 4: Test -->
+      <!-- Step 5: Test -->
       <section class="mb-12">
-        <h2 class="text-3xl font-bold mb-4">Step 4: Test It Out</h2>
+        <h2 class="text-3xl font-bold mb-4">Step 5: Test It Out</h2>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
           Try these commands in your AI assistant:
         </p>
@@ -174,6 +241,51 @@ import '../../styles/global.css';
           <p class="text-sm text-gray-700 dark:text-gray-300">
             <strong>Success!</strong> Your AI now has persistent memory across all devices and conversations. Memories are automatically synced and available everywhere.
           </p>
+        </div>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section class="mb-12">
+        <h2 class="text-3xl font-bold mb-4">Troubleshooting</h2>
+        
+        <div class="space-y-4">
+          <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <summary class="cursor-pointer font-semibold">I only see 2 services in Railway, where's Qdrant?</summary>
+            <div class="mt-3 text-gray-600 dark:text-gray-400">
+              <p><strong>This is correct!</strong> Qdrant is hosted separately on Qdrant Cloud, not on Railway. You should see exactly 2 services:</p>
+              <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">memory-service</code> - The AutoMem API</li>
+                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">falkordb</code> - The graph database</li>
+              </ul>
+              <p class="mt-2">Make sure you completed Step 3 to set up Qdrant Cloud and add the credentials to Railway.</p>
+            </div>
+          </details>
+
+          <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <summary class="cursor-pointer font-semibold">Health check is failing</summary>
+            <div class="mt-3 text-gray-600 dark:text-gray-400">
+              <p>Check that all environment variables are set correctly:</p>
+              <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">QDRANT_URL</code> - Should include the full URL with port (e.g., <code>https://xxxxx.cloud.qdrant.io:6333</code>)</li>
+                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">QDRANT_API_KEY</code> - Your Qdrant cluster API key</li>
+                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">FALKORDB_URL</code> - Auto-configured by Railway</li>
+              </ul>
+              <p class="mt-2">After updating variables, wait 1-2 minutes for the service to restart.</p>
+            </div>
+          </details>
+
+          <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <summary class="cursor-pointer font-semibold">MCP tools not appearing in Claude/Cursor</summary>
+            <div class="mt-3 text-gray-600 dark:text-gray-400">
+              <p>Try these steps:</p>
+              <ol class="list-decimal list-inside ml-4 mt-2 space-y-1">
+                <li>Verify your <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_ENDPOINT</code> doesn't have a trailing slash</li>
+                <li>Check that <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_API_KEY</code> is copied correctly (no extra spaces)</li>
+                <li>Restart Claude Desktop or Cursor completely (not just reload)</li>
+                <li>Check the MCP logs for connection errors</li>
+              </ol>
+            </div>
+          </details>
         </div>
       </section>
 
