@@ -22,6 +22,15 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   </form>
   <div id="message" class="mt-3 text-sm text-center hidden"></div>
   <div id="count" class="mt-2 text-xs text-gray-500 text-center hidden"></div>
+  <div id="success-actions" class="mt-4 text-center hidden">
+    <a
+      id="repo-button"
+      href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist"
+      class="border-2 border-automem-accent text-automem-accent px-6 py-3 rounded-lg font-semibold hover:bg-automem-surface transition inline-block"
+    >
+      Open GitHub Repo
+    </a>
+  </div>
   <div class="mt-4">
     <div id="turnstile-container" class="cf-turnstile" data-sitekey={siteKey} data-theme="auto" data-callback="__turnstileCb"></div>
   </div>
@@ -41,6 +50,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   let siteKeyFromAttr = (tsContainer?.getAttribute?.('data-sitekey') || '').trim();
   let runtimeSiteKey = '';
   const hasTurnstile = true; // we always render the container; decide key at runtime
+  const actions = document.getElementById('success-actions');
+  const repoBtn = document.getElementById('repo-button');
 
   // Callback invoked by Turnstile when ready/solved
   window.__turnstileCb = function(token) {
@@ -156,6 +167,15 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         if (data.position && count) {
           count.classList.remove('hidden');
           count.textContent = `You're among the first ${data.position}`;
+        }
+
+        // If not a confirm-required flow, show the repo button as a clear next step
+        const requiresConfirm = typeof data.message === 'string' && /confirm/i.test(data.message);
+        if (!requiresConfirm && actions) {
+          actions.classList.remove('hidden');
+          if (repoBtn && repoBtn.focus) {
+            try { repoBtn.focus(); } catch {}
+          }
         }
         
         // Clear form

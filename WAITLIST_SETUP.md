@@ -285,3 +285,20 @@ curl -X POST https://automem.ai/admin/broadcast \
 ```
 
 Advanced: override subject/html/text in the JSON body to send a custom message.
+
+## Template Preview (Send to yourself)
+
+Preview all templates (confirm, welcome, day1) to a chosen address:
+
+```bash
+curl -X POST https://automem.ai/admin/preview \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "you@example.com"
+  }'
+```
+
+Options:
+- `templates`: array to select specific templates, e.g. `["confirm","welcome"]`
+- `baseUrl`: override base for links if needed
