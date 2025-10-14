@@ -4,7 +4,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   const { request, locals, url } = context;
   const env = (locals as any)?.runtime?.env ?? {};
   const waitUntil = (locals as any)?.runtime?.waitUntil;
-  const { pathname } = url;
+  const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
   try {
     // API: Signup
@@ -30,6 +30,17 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
       const { onRequestGet } = await import('../functions/unsubscribe.js');
       return onRequestGet({ request, env });
     }
+
+    // For unmatched API/admin routes, return JSON 404 instead of HTML fallback
+    if (
+      pathname === '/api' || pathname.startsWith('/api/') ||
+      pathname === '/admin' || pathname.startsWith('/admin/')
+    ) {
+      return new Response(JSON.stringify({ success: false, error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    }
   } catch (err) {
     // If our handler fails, fall through with a 500 JSON
     return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
@@ -40,4 +51,3 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   return next();
 };
-

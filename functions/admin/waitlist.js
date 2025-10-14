@@ -16,11 +16,15 @@ export async function onRequestGet({ request, env }) {
   }
 
   try {
-    const { results } = await env.D1.prepare(
+    const db = env.D1 || env.DB;
+    if (!db) {
+      return new Response(JSON.stringify({ error: 'D1 binding not found' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+    const { results } = await db.prepare(
       'SELECT email, source, created_at FROM waitlist ORDER BY created_at DESC LIMIT 1000'
     ).all();
 
-    const stats = await env.D1.prepare(
+    const stats = await db.prepare(
       'SELECT * FROM waitlist_stats'
     ).first();
 
@@ -57,7 +61,11 @@ export async function onRequestPost({ request, env }) {
   }
 
   try {
-    const { results } = await env.D1.prepare(
+    const db = env.D1 || env.DB;
+    if (!db) {
+      return new Response('D1 binding not found', { status: 500 });
+    }
+    const { results } = await db.prepare(
       'SELECT email, source, created_at FROM waitlist ORDER BY created_at DESC'
     ).all();
 

@@ -15,7 +15,11 @@ export async function onRequestGet({ request, env }) {
   }
 
   try {
-    await env.D1.prepare(
+    const db = env.D1 || env.DB;
+    if (!db) {
+      return new Response('<h1>Database binding missing</h1>', { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+    await db.prepare(
       'UPDATE waitlist SET unsubscribed = 1 WHERE email = ?'
     ).bind(email.toLowerCase()).run();
 
@@ -30,4 +34,3 @@ export async function onRequestGet({ request, env }) {
     });
   }
 }
-

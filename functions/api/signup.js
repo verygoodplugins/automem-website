@@ -50,8 +50,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
       });
     }
 
+    const db = env.D1 || env.DB;
+    if (!db) {
+      throw new Error('D1 binding not found (expected env.D1)');
+    }
     // Check if already exists
-    const existing = await env.D1.prepare(
+    const existing = await db.prepare(
       'SELECT email FROM waitlist WHERE email = ?'
     ).bind(normalizedEmail).first();
     
@@ -68,7 +72,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     // Store in D1 database
     const isDoubleOptIn = String(env.DOUBLE_OPT_IN || 'false').toLowerCase() === 'true';
     const confirmedFlag = isDoubleOptIn ? 0 : 1;
-    await env.D1.prepare(
+    await db.prepare(
       'INSERT INTO waitlist (email, source, created_at, confirmed) VALUES (?, ?, ?, ?)'
     ).bind(normalizedEmail, source, new Date().toISOString(), confirmedFlag).run();
 
@@ -138,7 +142,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
 
     // Track signup count
-    const count = await env.D1.prepare(
+    const count = await db.prepare(
       'SELECT COUNT(*) as total FROM waitlist'
     ).first();
 
