@@ -3,6 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import ChatDemo from '../components/ChatDemo.astro';
 import EmailSignup from '../components/EmailSignup.astro';
 import '../styles/global.css';
+const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
+const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist`;
 ---
 
 <Layout title="Home">
@@ -41,7 +43,7 @@ import '../styles/global.css';
           <a href="/docs" class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition">
             Get Started
           </a>
-          <a href="https://github.com/verygoodplugins/automem" class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition">
+          <a href={GITHUB_URL} id="open-github" class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition">
             View on GitHub
           </a>
         </div>
@@ -51,6 +53,22 @@ import '../styles/global.css';
         </div>
       </div>
     </section>
+    
+    <!-- Soft Gate Modal for GitHub Link -->
+    <div id="github-modal" class="fixed inset-0 z-50 hidden">
+      <div class="absolute inset-0 bg-black/60" id="github-modal-backdrop"></div>
+      <div class="relative max-w-lg mx-auto mt-24 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-automem-border p-6">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-xl font-semibold text-automem-text">Get the repo link</h3>
+          <button id="github-modal-close" aria-label="Close" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">✕</button>
+        </div>
+        <p class="text-sm text-automem-muted mb-4">Enter your email to get the GitHub link and occasional product updates. No spam, unsubscribe anytime.</p>
+        <EmailSignup />
+        <div class="mt-4 text-center">
+          <a id="skip-github" href={GITHUB_URL_UTM} class="text-sm text-automem-muted underline hover:text-automem-text">Skip and view on GitHub</a>
+        </div>
+      </div>
+    </div>
 
     <!-- Key Features -->
     <section class="py-20 px-6">
@@ -220,6 +238,37 @@ POST /associate
       </div>
     </section>
   </main>
+
+  <script>
+    // Soft gate logic for GitHub button and modal
+    (function() {
+      const btn = document.getElementById('open-github');
+      const modal = document.getElementById('github-modal');
+      const closeBtn = document.getElementById('github-modal-close');
+      const backdrop = document.getElementById('github-modal-backdrop');
+      const targetUrl = 'https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist';
+
+      function openModal(e) {
+        if (e) e.preventDefault();
+        if (!modal) return;
+        modal.classList.remove('hidden');
+      }
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+      }
+
+      if (btn) btn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (backdrop) backdrop.addEventListener('click', closeModal);
+
+      // After successful signup, redirect to GitHub with UTM
+      window.addEventListener('waitlist:joined', () => {
+        try { closeModal(); } catch {}
+        setTimeout(() => { window.location.href = targetUrl; }, 800);
+      });
+    })();
+  </script>
 
   <script>
     (function () {
