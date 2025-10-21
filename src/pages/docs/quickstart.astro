@@ -6,8 +6,12 @@ import '../../styles/global.css';
 <Layout title="Quick Start - AutoMem">
   <main class="min-h-screen py-20 px-6">
     <div class="max-w-4xl mx-auto">
-      <a href="/docs" class="text-automem-primary hover:underline mb-4 inline-block">← Back to Documentation</a>
-      
+      <a
+        href="/docs"
+        class="text-automem-primary hover:underline mb-4 inline-block"
+        >← Back to Documentation</a
+      >
+
       <h1 class="text-5xl font-bold mb-6">
         <span class="gradient-text">Quick Start</span>
       </h1>
@@ -19,37 +23,50 @@ import '../../styles/global.css';
       <section class="mb-12">
         <h2 class="text-3xl font-bold mb-4">Step 1: Deploy AutoMem</h2>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
-          Click the button below to deploy AutoMem to Railway. You'll need a Railway account (free to sign up).
+          Click the button below to deploy AutoMem to Railway. You'll need a
+          Railway account (free to sign up).
         </p>
 
-        <div class="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 p-4 mb-6">
-          <p class="text-sm text-gray-700 dark:text-gray-300">
-            ⚠️ <strong>Important:</strong> Qdrant (vector database) is hosted separately on Qdrant Cloud's free tier. The Railway template only includes memory-service and FalkorDB. You'll connect Qdrant after deployment in Step 3.
-          </p>
-        </div>
-        
-        <a href="https://railway.com/deploy/automem-ai-memory-service"
-           target="_blank"
-           class="inline-block gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition mb-4">
+        <a
+          href="https://railway.com/deploy/automem-ai-memory-service"
+          target="_blank"
+          class="inline-block gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition mb-4"
+        >
           Deploy to Railway →
         </a>
 
-        <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4">
+        <div
+          class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4"
+        >
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Cost:</strong> Railway charges approximately $5/month for AutoMem (includes FalkorDB + memory API service). Qdrant Cloud offers a free tier for the vector database.
+            <strong>Cost:</strong> Railway charges approximately $5/month for
+            AutoMem (includes FalkorDB + memory API service). Qdrant Cloud
+            offers a free tier for the vector database.
           </p>
         </div>
 
         <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
           <h3 class="text-lg font-semibold mb-3">What Railway Will Set Up:</h3>
-          <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2">
+          <ul
+            class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2"
+          >
             <li>FalkorDB instance (graph database)</li>
             <li>AutoMem API service with automatic health checks</li>
             <li>SSL certificate for secure connections</li>
-            <li>Environment variables pre-configured (you'll add Qdrant credentials in Step 3)</li>
+            <li>
+              Environment variables pre-configured (you'll add Qdrant
+              credentials in Step 3)
+            </li>
           </ul>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-            <strong>Note:</strong> You should see exactly 2 services in Railway: <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">memory-service</code> and <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">falkordb</code>
+            <strong>Note:</strong> You should see exactly 2 services in Railway:
+            <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"
+              >memory-service</code
+            >
+            and
+            <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"
+              >falkordb</code
+            >
           </p>
         </div>
       </section>
@@ -60,23 +77,40 @@ import '../../styles/global.css';
         <p class="text-gray-600 dark:text-gray-400 mb-4">
           After deployment completes:
         </p>
-        
-        <ol class="list-decimal list-inside space-y-3 text-gray-600 dark:text-gray-400">
+
+        <ol
+          class="list-decimal list-inside space-y-3 text-gray-600 dark:text-gray-400"
+        >
           <li>Go to your Railway project dashboard</li>
           <li>Click on the <strong>memory-service</strong> service</li>
           <li>Go to the <strong>Variables</strong> tab</li>
-          <li>Find and copy these values:
+          <li>
+            Find and copy these values:
             <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
-              <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_API_KEY</code></li>
-              <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">OPENAI_API_KEY</code> (you'll set this)</li>
+              <li>
+                <code
+                  class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                  >AUTOMEM_API_KEY</code
+                >
+              </li>
+              <li>
+                <code
+                  class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                  >OPENAI_API_KEY</code
+                >
+                (you'll set this)
+              </li>
             </ul>
           </li>
           <li>Note your AutoMem endpoint URL (shown in the Settings tab)</li>
         </ol>
 
-        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 mt-4">
+        <div
+          class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 mt-4"
+        >
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Tip:</strong> Your endpoint URL will look like <code>https://memory-service-production-XXXX.up.railway.app</code>
+            <strong>Tip:</strong> Your endpoint URL will look like
+            <code>https://memory-service-production-XXXX.up.railway.app</code>
           </p>
         </div>
       </section>
@@ -85,23 +119,37 @@ import '../../styles/global.css';
       <section class="mb-12">
         <h2 class="text-3xl font-bold mb-4">Step 3: Set up Qdrant Cloud</h2>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
-          Qdrant is the vector database that powers AutoMem's semantic search. It's hosted separately on Qdrant Cloud's free tier.
+          Qdrant is the vector database that powers AutoMem's semantic search.
+          It's hosted separately on Qdrant Cloud's free tier.
         </p>
 
-        <ol class="list-decimal list-inside space-y-4 text-gray-600 dark:text-gray-400">
+        <ol
+          class="list-decimal list-inside space-y-4 text-gray-600 dark:text-gray-400"
+        >
           <li>
             <strong>Create a free Qdrant Cloud account:</strong>
             <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
-              <li>Go to <a href="https://cloud.qdrant.io/" target="_blank" class="text-automem-primary hover:underline">https://cloud.qdrant.io/</a></li>
+              <li>
+                Go to
+                <a
+                  href="https://cloud.qdrant.io/"
+                  target="_blank"
+                  class="text-automem-primary hover:underline"
+                  >https://cloud.qdrant.io/</a
+                >
+              </li>
               <li>Sign up (it's free, no credit card required)</li>
             </ul>
           </li>
-          
+
           <li>
             <strong>Create a cluster:</strong>
             <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
               <li>Click "Create Cluster"</li>
-              <li>Choose the <strong>Free tier</strong> (1GB storage, perfect for personal use)</li>
+              <li>
+                Choose the <strong>Free tier</strong> (1GB storage, perfect for
+                personal use)
+              </li>
               <li>Select a region close to your Railway deployment</li>
               <li>Wait for the cluster to be provisioned (~2 minutes)</li>
             </ul>
@@ -111,7 +159,13 @@ import '../../styles/global.css';
             <strong>Get your credentials:</strong>
             <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
               <li>Click on your cluster name</li>
-              <li>Copy the <strong>Cluster URL</strong> (looks like <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333</code>)</li>
+              <li>
+                Copy the <strong>Cluster URL</strong> (looks like
+                <code
+                  class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                  >https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333</code
+                >)
+              </li>
               <li>Copy the <strong>API Key</strong> from the "Access" tab</li>
             </ul>
           </li>
@@ -122,28 +176,41 @@ import '../../styles/global.css';
               <li>Go back to your Railway project</li>
               <li>Click on the <strong>memory-service</strong></li>
               <li>Go to <strong>Variables</strong> tab</li>
-              <li>Add these two variables:
-                <div class="bg-gray-900 text-green-400 p-3 rounded-lg mt-2 text-sm">
-                  <div>QDRANT_URL=https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333</div>
+              <li>
+                Add these two variables:
+                <div
+                  class="bg-gray-900 text-green-400 p-3 rounded-lg mt-2 text-sm"
+                >
+                  <div>
+                    QDRANT_URL=https://xxxxx-xxxxx.aws.cloud.qdrant.io:6333
+                  </div>
                   <div>QDRANT_API_KEY=your-api-key-here</div>
                 </div>
               </li>
-              <li>The service will automatically restart with the new configuration</li>
+              <li>
+                The service will automatically restart with the new
+                configuration
+              </li>
             </ul>
           </li>
         </ol>
 
-        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6">
+        <div
+          class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6"
+        >
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Success!</strong> Your AutoMem service is now connected to both FalkorDB (graph) and Qdrant (vector) databases.
+            <strong>Success!</strong> Your AutoMem service is now connected to
+            both FalkorDB (graph) and Qdrant (vector) databases.
           </p>
         </div>
       </section>
 
       <!-- Step 4: Configure MCP Client -->
       <section class="mb-12">
-        <h2 class="text-3xl font-bold mb-4">Step 4: Configure Your MCP Client</h2>
-        
+        <h2 class="text-3xl font-bold mb-4">
+          Step 4: Configure Your MCP Client
+        </h2>
+
         <div class="mb-6">
           <p class="text-gray-600 dark:text-gray-400 mb-4">
             Choose your AI assistant:
@@ -151,12 +218,21 @@ import '../../styles/global.css';
 
           <!-- Claude Desktop -->
           <details class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-4">
-            <summary class="cursor-pointer font-semibold text-lg">Claude Desktop Configuration</summary>
+            <summary class="cursor-pointer font-semibold text-lg">
+              Claude Desktop Configuration
+            </summary>
             <div class="mt-4 space-y-3">
               <p class="text-gray-600 dark:text-gray-400">
-                Edit <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">~/Library/Application Support/Claude/claude_desktop_config.json</code>
+                Edit
+                <code
+                  class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                  >~/Library/Application
+                  Support/Claude/claude_desktop_config.json</code
+                >
               </p>
-              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"><code>{`{
+              <pre
+                class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"
+              ><code>{`{
   "mcpServers": {
     "automem": {
       "command": "npx",
@@ -172,19 +248,31 @@ import '../../styles/global.css';
   }
 }`}</code></pre>
               <p class="text-sm text-gray-500 dark:text-gray-400">
-                Replace <code>your-railway-url</code> and <code>your-api-key-here</code> with your actual values. Then restart Claude Desktop.
+                Replace <code>your-railway-url</code> and
+                <code>your-api-key-here</code> with your actual values. Then
+                restart Claude Desktop.
               </p>
             </div>
           </details>
 
           <!-- Cursor -->
           <details class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-4">
-            <summary class="cursor-pointer font-semibold text-lg">Cursor IDE Configuration</summary>
+            <summary class="cursor-pointer font-semibold text-lg">
+              Cursor IDE Configuration
+            </summary>
             <div class="mt-4 space-y-3">
               <p class="text-gray-600 dark:text-gray-400">
-                Add to <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">~/.cursor/mcp.json</code>
+                [![Install MCP
+                Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=automem&config=eyJlbnYiOnsiQVVUT01FTV9FTkRQT0lOVCI6Imh0dHBzOi8veW91ci1yYWlsd2F5LXVybC51cC5yYWlsd2F5LmFwcCIsIkFVVE9NRU1fQVBJX0tFWSI6InlvdXItYXBpLWtleS1oZXJlIn0sImNvbW1hbmQiOiJucHggLXkgQHZlcnlnb29kcGx1Z2lucy9tY3AtYXV0b21lbUBsYXRlc3QifQ%3D%3D)
+                Alternatively, add to
+                <code
+                  class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                  >~/.cursor/mcp.json</code
+                >
               </p>
-              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"><code>{`{
+              <pre
+                class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"
+              ><code>{`{
   "mcpServers": {
     "automem": {
       "command": "npx",
@@ -200,7 +288,8 @@ import '../../styles/global.css';
   }
 }`}</code></pre>
               <p class="text-sm text-gray-500 dark:text-gray-400">
-                Replace the placeholders and restart Cursor. The MCP tools will appear in the tools panel.
+                Replace the placeholders and restart Cursor. The MCP tools will
+                appear in the tools panel.
               </p>
             </div>
           </details>
@@ -218,7 +307,8 @@ import '../../styles/global.css';
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <p class="font-semibold mb-2">Store a memory:</p>
             <p class="text-sm text-gray-600 dark:text-gray-400 italic">
-              "Remember that I prefer TypeScript over JavaScript for new projects"
+              "Remember that I prefer TypeScript over JavaScript for new
+              projects"
             </p>
           </div>
 
@@ -237,9 +327,13 @@ import '../../styles/global.css';
           </div>
         </div>
 
-        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6">
+        <div
+          class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4 mt-6"
+        >
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Success!</strong> Your AI now has persistent memory across all devices and conversations. Memories are automatically synced and available everywhere.
+            <strong>Success!</strong> Your AI now has persistent memory across
+            all devices and conversations. Memories are automatically synced and
+            available everywhere.
           </p>
         </div>
       </section>
@@ -247,41 +341,103 @@ import '../../styles/global.css';
       <!-- Troubleshooting -->
       <section class="mb-12">
         <h2 class="text-3xl font-bold mb-4">Troubleshooting</h2>
-        
+
         <div class="space-y-4">
           <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <summary class="cursor-pointer font-semibold">I only see 2 services in Railway, where's Qdrant?</summary>
+            <summary class="cursor-pointer font-semibold">
+              I only see 2 services in Railway, where's Qdrant?
+            </summary>
             <div class="mt-3 text-gray-600 dark:text-gray-400">
-              <p><strong>This is correct!</strong> Qdrant is hosted separately on Qdrant Cloud, not on Railway. You should see exactly 2 services:</p>
+              <p>
+                <strong>This is correct!</strong> Qdrant is hosted separately on
+                Qdrant Cloud, not on Railway. You should see exactly 2 services:
+              </p>
               <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">memory-service</code> - The AutoMem API</li>
-                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">falkordb</code> - The graph database</li>
+                <li>
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >memory-service</code
+                  >
+                  - The AutoMem API
+                </li>
+                <li>
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >falkordb</code
+                  >
+                  - The graph database
+                </li>
               </ul>
-              <p class="mt-2">Make sure you completed Step 3 to set up Qdrant Cloud and add the credentials to Railway.</p>
+              <p class="mt-2">
+                Make sure you completed Step 3 to set up Qdrant Cloud and add
+                the credentials to Railway.
+              </p>
             </div>
           </details>
 
           <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <summary class="cursor-pointer font-semibold">Health check is failing</summary>
+            <summary class="cursor-pointer font-semibold">
+              Health check is failing
+            </summary>
             <div class="mt-3 text-gray-600 dark:text-gray-400">
               <p>Check that all environment variables are set correctly:</p>
               <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">QDRANT_URL</code> - Should include the full URL with port (e.g., <code>https://xxxxx.cloud.qdrant.io:6333</code>)</li>
-                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">QDRANT_API_KEY</code> - Your Qdrant cluster API key</li>
-                <li><code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">FALKORDB_URL</code> - Auto-configured by Railway</li>
+                <li>
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >QDRANT_URL</code
+                  >
+                  - Should include the full URL with port (e.g.,
+                  <code>https://xxxxx.cloud.qdrant.io:6333</code>)
+                </li>
+                <li>
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >QDRANT_API_KEY</code
+                  >
+                  - Your Qdrant cluster API key
+                </li>
+                <li>
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >FALKORDB_URL</code
+                  >
+                  - Auto-configured by Railway
+                </li>
               </ul>
-              <p class="mt-2">After updating variables, wait 1-2 minutes for the service to restart.</p>
+              <p class="mt-2">
+                After updating variables, wait 1-2 minutes for the service to
+                restart.
+              </p>
             </div>
           </details>
 
           <details class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <summary class="cursor-pointer font-semibold">MCP tools not appearing in Claude/Cursor</summary>
+            <summary class="cursor-pointer font-semibold">
+              MCP tools not appearing in Claude/Cursor
+            </summary>
             <div class="mt-3 text-gray-600 dark:text-gray-400">
               <p>Try these steps:</p>
               <ol class="list-decimal list-inside ml-4 mt-2 space-y-1">
-                <li>Verify your <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_ENDPOINT</code> doesn't have a trailing slash</li>
-                <li>Check that <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm">AUTOMEM_API_KEY</code> is copied correctly (no extra spaces)</li>
-                <li>Restart Claude Desktop or Cursor completely (not just reload)</li>
+                <li>
+                  Verify your
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >AUTOMEM_ENDPOINT</code
+                  >
+                  doesn't have a trailing slash
+                </li>
+                <li>
+                  Check that
+                  <code
+                    class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm"
+                    >AUTOMEM_API_KEY</code
+                  >
+                  is copied correctly (no extra spaces)
+                </li>
+                <li>
+                  Restart Claude Desktop or Cursor completely (not just reload)
+                </li>
                 <li>Check the MCP logs for connection errors</li>
               </ol>
             </div>
@@ -293,13 +449,25 @@ import '../../styles/global.css';
       <section>
         <h2 class="text-3xl font-bold mb-4">Next Steps</h2>
         <div class="grid md:grid-cols-2 gap-4">
-          <a href="/docs/features" class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition">
+          <a
+            href="/docs/features"
+            class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition"
+          >
             <h3 class="font-semibold mb-2">Explore Features →</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Learn about memory types, knowledge graphs, and advanced capabilities</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Learn about memory types, knowledge graphs, and advanced
+              capabilities
+            </p>
           </a>
-          <a href="https://github.com/verygoodplugins/automem" target="_blank" class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition">
+          <a
+            href="https://github.com/verygoodplugins/automem"
+            target="_blank"
+            class="block p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-lg transition"
+          >
             <h3 class="font-semibold mb-2">View Source Code →</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Contribute to AutoMem or run it locally for development</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Contribute to AutoMem or run it locally for development
+            </p>
           </a>
         </div>
       </section>
