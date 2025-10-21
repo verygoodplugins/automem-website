@@ -67,6 +67,66 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
       </div>
     </div>
 
+    <!-- News Section -->
+    <section class="py-20 px-6 bg-gradient-to-b from-automem-accent/5 to-transparent">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl font-bold mb-2 text-automem-text">Latest News</h2>
+          <p class="text-automem-muted">Stay updated with the latest AutoMem Cloud features</p>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+          <!-- News Item: SSE Sidecar -->
+          <article class="bg-automem-surface rounded-xl shadow-lg p-8 border border-automem-border hover:border-automem-accent transition-colors">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>🚀</span>
+              </div>
+              <div class="flex-1">
+                <div class="text-sm text-automem-muted mb-2">October 2025</div>
+                <h3 class="text-2xl font-bold mb-3 text-automem-text">AutoMem Cloud Now Features Optional SSE Sidecar</h3>
+                <div class="prose prose-invert max-w-none text-automem-muted">
+                  <p class="mb-4">
+                    AutoMem Cloud now includes an optional <strong class="text-automem-text">Server-Sent Events (SSE) sidecar</strong> that enables real-time memory integration with conversational AI platforms that don't natively support MCP servers.
+                  </p>
+                  <p class="mb-4">
+                    This breakthrough allows AutoMem to work seamlessly with:
+                  </p>
+                  <ul class="space-y-2 mb-4 list-disc list-inside">
+                    <li>
+                      <a href="https://elevenlabs.io/conversational-ai" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">
+                        <strong>ElevenLabs Conversational AI</strong>
+                      </a> - Real-time voice agents with sub-100ms latency, now with memory capabilities
+                    </li>
+                    <li>
+                      <a href="https://openai.com/index/introducing-gpt-realtime/" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">
+                        <strong>ChatGPT Realtime API</strong>
+                      </a> - OpenAI's gpt-realtime model with streaming responses and remote tool calling
+                    </li>
+                    <li>
+                      <strong>Claude Web & Mobile</strong> - Voice mode integration for <a href="https://support.claude.com/en/articles/11101966-using-voice-mode-on-claude-mobile-apps" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">iOS/Android apps</a> and web interface
+                    </li>
+                  </ul>
+                  <p class="mb-4">
+                    The SSE sidecar acts as a lightweight bridge, streaming memory updates and retrievals in real-time while maintaining AutoMem's signature performance (20-50ms queries). This means conversational AI agents can now access contextual memory without waiting for full response cycles.
+                  </p>
+                  <div class="bg-automem-bgdark/50 rounded-lg p-4 border border-automem-border/50 mt-6">
+                    <p class="text-sm mb-2"><strong class="text-automem-accent">Technical Details:</strong></p>
+                    <ul class="text-sm space-y-1 list-disc list-inside">
+                      <li>Zero-latency memory streaming via SSE protocol</li>
+                      <li>Compatible with WebSocket and HTTP streaming APIs</li>
+                      <li>Automatic fallback for platforms without native MCP support</li>
+                      <li>Included in all AutoMem Cloud deployments at no extra cost</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- Key Features -->
     <section class="py-20 px-6">
       <div class="max-w-6xl mx-auto">
