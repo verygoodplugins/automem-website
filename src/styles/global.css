@@ -18,10 +18,13 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply antialiased bg-automem-bgdark text-automem-text;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   /* Custom scrollbar styling */
@@ -49,5 +52,17 @@
 
   .gradient-bg {
     @apply bg-gradient-to-br from-automem-accent to-automem-green;
+  }
+
+  /* Prevent horizontal scroll on all content */
+  * {
+    max-width: 100%;
+  }
+
+  /* Allow specific elements to exceed when needed with scroll */
+  pre, code {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }
