@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
 import ChatDemo from '../components/ChatDemo.astro';
 import EmailSignup from '../components/EmailSignup.astro';
 import '../styles/global.css';
@@ -8,6 +9,7 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 ---
 
 <Layout title="Home">
+  <Navigation currentPath="/" />
   <!-- Toast Notification -->
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
     <div
@@ -205,7 +207,7 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
                   <p class="mb-4">
                     The
                     <a
-                      href="https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md"
+                      href="https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md?utm_source=automem.ai&utm_medium=home&utm_campaign=news-sse"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="text-automem-accent hover:underline"
@@ -237,6 +239,18 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
                         container
                       </li>
                     </ul>
+                  </div>
+                  <div class="mt-6">
+                    <div class="relative w-full" style="padding-bottom: 56.25%;">
+                      <iframe
+                        class="absolute top-0 left-0 w-full h-full rounded-lg border border-automem-border"
+                        src="https://www.youtube.com/embed/oA0LnKzBS5g?modestbranding=1&rel=0&iv_load_policy=3&autohide=1"
+                        title="AutoMem SSE Sidecar Demo"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                      ></iframe>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -312,6 +326,33 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
           </p>
         </div>
         <ChatDemo />
+
+        <!-- Screenshots CTA -->
+        <div class="text-center mt-12">
+          <a
+            href="/docs/screenshots"
+            class="inline-flex items-center gap-2 text-lg text-automem-accent hover:text-automem-accent/80 transition group"
+          >
+            <span>
+              Click through to see how AutoMem enhances the tools you're already using with the power of memory and RAG
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="group-hover:translate-x-1 transition-transform"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -494,7 +535,7 @@ POST /associate
             Quick Start Guide
           </a>
           <a
-            href="https://railway.com/deploy/automem-ai-memory-service"
+            href="https://railway.com/deploy/automem-ai-memory-service?utm_source=automem.ai&utm_medium=home&utm_campaign=cta"
             class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition"
           >
             Deploy on Railway
