@@ -3,12 +3,14 @@ import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
 import ChatDemo from '../components/ChatDemo.astro';
 import EmailSignup from '../components/EmailSignup.astro';
+import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
 import '../styles/global.css';
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist`;
 ---
 
 <Layout title="Home">
+  <OrganizationSchema />
   <Navigation currentPath="/" />
   <!-- Toast Notification -->
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">

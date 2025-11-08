@@ -1,0 +1,29 @@
+---
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://automem.ai/#organization",
+  "name": "AutoMem",
+  "url": "https://automem.ai",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://automem.ai/favicon.svg"
+  },
+  "description": "Universal memory layer for AI assistants. Deploy once, remember everywhere. Works with Claude, Cursor, ChatGPT, and any MCP-compatible AI.",
+  "founder": {
+    "@type": "Person",
+    "@id": "https://automem.ai/authors/jack-arturo#person",
+    "name": "Jack Arturo"
+  },
+  "sameAs": [
+    "https://github.com/verygoodplugins/automem"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "Technical Support",
+    "url": "https://github.com/verygoodplugins/automem/issues"
+  }
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />

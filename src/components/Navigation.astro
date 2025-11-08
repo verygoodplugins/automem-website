@@ -44,6 +44,12 @@ const { currentPath = '' } = Astro.props;
           Screenshots
         </a>
         <a
+          href="/blog"
+          class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/blog' ? 'text-automem-accent font-semibold' : ''}`}
+        >
+          Blog
+        </a>
+        <a
           href="/about"
           class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/about' ? 'text-automem-accent font-semibold' : ''}`}
         >
