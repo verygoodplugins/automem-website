@@ -1,0 +1,38 @@
+---
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://automem.ai/authors/jack-arturo#person",
+  "name": "Jack Arturo",
+  "url": "https://automem.ai/authors/jack-arturo",
+  "image": "https://automem.ai/jack-arturo.jpeg",
+  "jobTitle": "Software Developer & Open Source Advocate",
+  "worksFor": {
+    "@type": "Organization",
+    "name": "Very Good Plugins"
+  },
+  "alumniOf": [
+    {
+      "@type": "Organization",
+      "name": "WordPress Community"
+    }
+  ],
+  "knowsAbout": [
+    "WordPress Development",
+    "AI Development",
+    "Open Source Software",
+    "API Integrations",
+    "Marketing Automation",
+    "AI Assistants",
+    "Software Architecture"
+  ],
+  "sameAs": [
+    "https://github.com/verygoodplugins",
+    "https://drunk.support",
+    "https://profiles.wordpress.org/verygoodplugins/"
+  ],
+  "description": "Jack Arturo is a software developer with over 20 years of experience, specializing in WordPress development, AI systems, and open source software. Creator of AutoMem, WP Fusion, and EchoDash."
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(personSchema)} />

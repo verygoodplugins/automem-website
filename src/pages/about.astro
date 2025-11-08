@@ -1,0 +1,222 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import '../styles/global.css';
+---
+
+<Layout title="About" description="Learn about Jack Arturo and the philosophy behind AutoMem">
+  <Navigation currentPath="/about" />
+
+  <main class="min-h-screen py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header with Photo -->
+      <div class="flex flex-col md:flex-row gap-8 items-start mb-12">
+        <div class="flex-shrink-0">
+          <img
+            src="/jack-arturo.jpeg"
+            alt="Jack Arturo"
+            class="w-48 h-48 rounded-full object-cover border-4 border-automem-accent shadow-xl"
+          />
+        </div>
+        <div class="flex-1">
+          <h1 class="text-5xl font-bold mb-4">
+            <span class="gradient-text">About AutoMem</span>
+          </h1>
+          <p class="text-xl text-automem-muted leading-relaxed">
+            Built by Jack, a developer who believes the best software is free software
+          </p>
+        </div>
+      </div>
+
+      <!-- Bio Section -->
+      <section class="mb-16">
+        <div class="bg-automem-surface rounded-xl p-8 border border-automem-border shadow-lg">
+          <h2 class="text-3xl font-bold mb-6 text-automem-text">The Builder</h2>
+          <div class="prose prose-invert max-w-none space-y-4 text-automem-muted">
+            <p>
+              I'm Jack Arturo, and I've been writing code since I was 12 years old. That's over two decades of turning ideas into software, most of it in the WordPress ecosystem where I've been building for the past 16-18 years.
+            </p>
+            <p>
+              For the last 12 years, I've been running <a href="https://verygoodplugins.com?utm_source=automem.ai&utm_medium=about&utm_campaign=link" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline"><strong class="text-automem-text">Very Good Plugins</strong></a>, where we built <a href="https://wpfusion.com?utm_source=automem.ai&utm_medium=about&utm_campaign=link" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">WP Fusion</a> — an integration tool that connects WordPress with CRM and email marketing systems like HubSpot, MailChimp, and Salesforce. Helping thousands of WordPress businesses automate their marketing has been incredibly rewarding.
+            </p>
+            <p>
+              More recently, I co-founded <a href="https://echodash.com?utm_source=automem.ai&utm_medium=about&utm_campaign=link" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">EchoDash</a>, a platform that cuts through data noise to surface what actually matters. EchoDash lets you have conversations with your data and proactively offers insights based on your business context.
+            </p>
+            <p>
+              These days, I'm deep into AI development. I use tools like <strong class="text-automem-text">Claude Code</strong> and <strong class="text-automem-text">Cursor</strong> extensively, and I've built <strong class="text-automem-text">AutoJack</strong> — my personal AI assistant that helps me automate everything from customer support to development workflows. I write about this work on my <a href="https://drunk.support?utm_source=automem.ai&utm_medium=about&utm_campaign=link" target="_blank" rel="noopener noreferrer" class="text-automem-accent hover:underline">personal blog</a>.
+            </p>
+            <p>
+              AutoMem grew out of that work. When I built the Claude Automation Hub and started giving AI assistants memory capabilities, I realized this shouldn't be proprietary technology locked behind walls. Everyone deserves AI that remembers.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Philosophy Section -->
+      <section class="mb-16">
+        <div class="bg-gradient-to-br from-automem-accent/10 to-purple-500/10 rounded-xl p-8 border border-automem-border shadow-lg">
+          <h2 class="text-3xl font-bold mb-6 text-automem-text">Why Open Source?</h2>
+          <div class="prose prose-invert max-w-none space-y-4 text-automem-muted">
+            <p>
+              I believe in giving good stuff away. Not because it's trendy or looks good on GitHub, but because <strong class="text-automem-text">better tools make better builders</strong>.
+            </p>
+            <p>
+              Here's the thing: when you open source your work, you're not losing value — you're multiplying it. Every developer who uses AutoMem makes it better. Every bug report, every feature request, every pull request is a contribution back to the commons.
+            </p>
+            <div class="bg-automem-bgdark/50 rounded-lg p-6 border border-automem-border/50 my-6">
+              <h3 class="text-xl font-semibold mb-3 text-automem-accent">The Open Source Multiplier Effect</h3>
+              <ul class="space-y-3 list-none">
+                <li class="flex items-start gap-3">
+                  <span class="text-automem-accent text-xl">→</span>
+                  <span><strong class="text-automem-text">Trust through transparency:</strong> When the code is open, you know exactly what it does. No hidden tracking, no vendor lock-in, no surprises.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-automem-accent text-xl">→</span>
+                  <span><strong class="text-automem-text">Community-driven innovation:</strong> The best features often come from users who scratched their own itch and shared the solution.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-automem-accent text-xl">→</span>
+                  <span><strong class="text-automem-text">Longevity over lock-in:</strong> Open source projects outlive companies. Even if I stop maintaining AutoMem tomorrow, the community can keep it alive.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-automem-accent text-xl">→</span>
+                  <span><strong class="text-automem-text">Learning from the source:</strong> Reading good code makes you a better developer. I learned by reading others' work — now it's my turn to give back.</span>
+                </li>
+              </ul>
+            </div>
+            <p>
+              The future of AI shouldn't be controlled by a handful of companies deciding what your AI can remember or how it should behave. <strong class="text-automem-text">Your memories should belong to you.</strong> Your AI's context should be portable. The infrastructure should be transparent.
+            </p>
+            <p>
+              That's why AutoMem is free, open source, and always will be. Fork it, modify it, deploy it however you want. Build something amazing on top of it. That's the whole point.
+            </p>
+            <p class="text-lg font-semibold text-automem-accent">
+              Because the best way to predict the future is to give people the tools to build it themselves.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Links Section -->
+      <section>
+        <div class="bg-automem-surface rounded-xl p-8 border border-automem-border shadow-lg">
+          <h2 class="text-3xl font-bold mb-6 text-automem-text">Connect</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <a
+              href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>💻</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">AutoMem on GitHub</h3>
+                <p class="text-sm text-automem-muted">Contribute to the project</p>
+              </div>
+            </a>
+
+            <a
+              href="https://drunk.support?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>✍️</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">Personal Blog</h3>
+                <p class="text-sm text-automem-muted">Articles on AI development</p>
+              </div>
+            </a>
+
+            <a
+              href="https://verygoodplugins.com?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>🔧</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">Very Good Plugins</h3>
+                <p class="text-sm text-automem-muted">WordPress development company</p>
+              </div>
+            </a>
+
+            <a
+              href="https://wpfusion.com?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>🔌</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">WP Fusion</h3>
+                <p class="text-sm text-automem-muted">WordPress CRM integration</p>
+              </div>
+            </a>
+
+            <a
+              href="https://echodash.com?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>📊</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">EchoDash</h3>
+                <p class="text-sm text-automem-muted">Universal analytics platform</p>
+              </div>
+            </a>
+
+            <a
+              href="https://profiles.wordpress.org/verygoodplugins/?utm_source=automem.ai&utm_medium=about&utm_campaign=connect"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-4 p-4 bg-automem-bgdark/50 rounded-lg border border-automem-border hover:border-automem-accent transition"
+            >
+              <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0">
+                <span>🌐</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-automem-text group-hover:text-automem-accent transition">WordPress.org Profile</h3>
+                <p class="text-sm text-automem-muted">Open source contributions</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Back Home -->
+      <div class="text-center mt-16">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back to Home
+        </a>
+      </div>
+    </div>
+  </main>
+</Layout>

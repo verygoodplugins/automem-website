@@ -1,0 +1,84 @@
+---
+const { currentPath = '' } = Astro.props;
+---
+
+<nav class="border-b border-automem-border bg-automem-surface/50 backdrop-blur-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 py-4">
+    <div class="flex items-center justify-between">
+      <!-- Logo/Home Link -->
+      <a href="/" class="flex items-center gap-2 group">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-automem-accent group-hover:text-automem-accent/80 transition"
+        >
+          <path d="M12 8V4H8"></path>
+          <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+          <path d="M2 14h2"></path>
+          <path d="M20 14h2"></path>
+          <path d="M15 13v2"></path>
+          <path d="M9 13v2"></path>
+        </svg>
+        <span class="text-xl font-bold gradient-text">automem.ai</span>
+      </a>
+
+      <!-- Navigation Links -->
+      <div class="flex items-center gap-6">
+        <a
+          href="/docs"
+          class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/docs' ? 'text-automem-accent font-semibold' : ''}`}
+        >
+          Docs
+        </a>
+        <a
+          href="/docs/screenshots"
+          class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/docs/screenshots' ? 'text-automem-accent font-semibold' : ''}`}
+        >
+          Screenshots
+        </a>
+        <a
+          href="/blog"
+          class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/blog' ? 'text-automem-accent font-semibold' : ''}`}
+        >
+          Blog
+        </a>
+        <a
+          href="/about"
+          class={`text-automem-muted hover:text-automem-text transition ${currentPath === '/about' ? 'text-automem-accent font-semibold' : ''}`}
+        >
+          About
+        </a>
+        <a
+          href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=nav&utm_campaign=header"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-automem-muted hover:text-automem-text transition flex items-center gap-1"
+        >
+          GitHub
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

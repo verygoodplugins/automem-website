@@ -1,0 +1,114 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import '../../styles/global.css';
+
+// Get all blog posts
+const allPosts = await getCollection('blog');
+
+// Filter out drafts and sort by date (newest first)
+const posts = allPosts
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Group posts by year
+const postsByYear: Record<number, typeof posts> = {};
+posts.forEach(post => {
+  const year = post.data.date.getFullYear();
+  if (!postsByYear[year]) {
+    postsByYear[year] = [];
+  }
+  postsByYear[year].push(post);
+});
+
+// Get sorted years (newest first)
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+---
+
+<Layout title="Blog - AutoMem" description="Articles about AI, memory systems, and open source development">
+  <Navigation currentPath="/blog" />
+
+  <main class="min-h-screen py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="mb-12">
+        <h1 class="text-5xl font-bold mb-4">
+          <span class="gradient-text">Blog</span>
+        </h1>
+        <p class="text-xl text-automem-muted">
+          Thoughts on AI, memory systems, and building in the open
+        </p>
+      </div>
+
+      <!-- Posts by Year -->
+      {years.map(year => (
+        <section class="mb-12">
+          <h2 class="text-3xl font-bold mb-6 text-automem-text">{year}</h2>
+          <div class="space-y-6">
+            {postsByYear[year].map(post => (
+              <article class="group">
+                <a
+                  href={`/blog/${post.slug}`}
+                  class="block bg-automem-surface rounded-lg p-6 border border-automem-border hover:border-automem-accent transition-all hover:shadow-lg"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                      <h3 class="text-2xl font-semibold mb-2 text-automem-text group-hover:text-automem-accent transition">
+                        {post.data.title}
+                      </h3>
+                      <p class="text-automem-muted mb-3">
+                        {post.data.description}
+                      </p>
+                      <div class="flex items-center gap-4 text-sm">
+                        <time class="text-automem-muted">
+                          {post.data.date.toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </time>
+                        {post.data.tags && post.data.tags.length > 0 && (
+                          <div class="flex gap-2">
+                            {post.data.tags.map(tag => (
+                              <span class="px-2 py-1 bg-automem-accent/10 text-automem-accent rounded text-xs">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-automem-muted group-hover:text-automem-accent group-hover:translate-x-1 transition-all flex-shrink-0"
+                    >
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {posts.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-automem-muted text-lg">No posts yet. Check back soon!</p>
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>

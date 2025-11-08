@@ -1,0 +1,49 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  datePublished: Date;
+  dateModified?: Date;
+  slug: string;
+  tags?: string[];
+}
+
+const { title, description, datePublished, dateModified, slug, tags } = Astro.props;
+
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "@id": `https://automem.ai/blog/${slug}#article`,
+  "headline": title,
+  "description": description,
+  "datePublished": datePublished.toISOString(),
+  "dateModified": (dateModified || datePublished).toISOString(),
+  "author": {
+    "@type": "Person",
+    "@id": "https://automem.ai/authors/jack-arturo#person",
+    "name": "Jack Arturo",
+    "url": "https://automem.ai/authors/jack-arturo"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://automem.ai/#organization",
+    "name": "AutoMem",
+    "url": "https://automem.ai",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://automem.ai/favicon.svg"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://automem.ai/blog/${slug}`
+  },
+  "url": `https://automem.ai/blog/${slug}`,
+  "inLanguage": "en-US",
+  ...(tags && tags.length > 0 && {
+    "keywords": tags.join(", ")
+  })
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
