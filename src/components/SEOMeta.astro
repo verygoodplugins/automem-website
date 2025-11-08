@@ -19,7 +19,13 @@ const {
   tags
 } = Astro.props;
 
-const canonicalURL = `https://automem.ai${url}`;
+// Normalize URL: strip any existing scheme+host, trim whitespace, ensure single leading slash
+let normalizedPath = url.trim();
+// Remove any existing domain/scheme (e.g., "https://automem.ai/blog" -> "/blog")
+normalizedPath = normalizedPath.replace(/^https?:\/\/[^/]+/, '');
+// Ensure single leading slash
+normalizedPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+const canonicalURL = `https://automem.ai${normalizedPath}`;
 ---
 
 <!-- Canonical URL -->

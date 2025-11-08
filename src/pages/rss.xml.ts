@@ -23,6 +23,5 @@ export async function GET(context: APIContext) {
       author: 'Jack Arturo',
     })),
     customData: `<language>en-us</language>`,
-    stylesheet: '/rss-styles.xsl',
   });
 }
