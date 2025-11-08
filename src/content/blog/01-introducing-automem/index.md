@@ -7,51 +7,83 @@ tags:
   - open-source
 ---
 
-After months of building AutoJack (my personal AI assistant) and the Claude Automation Hub, I realized something important: **memory shouldn't be proprietary technology locked behind walls**.
+Here's the thing — after months building AutoJack (my personal AI assistant) and working on the Claude Automation Hub, I kept hitting the same stupid problem:
 
-Every AI company wants to own your context. They want you locked into their ecosystem, dependent on their memory implementation, unable to take your AI's knowledge with you when you switch tools.
+**Every AI tool has amnesia.**
 
-That's not how it should work.
+Claude forgets what you told it yesterday. Cursor doesn't know what you taught Claude. ChatGPT has no clue about either. You're stuck teaching the same preferences to every tool, every session.
 
-## The Problem with AI Memory Today
+That's broken. So I built something to fix it.
 
-Right now, if you use Claude Desktop, your memories stay in Claude Desktop. If you use Cursor, that's a separate memory system. ChatGPT? Another silo. Each tool learns about you independently, and none of them share that knowledge.
+## The Problem: AI Memory is a Walled Garden
 
-This means you're constantly re-teaching your AI assistants the same things:
-- Your coding preferences
-- Your project architecture decisions
-- Your communication style
-- Your workflow patterns
+Right now you've probably got multiple AI tools. Each one maintains its own little memory silo:
 
-It's inefficient. It's frustrating. And it's completely unnecessary.
+- Claude Desktop → memories locked in Claude
+- Cursor → separate memory system
+- ChatGPT → another black box
+- That new AI tool you're trying → starts from zero
 
-## What AutoMem Does Differently
+**The pattern:** You spend way too much time re-explaining context instead of actually working.
 
-AutoMem is a **universal memory layer** that works with any MCP-compatible AI tool. One deployment, accessible everywhere:
+I kept explaining the same TypeScript preferences over and over. To different AI tools. In the same week. That's insane.
 
-- Claude Desktop recalls your preferences automatically
-- Cursor remembers your project context
-- ChatGPT knows your communication style
-- Any future MCP-enabled tool works immediately
+## What AutoMem Actually Does
 
-Your memories follow you across devices, across platforms, across tools. **Because they belong to you, not the AI company.**
+AutoMem is a **universal memory layer** that works with any MCP-compatible AI tool.
 
-## Why Open Source Matters
+One deployment. Simple config. Works everywhere:
 
-I believe in giving good stuff away. Not because it looks good on GitHub, but because **better tools make better builders**.
+- Claude Desktop automatically knows your coding style
+- Cursor remembers that auth refactor from last week
+- ChatGPT understands your project architecture
+- Any new MCP tool → instant context, no setup
 
-When you open source your work, you're not losing value — you're multiplying it. Every developer who uses AutoMem makes it better. Every bug report, every feature request, every pull request contributes back to the commons.
+**Why this matters:** Your memories follow you. Not stuck in some company's database. Not lost when you switch tools. They're yours — stored where you want, accessed how you want.
 
-The future of AI shouldn't be controlled by a handful of companies deciding what your AI can remember or how it should behave. Your memories should be portable. The infrastructure should be transparent.
+## The Open Source Part
 
-## Try It Yourself
+I could've kept this proprietary. Built another SaaS, charged monthly, made it a "platform."
 
-AutoMem is free, open source, and ready to deploy. You can have it running on Railway in under 5 minutes for about $5/month.
+But that's exactly the problem I'm trying to solve.
 
-- [Deploy on Railway](https://railway.com/deploy/automem-ai-memory-service?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
-- [View on GitHub](https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
-- [Read the Quick Start](/docs/quickstart)
+When you open source the core infrastructure:
+- People contribute features you didn't think of
+- Bug fixes come from everywhere
+- Someone adapts it for their use case
+- Everyone benefits
 
-Fork it. Modify it. Build something amazing on top of it. That's the whole point.
+**The bottom line:** Better tools make better builders.
 
-Because the best way to predict the future is to give people the tools to build it themselves.
+## How It Actually Works
+
+AutoMem is pretty straightforward:
+- **Quick setup** — takes about 5 minutes
+- **Cheap to run** — costs a few bucks a month on Railway
+- **MCP compatible** — works with any tool that supports MCP
+
+Not "blazingly fast" or "game-changing" — just solid infrastructure that works.
+
+## Deploy It Right Now
+
+Stop reading. Start deploying:
+
+1️⃣ **Click this:** [Deploy on Railway](https://railway.com/deploy/automem-ai-memory-service?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
+
+2️⃣ **Add your OpenAI key** (for embeddings)
+
+3️⃣ **Connect to your AI tools** via MCP
+
+That's it! 🎉
+
+Full deployment guide with screenshots: [Quick Start](/docs/quickstart)
+
+Want to hack on it? [GitHub repo is here](https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
+
+Fork it. Break it. Make it better. Ship something wild.
+
+Because here's what I learned after 10 years building WordPress plugins — the best infrastructure is the stuff nobody owns and everybody improves.
+
+Now go make your AI actually remember things.
+
+– Jack
