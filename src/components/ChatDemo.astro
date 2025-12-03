@@ -2,36 +2,29 @@
 // Animated chat demo component
 ---
 
-<div class="chat-demo-container">
-  <div class="chat-window bg-automem-surface rounded-xl shadow-2xl border border-automem-border overflow-hidden max-w-5xl mx-auto">
+<div class="chat-demo-container font-mono">
+  <div class="chat-window bg-white border-2 border-core-text shadow-hard max-w-5xl mx-auto rounded-lg overflow-hidden">
     <!-- Header -->
-    <div class="chat-header bg-automem-bgdark border-b border-automem-border px-6 py-4 flex items-center gap-4">
+    <div class="chat-header bg-core-bg border-b-2 border-core-text px-4 py-2 flex items-center gap-4 text-sm">
       <div class="flex items-center gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-automem-accent">
-          <path d="M12 8V4H8"></path>
-          <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-          <path d="M2 14h2"></path>
-          <path d="M20 14h2"></path>
-          <path d="M15 13v2"></path>
-          <path d="M9 13v2"></path>
-        </svg>
-        <span class="font-semibold text-automem-text text-lg">AutoJack</span>
+        <span class="text-core-accent font-bold">./autojack</span>
       </div>
-      <div class="flex-1"></div>
+      <div class="flex-1 text-center text-core-muted text-xs opacity-50">PID: 8492</div>
       <div class="flex items-center gap-2">
-        <div class="w-2.5 h-2.5 rounded-full bg-automem-green animate-pulse"></div>
-        <span class="text-sm text-automem-muted">Online</span>
+        <div class="w-2 h-2 bg-green-500"></div>
+        <span class="text-xs text-core-text uppercase">Active</span>
       </div>
     </div>
 
     <!-- Messages -->
-    <div class="chat-messages p-6 min-h-[600px] max-h-[700px] overflow-y-auto">
-      <div class="messages-wrapper flex flex-col justify-start space-y-4">
+    <div class="chat-messages p-6 min-h-[600px] max-h-[700px] overflow-y-auto bg-white">
+      <div class="messages-wrapper flex flex-col justify-start space-y-6">
         <!-- Initial greeting - visible from start -->
         <div class="message visible" data-delay="0">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
-            <p class="text-automem-text text-base">👋 Hi! I'm AutoJack. How can I help you today?</p>
+          <div class="bg-core-bg border-2 border-core-text px-4 py-2 rounded-tr-lg rounded-bl-lg rounded-br-lg max-w-[85%] shadow-sm">
+            <p class="text-core-text text-sm font-bold mb-1 text-xs uppercase tracking-wider opacity-50">AutoJack</p>
+            <p class="text-core-text text-sm">Hi! I'm AutoJack. How can I help you today?</p>
           </div>
         </div>
       </div>
@@ -39,7 +32,7 @@
       <!-- User message 1 -->
       <div class="message opacity-0" data-delay="800">
         <div class="flex justify-end">
-          <div class="bg-automem-accent text-white px-5 py-3 rounded-lg max-w-[80%] text-base">
+          <div class="bg-core-text text-white px-4 py-2 max-w-[80%] text-sm font-bold border-2 border-core-text rounded-tl-lg rounded-bl-lg rounded-br-lg shadow-hard">
             Hey! I'm starting a new web project.
           </div>
         </div>
@@ -48,12 +41,8 @@
       <!-- Typing indicator -->
       <div class="message opacity-0" data-delay="1600">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg">
-            <div class="flex gap-1.5">
-              <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0s"></div>
-              <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-              <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-            </div>
+          <div class="pl-4 text-core-muted text-xs animate-pulse">
+            analyzing...
           </div>
         </div>
       </div>
@@ -61,33 +50,29 @@
       <!-- Bot response 1 -->
       <div class="message opacity-0" data-delay="2400">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
-            <p class="text-automem-text text-base">Awesome! Let me check what you usually work with...</p>
+          <div class="bg-white border border-core-text px-4 py-2 text-sm">
+            <p class="text-core-text">> Awesome! Let me check what you usually work with...</p>
           </div>
         </div>
       </div>
 
       <!-- Thinking block -->
       <div class="message opacity-0" data-delay="3200">
-        <div class="bg-purple-900/20 border-l-2 border-purple-500 px-4 py-3 rounded text-sm">
-          <div class="flex items-center gap-2 text-purple-400 mb-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-pulse">
-              <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path>
-            </svg>
-            <span>Thinking...</span>
+        <div class="bg-core-bg border-l-2 border-core-accent px-4 py-2 text-xs font-mono">
+          <div class="flex items-center gap-2 text-core-accent mb-1.5">
+            <span class="animate-pulse">●</span>
+            <span>PROCESSING...</span>
           </div>
-          <p class="text-automem-muted text-sm">Let me recall their development preferences</p>
+          <p class="text-core-muted">Let me recall their development preferences</p>
         </div>
       </div>
 
       <!-- Tool call: recall_memory with spinner -->
       <div class="message opacity-0" data-delay="4000">
-        <div class="bg-automem-bgdark/50 border border-automem-border/50 rounded-lg p-3">
-          <div class="flex items-center gap-2 mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-automem-blue animate-spin">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-            </svg>
-            <span class="text-sm font-mono text-automem-blue">recall_memory</span>
+        <div class="bg-white border border-core-text/50 p-2 text-xs font-mono shadow-hard">
+          <div class="flex items-center gap-2 mb-2 border-b border-core-line pb-1">
+            <span class="text-core-accent">> function call:</span>
+            <span class="font-bold">recall_memory</span>
           </div>
           <div class="text-sm text-automem-muted font-mono pl-6">
             query: "web development stack"<br/>
@@ -99,13 +84,12 @@
       <!-- Memory cards -->
       <div class="message opacity-0" data-delay="5200">
         <div class="space-y-2.5">
-          <div class="memory-card bg-automem-bgdark border border-green-500/30 rounded-lg p-3.5">
+          <div class="memory-card bg-white border border-core-text p-2 shadow-hard">
             <div class="flex items-start gap-3">
-              <span class="px-2.5 py-1 bg-green-900/40 text-green-400 rounded text-sm">Preference</span>
-              <div class="flex-1 text-sm text-automem-text">
+              <span class="px-2 py-0.5 bg-core-bg border border-core-text text-xs uppercase font-bold">Preference</span>
+              <div class="flex-1 text-xs text-core-text">
                 Prefers React with TypeScript for web apps
               </div>
-              <span class="text-sm text-automem-muted">⭐⭐⭐</span>
             </div>
           </div>
           <div class="memory-card bg-automem-bgdark border border-blue-500/30 rounded-lg p-3.5">
@@ -123,7 +107,7 @@
       <!-- Bot response 2 -->
       <div class="message opacity-0" data-delay="6400">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
+          <div class="bg-white border border-core-text px-4 py-2 max-w-[85%]">
             <p class="text-automem-text text-base">Perfect! I remember you like <strong class="text-automem-accent">React + TypeScript</strong> with <strong class="text-automem-accent">Tailwind CSS</strong>. Want me to set that up?</p>
           </div>
         </div>
@@ -132,7 +116,7 @@
       <!-- User message 2 -->
       <div class="message opacity-0" data-delay="7600">
         <div class="flex justify-end">
-          <div class="bg-automem-accent text-white px-5 py-3 rounded-lg max-w-[80%] text-base">
+          <div class="bg-core-text text-white px-4 py-2 text-sm font-bold max-w-[80%] text-base">
             Yes! And use Vite this time.
           </div>
         </div>
@@ -141,7 +125,7 @@
       <!-- Typing indicator 2 -->
       <div class="message opacity-0" data-delay="8400">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg">
+          <div class="bg-white border border-core-text px-4 py-2">
             <div class="flex gap-1.5">
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0s"></div>
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -154,7 +138,7 @@
       <!-- Bot asks clarification -->
       <div class="message opacity-0" data-delay="9200">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
+          <div class="bg-white border border-core-text px-4 py-2 max-w-[85%]">
             <p class="text-automem-text text-base">Great choice! Do you want your usual folder structure too?</p>
           </div>
         </div>
@@ -163,7 +147,7 @@
       <!-- User confirms -->
       <div class="message opacity-0" data-delay="10400">
         <div class="flex justify-end">
-          <div class="bg-automem-accent text-white px-5 py-3 rounded-lg max-w-[80%] text-base">
+          <div class="bg-core-text text-white px-4 py-2 text-sm font-bold max-w-[80%] text-base">
             Yes please!
           </div>
         </div>
@@ -172,7 +156,7 @@
       <!-- Typing indicator 3 -->
       <div class="message opacity-0" data-delay="11200">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg">
+          <div class="bg-white border border-core-text px-4 py-2">
             <div class="flex gap-1.5">
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0s"></div>
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -231,7 +215,7 @@
       <!-- Bot confirmation -->
       <div class="message opacity-0" data-delay="16000">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
+          <div class="bg-white border border-core-text px-4 py-2 max-w-[85%]">
             <p class="text-automem-text text-base">✅ Perfect! Setting up <span class="text-automem-accent font-mono text-sm">React + TypeScript + Vite + Tailwind</span></p>
             <div class="mt-2.5 pt-2.5 border-t border-automem-border/30 text-sm text-automem-muted">
               💾 Remembered your Vite preference for next time!
@@ -243,7 +227,7 @@
       <!-- User thanks -->
       <div class="message opacity-0" data-delay="17200">
         <div class="flex justify-end">
-          <div class="bg-automem-accent text-white px-5 py-3 rounded-lg max-w-[80%] text-base">
+          <div class="bg-core-text text-white px-4 py-2 text-sm font-bold max-w-[80%] text-base">
             Perfect, thanks! 🙌
           </div>
         </div>
@@ -252,7 +236,7 @@
       <!-- Typing indicator 4 -->
       <div class="message opacity-0" data-delay="18000">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg">
+          <div class="bg-white border border-core-text px-4 py-2">
             <div class="flex gap-1.5">
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0s"></div>
               <div class="w-2.5 h-2.5 bg-automem-muted rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -265,7 +249,7 @@
       <!-- Final bot message -->
       <div class="message opacity-0" data-delay="19200">
         <div class="flex justify-start">
-          <div class="bg-automem-bgdark border border-automem-border px-5 py-3 rounded-lg max-w-[85%]">
+          <div class="bg-white border border-core-text px-4 py-2 max-w-[85%]">
             <p class="text-automem-text text-base">You're all set! I'll remember these preferences for your future projects. Happy coding! 🚀</p>
           </div>
         </div>

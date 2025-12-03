@@ -31,41 +31,42 @@ const years = Object.keys(postsByYear)
 <Layout title="Blog - AutoMem" description="Articles about AI, memory systems, and open source development">
   <Navigation currentPath="/blog" />
 
-  <main class="min-h-screen py-20 px-6">
+  <main class="min-h-screen py-20 px-6 bg-core-bg">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-12">
-        <h1 class="text-5xl font-bold mb-4">
-          <span class="gradient-text">Blog</span>
+        <div class="comment-header">:: TRANSMISSION_LOG</div>
+        <h1 class="text-5xl font-bold mb-4 tracking-tighter">
+          <span class="text-core-secondary">Blog</span>
         </h1>
-        <p class="text-xl text-automem-muted">
-          Thoughts on AI, memory systems, and building in the open
+        <p class="text-xl text-core-muted font-mono border-l-4 border-core-accent pl-4">
+          Thoughts on AI, memory systems, and building in the open.
         </p>
       </div>
 
       <!-- Posts by Year -->
       {years.map(year => (
-        <section class="mb-12">
-          <h2 class="text-3xl font-bold mb-6 text-automem-text">{year}</h2>
+        <section class="mb-16">
+          <h2 class="text-3xl font-bold mb-6 text-core-text font-mono">{year}</h2>
           <div class="space-y-6">
             {postsByYear[year].map(post => (
               <article class="group">
                 <a
                   href={`/blog/${post.slug}`}
-                  class="block bg-automem-surface rounded-lg p-6 border border-automem-border hover:border-automem-accent transition-all hover:shadow-lg"
+                  class="block bg-white rounded-lg p-6 border-2 border-core-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none"
                 >
                   <div class="flex items-start justify-between gap-4">
                     <div class="flex-1">
-                      <h3 class="text-2xl font-semibold mb-2 text-automem-text group-hover:text-automem-accent transition">
+                      <h3 class="text-2xl font-bold mb-2 text-core-text group-hover:text-core-accent transition">
                         {post.data.title}
                       </h3>
-                      <p class="text-automem-muted mb-3">
+                      <p class="text-core-muted mb-3 font-mono text-sm">
                         {post.data.description}
                       </p>
                       <div class="flex items-center gap-4 text-sm">
-                        <time class="text-automem-muted">
+                        <time class="text-core-muted font-mono text-xs">
                           {post.data.date.toLocaleDateString('en-US', {
-                            month: 'long',
+                            month: 'short',
                             day: 'numeric',
                             year: 'numeric'
                           })}
@@ -73,7 +74,7 @@ const years = Object.keys(postsByYear)
                         {post.data.tags && post.data.tags.length > 0 && (
                           <div class="flex gap-2">
                             {post.data.tags.map(tag => (
-                              <span class="px-2 py-1 bg-automem-accent/10 text-automem-accent rounded text-xs">
+                              <span class="px-2 py-0.5 bg-core-secondary/20 text-core-secondary border border-core-secondary/30 text-xs font-bold uppercase">
                                 {tag}
                               </span>
                             ))}
@@ -81,21 +82,9 @@ const years = Object.keys(postsByYear)
                         )}
                       </div>
                     </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="text-automem-muted group-hover:text-automem-accent group-hover:translate-x-1 transition-all flex-shrink-0"
-                    >
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
+                    <div class="text-core-muted group-hover:text-core-accent group-hover:translate-x-1 transition-all flex-shrink-0 font-mono">
+                      →
+                    </div>
                   </div>
                 </a>
               </article>
@@ -105,8 +94,8 @@ const years = Object.keys(postsByYear)
       ))}
 
       {posts.length === 0 && (
-        <div class="text-center py-12">
-          <p class="text-automem-muted text-lg">No posts yet. Check back soon!</p>
+        <div class="text-center py-12 bg-white rounded-lg border-2 border-core-line">
+          <p class="text-core-muted text-lg font-mono">// No posts yet. Check back soon.</p>
         </div>
       )}
     </div>

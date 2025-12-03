@@ -4,65 +4,66 @@
 
 @layer base {
   :root {
-    --color-bg: #2D2B28;
-    --color-surface: #3A3734;
-    --color-border: #4A4744;
-    --color-text: #F5F3EF;
-    --color-muted: #9B9996;
-    --color-accent: #E3A857;
-    --color-blue: #5C9FD8;
-    --color-green: #4AA181;
-    --color-primary: #E3A857;
-    --color-secondary: #5C9FD8;
+    --color-bg: #F0F4F8;
+    --color-text: #102A43;
   }
 
   html {
     scroll-behavior: smooth;
-    overflow-x: hidden;
+    background-color: var(--color-bg);
   }
 
   body {
-    @apply antialiased bg-automem-bgdark text-automem-text;
+    @apply antialiased bg-core-bg text-core-text font-mono;
     overflow-x: hidden;
     width: 100%;
+    
+    /* Blueprint Grid */
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, #D9E2EC 1px, transparent 1px),
+      linear-gradient(to bottom, #D9E2EC 1px, transparent 1px);
   }
 
-  /* Custom scrollbar styling */
-  ::-webkit-scrollbar {
-    @apply w-2;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-automem-surface;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-automem-border rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-automem-muted;
+  ::selection {
+    @apply bg-core-accent/30 text-core-text;
   }
 }
 
 @layer components {
-  .gradient-text {
-    @apply bg-gradient-to-r from-automem-accent to-automem-blue bg-clip-text text-transparent;
+  /* "Lab Label" Header style */
+  .comment-header {
+    @apply text-core-secondary font-bold uppercase tracking-widest text-xs mb-8 flex items-center gap-2;
+  }
+  
+  .comment-header::before {
+    content: "";
+    @apply w-3 h-3 bg-core-secondary rounded-full;
   }
 
-  .gradient-bg {
-    @apply bg-gradient-to-br from-automem-accent to-automem-green;
+  /* Fun Button: "Pushable" look */
+  .btn-core {
+    @apply bg-white border-2 border-core-text text-core-text px-6 py-3 
+           hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
+           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
   }
 
-  /* Prevent horizontal scroll on all content */
-  * {
-    max-width: 100%;
+  .btn-core-accent {
+    @apply bg-core-accent text-white border-2 border-core-text px-6 py-3 
+           hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
+           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
   }
+}
 
-  /* Allow specific elements to exceed when needed with scroll */
-  pre, code {
-    max-width: 100%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
+/* Animations */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: "█";
+  animation: blink 1s step-end infinite;
+  margin-left: 4px;
+  @apply text-core-accent;
 }
