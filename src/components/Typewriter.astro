@@ -1,0 +1,63 @@
+---
+interface Props {
+  text: string;
+  delay?: number;
+  class?: string;
+}
+
+const { text, delay = 0, class: className = "" } = Astro.props;
+---
+
+<span class:list={["typewriter-text", className]} data-text={text} data-delay={delay}></span>
+<span class="cursor-blink"></span>
+
+<script>
+  class Typewriter {
+    element: HTMLElement;
+    text: string;
+    delay: number;
+    index: number;
+
+    constructor(el: HTMLElement) {
+      this.element = el;
+      this.text = el.dataset.text || "";
+      this.delay = parseInt(el.dataset.delay || "0");
+      this.index = 0;
+      
+      // Clear initial content
+      this.element.textContent = "";
+      
+      // Start observing
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setTimeout(() => this.type(), this.delay);
+            observer.disconnect();
+          }
+        });
+      });
+      
+      observer.observe(this.element);
+    }
+
+    type() {
+      if (this.index < this.text.length) {
+        this.element.textContent += this.text.charAt(this.index);
+        this.index++;
+        setTimeout(() => this.type(), Math.random() * 30 + 30); // Random typing speed
+      } else {
+        // Remove cursor from sibling if it exists
+        const cursor = this.element.nextElementSibling;
+        if (cursor && cursor.classList.contains('cursor-blink')) {
+          // cursor.style.display = 'none'; // Optional: hide cursor after typing
+        }
+      }
+    }
+  }
+
+  // Initialize all typewriters
+  document.querySelectorAll('.typewriter-text').forEach(el => {
+    new Typewriter(el as HTMLElement);
+  });
+</script>
+

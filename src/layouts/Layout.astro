@@ -8,20 +8,48 @@ const { title, description = 'automem.ai - Intelligent Memory Service for AI Age
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title} | automem.ai</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | automem.ai</title>
     <script defer src="https://api.pirsch.io/pa.js" id="pianjs" data-code="y8vzF2XcYTd2TFNyVLk2l2IaUyKdQTE6"></script>
   </head>
-  <body class="bg-white dark:bg-automem-dark text-gray-900 dark:text-gray-100">
-    <slot />
+  <body class="bg-core-bg text-core-text min-h-screen flex font-mono selection:bg-core-accent/20 relative">
+    
+    <!-- Line Numbers (Scrolls with content) -->
+    <div class="hidden md:block w-20 border-r border-core-line bg-core-bg flex-shrink-0 text-right pr-4 py-6 select-none text-core-muted/30 text-xs font-mono leading-7 min-h-screen">
+      {Array.from({ length: 200 }).map((_, i) => (
+        <div>0x{(i * 16).toString(16).toUpperCase().padStart(4, '0')}</div>
+      ))}
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 w-full max-w-full overflow-x-hidden relative">
+       <!-- Grid overlay -->
+      <div class="absolute inset-0 bg-[radial-gradient(#E5E5E5_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none -z-10"></div>
+
+      <div class="max-w-7xl mx-auto px-6 border-r border-core-line min-h-screen bg-core-bg/50 backdrop-blur-[2px]">
+        <slot />
+        
+        <!-- Footer Signature -->
+        <footer class="py-12 border-t border-core-line mt-20 text-core-muted text-sm">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="text-core-accent">→</span> End of file
+            </div>
+            <div>
+              automem.ai v1.0.0
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
   </body>
 </html>

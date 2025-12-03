@@ -4,7 +4,8 @@ import Navigation from '../components/Navigation.astro';
 import ChatDemo from '../components/ChatDemo.astro';
 import EmailSignup from '../components/EmailSignup.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
-import '../styles/global.css';
+import Typewriter from '../components/Typewriter.astro';
+
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist`;
 ---
@@ -12,642 +13,261 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 <Layout title="Home">
   <OrganizationSchema />
   <Navigation currentPath="/" />
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
-    <div
-      id="toast-inner"
-      class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-white"
-    >
-      <span id="toast-message"></span>
-      <button
-        id="toast-close"
-        aria-label="Close"
-        class="ml-2 text-white/90 hover:text-white"
-      >
-        &times;
-      </button>
-    </div>
-  </div>
 
-  <main class="overflow-x-hidden w-full">
-    <!-- Hero Section -->
+  <main class="w-full pt-12 pb-24">
+    <!-- Hero Section: Memory Lab -->
     <section
-      class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-automem-surface/30 to-automem-bgdark"
+      class="px-6 md:px-12 pt-12 pb-24 border-b border-core-line bg-core-bg relative overflow-hidden"
     >
-      <div class="max-w-6xl mx-auto text-center">
-        <div class="flex items-center justify-center gap-4 mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="text-automem-accent w-12 h-12 md:w-16 md:h-16"
+      <!-- Lab Label -->
+      <div class="comment-header">:: SEQUENCE_INIT</div>
+
+      <div
+        class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10"
+      >
+        <!-- Left: Manifesto -->
+        <div>
+          <h1
+            class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[0.9]"
           >
-            <path d="M12 8V4H8"></path>
-            <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-            <path d="M2 14h2"></path>
-            <path d="M20 14h2"></path>
-            <path d="M15 13v2"></path>
-            <path d="M9 13v2"></path>
-          </svg>
-          <h1 class="text-5xl md:text-7xl font-bold">
-            <span class="gradient-text">automem.ai</span>
+            Recall is<br />
+            <span class="text-core-accent">Power.</span>
           </h1>
-        </div>
-        <p
-          class="text-xl md:text-2xl text-automem-text/90 mb-8 max-w-3xl mx-auto"
-        >
-          Deploy once, remember everywhere. Works with every AI.
-        </p>
-        <p class="text-lg text-automem-muted mb-12 max-w-2xl mx-auto">
-          The only universal memory layer for AI assistants. One-click
-          deployment, cross-device sync, works with Claude, Cursor, and any
-          MCP-compatible LLM. Your AI's memory follows you everywhere for just
-          $5/month.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/docs"
-            class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition"
-          >
-            Get Started
-          </a>
-          <a
-            href="{GITHUB_URL}"
-            id="open-github"
-            class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition"
-          >
-            View on GitHub
-          </a>
-        </div>
-      </div>
-    </section>
 
-    <!-- Soft Gate Modal for GitHub Link -->
-    <div id="github-modal" class="fixed inset-0 z-50 hidden">
-      <div
-        class="absolute inset-0 bg-black/60"
-        id="github-modal-backdrop"
-      ></div>
-      <div
-        class="relative max-w-lg mx-4 sm:mx-auto mt-24 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-automem-border p-6 break-words"
-      >
-        <div class="flex items-start justify-between mb-4">
-          <h3 class="text-xl font-semibold text-automem-text">
-            Get the repo link
-          </h3>
-          <button
-            id="github-modal-close"
-            aria-label="Close"
-            class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          <div
+            class="space-y-6 text-lg md:text-xl leading-relaxed border-l-4 border-core-secondary pl-6 py-2"
           >
-            ✕
-          </button>
-        </div>
-        <p class="text-sm text-automem-muted mb-4">
-          Enter your email to get the GitHub link and occasional product
-          updates. No spam, unsubscribe anytime.
-        </p>
-        <EmailSignup />
-        <div class="mt-4 text-center">
-          <a
-            id="skip-github"
-            href="{GITHUB_URL_UTM}"
-            class="text-sm text-automem-muted underline hover:text-automem-text"
-            >Skip and view on GitHub</a
-          >
-        </div>
-      </div>
-    </div>
+            <p>
+              <Typewriter
+                text="Deploy once. Remember everywhere."
+                delay="{200}"
+              />
+              <br />
+              <Typewriter
+                text="The universal memory layer for your AI agents."
+                delay="{1500}"
+                class="text-core-muted"
+              />
+            </p>
+          </div>
 
-    <!-- News Section -->
-    <section
-      class="py-20 px-6 bg-gradient-to-b from-automem-accent/5 to-transparent"
-    >
-      <div class="max-w-6xl mx-auto">
-        <div class="text-center mb-12">
-          <h2 class="text-4xl font-bold mb-2 text-automem-text">Latest News</h2>
-          <p class="text-automem-muted">
-            Stay updated with the latest AutoMem Cloud features
-          </p>
-        </div>
-
-        <div class="max-w-4xl mx-auto">
-          <!-- News Item: SSE Sidecar -->
-          <article
-            class="bg-automem-surface rounded-xl shadow-lg p-8 border border-automem-border hover:border-automem-accent transition-colors"
-          >
-            <div class="flex items-start gap-4 mb-4">
-              <div
-                class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0"
+          <div class="mt-12 flex flex-wrap gap-4">
+            <a href="/docs" class="btn-core-accent shadow-hard">
+              INIT_SYSTEM.sh
+            </a>
+            <a href="{GITHUB_URL}" class="btn-core group gap-2">
+              <span>SOURCE_CODE</span>
+              <span class="text-xs bg-core-text text-white px-1.5 rounded"
+                >GITHUB</span
               >
-                <span aria-hidden="true">🚀</span>
-              </div>
-              <div class="flex-1">
-                <div class="text-sm text-automem-muted mb-2">October 2025</div>
-                <h3 class="text-2xl font-bold mb-3 text-automem-text">
-                  AutoMem Cloud Now Features Optional SSE MCP
-                </h3>
-                <div
-                  class="prose prose-invert max-w-none text-automem-muted break-words"
-                >
-                  <p class="mb-4">
-                    Automem cloud now includes an optional
-                    <strong class="text-automem-text"
-                      >Server-Sent Events (SSE) sidecar</strong
-                    >
-                    that enables real-time memory integration with
-                    conversational AI platforms that don't natively support MCP
-                    servers.
-                  </p>
-                  <p class="mb-4">
-                    This update allows AutoMem to work seamlessly with:
-                  </p>
-                  <ul class="space-y-2 mb-4 list-disc list-inside">
-                    <li>
-                      <a
-                        href="https://elevenlabs.io/conversational-ai"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-automem-accent hover:underline"
-                      >
-                        <strong>ElevenLabs Conversational AI</strong>
-                      </a>
-                      - Real-time voice agents with sub-100ms latency, now with
-                      memory capabilities
-                    </li>
-                    <li>
-                      <a
-                        href="https://platform.openai.com/docs/guides/developer-mode"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-automem-accent hover:underline"
-                      >
-                        <strong>ChatGPT</strong>
-                      </a>
-                      - Use memories in your ChatGPT conversations (requires
-                      developer mode)
-                    </li>
-                    <li>
-                      <a
-                        href="https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-automem-accent hover:underline"
-                      >
-                        <strong>Claude Web & Mobile</strong>
-                      </a>
-                      - No longer limited to Claude Desktop, Automem works with
-                      iOS/Android apps and web interface
-                    </li>
-                  </ul>
-                  <p class="mb-4">
-                    The
-                    <a
-                      href="https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md?utm_source=automem.ai&utm_medium=home&utm_campaign=news-sse"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-automem-accent hover:underline"
-                      >SSE sidecar</a
-                    >
-                    acts as a lightweight bridge, streaming memory updates and
-                    retrievals in real-time while maintaining AutoMem's
-                    signature performance (20-50ms queries). This means
-                    conversational AI agents can now access contextual memory
-                    without waiting for full response cycles.
-                  </p>
-                  <div
-                    class="bg-automem-bgdark/50 rounded-lg p-4 border border-automem-border/50 mt-6"
-                  >
-                    <p class="text-sm mb-2">
-                      <strong class="text-automem-accent"
-                        >Technical Details:</strong
-                      >
-                    </p>
-                    <ul class="text-sm space-y-1 list-disc list-inside">
-                      <li>Low-latency memory streaming via SSE protocol</li>
-                      <li>Compatible with WebSocket and HTTP streaming APIs</li>
-                      <li>
-                        Automatic fallback for platforms without native MCP
-                        support
-                      </li>
-                      <li>
-                        Runs great on Railway, or anywhere you can run a Docker
-                        container
-                      </li>
-                    </ul>
-                  </div>
-                  <div class="mt-6">
-                    <div class="relative w-full" style="padding-bottom: 56.25%;">
-                      <iframe
-                        class="absolute top-0 left-0 w-full h-full rounded-lg border border-automem-border"
-                        src="https://www.youtube.com/embed/oA0LnKzBS5g?modestbranding=1&rel=0&iv_load_policy=3&autohide=1"
-                        title="AutoMem SSE Sidecar Demo"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                      ></iframe>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right: The Machine (Chat Demo) -->
+        <div class="relative">
+          <div
+            class="absolute inset-0 bg-core-accent/5 blur-3xl rounded-full"
+          ></div>
+          <ChatDemo />
         </div>
       </div>
     </section>
 
-    <!-- Key Features -->
-    <section class="py-20 px-6">
+    <!-- Features: The Circuit -->
+    <section
+      class="px-6 md:px-12 py-24 border-b border-core-line bg-white relative"
+    >
+      <div class="comment-header">System Architecture</div>
+
       <div class="max-w-6xl mx-auto">
-        <h2 class="text-4xl font-bold text-center mb-16">Why AutoMem?</h2>
         <div class="grid md:grid-cols-3 gap-8">
-          <div class="text-center p-6">
+          <!-- Node 1 -->
+          <div
+            class="border-2 border-core-text p-6 rounded-lg shadow-hard bg-core-bg hover:translate-y-[-4px] transition-transform relative group"
+          >
             <div
-              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4"
+              class="absolute -top-3 left-6 bg-core-secondary text-white px-2 text-xs font-bold uppercase"
             >
-              <span>🌐</span>
+              Input
             </div>
-            <h3 class="text-xl font-semibold mb-3 text-automem-text">
-              Universal MCP Compatibility
-            </h3>
-            <p class="text-automem-muted">
-              Works with ANY MCP-compatible LLM. Claude Desktop, Cursor,
-              ChatGPT, Claude Web & Mobile, ElevenLabs Conversational AI - even
-              future AI tools automatically work. Not vendor-locked.
+            <h3 class="text-xl font-bold mb-2 mt-2">Universal I/O</h3>
+            <p class="text-core-muted text-sm leading-relaxed">
+              Compatible with Cursor, Claude, and ChatGPT. Connects to any LLM
+              via MCP or SSE sidecar.
             </p>
-          </div>
-          <div class="text-center p-6">
-            <div
-              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4"
-            >
-              <span>🚀</span>
+            <div class="mt-4 flex gap-2">
+              <span
+                class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+              ></span>
+              <span class="text-xs font-mono opacity-50">LISTENING...</span>
             </div>
-            <h3 class="text-xl font-semibold mb-3 text-automem-text">
-              One-Click Deploy
-            </h3>
-            <p class="text-automem-muted">
-              Railway deployment with a single command. Docker containerized.
-              Once deployed, accessible from ALL devices and services. $5/month.
+          </div>
+
+          <!-- Node 2 -->
+          <div
+            class="border-2 border-core-text p-6 rounded-lg shadow-hard bg-core-bg hover:translate-y-[-4px] transition-transform relative group"
+          >
+            <div
+              class="absolute -top-3 left-6 bg-core-accent text-white px-2 text-xs font-bold uppercase"
+            >
+              Process
+            </div>
+            <h3 class="text-xl font-bold mb-2 mt-2">Graph Engine</h3>
+            <p class="text-core-muted text-sm leading-relaxed">
+              FalkorDB + Qdrant hybrid core. Maps relationships between
+              memories, not just vector similarity.
             </p>
-          </div>
-          <div class="text-center p-6">
-            <div
-              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4"
-            >
-              <span>🧠</span>
+            <div class="mt-4 flex gap-1">
+              {[1,2,3].map(() =>
+              <div class="w-2 h-4 bg-core-muted/30"></div>
+              )}
             </div>
-            <h3 class="text-xl font-semibold mb-3 text-automem-text">
-              Graph-Based Memory
-            </h3>
-            <p class="text-automem-muted">
-              Powered by FalkorDB + Qdrant. Creates rich semantic relationships
-              between memories. Knowledge graphs with 11 relationship types, not
-              just vector search.
+          </div>
+
+          <!-- Node 3 -->
+          <div
+            class="border-2 border-core-text p-6 rounded-lg shadow-hard bg-core-bg hover:translate-y-[-4px] transition-transform relative group"
+          >
+            <div
+              class="absolute -top-3 left-6 bg-core-text text-white px-2 text-xs font-bold uppercase"
+            >
+              Output
+            </div>
+            <h3 class="text-xl font-bold mb-2 mt-2">Instant Recall</h3>
+            <p class="text-core-muted text-sm leading-relaxed">
+              Sub-50ms latency. Your agent knows what you know before you finish
+              typing the prompt.
+            </p>
+            <div class="mt-4 font-mono text-xs text-core-accent">>> 48ms</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timeline / Changelog -->
+    <section class="px-6 md:px-12 py-24 border-b border-core-line bg-core-bg">
+      <div class="comment-header">:: MEMORY_STREAM</div>
+
+      <div class="max-w-4xl mx-auto space-y-12">
+        <!-- Log Entry -->
+        <div class="flex gap-6">
+          <div
+            class="font-mono text-sm text-core-muted text-right w-24 pt-1 hidden md:block"
+          >
+            2025-10-15<br />14:00:00
+          </div>
+          <div class="flex-1 border-l-2 border-core-line pl-8 relative">
+            <div
+              class="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-core-secondary rounded-full"
+            ></div>
+            <h3 class="text-xl font-bold">SSE Sidecar Activated</h3>
+            <p class="mt-2 text-core-text/80 max-w-xl">
+              Real-time memory streaming enabled for non-MCP platforms.
+              <span class="bg-core-secondary/20 px-1 rounded">ChatGPT</span> and
+              <span class="bg-core-secondary/20 px-1 rounded">ElevenLabs</span>
+              integrations live.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Live Demo -->
-    <section class="py-20 px-6">
+    <!-- Deployment Options -->
+    <section class="px-6 md:px-12 py-24 bg-white">
+      <div class="comment-header">:: DEPLOYMENT_PROTOCOLS</div>
       <div class="max-w-6xl mx-auto">
-        <div class="text-center mb-12">
-          <h2 class="text-4xl font-bold mb-4 text-automem-text">
-            See It In Action
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <h2 class="text-4xl font-bold mb-6 tracking-tighter">
+            Open Source & Portable
           </h2>
-          <p class="text-automem-muted max-w-2xl mx-auto">
-            Watch how AutoJack uses AutoMem to recall your preferences and
-            context, making every interaction feel natural and personalized.
+          <p class="text-xl text-core-muted">
+            Your memory infrastructure should be as portable as your code. Run
+            it on your laptop, your private cloud, or our managed service.
           </p>
         </div>
-        <ChatDemo />
 
-        <!-- Screenshots CTA -->
-        <div class="text-center mt-12">
-          <a
-            href="/docs/screenshots"
-            class="inline-flex items-center gap-2 text-lg text-automem-accent hover:text-automem-accent/80 transition group"
-          >
-            <span>
-              Click through to see how AutoMem enhances the tools you're already using with the power of memory and RAG
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="group-hover:translate-x-1 transition-transform"
-            >
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Competitive Advantage -->
-    <section
-      class="py-20 px-6 bg-gradient-to-b from-automem-accent/10 to-transparent"
-    >
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-4xl font-bold text-center mb-8 text-automem-text">
-          The Only Memory Solution That...
-        </h2>
-        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Option 1: Docker -->
           <div
-            class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border"
+            class="bg-core-bg border-2 border-core-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
           >
-            <div class="text-2xl mb-3">✅</div>
-            <h3 class="font-semibold mb-2 text-automem-text">
-              Works with any MCP LLM
-            </h3>
-            <p class="text-sm text-automem-muted">
-              Not locked to Claude or Cursor. Any MCP-enabled AI instantly
-              works.
-            </p>
-          </div>
-          <div
-            class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border"
-          >
-            <div class="text-2xl mb-3">✅</div>
-            <h3 class="font-semibold mb-2 text-automem-text">
-              Deploys to cloud in one click
-            </h3>
-            <p class="text-sm text-automem-muted">
-              No complex setup. Railway deployment takes seconds.
-            </p>
-          </div>
-          <div
-            class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border"
-          >
-            <div class="text-2xl mb-3">✅</div>
-            <h3 class="font-semibold mb-2 text-automem-text">
-              Syncs across all devices
-            </h3>
-            <p class="text-sm text-automem-muted">
-              Same memory on desktop, laptop, mobile. True cross-device AI.
-            </p>
-          </div>
-          <div
-            class="bg-automem-surface rounded-lg p-6 shadow-lg border border-automem-border"
-          >
-            <div class="text-2xl mb-3">✅</div>
-            <h3 class="font-semibold mb-2 text-automem-text">
-              Costs only $5/month
-            </h3>
-            <p class="text-sm text-automem-muted">
-              Railway hosting + databases. Unlimited memories, massive value.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Architecture Preview -->
-    <section class="py-20 px-6 bg-automem-surface/30">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-4xl font-bold text-center mb-16 text-automem-text">
-          Built for Performance
-        </h2>
-        <div
-          class="bg-automem-surface rounded-xl shadow-lg p-8 border border-automem-border"
-        >
-          <div class="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h3 class="text-2xl font-semibold mb-4 text-automem-text">
-                Lightning Fast
-              </h3>
-              <ul class="space-y-3 text-automem-muted">
-                <li class="flex items-start">
-                  <span class="text-automem-accent mr-2">⚡</span>
-                  <span>Single queries in 20-50ms</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-automem-accent mr-2">⚡</span>
-                  <span>Complex graph traversals under 200ms</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-automem-accent mr-2">⚡</span>
-                  <span>Hybrid semantic + keyword search</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-automem-accent mr-2">⚡</span>
-                  <span>Automatic consolidation & importance decay</span>
-                </li>
-              </ul>
-              <h3 class="text-2xl font-semibold mb-4 mt-8 text-automem-text">
-                Memory Types
-              </h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
-                  >Decision</span
-                >
-                <span
-                  class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm"
-                  >Pattern</span
-                >
-                <span
-                  class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm"
-                  >Insight</span
-                >
-                <span
-                  class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm"
-                  >Preference</span
-                >
-                <span
-                  class="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded-full text-sm"
-                  >Style</span
-                >
-                <span
-                  class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm"
-                  >Habit</span
-                >
-                <span
-                  class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-full text-sm"
-                  >Context</span
-                >
-              </div>
-            </div>
             <div
-              class="bg-black/80 rounded-lg p-4 border border-automem-border overflow-hidden"
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-core-text text-white px-3 py-1 text-xs font-bold uppercase tracking-widest"
             >
-              <pre
-                class="text-xs text-green-400 font-mono overflow-x-auto max-w-full"
-              >
-{`# Store with importance scoring
-POST /memory
-{
-  "content": "Prefers TypeScript with strict mode",
-  "type": "Preference",
-  "tags": ["coding", "typescript"],
-  "importance": 0.9,
-  "metadata": {
-    "rationale": "Type safety prevents bugs"
-  }
-}
-
-# Hybrid search: semantic + tags + time
-GET /recall?query="what language"&tags=coding
-
-# Associate memories (knowledge graph)
-POST /associate
-{
-  "memory1_id": "abc123",
-  "memory2_id": "def456",
-  "type": "RELATES_TO",
-  "strength": 0.85
-}
-
-# All queries return in ~25ms`}</pre
-              >
+              Standard
             </div>
+            <div class="text-4xl mb-4">🐳</div>
+            <h3 class="text-2xl font-bold mb-2">Docker</h3>
+            <p class="text-core-muted mb-6 text-sm min-h-[40px]">
+              The standard container. Run it locally or on any VPS.
+            </p>
+            <div
+              class="bg-white border border-core-text p-3 rounded font-mono text-xs text-left mb-6"
+            >
+              docker run -p 3000:3000<br />automem/server:latest
+            </div>
+            <a
+              href="https://github.com/verygoodplugins/automem"
+              class="btn-core w-full"
+              >View Image</a
+            >
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- CTA Section -->
-    <section class="py-20 px-6">
-      <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-4xl font-bold mb-6 text-automem-text">
-          Ready to Give Your AI Perfect Memory?
-        </h2>
-        <p class="text-lg text-automem-muted mb-8">
-          Join developers building truly intelligent AI agents with AutoMem
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/docs/quickstart"
-            class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition"
+          <!-- Option 2: Railway -->
+          <div
+            class="bg-white border-2 border-core-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform scale-105 z-10"
           >
-            Quick Start Guide
-          </a>
-          <a
-            href="https://railway.com/deploy/automem-ai-memory-service?utm_source=automem.ai&utm_medium=home&utm_campaign=cta"
-            class="border-2 border-automem-accent text-automem-accent px-8 py-4 rounded-lg font-semibold hover:bg-automem-surface transition"
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-core-accent text-white px-3 py-1 text-xs font-bold uppercase tracking-widest"
+            >
+              Fastest
+            </div>
+            <div class="text-4xl mb-4">🚂</div>
+            <h3 class="text-2xl font-bold mb-2">Railway</h3>
+            <p class="text-core-muted mb-6 text-sm min-h-[40px]">
+              One-click production deployment. Handles DBs & updates
+              automatically.
+            </p>
+            <div
+              class="bg-core-bg border border-core-accent p-3 rounded font-mono text-xs text-left mb-6 text-core-accent"
+            >
+              > Deploying to prod...<br />> Success (24s)
+            </div>
+            <a
+              href="https://railway.com/deploy/automem-ai-memory-service"
+              class="btn-core-accent w-full"
+              >One-Click Deploy</a
+            >
+          </div>
+
+          <!-- Option 3: Source -->
+          <div
+            class="bg-core-bg border-2 border-core-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
           >
-            Deploy on Railway
-          </a>
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-core-text text-white px-3 py-1 text-xs font-bold uppercase tracking-widest"
+            >
+              Hacker
+            </div>
+            <div class="text-4xl mb-4">💻</div>
+            <h3 class="text-2xl font-bold mb-2">Source</h3>
+            <p class="text-core-muted mb-6 text-sm min-h-[40px]">
+              Fork the repo. Hack the graph logic. It's your code.
+            </p>
+            <div
+              class="bg-white border border-core-text p-3 rounded font-mono text-xs text-left mb-6"
+            >
+              git clone ...<br />npm install
+            </div>
+            <a
+              href="https://github.com/verygoodplugins/automem"
+              class="btn-core w-full"
+              >Fork Repo</a
+            >
+          </div>
         </div>
       </div>
     </section>
   </main>
-
-  <script>
-    // Soft gate logic for GitHub button and modal
-    (function () {
-      const btn = document.getElementById("open-github");
-      const modal = document.getElementById("github-modal");
-      const closeBtn = document.getElementById("github-modal-close");
-      const backdrop = document.getElementById("github-modal-backdrop");
-      const targetUrl =
-        "https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist";
-
-      function openModal(e) {
-        if (e) e.preventDefault();
-        if (!modal) return;
-        modal.classList.remove("hidden");
-        try {
-          window.dispatchEvent(new CustomEvent("github:modal-open"));
-        } catch {}
-      }
-      function closeModal() {
-        if (!modal) return;
-        modal.classList.add("hidden");
-      }
-
-      if (btn) btn.addEventListener("click", openModal);
-      if (closeBtn) closeBtn.addEventListener("click", closeModal);
-      if (backdrop) backdrop.addEventListener("click", closeModal);
-
-      // After successful signup, redirect to GitHub with UTM
-      window.addEventListener("waitlist:joined", () => {
-        try {
-          closeModal();
-        } catch {}
-        setTimeout(() => {
-          window.location.href = targetUrl;
-        }, 800);
-      });
-    })();
-  </script>
-
-  <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search || "");
-      let message = "";
-      let variant = "success";
-
-      if (params.get("confirmed") === "1") {
-        message = "Email confirmed. You're on the list!";
-        variant = "success";
-      } else if (params.get("unsubscribed") === "1") {
-        message = "You have been unsubscribed.";
-        variant = "warn";
-      }
-
-      if (!message) return;
-
-      // Clean the URL (remove params)
-      params.delete("confirmed");
-      params.delete("unsubscribed");
-      const newQuery = params.toString();
-      const newUrl =
-        window.location.pathname +
-        (newQuery ? "?" + newQuery : "") +
-        window.location.hash;
-      window.history.replaceState({}, "", newUrl);
-
-      const toast = document.getElementById("toast");
-      const inner = document.getElementById("toast-inner");
-      const msgEl = document.getElementById("toast-message");
-      const closeBtn = document.getElementById("toast-close");
-
-      if (!toast || !inner || !msgEl || !closeBtn) return;
-
-      msgEl.textContent = message;
-
-      // Reset classes then apply variant
-      inner.className =
-        "flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-white";
-      if (variant === "success") {
-        inner.classList.add(
-          "bg-green-600",
-          "border-green-500",
-          "dark:bg-green-700"
-        );
-      } else {
-        inner.classList.add(
-          "bg-amber-600",
-          "border-amber-500",
-          "dark:bg-amber-700"
-        );
-      }
-
-      toast.classList.remove("hidden");
-
-      let hideTimer = setTimeout(() => {
-        toast.classList.add("hidden");
-      }, 6000);
-
-      closeBtn.addEventListener("click", () => {
-        clearTimeout(hideTimer);
-        toast.classList.add("hidden");
-      });
-    })();
-  </script>
 </Layout>
