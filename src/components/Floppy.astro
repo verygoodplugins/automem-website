@@ -1,6 +1,6 @@
 ---
 interface Props {
-  variant?: 'idle' | 'wink' | 'peek' | 'walk';
+  variant?: 'idle' | 'wink' | 'peek' | 'walk' | 'happy';
   class?: string;
   width?: string;
   height?: string;
@@ -31,31 +31,45 @@ const { variant = 'idle', class: className = '', width = 'w-12', height = 'h-12'
         
         <!-- Face -->
         <g class="face">
-          <!-- Left Eye -->
-          <circle cx="85" cy="125" r="6" fill="#0A0A0A">
-            {variant === 'wink' && (
-              <animate attributeName="r" values="6;1;6" dur="2s" repeatCount="indefinite" begin="0s" />
-            )}
-          </circle>
-          
-          <!-- Right Eye (Wink Logic) -->
-          {variant === 'wink' ? (
+          <!-- Happy/Anime Eyes -->
+          {variant === 'happy' ? (
             <g>
-               <!-- Wink Line -->
-               <path d="M109 125 L121 125" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round" class="group-hover:opacity-100 opacity-0 transition-opacity"/>
-               <!-- Normal Eye (Hidden on hover) -->
-               <circle cx="115" cy="125" r="6" fill="#0A0A0A" class="group-hover:opacity-0 transition-opacity"/>
+               <!-- Left Arc -->
+               <path d="M78 128 Q85 120 92 128" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round" />
+               <!-- Right Arc -->
+               <path d="M108 128 Q115 120 122 128" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round" />
+               <!-- Happy Mouth (Bigger smile) -->
+               <path d="M85 135 Q100 145 115 135" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
             </g>
           ) : (
-            <circle cx="115" cy="125" r="6" fill="#0A0A0A">
-               {variant === 'wink' && (
-                <animate attributeName="r" values="6;1;6" dur="2s" repeatCount="indefinite" begin="0.2s" />
+            <g>
+              <!-- Standard Eyes -->
+              <circle cx="85" cy="125" r="6" fill="#0A0A0A">
+                {variant === 'wink' && (
+                  <animate attributeName="r" values="6;1;6" dur="2s" repeatCount="indefinite" begin="0s" />
+                )}
+              </circle>
+              
+              <!-- Right Eye (Wink Logic) -->
+              {variant === 'wink' ? (
+                <g>
+                   <!-- Wink Line -->
+                   <path d="M109 125 L121 125" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round" class="group-hover:opacity-100 opacity-0 transition-opacity"/>
+                   <!-- Normal Eye (Hidden on hover) -->
+                   <circle cx="115" cy="125" r="6" fill="#0A0A0A" class="group-hover:opacity-0 transition-opacity"/>
+                </g>
+              ) : (
+                <circle cx="115" cy="125" r="6" fill="#0A0A0A">
+                   {variant === 'wink' && (
+                    <animate attributeName="r" values="6;1;6" dur="2s" repeatCount="indefinite" begin="0.2s" />
+                  )}
+                </circle>
               )}
-            </circle>
-          )}
 
-          <!-- Mouth -->
-          <path d="M92 132 Q100 138 108 132" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <!-- Standard Mouth -->
+              <path d="M92 132 Q100 138 108 132" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </g>
+          )}
         </g>
 
         <!-- Legs (Hidden in peek mode usually, but kept for consistency) -->
