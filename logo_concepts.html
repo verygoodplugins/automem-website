@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoMem Logo Concepts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lab: {
+                            bg: '#0A0A0A',
+                            surface: '#1A1A1A',
+                            text: '#E0E0E0',
+                            accent: '#FF33CC',  // Hot Pink
+                            secondary: '#00FFFF', // Cyan
+                            success: '#CCFF00', // Acid Green
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-lab-bg text-lab-text font-mono min-h-screen flex flex-col items-center justify-center p-12">
+    
+    <h1 class="text-3xl mb-12 text-lab-secondary">:: IDENTITY_CONCEPTS</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl w-full">
+        
+        <!-- Concept 1: The Sentinel (Floppy) -->
+        <div class="flex flex-col items-center gap-6 p-8 border border-lab-surface bg-lab-surface/50 rounded-xl hover:border-lab-accent transition-colors group">
+            <div class="w-48 h-48 relative flex items-center justify-center">
+                <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <!-- Floppy Body -->
+                    <rect x="40" y="40" width="120" height="120" rx="10" fill="#00FFFF" stroke="#E0E0E0" stroke-width="4"/>
+                    <!-- Cut corner -->
+                    <path d="M160 40 L160 70 L130 40 Z" fill="#0A0A0A" />
+                    <!-- Shutter -->
+                    <rect x="65" y="40" width="70" height="50" rx="4" fill="#E0E0E0" stroke="#0A0A0A" stroke-width="2"/>
+                    <rect x="80" y="50" width="20" height="30" rx="2" fill="#0A0A0A"/>
+                    <!-- Label/Face Area -->
+                    <rect x="50" y="100" width="100" height="50" rx="4" fill="#FF33CC" stroke="#0A0A0A" stroke-width="2"/>
+                    <!-- Eyes -->
+                    <circle cx="80" cy="125" r="8" fill="#0A0A0A"/>
+                    <circle cx="120" cy="125" r="8" fill="#0A0A0A"/>
+                    <!-- Smile -->
+                    <path d="M90 135 Q100 140 110 135" stroke="#0A0A0A" stroke-width="3" fill="none"/>
+                    <!-- Feet -->
+                    <rect x="60" y="160" width="20" height="20" fill="#00FFFF" stroke="#E0E0E0" stroke-width="2"/>
+                    <rect x="120" y="160" width="20" height="20" fill="#00FFFF" stroke="#E0E0E0" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-lab-accent mb-2">01. THE FLOPPY</h3>
+                <p class="text-sm text-gray-400">Retro. Reliable. Literally "Memory". Cute personality.</p>
+            </div>
+        </div>
+
+        <!-- Concept 2: The Chip (Processor) -->
+        <div class="flex flex-col items-center gap-6 p-8 border border-lab-surface bg-lab-surface/50 rounded-xl hover:border-lab-secondary transition-colors group">
+            <div class="w-48 h-48 relative flex items-center justify-center">
+                <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <!-- Legs (Pins) -->
+                    <path d="M40 140 L40 170" stroke="#E0E0E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M160 140 L160 170" stroke="#E0E0E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M30 80 L10 80" stroke="#E0E0E0" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M30 110 L10 110" stroke="#E0E0E0" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M170 80 L190 80" stroke="#E0E0E0" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M170 110 L190 110" stroke="#E0E0E0" stroke-width="6" stroke-linecap="round"/>
+                    
+                    <!-- Chip Body -->
+                    <rect x="30" y="50" width="140" height="100" rx="8" fill="#0A0A0A" stroke="#CCFF00" stroke-width="4"/>
+                    
+                    <!-- Face Screen -->
+                    <rect x="50" y="70" width="100" height="60" rx="4" fill="#1A1A1A" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Digital Eyes -->
+                    <rect x="65" y="90" width="20" height="20" fill="#CCFF00" class="animate-pulse"/>
+                    <rect x="115" y="90" width="20" height="20" fill="#CCFF00" class="animate-pulse"/>
+                    
+                    <!-- Notch -->
+                    <circle cx="100" cy="50" r="10" fill="#0A0A0A" stroke="#CCFF00" stroke-width="4"/>
+                </svg>
+            </div>
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-lab-success mb-2">02. THE CHIP</h3>
+                <p class="text-sm text-gray-400">Modern. Processing. The "Brain". Digital native.</p>
+            </div>
+        </div>
+
+        <!-- Concept 3: The CRT Bot (Retro Monitor) -->
+        <div class="flex flex-col items-center gap-6 p-8 border border-lab-surface bg-lab-surface/50 rounded-xl hover:border-lab-accent transition-colors group">
+            <div class="w-48 h-48 relative flex items-center justify-center">
+                <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <!-- Monitor Body -->
+                    <path d="M40 40 L160 40 L170 140 L30 140 Z" fill="#FF33CC" stroke="#E0E0E0" stroke-width="4" stroke-linejoin="round"/>
+                    
+                    <!-- Screen -->
+                    <path d="M50 55 L150 55 L155 125 L45 125 Z" fill="#0A0A0A" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Face -->
+                    <path d="M70 85 L90 85" stroke="#00FFFF" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M110 85 L130 85" stroke="#00FFFF" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Mouth -->
+                    <path d="M85 110 L115 110" stroke="#00FFFF" stroke-width="4" stroke-linecap="round"/>
+                    
+                    <!-- Neck -->
+                    <rect x="85" y="140" width="30" height="10" fill="#333"/>
+                    
+                    <!-- Shoulder/Body -->
+                    <path d="M60 150 L140 150 L150 180 L50 180 Z" fill="#E0E0E0" stroke="#0A0A0A" stroke-width="3"/>
+                    
+                    <!-- Antenna -->
+                    <line x1="100" y1="40" x2="100" y2="20" stroke="#E0E0E0" stroke-width="3"/>
+                    <circle cx="100" cy="15" r="5" fill="#CCFF00"/>
+                </svg>
+            </div>
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-lab-secondary mb-2">03. THE TERMINAL</h3>
+                <p class="text-sm text-gray-400">Nostalgic. Interface. The "Window". Friendly bot.</p>
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="mt-16 text-lab-muted text-xs">
+        // SELECT_AVATAR_ID: [01, 02, 03]
+    </div>
+
+</body>
+</html>

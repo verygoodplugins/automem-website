@@ -1,0 +1,94 @@
+---
+import Floppy from './Floppy.astro';
+---
+
+<div class="memory-drive-container relative w-full max-w-md mx-auto h-48 flex items-center justify-center">
+  
+  <!-- The Drive Slot -->
+  <div class="absolute bottom-0 w-64 h-16 bg-lab-surface border-2 border-lab-text rounded-lg shadow-hard z-20 flex items-center justify-center overflow-hidden">
+    <!-- Slot Opening -->
+    <div class="w-48 h-2 bg-lab-bg rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <!-- Light inside slot -->
+        <div class="absolute inset-0 bg-lab-success/50 blur-sm opacity-0 transition-opacity duration-300" id="slot-light"></div>
+    </div>
+    
+    <!-- Status Lights -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+        <div class="w-2 h-2 rounded-full bg-lab-error animate-pulse" id="light-busy"></div>
+        <div class="w-2 h-2 rounded-full bg-lab-text/20" id="light-ready"></div>
+    </div>
+  </div>
+
+  <!-- The Floppy (Animated) -->
+  <div class="absolute z-10 transition-all duration-1000 ease-in-out" id="floppy-actor">
+    <Floppy variant="idle" width="w-32" height="h-32" />
+  </div>
+
+  <!-- Success Message -->
+  <div class="absolute -top-12 opacity-0 transition-all duration-500 transform translate-y-4" id="success-msg">
+    <div class="bg-lab-success text-lab-bg px-4 py-2 font-bold shadow-hard border-2 border-lab-bg rounded rotate-2">
+        :: MEMORY_SYNCED!
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Simple animation loop
+  const floppy = document.getElementById('floppy-actor');
+  const slotLight = document.getElementById('slot-light');
+  const lightBusy = document.getElementById('light-busy');
+  const lightReady = document.getElementById('light-ready');
+  const successMsg = document.getElementById('success-msg');
+
+  if (floppy && slotLight && lightBusy && lightReady && successMsg) {
+    
+    const animate = () => {
+      // 1. Reset
+      floppy.style.transform = 'translateY(-80px)';
+      floppy.style.opacity = '1';
+      slotLight.style.opacity = '0';
+      lightBusy.className = 'w-2 h-2 rounded-full bg-lab-text/20'; // Busy off
+      lightReady.className = 'w-2 h-2 rounded-full bg-lab-success animate-pulse'; // Ready on
+      successMsg.style.opacity = '0';
+      successMsg.style.transform = 'translateY(16px) rotate(2deg)';
+
+      // 2. Insert (Drop down)
+      setTimeout(() => {
+        floppy.style.transform = 'translateY(15px) scale(0.9)'; // Go into slot
+      }, 1000);
+
+      // 3. Process
+      setTimeout(() => {
+        floppy.style.opacity = '0'; // Hide inside
+        lightReady.className = 'w-2 h-2 rounded-full bg-lab-text/20'; // Ready off
+        lightBusy.className = 'w-2 h-2 rounded-full bg-lab-error animate-pulse'; // Busy on (Processing)
+      }, 1500);
+
+      // 4. Success (Eureka!)
+      setTimeout(() => {
+        lightBusy.className = 'w-2 h-2 rounded-full bg-lab-text/20'; // Busy off
+        lightReady.className = 'w-2 h-2 rounded-full bg-lab-success'; // Solid green
+        slotLight.style.opacity = '1'; // Glow
+        
+        // Pop message
+        successMsg.style.opacity = '1';
+        successMsg.style.transform = 'translateY(0px) rotate(2deg)';
+      }, 2500);
+
+      // 5. Eject / Reset Loop
+      setTimeout(() => {
+        floppy.style.transform = 'translateY(-80px)';
+        floppy.style.opacity = '1';
+        successMsg.style.opacity = '0';
+        slotLight.style.opacity = '0';
+        lightReady.className = 'w-2 h-2 rounded-full bg-lab-success animate-pulse';
+      }, 5000);
+
+      setTimeout(animate, 6000);
+    };
+
+    // Start
+    animate();
+  }
+</script>
