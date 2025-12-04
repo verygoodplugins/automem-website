@@ -1,5 +1,6 @@
 ---
 import Floppy from './Floppy.astro';
+import ThemeToggle from './ThemeToggle.astro';
 
 const { currentPath = '' } = Astro.props;
 
@@ -45,6 +46,7 @@ const links = [
       >
         ★ Star us
       </a>
+      <ThemeToggle />
     </div>
   </div>
 </nav>

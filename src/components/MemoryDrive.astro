@@ -2,38 +2,38 @@
 import Floppy from './Floppy.astro';
 ---
 
-<div class="memory-drive-wrapper relative w-full py-24 min-h-[600px]" id="memory-stage">
+<div class="memory-drive-wrapper relative w-full py-24 min-h-[800px]" id="memory-stage">
   
   <!-- The Stage (Pinned center) -->
-  <div class="sticky top-1/3 w-full max-w-2xl mx-auto h-64 flex flex-col items-center justify-center">
+  <div class="sticky top-[20%] w-full max-w-4xl mx-auto h-[500px] flex flex-col items-center justify-center">
     
     <!-- The Drive Slot -->
-    <div class="relative z-20 w-64 h-16 bg-lab-surface border-2 border-lab-text rounded-lg shadow-hard flex items-center justify-center overflow-visible mb-4 transition-transform duration-300" id="drive-slot">
+    <div class="relative z-20 w-96 h-24 bg-lab-surface border-4 border-lab-text rounded-xl shadow-hard flex items-center justify-center overflow-visible mb-8 transition-transform duration-300" id="drive-slot">
       <!-- Slot Opening -->
-      <div class="w-48 h-2 bg-lab-bg rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] relative overflow-hidden">
+      <div class="w-72 h-3 bg-lab-bg rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] relative overflow-hidden">
           <!-- Light inside slot -->
           <div class="absolute inset-0 bg-lab-success/50 blur-sm opacity-0 transition-opacity duration-300" id="slot-light"></div>
       </div>
       
       <!-- Status Lights -->
-      <div class="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-          <div class="w-2 h-2 rounded-full bg-lab-error opacity-20" id="light-busy"></div>
-          <div class="w-2 h-2 rounded-full bg-lab-success animate-pulse" id="light-ready"></div>
+      <div class="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3">
+          <div class="w-3 h-3 rounded-full bg-lab-error opacity-20" id="light-busy"></div>
+          <div class="w-3 h-3 rounded-full bg-lab-success animate-pulse" id="light-ready"></div>
       </div>
 
       <!-- Thinking Bubble (Expands from right) -->
-      <div class="absolute left-full ml-8 top-0 min-w-[280px] opacity-0 transition-all duration-500 transform translate-x-[-10px]" id="thought-bubble">
-        <div class="bg-lab-surface border border-lab-text p-4 rounded-lg shadow-hard text-sm font-mono relative">
+      <div class="absolute left-full ml-12 top-0 min-w-[320px] md:min-w-[400px] opacity-0 transition-all duration-500 transform translate-x-[-10px]" id="thought-bubble">
+        <div class="bg-lab-surface border-2 border-lab-text p-6 rounded-xl shadow-hard text-base font-mono relative">
             <!-- Triangle pointer -->
-            <div class="absolute top-4 -left-2 w-4 h-4 bg-lab-surface border-l border-b border-lab-text transform rotate-45"></div>
+            <div class="absolute top-8 -left-3 w-6 h-6 bg-lab-surface border-l-2 border-b-2 border-lab-text transform rotate-45"></div>
             
             <!-- Header -->
-            <div class="flex items-center gap-2 mb-2 text-xs text-lab-muted uppercase tracking-widest border-b border-lab-border pb-1">
+            <div class="flex items-center gap-3 mb-3 text-sm text-lab-muted uppercase tracking-widest border-b border-lab-border pb-2">
                 <span class="animate-pulse text-lab-accent">●</span> Thinking
             </div>
             
             <!-- Content Stream -->
-            <div class="space-y-1 text-lab-text" id="thought-content">
+            <div class="space-y-2 text-lab-text" id="thought-content">
                 <!-- JS will inject text here -->
                 <span class="opacity-50">Analyzing context...</span>
             </div>
@@ -44,12 +44,12 @@ import Floppy from './Floppy.astro';
     <!-- The Floppy (Moves up) -->
     <div class="absolute top-full transition-transform duration-100 ease-out z-10" id="floppy-actor">
       <!-- Standard Face -->
-      <div id="floppy-idle" class="block">
-        <Floppy variant="idle" width="w-32" height="h-32" />
+      <div id="floppy-idle" class="block transition-opacity duration-300">
+        <Floppy variant="idle" width="w-48" height="h-48" />
       </div>
       <!-- Happy Face (Swapped on success) -->
-      <div id="floppy-happy" class="hidden">
-         <Floppy variant="happy" width="w-32" height="h-32" />
+      <div id="floppy-happy" class="hidden transition-opacity duration-300">
+         <Floppy variant="happy" width="w-48" height="h-48" />
       </div>
     </div>
 
@@ -80,27 +80,25 @@ import Floppy from './Floppy.astro';
     const rect = stage.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     
-    // Calculate progress: 0 when stage enters bottom, 1 when stage leaves top
-    // We want the animation to happen as the stage is in the center
+    // Calculate progress
     const centerOffset = (viewportHeight / 2) - (rect.top + (rect.height / 2));
     
     // Map offset to floppy position
-    // Start: 150px below drive. End: -20px (inserted)
-    // Clamped range
-    let yPos = 150 - (centerOffset * 0.8);
-    yPos = Math.max(10, Math.min(150, yPos)); // Clamp between 10 (inserted) and 150 (below)
+    // Start: 250px below drive. End: 20px (inserted)
+    let yPos = 250 - (centerOffset * 0.8);
+    yPos = Math.max(20, Math.min(250, yPos)); 
 
     // Trigger Logic
-    if (yPos <= 15 && state !== 'success') {
+    if (yPos <= 25 && state !== 'success') {
         // INSERTED!
         if (state !== 'processing') {
             state = 'processing';
             processMemory();
         }
-        // Snap to inserted position
-        floppy.style.transform = `translateY(-40px) scale(0.9)`; // Go into slot
-        floppy.style.opacity = '0'; // Fade out as it goes in
-    } else if (yPos > 20) {
+        // Slide into slot smoothly
+        floppy.style.transform = `translateY(-60px) scale(0.95)`; 
+        floppy.style.opacity = '0'; 
+    } else if (yPos > 30) {
         // Reset if scrolled back down
         if (state === 'success' || state === 'processing') {
             resetMemory();
@@ -112,8 +110,8 @@ import Floppy from './Floppy.astro';
 
   function processMemory() {
     // 1. Lights
-    if(lightReady) lightReady.className = 'w-2 h-2 rounded-full bg-lab-success/20'; // Ready off
-    if(lightBusy) lightBusy.className = 'w-2 h-2 rounded-full bg-lab-error animate-pulse opacity-100'; // Busy on
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success/20'; // Ready off
+    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error animate-pulse opacity-100'; // Busy on
     
     // 2. Show Thinking Bubble
     if(thoughtBubble) {
@@ -142,7 +140,6 @@ import Floppy from './Floppy.astro';
                 p.className = "opacity-0 transform translate-y-2 transition-all duration-300";
                 thoughtContent.appendChild(p);
                 
-                // Reveal animation
                 requestAnimationFrame(() => {
                     p.className = "opacity-100 transform translate-y-0 transition-all duration-300";
                 });
@@ -157,8 +154,8 @@ import Floppy from './Floppy.astro';
     state = 'success';
     
     // Lights Green
-    if(lightBusy) lightBusy.className = 'w-2 h-2 rounded-full bg-lab-error opacity-20';
-    if(lightReady) lightReady.className = 'w-2 h-2 rounded-full bg-lab-success';
+    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error opacity-20';
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success';
     if(slotLight) slotLight.style.opacity = '1';
 
     // Eject Floppy with Happy Face
@@ -167,10 +164,10 @@ import Floppy from './Floppy.astro';
         floppyHappy.classList.remove('hidden');
         
         floppy.style.opacity = '1';
-        floppy.style.transform = 'translateY(10px) scale(1)'; // Pop out slightly
+        floppy.style.transform = 'translateY(30px) scale(1)'; // Slide out happy
         
         // Celebrate
-        if(drive) drive.style.transform = "scale(1.05)";
+        if(drive) drive.style.transform = "scale(1.02)";
         setTimeout(() => { if(drive) drive.style.transform = "scale(1)"; }, 200);
     }
   }
@@ -186,7 +183,7 @@ import Floppy from './Floppy.astro';
         thoughtBubble.style.transform = 'translateX(-10px)';
     }
     if(slotLight) slotLight.style.opacity = '0';
-    if(lightReady) lightReady.className = 'w-2 h-2 rounded-full bg-lab-success animate-pulse';
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success animate-pulse';
   }
 
   // Listen to scroll
