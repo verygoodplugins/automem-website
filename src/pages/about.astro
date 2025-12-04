@@ -1,147 +1,147 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
-import '../styles/global.css';
+import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
+
+const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 ---
 
-<Layout title="About" description="Learn about Jack Arturo and the philosophy behind AutoMem">
+<Layout title="About">
+  <OrganizationSchema />
   <Navigation currentPath="/about" />
 
-  <main class="min-h-screen py-20 px-6 bg-core-bg relative overflow-hidden">
-    <!-- Lab Label -->
-    <div class="fixed top-24 left-6 comment-header hidden md:block">:: USER_PROFILE: JACK</div>
-
+  <main class="min-h-screen py-20 px-6 bg-lab-bg relative overflow-hidden">
     <div class="max-w-4xl mx-auto relative z-10">
-      <!-- Header with Photo -->
-      <div class="flex flex-col md:flex-row gap-8 items-start mb-16">
-        <div class="flex-shrink-0">
+      <!-- Header -->
+      <div class="mb-16">
+        <div class="comment-header">:: SYSTEM_IDENTITY</div>
+        <div class="flex items-center gap-8 mb-8">
           <div class="relative">
-            <div class="absolute inset-0 bg-core-accent/20 translate-x-2 translate-y-2 rounded-full"></div>
-            <img
-              src="/jack-arturo.jpeg"
-              alt="Jack Arturo"
-              class="w-48 h-48 rounded-full object-cover border-2 border-core-text shadow-hard relative z-10 bg-white"
+            <div class="absolute inset-0 bg-lab-accent/20 translate-x-2 translate-y-2 rounded-full"></div>
+            <img 
+              src="/jack.jpg" 
+              alt="Jack Arturo" 
+              class="w-48 h-48 rounded-full object-cover border-2 border-lab-text shadow-hard relative z-10 bg-lab-surface"
             />
           </div>
+          <div>
+            <h1 class="text-4xl md:text-6xl font-bold tracking-tighter mb-4">
+              About <span class="text-lab-secondary">AutoMem</span>
+            </h1>
+            <p class="text-xl text-lab-muted leading-relaxed font-mono border-l-4 border-lab-accent pl-4">
+              Building the memory layer for the AI age.
+            </p>
+          </div>
         </div>
-        <div class="flex-1 pt-4">
-          <h1 class="text-5xl font-bold mb-4 tracking-tighter">
-            About <span class="text-core-secondary">AutoMem</span>
-          </h1>
-          <p class="text-xl text-core-muted leading-relaxed font-mono border-l-4 border-core-accent pl-4">
-            Built by Jack, a developer who believes the best software is free software.
-          </p>
-        </div>
-      </div>
 
-      <!-- Bio Section -->
-      <section class="mb-16">
-        <div class="bg-white rounded-lg p-8 border-2 border-core-text shadow-hard relative group hover:translate-y-[-2px] transition-transform">
-          <div class="absolute -top-3 left-6 bg-core-text text-white px-2 text-xs font-bold uppercase">Builder_Log</div>
+        <!-- Bio Card -->
+        <div class="bg-lab-surface rounded-lg p-8 border-2 border-lab-text shadow-hard relative group hover:translate-y-[-2px] transition-transform">
+          <div class="absolute -top-3 left-6 bg-lab-text text-lab-bg px-2 text-xs font-bold uppercase">Builder_Log</div>
           
-          <div class="prose prose-lg max-w-none space-y-6 text-core-text font-mono text-sm md:text-base">
+          <div class="prose prose-lg max-w-none space-y-6 text-lab-text font-mono text-sm md:text-base">
             <p>
-              I'm Jack Arturo, and I've been writing code since I was 12 years old. That's over two decades of turning ideas into software, most of it in the WordPress ecosystem where I've been building for the past 16-18 years.
+              I'm Jack Arturo, and I've been writing code since I was 12 years old. That's over two decades of turning ideas into software, most of it in the WordPress ecosystem where I've been building for the past 15 years.
             </p>
             <p>
-              For the last 12 years, I've been running <a href="https://verygoodplugins.com" target="_blank" class="text-core-accent hover:underline font-bold">Very Good Plugins</a>, where we built <a href="https://wpfusion.com" target="_blank" class="text-core-accent hover:underline font-bold">WP Fusion</a> — connecting WordPress with CRMs. Helping thousands of businesses automate their marketing has been incredibly rewarding.
+              For the last 12 years, I've been running <a href="https://verygoodplugins.com" target="_blank" class="text-lab-accent hover:underline font-bold">Very Good Plugins</a>, where we built <a href="https://wpfusion.com" target="_blank" class="text-lab-accent hover:underline font-bold">WP Fusion</a> — connecting WordPress with CRMs. Helping thousands of businesses automate their marketing has been incredibly rewarding.
             </p>
             <p>
-              More recently, I co-founded <a href="https://echodash.com" target="_blank" class="text-core-accent hover:underline font-bold">EchoDash</a>, a platform that cuts through data noise.
+              More recently, I co-founded <a href="https://echodash.com" target="_blank" class="text-lab-accent hover:underline font-bold">EchoDash</a>, a platform that cuts through data noise.
             </p>
             <p>
-              These days, I'm deep into AI. I use tools like <strong class="bg-core-secondary/20 px-1">Claude Code</strong> and <strong class="bg-core-secondary/20 px-1">Cursor</strong> extensively, and I've built <strong class="bg-core-secondary/20 px-1">AutoJack</strong> — my personal AI assistant. I write about this on my <a href="https://drunk.support" target="_blank" class="text-core-accent hover:underline font-bold">personal blog</a>.
+              These days, I'm deep into AI. I use tools like <strong class="bg-lab-secondary/20 px-1">Claude Code</strong> and <strong class="bg-lab-secondary/20 px-1">Cursor</strong> extensively, and I've built <strong class="bg-lab-secondary/20 px-1">AutoJack</strong> — my personal AI assistant. I write about this on my <a href="https://drunk.support" target="_blank" class="text-lab-accent hover:underline font-bold">personal blog</a>.
             </p>
-            <p class="border-l-2 border-core-text pl-4 italic text-core-muted">
+            <p class="border-l-2 border-lab-text pl-4 italic text-lab-muted">
               AutoMem grew out of that work. When I started giving AI assistants memory capabilities, I realized this shouldn't be proprietary technology locked behind walls. Everyone deserves AI that remembers.
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
       <!-- Philosophy Section -->
-      <section class="mb-16">
-        <div class="bg-core-text text-white rounded-lg p-8 border-2 border-core-text shadow-hard relative overflow-hidden">
-          <!-- Grid texture overlay for dark card -->
-          <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+      <div class="mb-16">
+        <div class="bg-lab-text text-lab-bg rounded-lg p-8 border-2 border-lab-text shadow-hard relative overflow-hidden">
+          <!-- Grid texture overlay -->
+          <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
           
           <div class="relative z-10">
-            <h2 class="text-3xl font-bold mb-6 text-core-secondary">Why Open Source?</h2>
-            <div class="space-y-6 font-mono text-sm md:text-base">
+            <h2 class="text-3xl font-bold mb-6 text-lab-secondary">Why Open Source?</h2>
+            <div class="space-y-6 font-mono">
               <p>
-                I believe in giving good stuff away. Not because it's trendy, but because <strong class="text-core-accent">better tools make better builders</strong>.
+                I believe in giving good stuff away. Not because it's trendy, but because <strong class="text-lab-accent">better tools make better builders</strong>.
               </p>
               <p>
-                When you open source your work, you're not losing value — you're multiplying it.
+                When we share our foundational blocks, we all build higher. I've benefited from open source my entire career; AutoMem is my contribution back to that stack.
               </p>
               
-              <div class="bg-white/10 rounded-lg p-6 border border-white/20 my-6">
-                <h3 class="text-lg font-bold mb-4 text-core-secondary uppercase tracking-widest">:: The Multiplier Effect</h3>
-                <ul class="space-y-4 list-none">
+              <div class="bg-lab-bg/10 p-6 rounded border border-lab-bg/20 my-8">
+                <h3 class="text-lg font-bold mb-4 text-lab-secondary uppercase tracking-widest">:: The Multiplier Effect</h3>
+                <ul class="space-y-4 text-sm">
                   <li class="flex items-start gap-3">
-                    <span class="text-core-accent text-xl">→</span>
-                    <span><strong class="text-white">Trust through transparency:</strong> No hidden tracking, no vendor lock-in.</span>
+                    <span class="text-lab-accent text-xl">→</span>
+                    <span>If I build it alone, it solves my problem.</span>
                   </li>
                   <li class="flex items-start gap-3">
-                    <span class="text-core-accent text-xl">→</span>
-                    <span><strong class="text-white">Community-driven:</strong> The best features come from users.</span>
+                    <span class="text-lab-accent text-xl">→</span>
+                    <span>If we build it together, it solves problems I haven't even imagined yet.</span>
                   </li>
                   <li class="flex items-start gap-3">
-                    <span class="text-core-accent text-xl">→</span>
-                    <span><strong class="text-white">Longevity:</strong> Open source outlives companies.</span>
+                    <span class="text-lab-accent text-xl">→</span>
+                    <span>Proprietary memory locks you in. Open memory sets you free.</span>
                   </li>
                 </ul>
               </div>
-              
+
               <p>
-                The future of AI shouldn't be controlled by a handful of companies. <strong class="text-core-accent">Your memories should belong to you.</strong>
+                The future of AI shouldn't be controlled by a handful of companies. <strong class="text-lab-accent">Your memories should belong to you.</strong>
               </p>
-              <p class="text-lg font-bold text-core-secondary mt-8 border-t border-white/20 pt-6">
-                That's why AutoMem is free, open source, and always will be.
+              <p class="text-lg font-bold text-lab-secondary mt-8 border-t border-lab-bg/20 pt-6">
+                // Recall is Power.
               </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Links Section -->
-      <section>
-        <div class="bg-white rounded-lg p-8 border-2 border-core-text shadow-hard">
-          <div class="comment-header mb-6">:: NETWORK_CONNECTIONS</div>
-          <div class="grid md:grid-cols-2 gap-6">
-            <a href="https://github.com/verygoodplugins/automem" target="_blank" class="group flex items-center gap-4 p-4 bg-core-bg rounded-lg border-2 border-core-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
-              <div class="w-12 h-12 bg-core-text text-white rounded-lg flex items-center justify-center text-xl font-mono">GH</div>
-              <div>
-                <h3 class="font-bold text-core-text">AutoMem on GitHub</h3>
-                <p class="text-xs text-core-muted uppercase tracking-wider">Contribute</p>
-              </div>
-            </a>
+      <!-- Connect Links -->
+      <div>
+        <div class="comment-header">:: NETWORK_UPLINK</div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- GitHub -->
+          <a href="https://github.com/verygoodplugins/automem" target="_blank" class="group flex items-center gap-4 p-4 bg-lab-bg rounded-lg border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
+            <div class="w-12 h-12 bg-lab-text text-lab-bg rounded-lg flex items-center justify-center text-xl font-mono">GH</div>
+            <div>
+              <h3 class="font-bold text-lab-text">AutoMem on GitHub</h3>
+              <p class="text-xs text-lab-muted uppercase tracking-wider">Contribute</p>
+            </div>
+          </a>
 
-            <a href="https://drunk.support" target="_blank" class="group flex items-center gap-4 p-4 bg-core-bg rounded-lg border-2 border-core-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
-              <div class="w-12 h-12 bg-core-secondary text-white rounded-lg flex items-center justify-center text-xl font-mono">DS</div>
-              <div>
-                <h3 class="font-bold text-core-text">Personal Blog</h3>
-                <p class="text-xs text-core-muted uppercase tracking-wider">Read Articles</p>
-              </div>
-            </a>
+          <!-- Personal Blog -->
+          <a href="https://drunk.support" target="_blank" class="group flex items-center gap-4 p-4 bg-lab-bg rounded-lg border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
+            <div class="w-12 h-12 bg-lab-secondary text-lab-bg rounded-lg flex items-center justify-center text-xl font-mono">DS</div>
+            <div>
+              <h3 class="font-bold text-lab-text">Personal Blog</h3>
+              <p class="text-xs text-lab-muted uppercase tracking-wider">Read Articles</p>
+            </div>
+          </a>
 
-            <a href="https://verygoodplugins.com" target="_blank" class="group flex items-center gap-4 p-4 bg-core-bg rounded-lg border-2 border-core-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
-              <div class="w-12 h-12 bg-core-accent text-white rounded-lg flex items-center justify-center text-xl font-mono">VP</div>
-              <div>
-                <h3 class="font-bold text-core-text">Very Good Plugins</h3>
-                <p class="text-xs text-core-muted uppercase tracking-wider">Company</p>
-              </div>
-            </a>
-          </div>
+          <!-- VGP -->
+          <a href="https://verygoodplugins.com" target="_blank" class="group flex items-center gap-4 p-4 bg-lab-bg rounded-lg border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none">
+            <div class="w-12 h-12 bg-lab-accent text-lab-bg rounded-lg flex items-center justify-center text-xl font-mono">VP</div>
+            <div>
+              <h3 class="font-bold text-lab-text">Very Good Plugins</h3>
+              <p class="text-xs text-lab-muted uppercase tracking-wider">Company</p>
+            </div>
+          </a>
         </div>
-      </section>
+      </div>
 
-      <!-- CTA Back Home -->
-      <div class="text-center mt-16">
-        <a href="/" class="btn-core inline-flex gap-2">
-          <span>← RETURN_ROOT</span>
+      <div class="mt-16">
+        <a href="/" class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent transition font-mono">
+          ← RETURN_ROOT
         </a>
       </div>
+
     </div>
   </main>
 </Layout>

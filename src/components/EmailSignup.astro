@@ -10,23 +10,23 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       id="email-input"
       placeholder="Enter your email"
       required
-      class="flex-1 px-4 py-3 border border-core-text bg-white focus:outline-none focus:ring-2 focus:ring-core-accent transition placeholder:text-core-muted/50 font-mono text-sm"
+      class="flex-1 px-4 py-3 border border-lab-text bg-lab-surface focus:outline-none focus:ring-2 focus:ring-lab-accent transition placeholder:text-lab-muted/50 font-mono text-sm text-lab-text"
     />
     <button
       type="submit"
       id="submit-btn"
-      class="bg-core-text text-white px-6 py-3 font-bold hover:bg-core-accent transition disabled:opacity-50 uppercase tracking-wider text-sm border border-core-text"
+      class="bg-lab-text text-lab-bg px-6 py-3 font-bold hover:bg-lab-accent hover:text-lab-bg transition disabled:opacity-50 uppercase tracking-wider text-sm border border-lab-text"
     >
       Get Early Access
     </button>
   </form>
-  <div id="message" class="mt-3 text-sm text-center hidden"></div>
-  <div id="count" class="mt-2 text-xs text-gray-500 text-center hidden"></div>
+  <div id="message" class="mt-3 text-sm text-center hidden font-mono"></div>
+  <div id="count" class="mt-2 text-xs text-lab-muted text-center hidden font-mono"></div>
   <div id="success-actions" class="mt-4 text-center hidden">
     <a
       id="repo-button"
       href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist"
-      class="border-2 border-automem-accent text-automem-accent px-6 py-3 rounded-lg font-semibold hover:bg-automem-surface transition inline-block"
+      class="border-2 border-lab-accent text-lab-accent px-6 py-3 rounded-lg font-semibold hover:bg-lab-surface transition inline-block shadow-hard font-mono"
     >
       Open GitHub Repo
     </a>
@@ -128,8 +128,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       if (hasTurnstile && !turnstileToken) {
         if (message) {
           message.classList.remove('hidden');
-          message.classList.remove('text-green-600');
-          message.classList.add('text-red-600');
+          message.classList.remove('text-lab-success');
+          message.classList.add('text-lab-error');
           message.textContent = 'Please complete the verification.';
         }
         if (submitBtn) {
@@ -157,8 +157,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       
       if (data.success) {
         if (message) {
-          message.classList.remove('text-red-600');
-          message.classList.add('text-green-600');
+          message.classList.remove('text-lab-error');
+          message.classList.add('text-lab-success');
           message.textContent = data.message || 'Successfully joined the waitlist!';
         }
         
@@ -188,15 +188,15 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         }
       } else {
         if (message) {
-          message.classList.remove('text-green-600');
-          message.classList.add('text-red-600');
+          message.classList.remove('text-lab-success');
+          message.classList.add('text-lab-error');
           message.textContent = data.error || 'Something went wrong. Please try again.';
         }
       }
     } catch (error) {
       if (message) {
-        message.classList.remove('hidden', 'text-green-600');
-        message.classList.add('text-red-600');
+        message.classList.remove('hidden', 'text-lab-success');
+        message.classList.add('text-lab-error');
         message.textContent = 'Network error. Please try again.';
       }
     } finally {

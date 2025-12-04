@@ -6,15 +6,15 @@ export default {
     extend: {
       colors: {
         lab: {
-          bg: 'var(--lab-bg)',
-          surface: 'var(--lab-surface)',
-          border: 'var(--lab-border)',
-          text: 'var(--lab-text)',
-          muted: 'var(--lab-muted)',
-          accent: 'var(--lab-accent)',
-          secondary: 'var(--lab-secondary)',
-          success: 'var(--lab-success)',
-          error: 'var(--lab-error)',
+          bg: 'rgb(var(--lab-bg) / <alpha-value>)',
+          surface: 'rgb(var(--lab-surface) / <alpha-value>)',
+          border: 'rgb(var(--lab-border) / <alpha-value>)',
+          text: 'rgb(var(--lab-text) / <alpha-value>)',
+          muted: 'rgb(var(--lab-muted) / <alpha-value>)',
+          accent: 'rgb(var(--lab-accent) / <alpha-value>)',
+          secondary: 'rgb(var(--lab-secondary) / <alpha-value>)',
+          success: 'rgb(var(--lab-success) / <alpha-value>)',
+          error: 'rgb(var(--lab-error) / <alpha-value>)',
         }
       },
       fontFamily: {
