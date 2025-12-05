@@ -1,0 +1,151 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Mascot Lab">
+  <div class="p-12 min-h-screen relative">
+    <div class="max-w-6xl mx-auto">
+        <div class="comment-header">:: IDENTITY_LAB_v1.0</div>
+        <h1 class="text-5xl font-bold mb-12">Project: <span class="text-lab-secondary">FLOPPY_SENTINEL</span></h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            
+            <!-- Variation 1: The Standard (Logo) -->
+            <div class="space-y-4">
+                <div class="bg-lab-surface border border-lab-border p-8 rounded-xl flex items-center justify-center h-64 group hover:border-lab-secondary transition-colors relative overflow-hidden">
+                    <!-- Grid bg -->
+                    <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+                    
+                    <svg viewBox="0 0 200 200" class="w-40 h-40 drop-shadow-hard transition-transform duration-300 group-hover:-translate-y-2">
+                        <g class="floppy-body">
+                            <!-- Main Body -->
+                            <rect x="40" y="40" width="120" height="120" rx="8" fill="#00FFFF" stroke="#0A0A0A" stroke-width="4"/>
+                            <!-- Cut Corner -->
+                            <path d="M160 40 L160 70 L130 40 Z" fill="#0A0A0A"/>
+                            
+                            <!-- Shutter (Metal part) -->
+                            <rect x="65" y="40" width="70" height="52" rx="4" fill="#E0E0E0" stroke="#0A0A0A" stroke-width="3"/>
+                            <rect x="82" y="48" width="16" height="24" rx="2" fill="#0A0A0A" opacity="0.8"/>
+                            
+                            <!-- Label (Face Background) -->
+                            <rect x="50" y="105" width="100" height="45" rx="4" fill="#FF33CC" stroke="#0A0A0A" stroke-width="3"/>
+                            
+                            <!-- Face: Standard -->
+                            <g class="face-standard">
+                                <circle cx="85" cy="125" r="6" fill="#0A0A0A"/>
+                                <circle cx="115" cy="125" r="6" fill="#0A0A0A"/>
+                                <path d="M92 132 Q100 138 108 132" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </g>
+
+                            <!-- Legs -->
+                            <path d="M70 160 L70 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 160 L130 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <!-- Feet -->
+                            <path d="M60 180 L80 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M120 180 L140 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                        </g>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-mono text-lab-muted">:: STATE_IDLE</h3>
+            </div>
+
+            <!-- Variation 2: The Wink (Interaction) -->
+            <div class="space-y-4">
+                <div class="bg-lab-surface border border-lab-border p-8 rounded-xl flex items-center justify-center h-64 group hover:border-lab-accent transition-colors relative overflow-hidden">
+                     <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+                    
+                    <svg viewBox="0 0 200 200" class="w-40 h-40 drop-shadow-hard group-hover:rotate-3 transition-transform">
+                        <g class="floppy-body">
+                            <rect x="40" y="40" width="120" height="120" rx="8" fill="#00FFFF" stroke="#0A0A0A" stroke-width="4"/>
+                            <path d="M160 40 L160 70 L130 40 Z" fill="#0A0A0A"/>
+                            <rect x="65" y="40" width="70" height="52" rx="4" fill="#E0E0E0" stroke="#0A0A0A" stroke-width="3"/>
+                            <rect x="82" y="48" width="16" height="24" rx="2" fill="#0A0A0A" opacity="0.8"/>
+                            <rect x="50" y="105" width="100" height="45" rx="4" fill="#FF33CC" stroke="#0A0A0A" stroke-width="3"/>
+                            
+                            <!-- Face: Winking -->
+                            <g class="face-wink">
+                                <circle cx="85" cy="125" r="6" fill="#0A0A0A"/>
+                                <!-- Wink Eye -->
+                                <path d="M109 125 L121 125" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round"/>
+                                <path d="M115 122 L115 128" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round"/>
+                                <!-- Smirk -->
+                                <path d="M92 132 Q100 138 108 130" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </g>
+
+                            <path d="M70 160 L70 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 160 L130 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M60 180 L80 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M120 180 L140 180" stroke="#0A0A0A" stroke-width="4" stroke-linecap="round"/>
+                        </g>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-mono text-lab-muted">:: STATE_WINK (HOVER)</h3>
+            </div>
+
+            <!-- Variation 3: The Peek (Animation) -->
+            <div class="space-y-4">
+                <div class="bg-lab-surface border border-lab-border p-0 rounded-xl flex items-end justify-center h-64 relative overflow-hidden group">
+                    <!-- Fake Window UI -->
+                    <div class="absolute top-8 left-8 right-8 h-32 bg-lab-bg border border-lab-text z-10 shadow-hard flex items-center justify-center">
+                        <span class="text-xs text-lab-muted">CONTENT_WINDOW</span>
+                    </div>
+
+                    <!-- Peeking Floppy -->
+                    <svg viewBox="0 0 200 200" class="w-32 h-32 absolute bottom-0 right-8 z-0 transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.34, 1.56, 0.64, 1)">
+                        <g class="floppy-body">
+                            <!-- Tilted slightly -->
+                            <g transform="rotate(-10, 100, 100)">
+                                <rect x="40" y="40" width="120" height="120" rx="8" fill="#00FFFF" stroke="#0A0A0A" stroke-width="4"/>
+                                <path d="M160 40 L160 70 L130 40 Z" fill="#0A0A0A"/>
+                                <rect x="65" y="40" width="70" height="52" rx="4" fill="#E0E0E0" stroke="#0A0A0A" stroke-width="3"/>
+                                <rect x="82" y="48" width="16" height="24" rx="2" fill="#0A0A0A" opacity="0.8"/>
+                                <rect x="50" y="105" width="100" height="45" rx="4" fill="#FF33CC" stroke="#0A0A0A" stroke-width="3"/>
+                                
+                                <!-- Face: Looking Up -->
+                                <g class="face-standard">
+                                    <circle cx="85" cy="122" r="6" fill="#0A0A0A"/>
+                                    <circle cx="115" cy="122" r="6" fill="#0A0A0A"/>
+                                    <path d="M95 135 Q100 138 105 135" stroke="#0A0A0A" stroke-width="3" fill="none" stroke-linecap="round"/>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-mono text-lab-muted">:: STATE_PEEK (ANIM)</h3>
+            </div>
+
+        </div>
+
+        <div class="mt-12 p-8 border border-lab-border bg-lab-surface/30">
+            <div class="comment-header">:: ANIMATION_TEST</div>
+            <p class="mb-4 max-w-2xl">We can absolutely have him interact with the DOM. He fits perfectly in our "hard shadow" aesthetic.</p>
+            
+            <div class="flex gap-4 items-center">
+                <!-- Walking Animation CSS -->
+                <style>
+                    @keyframes walk {
+                        0%, 100% { transform: translateY(0) rotate(0deg); }
+                        25% { transform: translateY(-5px) rotate(-2deg); }
+                        75% { transform: translateY(-5px) rotate(2deg); }
+                    }
+                    .animate-walk {
+                        animation: walk 0.6s ease-in-out infinite;
+                    }
+                </style>
+                
+                <div class="bg-lab-accent text-lab-bg px-4 py-2 font-bold shadow-hard flex items-center gap-3 cursor-pointer hover:bg-lab-secondary transition-colors">
+                    <span>HOVER_ME</span>
+                    <svg viewBox="0 0 200 200" class="w-8 h-8 animate-walk">
+                         <rect x="40" y="40" width="120" height="120" rx="15" fill="#0A0A0A"/> <!-- Silhouette -->
+                         <rect x="40" y="40" width="120" height="120" rx="8" fill="#E0E0E0"/>
+                         <rect x="50" y="105" width="100" height="45" rx="4" fill="#FF33CC"/>
+                         <circle cx="85" cy="125" r="6" fill="#0A0A0A"/>
+                         <circle cx="115" cy="125" r="6" fill="#0A0A0A"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+</Layout>

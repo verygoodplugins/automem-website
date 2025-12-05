@@ -1,0 +1,203 @@
+---
+import Floppy from './Floppy.astro';
+---
+
+<div class="memory-drive-wrapper relative w-full py-12 min-h-[100vh]" id="memory-stage">
+  
+  <!-- The Stage (Pinned center) -->
+  <div class="sticky top-[20%] w-full max-w-4xl mx-auto h-[400px] flex flex-col items-center justify-center">
+    
+    <!-- The Drive Slot -->
+    <div class="relative z-20 w-96 h-24 bg-lab-surface border-4 border-lab-text rounded-xl shadow-hard flex items-center justify-center overflow-visible mb-8 transition-transform duration-300" id="drive-slot">
+      <!-- Slot Opening -->
+      <div class="w-72 h-3 bg-lab-bg rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] relative overflow-hidden">
+          <!-- Light inside slot -->
+          <div class="absolute inset-0 bg-lab-success/50 blur-sm opacity-0 transition-opacity duration-300" id="slot-light"></div>
+      </div>
+      
+      <!-- Status Lights -->
+      <div class="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3">
+          <div class="w-3 h-3 rounded-full bg-lab-error opacity-20" id="light-busy"></div>
+          <div class="w-3 h-3 rounded-full bg-lab-success animate-pulse" id="light-ready"></div>
+      </div>
+
+      <!-- Thinking Bubble (Expands from right) -->
+      <div class="absolute left-full ml-12 top-0 min-w-[320px] md:min-w-[400px] opacity-0 transition-all duration-500 transform translate-x-[-10px]" id="thought-bubble">
+        <div class="bg-lab-surface border-2 border-lab-text p-6 rounded-xl shadow-hard text-base font-mono relative">
+            <!-- Triangle pointer -->
+            <div class="absolute top-8 -left-3 w-6 h-6 bg-lab-surface border-l-2 border-b-2 border-lab-text transform rotate-45"></div>
+            
+            <!-- Header -->
+            <div class="flex items-center gap-3 mb-3 text-sm text-lab-muted uppercase tracking-widest border-b border-lab-border pb-2">
+                <span class="animate-pulse text-lab-accent">●</span> Thinking
+            </div>
+            
+            <!-- Content Stream -->
+            <div class="space-y-2 text-lab-text" id="thought-content">
+                <!-- JS will inject text here -->
+                <span class="opacity-50">Analyzing context...</span>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Floppy (Moves up) -->
+    <div class="absolute top-full transition-transform duration-100 ease-out z-10" id="floppy-actor">
+      <!-- Standard Face -->
+      <div id="floppy-idle" class="block transition-opacity duration-300">
+        <Floppy variant="idle" width="w-48" height="h-48" />
+      </div>
+      <!-- Happy Face (Swapped on success) -->
+      <div id="floppy-happy" class="hidden transition-opacity duration-300">
+         <Floppy variant="happy" width="w-48" height="h-48" />
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Trigger zones for scroll logic -->
+  <div class="absolute inset-0 pointer-events-none" id="scroll-track"></div>
+
+</div>
+
+<script>
+  const stage = document.getElementById('memory-stage');
+  const floppy = document.getElementById('floppy-actor');
+  const floppyIdle = document.getElementById('floppy-idle');
+  const floppyHappy = document.getElementById('floppy-happy');
+  const drive = document.getElementById('drive-slot');
+  const thoughtBubble = document.getElementById('thought-bubble');
+  const thoughtContent = document.getElementById('thought-content');
+  const lightBusy = document.getElementById('light-busy');
+  const lightReady = document.getElementById('light-ready');
+  const slotLight = document.getElementById('slot-light');
+
+  let state = 'idle'; // idle, inserting, processing, success
+
+  function updateScroll() {
+    if (!stage || !floppy) return;
+
+    const rect = stage.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate progress based on container position relative to viewport
+    // Start animation when top of container enters view (or slightly after)
+    // End animation when it's scrolled well into view
+    
+    // Tighter scroll range for snappier animation with less padding
+    const startTrigger = viewportHeight * 0.7; // Start later
+    const endTrigger = viewportHeight * 0.3;   // End earlier
+    
+    // Progress 0 -> 1 as rect.top goes from startTrigger -> endTrigger
+    let progress = (startTrigger - rect.top) / (startTrigger - endTrigger);
+    progress = Math.max(0, Math.min(1, progress));
+    
+    // Map progress to Y position (250px -> 20px)
+    let yPos = 250 - (progress * 230);
+    
+    // Trigger Logic
+    if (progress >= 0.95 && state !== 'success') {
+        // INSERTED!
+        if (state !== 'processing') {
+            state = 'processing';
+            processMemory();
+        }
+        // Slide into slot smoothly
+        floppy.style.transform = `translateY(-60px) scale(0.95)`; 
+        floppy.style.opacity = '0'; 
+    } else if (progress < 0.9) {
+        // Reset if scrolled back down
+        if (state === 'success' || state === 'processing') {
+            resetMemory();
+        }
+        floppy.style.transform = `translateY(${yPos}px)`;
+        floppy.style.opacity = '1';
+    }
+  }
+
+  function processMemory() {
+    // 1. Lights
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success/20'; // Ready off
+    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error animate-pulse opacity-100'; // Busy on
+    
+    // 2. Show Thinking Bubble
+    if(thoughtBubble) {
+        thoughtBubble.style.opacity = '1';
+        thoughtBubble.style.transform = 'translateX(0)';
+    }
+
+    // 3. Text Stream Simulation
+    const thoughts = [
+        "Parsing user context...",
+        "Vectorizing input...",
+        "<span class='text-lab-accent'>FOUND_MATCH:</span> Previous project",
+        "<span class='text-lab-success'>RECALLING:</span> Vite + React config"
+    ];
+
+    let i = 0;
+    if(thoughtContent) {
+        thoughtContent.innerHTML = '';
+        const interval = setInterval(() => {
+            if (i >= thoughts.length) {
+                clearInterval(interval);
+                completeMemory();
+            } else {
+                const p = document.createElement('div');
+                p.innerHTML = `> ${thoughts[i]}`;
+                p.className = "opacity-0 transform translate-y-2 transition-all duration-300";
+                thoughtContent.appendChild(p);
+                
+                requestAnimationFrame(() => {
+                    p.className = "opacity-100 transform translate-y-0 transition-all duration-300";
+                });
+                
+                i++;
+            }
+        }, 600);
+    }
+  }
+
+  function completeMemory() {
+    state = 'success';
+    
+    // Lights Green
+    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error opacity-20';
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success';
+    if(slotLight) slotLight.style.opacity = '1';
+
+    // Eject Floppy with Happy Face
+    if(floppy && floppyIdle && floppyHappy) {
+        floppyIdle.classList.add('hidden');
+        floppyHappy.classList.remove('hidden');
+        
+        floppy.style.opacity = '1';
+        floppy.style.transform = 'translateY(30px) scale(1)'; // Slide out happy
+        
+        // Celebrate
+        if(drive) drive.style.transform = "scale(1.02)";
+        setTimeout(() => { if(drive) drive.style.transform = "scale(1)"; }, 200);
+    }
+  }
+
+  function resetMemory() {
+    state = 'idle';
+    if(floppyIdle && floppyHappy) {
+        floppyIdle.classList.remove('hidden');
+        floppyHappy.classList.add('hidden');
+    }
+    if(thoughtBubble) {
+        thoughtBubble.style.opacity = '0';
+        thoughtBubble.style.transform = 'translateX(-10px)';
+    }
+    if(slotLight) slotLight.style.opacity = '0';
+    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success animate-pulse';
+  }
+
+  // Listen to scroll
+  window.addEventListener('scroll', () => {
+    window.requestAnimationFrame(updateScroll);
+  });
+  
+  // Init
+  updateScroll();
+</script>

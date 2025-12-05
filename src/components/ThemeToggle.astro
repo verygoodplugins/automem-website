@@ -1,0 +1,87 @@
+<button
+  id="theme-toggle"
+  class="h-14 px-4 md:px-6 flex items-center justify-center border-l border-lab-border hover:bg-lab-text hover:text-lab-bg transition-colors cursor-pointer focus:outline-none"
+  aria-label="Toggle Dark Mode"
+>
+  <!-- Sun Icon (shows in default/dark mode) -->
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="w-5 h-5 block light:hidden"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <circle cx="12" cy="12" r="5"></circle>
+    <line x1="12" y1="1" x2="12" y2="3"></line>
+    <line x1="12" y1="21" x2="12" y2="23"></line>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+    <line x1="1" y1="12" x2="3" y2="12"></line>
+    <line x1="21" y1="12" x2="23" y2="12"></line>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+  </svg>
+
+  <!-- Moon Icon (shows in light mode) -->
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="w-5 h-5 hidden light:block"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
+</button>
+
+<script>
+  const themeToggle = document.getElementById('theme-toggle');
+
+  // Check local storage. Default to 'dark' (Neon/Lab) if not set.
+  const getTheme = () => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme');
+    }
+    return 'dark';
+  };
+
+  const setTheme = (theme) => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+    localStorage.setItem('theme', theme);
+    
+    // Update icons visibility manually since we're using custom classes
+    const sunIcon = document.querySelector('.light\\:hidden');
+    const moonIcon = document.querySelector('.light\\:block');
+    
+    if (theme === 'light') {
+      sunIcon?.classList.add('hidden');
+      sunIcon?.classList.remove('block');
+      moonIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('block');
+    } else {
+      sunIcon?.classList.remove('hidden');
+      sunIcon?.classList.add('block');
+      moonIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('block');
+    }
+  };
+
+  // Init
+  setTheme(getTheme());
+
+  // Toggle
+  themeToggle?.addEventListener('click', () => {
+    const isLight = document.documentElement.classList.contains('light');
+    setTheme(isLight ? 'dark' : 'light');
+  });
+</script>

@@ -1,4 +1,7 @@
 ---
+import Floppy from './Floppy.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
 const { currentPath = '' } = Astro.props;
 
 const links = [
@@ -9,24 +12,27 @@ const links = [
 ];
 ---
 
-<nav class="sticky top-0 z-40 bg-core-bg border-b border-core-line">
+<nav class="sticky top-0 z-40 bg-lab-bg border-b border-lab-border">
   <div class="max-w-7xl mx-auto flex items-center justify-between px-6 h-14">
     <!-- Left: Breadcrumbs / Logo -->
     <div class="flex items-center gap-4">
-      <a href="/" class="font-bold text-core-text hover:text-core-accent transition-colors flex items-center gap-2">
-        <div class="w-3 h-3 bg-core-accent"></div>
+      <a href="/" class="font-bold text-lab-text hover:text-lab-accent transition-colors flex items-center gap-3 group">
+        <!-- Floppy Logo -->
+        <div class="transform transition-transform group-hover:rotate-12">
+           <Floppy variant="idle" width="w-8" height="h-8" />
+        </div>
         <span>~/automem</span>
       </a>
     </div>
 
     <!-- Right: Links -->
-    <div class="flex items-center">
+    <div class="flex items-center overflow-x-auto no-scrollbar">
       {links.map((link) => (
         <a
           href={link.href}
           class={`
-            h-14 px-6 flex items-center text-sm font-mono border-l border-core-line hover:bg-white transition-colors
-            ${currentPath === link.href ? 'bg-white text-core-accent font-bold' : 'text-core-muted'}
+            h-14 px-4 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-text hover:text-lab-bg transition-colors whitespace-nowrap
+            ${currentPath === link.href ? 'bg-lab-text text-lab-bg font-bold' : 'text-lab-muted'}
           `}
         >
           {link.label}
@@ -36,10 +42,11 @@ const links = [
         href="https://github.com/verygoodplugins/automem"
           target="_blank"
           rel="noopener noreferrer"
-        class="h-14 px-6 flex items-center text-sm font-mono border-l border-core-line hover:bg-core-text hover:text-white transition-colors"
+        class="h-14 px-4 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-accent hover:text-lab-bg transition-colors whitespace-nowrap"
       >
         ★ Star us
       </a>
+      <ThemeToggle />
     </div>
   </div>
 </nav>

@@ -43,33 +43,33 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   />
   <Navigation currentPath="/blog" />
 
-  <main class="min-h-screen py-20 px-6 bg-core-bg">
+  <main class="min-h-screen py-20 px-6 bg-lab-bg">
     <article class="max-w-3xl mx-auto">
       <!-- Back to Blog -->
       <a
         href="/blog"
-        class="inline-flex items-center gap-2 text-core-muted hover:text-core-accent transition mb-8 font-mono text-sm"
+        class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent transition mb-8 font-mono text-sm"
       >
         ← Back to Blog
       </a>
 
       <!-- Post Header -->
-      <header class="mb-12 bg-white p-8 rounded-lg border-2 border-core-text shadow-hard">
+      <header class="mb-12 bg-lab-surface p-8 rounded-lg border-2 border-lab-text shadow-hard">
         <div class="comment-header mb-4">:: POST_CONTENT</div>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-core-text tracking-tighter leading-tight">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight">
           {post.data.title}
         </h1>
-        <p class="text-xl text-core-muted mb-6 font-mono border-l-4 border-core-accent pl-4">
+        <p class="text-xl text-lab-muted mb-6 font-mono border-l-4 border-lab-accent pl-4">
           {post.data.description}
         </p>
         <div class="flex flex-wrap items-center gap-4 text-sm">
-          <time class="text-core-muted font-mono bg-core-bg px-2 py-1 border border-core-line">
+          <time class="text-lab-muted font-mono bg-lab-bg px-2 py-1 border border-lab-border">
             {formattedDate}
           </time>
           {post.data.tags && post.data.tags.length > 0 && (
             <div class="flex gap-2">
               {post.data.tags.map(tag => (
-                <span class="px-2 py-1 bg-core-secondary/20 text-core-secondary border border-core-secondary/30 text-xs font-bold uppercase">
+                <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
                   {tag}
                 </span>
               ))}
@@ -79,7 +79,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
       </header>
 
       <!-- Post Content -->
-      <div class="prose prose-lg max-w-none bg-white p-8 rounded-lg border-2 border-core-text">
+      <div class="prose prose-lg max-w-none bg-lab-surface p-8 rounded-lg border-2 border-lab-text">
         <Content />
       </div>
 
@@ -87,17 +87,17 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
       <AuthorBio />
 
       <!-- Footer -->
-      <footer class="mt-16 pt-8 border-t-2 border-core-line">
+      <footer class="mt-16 pt-8 border-t-2 border-lab-border">
         <div class="flex items-center justify-between font-mono text-sm">
           <a
             href="/blog"
-            class="text-core-accent hover:underline"
+            class="text-lab-accent hover:underline"
           >
             ← All Posts
           </a>
           <a
             href="/"
-            class="text-core-accent hover:underline"
+            class="text-lab-accent hover:underline"
           >
             Return Home →
           </a>
@@ -110,28 +110,28 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
 <style>
   /* Prose styling for blog content - Memory Lab theme */
   .prose {
-    @apply text-core-text font-mono text-base leading-relaxed;
+    @apply text-lab-text font-mono text-base leading-relaxed;
   }
 
   .prose :global(h2) {
-    @apply text-core-text text-2xl font-bold mt-10 mb-4 pb-2 border-b-2 border-core-line;
+    @apply text-lab-text text-2xl font-bold mt-10 mb-4 pb-2 border-b-2 border-lab-border;
   }
 
   .prose :global(h3) {
-    @apply text-core-text text-xl font-bold mt-8 mb-3;
+    @apply text-lab-text text-xl font-bold mt-8 mb-3;
   }
 
   .prose :global(p) {
-    @apply mb-6 text-core-text/80;
+    @apply mb-6 text-lab-text/80;
   }
 
   .prose :global(a) {
-    @apply text-core-accent underline decoration-core-accent/30 hover:decoration-core-accent transition-all;
+    @apply text-lab-accent underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
   }
 
   .prose :global(ul),
   .prose :global(ol) {
-    @apply mb-6 pl-6 text-core-text/80;
+    @apply mb-6 pl-6 text-lab-text/80;
   }
 
   .prose :global(li) {
@@ -139,22 +139,22 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   }
 
   .prose :global(strong) {
-    @apply text-core-text font-bold;
+    @apply text-lab-text font-bold;
   }
 
   .prose :global(code) {
-    @apply bg-core-bg px-1.5 py-0.5 text-sm border border-core-line text-core-accent;
+    @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent;
   }
 
   .prose :global(pre) {
-    @apply bg-core-text text-white p-4 rounded-lg overflow-x-auto mb-6 border-2 border-core-text shadow-hard;
+    @apply bg-lab-text text-lab-bg p-4 rounded-lg overflow-x-auto mb-6 border-2 border-lab-text shadow-hard;
   }
 
   .prose :global(pre code) {
-    @apply bg-transparent p-0 border-none text-white;
+    @apply bg-transparent p-0 border-none text-lab-bg;
   }
 
   .prose :global(blockquote) {
-    @apply border-l-4 border-core-accent pl-4 ml-0 mb-6 italic text-core-muted bg-core-bg p-4 rounded-r-lg;
+    @apply border-l-4 border-lab-accent pl-4 ml-0 mb-6 italic text-lab-muted bg-lab-bg p-4 rounded-r-lg;
   }
 </style>

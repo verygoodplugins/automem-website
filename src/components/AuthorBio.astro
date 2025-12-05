@@ -6,37 +6,37 @@ export interface Props {
 const { showFullBio = false } = Astro.props;
 ---
 
-<div class="author-bio bg-white rounded-lg p-6 border-2 border-core-text shadow-hard mt-12 relative">
-  <div class="absolute -top-3 left-6 bg-core-accent text-white px-2 text-xs font-bold uppercase">Author</div>
+<div class="author-bio bg-lab-surface rounded-lg p-6 border-2 border-lab-text shadow-hard mt-12 relative">
+  <div class="absolute -top-3 left-6 bg-lab-accent text-lab-bg px-2 text-xs font-bold uppercase">Author</div>
   <div class="flex gap-6 items-start">
     <!-- Author Photo -->
     <a href="/authors/jack-arturo" class="flex-shrink-0">
       <img
         src="/jack-arturo.jpeg"
         alt="Jack Arturo"
-        class="w-20 h-20 rounded-full object-cover border-2 border-core-text hover:scale-105 transition-transform"
+        class="w-20 h-20 rounded-full object-cover border-2 border-lab-text hover:scale-105 transition-transform"
       />
     </a>
 
     <!-- Author Info -->
     <div class="flex-1">
-      <h3 class="text-xl font-bold mb-2 text-core-text">
-        <a href="/authors/jack-arturo" class="hover:text-core-accent transition">
+      <h3 class="text-xl font-bold mb-2 text-lab-text">
+        <a href="/authors/jack-arturo" class="hover:text-lab-accent transition">
           Jack Arturo
         </a>
       </h3>
 
       {showFullBio ? (
-        <div class="text-core-muted space-y-3 font-mono text-sm">
+        <div class="text-lab-muted space-y-3 font-mono text-sm">
           <p>
-            Jack has been writing code since he was 12 years old. For the past 12 years, he's been running <a href="https://verygoodplugins.com" target="_blank" class="text-core-accent hover:underline">Very Good Plugins</a>, where he built <a href="https://wpfusion.com" target="_blank" class="text-core-accent hover:underline">WP Fusion</a>. He co-founded <a href="https://echodash.com" target="_blank" class="text-core-accent hover:underline">EchoDash</a> and is deep into AI development with AutoJack, his personal AI assistant.
+            Jack has been writing code since he was 12 years old. For the past 12 years, he's been running <a href="https://verygoodplugins.com" target="_blank" class="text-lab-accent hover:underline">Very Good Plugins</a>, where he built <a href="https://wpfusion.com" target="_blank" class="text-lab-accent hover:underline">WP Fusion</a>. He co-founded <a href="https://echodash.com" target="_blank" class="text-lab-accent hover:underline">EchoDash</a> and is deep into AI development with AutoJack, his personal AI assistant.
           </p>
           <p>
             Jack believes in open source software and giving good stuff away. AutoMem is his contribution to making AI memory universal and portable across all platforms.
           </p>
         </div>
       ) : (
-        <p class="text-core-muted mb-4 font-mono text-sm">
+        <p class="text-lab-muted mb-4 font-mono text-sm">
           Developer, open source advocate, and builder of AI tools. Creator of AutoMem, WP Fusion, and EchoDash.
         </p>
       )}
@@ -46,7 +46,7 @@ const { showFullBio = false } = Astro.props;
         <a
           href="https://github.com/verygoodplugins"
           target="_blank"
-          class="text-core-muted hover:text-core-accent transition font-mono text-xs uppercase"
+          class="text-lab-muted hover:text-lab-accent transition font-mono text-xs uppercase"
         >
           GitHub
         </a>
@@ -54,14 +54,14 @@ const { showFullBio = false } = Astro.props;
         <a
           href="https://drunk.support"
           target="_blank"
-          class="text-core-muted hover:text-core-accent transition font-mono text-xs uppercase"
+          class="text-lab-muted hover:text-lab-accent transition font-mono text-xs uppercase"
         >
           Blog
         </a>
 
         <a
           href="/authors/jack-arturo"
-          class="text-core-accent hover:underline font-mono text-xs ml-auto"
+          class="text-lab-accent hover:underline font-mono text-xs ml-auto"
         >
           More by Jack →
         </a>

@@ -4,66 +4,97 @@
 
 @layer base {
   :root {
-    --color-bg: #F0F4F8;
-    --color-text: #102A43;
+    /* Default: Memory Lab (Neon/Retro) - Was Dark Mode */
+    --lab-bg: 10 10 10;          /* #0A0A0A */
+    --lab-surface: 26 26 26;     /* #1A1A1A */
+    --lab-border: 51 51 51;      /* #333333 */
+    --lab-text: 224 224 224;     /* #E0E0E0 */
+    --lab-muted: 136 136 136;    /* #888888 */
+    --lab-accent: 255 51 204;    /* #FF33CC */
+    --lab-secondary: 0 255 255;  /* #00FFFF */
+    --lab-success: 204 255 0;    /* #CCFF00 */
+    --lab-error: 255 0 0;        /* #FF0000 */
+    --grid-color: #333333;
+    --shadow-color: rgba(0,0,0,1);
+  }
+
+  .light {
+    /* Light Mode (Blueprint/Clean) - Enhanced with Neon for Friendliness */
+    --lab-bg: 240 244 248;       /* #F0F4F8 */
+    --lab-surface: 255 255 255;  /* #FFFFFF */
+    --lab-border: 188 204 220;   /* #BCCCDC */
+    --lab-text: 16 42 67;        /* #102A43 */
+    --lab-muted: 98 125 152;     /* #627D98 */
+    
+    /* Using Vibrant/Neon accents even in light mode to match Floppy Logo */
+    --lab-accent: 255 51 204;    /* #FF33CC - Hot Pink */
+    --lab-secondary: 0 183 255;  /* #00B7FF - Bright Blue (adjusted for white bg) */
+    --lab-success: 56 193 114;   /* #38C172 */
+    --lab-error: 227 52 47;      /* #E3342F */
+    
+    --grid-color: #D9E2EC;
+    --shadow-color: rgba(16, 42, 67, 0.15);
   }
 
   html {
     scroll-behavior: smooth;
-    background-color: var(--color-bg);
+    overflow-x: hidden;
   }
 
   body {
-    @apply antialiased bg-core-bg text-core-text font-mono;
+    @apply antialiased bg-lab-bg text-lab-text font-mono;
     overflow-x: hidden;
     width: 100%;
     
     /* Blueprint Grid */
-    background-size: 40px 40px;
+    background-size: 24px 24px;
     background-image: 
-      linear-gradient(to right, #D9E2EC 1px, transparent 1px),
-      linear-gradient(to bottom, #D9E2EC 1px, transparent 1px);
+      radial-gradient(var(--grid-color) 1px, transparent 1px);
   }
 
-  ::selection {
-    @apply bg-core-accent/30 text-core-text;
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-lab-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-lab-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-lab-muted;
   }
 }
 
 @layer components {
-  /* "Lab Label" Header style */
   .comment-header {
-    @apply text-core-secondary font-bold uppercase tracking-widest text-xs mb-8 flex items-center gap-2;
+    @apply text-lab-secondary font-bold uppercase tracking-widest text-xs mb-8 flex items-center gap-2;
   }
   
   .comment-header::before {
     content: "";
-    @apply w-3 h-3 bg-core-secondary rounded-full;
+    @apply w-3 h-3 bg-lab-secondary rounded-full;
   }
 
-  /* Fun Button: "Pushable" look */
-  .btn-core {
-    @apply bg-white border-2 border-core-text text-core-text px-6 py-3 
+  .btn-lab {
+    @apply bg-lab-surface border-2 border-lab-text text-lab-text px-6 py-3 
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
            transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
   }
 
-  .btn-core-accent {
-    @apply bg-core-accent text-white border-2 border-core-text px-6 py-3 
+  .btn-lab-accent {
+    @apply bg-lab-accent text-white px-6 py-3 
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
-           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
+           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg border-2 border-lab-text;
   }
 }
 
-/* Animations */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+/* No-scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-
-.cursor-blink::after {
-  content: "█";
-  animation: blink 1s step-end infinite;
-  margin-left: 4px;
-  @apply text-core-accent;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,4 +1,7 @@
 ---
+import '../styles/global.css';
+import Floppy from '../components/Floppy.astro';
+
 export interface Props {
   title: string;
   description?: string;
@@ -36,10 +39,10 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
   </head>
-  <body class="bg-core-bg text-core-text min-h-screen flex font-mono selection:bg-core-accent/20 relative">
+  <body class="bg-lab-bg text-lab-text min-h-screen flex font-mono selection:bg-lab-accent/20 relative">
     
     <!-- Line Numbers (Scrolls with content) -->
-    <div class="hidden md:block w-20 border-r border-core-line bg-core-bg flex-shrink-0 text-right pr-4 py-6 select-none text-core-muted/30 text-xs font-mono leading-7 min-h-screen">
+    <div class="hidden md:block w-20 border-r border-lab-border bg-lab-bg flex-shrink-0 text-right pr-4 py-6 select-none text-lab-muted/30 text-xs font-mono leading-7 min-h-screen">
       {Array.from({ length: 200 }).map((_, i) => (
         <div>0x{(i * 16).toString(16).toUpperCase().padStart(4, '0')}</div>
       ))}
@@ -47,22 +50,32 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
 
     <!-- Main Content Area -->
     <div class="flex-1 w-full max-w-full overflow-x-hidden relative">
-       <!-- Grid overlay -->
-      <div class="absolute inset-0 bg-[radial-gradient(#E5E5E5_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none -z-10"></div>
-
-      <div class="max-w-7xl mx-auto px-6 border-r border-core-line min-h-screen bg-core-bg/50 backdrop-blur-[2px]">
+      
+      <div class="max-w-7xl mx-auto px-6 border-r border-lab-border min-h-screen bg-lab-bg/50 backdrop-blur-[2px]">
         <slot />
         
         <!-- Footer Signature -->
-        <footer class="py-12 border-t border-core-line mt-20 text-core-muted text-sm">
+        <footer class="py-12 border-t border-lab-border mt-20 text-lab-muted text-sm relative">
           <div class="flex justify-between items-center">
             <div>
-              <span class="text-core-accent">→</span> End of file
+              <span class="text-lab-accent">→</span> End of file
             </div>
             <div>
               automem.ai v1.0.0
             </div>
           </div>
+
+          <!-- Peeking Floppy Mascot -->
+          <div class="absolute bottom-0 right-12 hidden md:block group cursor-pointer pointer-events-auto">
+            <div class="transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300 ease-out">
+               <Floppy variant="peek" width="w-24" height="h-24" />
+            </div>
+             <!-- Speech Bubble (Hidden initially) -->
+            <div class="absolute -top-12 right-0 bg-lab-surface border border-lab-text p-2 rounded text-xs text-lab-text shadow-hard opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
+                I never forget!
+            </div>
+          </div>
+
         </footer>
       </div>
     </div>
