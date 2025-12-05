@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 import Floppy from '../components/Floppy.astro';
 
 export interface Props {
@@ -49,9 +50,7 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
 
     <!-- Main Content Area -->
     <div class="flex-1 w-full max-w-full overflow-x-hidden relative">
-       <!-- Grid overlay -->
-      <div class="absolute inset-0 bg-[radial-gradient(#333333_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none -z-10 opacity-20"></div>
-
+      
       <div class="max-w-7xl mx-auto px-6 border-r border-lab-border min-h-screen bg-lab-bg/50 backdrop-blur-[2px]">
         <slot />
         

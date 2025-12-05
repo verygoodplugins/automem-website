@@ -3,10 +3,10 @@
   class="h-14 px-4 md:px-6 flex items-center justify-center border-l border-lab-border hover:bg-lab-text hover:text-lab-bg transition-colors cursor-pointer focus:outline-none"
   aria-label="Toggle Dark Mode"
 >
-  <!-- Sun Icon (shows in dark mode) -->
+  <!-- Sun Icon (shows in default/dark mode) -->
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5 hidden dark:block"
+    class="w-5 h-5 block light:hidden"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -28,7 +28,7 @@
   <!-- Moon Icon (shows in light mode) -->
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5 block dark:hidden"
+    class="w-5 h-5 hidden light:block"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -43,22 +43,37 @@
 <script>
   const themeToggle = document.getElementById('theme-toggle');
 
-  // Check local storage only. Default to 'light' if not set.
+  // Check local storage. Default to 'dark' (Neon/Lab) if not set.
   const getTheme = () => {
     if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
       return localStorage.getItem('theme');
     }
-    // FORCE LIGHT MODE DEFAULT (Ignore system preference for now as per user request)
-    return 'light';
+    return 'dark';
   };
 
   const setTheme = (theme) => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('light');
     }
     localStorage.setItem('theme', theme);
+    
+    // Update icons visibility manually since we're using custom classes
+    const sunIcon = document.querySelector('.light\\:hidden');
+    const moonIcon = document.querySelector('.light\\:block');
+    
+    if (theme === 'light') {
+      sunIcon?.classList.add('hidden');
+      sunIcon?.classList.remove('block');
+      moonIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('block');
+    } else {
+      sunIcon?.classList.remove('hidden');
+      sunIcon?.classList.add('block');
+      moonIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('block');
+    }
   };
 
   // Init
@@ -66,7 +81,7 @@
 
   // Toggle
   themeToggle?.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setTheme(isDark ? 'light' : 'dark');
+    const isLight = document.documentElement.classList.contains('light');
+    setTheme(isLight ? 'dark' : 'light');
   });
 </script>

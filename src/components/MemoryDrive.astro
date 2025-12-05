@@ -2,10 +2,10 @@
 import Floppy from './Floppy.astro';
 ---
 
-<div class="memory-drive-wrapper relative w-full py-24 min-h-[800px]" id="memory-stage">
+<div class="memory-drive-wrapper relative w-full py-12 min-h-[100vh]" id="memory-stage">
   
   <!-- The Stage (Pinned center) -->
-  <div class="sticky top-[20%] w-full max-w-4xl mx-auto h-[500px] flex flex-col items-center justify-center">
+  <div class="sticky top-[20%] w-full max-w-4xl mx-auto h-[400px] flex flex-col items-center justify-center">
     
     <!-- The Drive Slot -->
     <div class="relative z-20 w-96 h-24 bg-lab-surface border-4 border-lab-text rounded-xl shadow-hard flex items-center justify-center overflow-visible mb-8 transition-transform duration-300" id="drive-slot">
@@ -80,16 +80,23 @@ import Floppy from './Floppy.astro';
     const rect = stage.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     
-    // Calculate progress
-    const centerOffset = (viewportHeight / 2) - (rect.top + (rect.height / 2));
+    // Calculate progress based on container position relative to viewport
+    // Start animation when top of container enters view (or slightly after)
+    // End animation when it's scrolled well into view
     
-    // Map offset to floppy position
-    // Start: 250px below drive. End: 20px (inserted)
-    let yPos = 250 - (centerOffset * 0.8);
-    yPos = Math.max(20, Math.min(250, yPos)); 
-
+    // Tighter scroll range for snappier animation with less padding
+    const startTrigger = viewportHeight * 0.7; // Start later
+    const endTrigger = viewportHeight * 0.3;   // End earlier
+    
+    // Progress 0 -> 1 as rect.top goes from startTrigger -> endTrigger
+    let progress = (startTrigger - rect.top) / (startTrigger - endTrigger);
+    progress = Math.max(0, Math.min(1, progress));
+    
+    // Map progress to Y position (250px -> 20px)
+    let yPos = 250 - (progress * 230);
+    
     // Trigger Logic
-    if (yPos <= 25 && state !== 'success') {
+    if (progress >= 0.95 && state !== 'success') {
         // INSERTED!
         if (state !== 'processing') {
             state = 'processing';
@@ -98,7 +105,7 @@ import Floppy from './Floppy.astro';
         // Slide into slot smoothly
         floppy.style.transform = `translateY(-60px) scale(0.95)`; 
         floppy.style.opacity = '0'; 
-    } else if (yPos > 30) {
+    } else if (progress < 0.9) {
         // Reset if scrolled back down
         if (state === 'success' || state === 'processing') {
             resetMemory();
