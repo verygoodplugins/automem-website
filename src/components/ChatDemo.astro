@@ -17,7 +17,7 @@
     </div>
 
     <!-- Messages -->
-    <div class="chat-messages p-6 min-h-[600px] max-h-[700px] overflow-y-auto bg-lab-bg relative">
+    <div class="chat-messages p-6 min-h-[420px] max-h-[520px] md:max-h-[560px] overflow-y-auto bg-lab-bg relative">
       
       <!-- Grid overlay for inside chat -->
       <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
@@ -275,21 +275,18 @@
   const container = document.querySelector('.chat-messages');
   const messages = document.querySelectorAll('.message');
 
+  function scrollToMessage(message) {
+    if (!container || !message) return;
+    const targetTop = Math.max(message.offsetTop - 16, 0);
+    container.scrollTo({ top: targetTop, behavior: 'smooth' });
+  }
+
   function animateMessages() {
     messages.forEach((message, index) => {
       const delay = parseInt(message.getAttribute('data-delay') || '0');
       setTimeout(() => {
         message.classList.add('visible');
-        setTimeout(() => {
-          if (container) {
-             // Auto scroll to bottom on new message
-            const scrollOptions = {
-                top: container.scrollHeight,
-                behavior: 'smooth'
-            };
-            container.scrollTo(scrollOptions);
-          }
-        }, 100);
+        setTimeout(() => scrollToMessage(message), 100);
       }, delay);
     });
   }

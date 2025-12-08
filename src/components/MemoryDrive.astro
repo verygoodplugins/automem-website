@@ -1,203 +1,172 @@
 ---
-import Floppy from './Floppy.astro';
 ---
 
-<div class="memory-drive-wrapper relative w-full py-12 min-h-[100vh]" id="memory-stage">
-  
-  <!-- The Stage (Pinned center) -->
-  <div class="sticky top-[20%] w-full max-w-4xl mx-auto h-[400px] flex flex-col items-center justify-center">
-    
-    <!-- The Drive Slot -->
-    <div class="relative z-20 w-96 h-24 bg-lab-surface border-4 border-lab-text rounded-xl shadow-hard flex items-center justify-center overflow-visible mb-8 transition-transform duration-300" id="drive-slot">
-      <!-- Slot Opening -->
-      <div class="w-72 h-3 bg-lab-bg rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] relative overflow-hidden">
-          <!-- Light inside slot -->
-          <div class="absolute inset-0 bg-lab-success/50 blur-sm opacity-0 transition-opacity duration-300" id="slot-light"></div>
-      </div>
-      
-      <!-- Status Lights -->
-      <div class="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3">
-          <div class="w-3 h-3 rounded-full bg-lab-error opacity-20" id="light-busy"></div>
-          <div class="w-3 h-3 rounded-full bg-lab-success animate-pulse" id="light-ready"></div>
+<div class="memory-graph-shell relative w-full max-w-6xl mx-auto px-4 py-12 overflow-hidden rounded-3xl border-2 border-lab-text bg-lab-bg shadow-hard">
+  <div class="absolute inset-0 bg-[radial-gradient(#1f1f1f_1px,transparent_1px)] [background-size:18px_18px] opacity-30 pointer-events-none"></div>
+  <div class="graph-glow absolute -inset-x-24 inset-y-6 bg-gradient-to-br from-lab-secondary/10 via-lab-accent/5 to-transparent blur-3xl"></div>
+
+  <div class="relative z-10 grid md:grid-cols-[1.3fr_1fr] gap-8 items-center">
+    <!-- Graph stage -->
+    <div class="relative h-[420px]">
+      <svg class="graph-lines absolute inset-0 w-full h-full" viewBox="0 0 1000 520" preserveAspectRatio="none">
+        <g stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-lab-border/80">
+          <line data-edge="core:idea" x1="500" y1="291" x2="220" y2="166" class="edge" />
+          <line data-edge="core:research" x1="500" y1="291" x2="780" y2="177" class="edge" />
+          <line data-edge="core:habit" x1="500" y1="291" x2="180" y2="385" class="edge" />
+          <line data-edge="core:code" x1="500" y1="291" x2="820" y2="364" class="edge" />
+          <line data-edge="idea:research" x1="220" y1="166" x2="780" y2="177" class="edge" />
+          <line data-edge="habit:code" x1="180" y1="385" x2="820" y2="364" class="edge" />
+          <line data-edge="research:code" x1="780" y1="177" x2="820" y2="364" class="edge" />
+          <line data-edge="habit:idea" x1="180" y1="385" x2="220" y2="166" class="edge" />
+          <line data-edge="core:retrieval" x1="500" y1="291" x2="500" y2="83" class="edge" />
+          <line data-edge="retrieval:thread" x1="500" y1="83" x2="700" y2="125" class="edge" />
+          <line data-edge="retrieval:session" x1="500" y1="83" x2="300" y2="125" class="edge" />
+        </g>
+      </svg>
+
+      <!-- Nodes -->
+      <div class="node core" data-node="core" style="left: 50%; top: 56%;">
+        <div class="node-body">
+          <div class="node-label text-xs tracking-wider text-lab-muted">MEMORY CORE</div>
+          <div class="text-lab-text font-bold">AutoMem</div>
+        </div>
       </div>
 
-      <!-- Thinking Bubble (Expands from right) -->
-      <div class="absolute left-full ml-12 top-0 min-w-[320px] md:min-w-[400px] opacity-0 transition-all duration-500 transform translate-x-[-10px]" id="thought-bubble">
-        <div class="bg-lab-surface border-2 border-lab-text p-6 rounded-xl shadow-hard text-base font-mono relative">
-            <!-- Triangle pointer -->
-            <div class="absolute top-8 -left-3 w-6 h-6 bg-lab-surface border-l-2 border-b-2 border-lab-text transform rotate-45"></div>
-            
-            <!-- Header -->
-            <div class="flex items-center gap-3 mb-3 text-sm text-lab-muted uppercase tracking-widest border-b border-lab-border pb-2">
-                <span class="animate-pulse text-lab-accent">●</span> Thinking
-            </div>
-            
-            <!-- Content Stream -->
-            <div class="space-y-2 text-lab-text" id="thought-content">
-                <!-- JS will inject text here -->
-                <span class="opacity-50">Analyzing context...</span>
-            </div>
+      <div class="node" data-node="idea" style="left: 22%; top: 32%;">Ideas</div>
+      <div class="node" data-node="research" style="left: 78%; top: 34%;">Research</div>
+      <div class="node" data-node="habit" style="left: 18%; top: 74%;">Habits</div>
+      <div class="node" data-node="code" style="left: 82%; top: 70%;">Code</div>
+      <div class="node pill" data-node="retrieval" style="left: 50%; top: 16%;">Retrieval Graph</div>
+      <div class="node small" data-node="thread" style="left: 70%; top: 24%;">Thread</div>
+      <div class="node small" data-node="session" style="left: 30%; top: 24%;">Session</div>
+    </div>
+
+    <!-- Copy -->
+    <div class="space-y-4 relative">
+      <div class="comment-header">:: BACKGROUND_PROCESS</div>
+      <h3 class="text-3xl font-bold leading-tight">Organizes itself while you work.</h3>
+      <p class="text-lab-muted leading-relaxed">
+        AutoMem runs quietly in the background, stitching every thought into a retrieval graph. It notices patterns,
+        links context, and keeps the right edges warm so your agents answer with your voice—without you ever thinking about it.
+      </p>
+      <div class="bg-lab-surface border border-lab-border rounded-xl p-4 font-mono text-sm shadow-hard">
+        <div class="flex items-center gap-2 mb-2 text-lab-secondary uppercase text-xs tracking-widest">
+          <span class="w-2 h-2 rounded-full bg-lab-success animate-pulse"></span>
+          daemon: recall.service
+        </div>
+        <div class="space-y-1 text-lab-text">
+          <div>&gt; ingest(stream) → normalize → link()</div>
+          <div class="text-lab-muted">paths warmed: 12 · associations refreshed: 48ms</div>
         </div>
       </div>
     </div>
-
-    <!-- The Floppy (Moves up) -->
-    <div class="absolute top-full transition-transform duration-100 ease-out z-10" id="floppy-actor">
-      <!-- Standard Face -->
-      <div id="floppy-idle" class="block transition-opacity duration-300">
-        <Floppy variant="idle" width="w-48" height="h-48" />
-      </div>
-      <!-- Happy Face (Swapped on success) -->
-      <div id="floppy-happy" class="hidden transition-opacity duration-300">
-         <Floppy variant="happy" width="w-48" height="h-48" />
-      </div>
-    </div>
-
   </div>
-
-  <!-- Trigger zones for scroll logic -->
-  <div class="absolute inset-0 pointer-events-none" id="scroll-track"></div>
-
 </div>
 
+<style>
+  .memory-graph-shell .node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    padding: 10px 14px;
+    background: #0A0A0A;
+    border: 2px solid #1f1f1f;
+    border-radius: 14px;
+    color: #cbd5e1;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    box-shadow: 6px 6px 0 #000;
+    transition: border-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+
+  .memory-graph-shell .node.core {
+    padding: 18px 24px;
+    border-radius: 18px;
+    border-color: #6ee7ff;
+    background: linear-gradient(145deg, rgba(110, 231, 255, 0.12), rgba(79, 70, 229, 0.12));
+    box-shadow: 10px 10px 0 #000;
+  }
+
+  .memory-graph-shell .node.pill {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.08);
+  }
+
+  .memory-graph-shell .node.small {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .memory-graph-shell .node.active {
+    border-color: #f472b6;
+    color: #fdf2f8;
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.18), rgba(56, 189, 248, 0.12));
+    box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.35), 8px 8px 0 #000;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+
+  .memory-graph-shell .node:hover {
+    border-color: #f472b6;
+    color: #fdf2f8;
+  }
+
+  .memory-graph-shell .edge {
+    stroke: currentColor;
+    stroke-dasharray: 6 6;
+    opacity: 0.35;
+    transition: opacity 0.4s ease, stroke 0.4s ease;
+  }
+
+  .memory-graph-shell .edge.active {
+    stroke: #f472b6;
+    opacity: 0.9;
+    stroke-dasharray: 2 8;
+    animation: dash-move 1.2s linear infinite;
+  }
+
+  .graph-lines {
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.2));
+  }
+
+  @keyframes dash-move {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
+</style>
+
 <script>
-  const stage = document.getElementById('memory-stage');
-  const floppy = document.getElementById('floppy-actor');
-  const floppyIdle = document.getElementById('floppy-idle');
-  const floppyHappy = document.getElementById('floppy-happy');
-  const drive = document.getElementById('drive-slot');
-  const thoughtBubble = document.getElementById('thought-bubble');
-  const thoughtContent = document.getElementById('thought-content');
-  const lightBusy = document.getElementById('light-busy');
-  const lightReady = document.getElementById('light-ready');
-  const slotLight = document.getElementById('slot-light');
+  const nodes = Array.from(document.querySelectorAll('[data-node]'));
+  const edges = Array.from(document.querySelectorAll('[data-edge]'));
 
-  let state = 'idle'; // idle, inserting, processing, success
+  const sequences = [
+    { nodes: ['idea', 'core', 'research'], edges: ['core:idea', 'core:research', 'idea:research'] },
+    { nodes: ['habit', 'core', 'code'], edges: ['core:habit', 'core:code', 'habit:code'] },
+    { nodes: ['retrieval', 'thread', 'session', 'core'], edges: ['core:retrieval', 'retrieval:thread', 'retrieval:session'] },
+    { nodes: ['code', 'research'], edges: ['research:code'] },
+  ];
 
-  function updateScroll() {
-    if (!stage || !floppy) return;
-
-    const rect = stage.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    
-    // Calculate progress based on container position relative to viewport
-    // Start animation when top of container enters view (or slightly after)
-    // End animation when it's scrolled well into view
-    
-    // Tighter scroll range for snappier animation with less padding
-    const startTrigger = viewportHeight * 0.7; // Start later
-    const endTrigger = viewportHeight * 0.3;   // End earlier
-    
-    // Progress 0 -> 1 as rect.top goes from startTrigger -> endTrigger
-    let progress = (startTrigger - rect.top) / (startTrigger - endTrigger);
-    progress = Math.max(0, Math.min(1, progress));
-    
-    // Map progress to Y position (250px -> 20px)
-    let yPos = 250 - (progress * 230);
-    
-    // Trigger Logic
-    if (progress >= 0.95 && state !== 'success') {
-        // INSERTED!
-        if (state !== 'processing') {
-            state = 'processing';
-            processMemory();
-        }
-        // Slide into slot smoothly
-        floppy.style.transform = `translateY(-60px) scale(0.95)`; 
-        floppy.style.opacity = '0'; 
-    } else if (progress < 0.9) {
-        // Reset if scrolled back down
-        if (state === 'success' || state === 'processing') {
-            resetMemory();
-        }
-        floppy.style.transform = `translateY(${yPos}px)`;
-        floppy.style.opacity = '1';
-    }
+  function clearActive() {
+    nodes.forEach((n) => n.classList.remove('active'));
+    edges.forEach((e) => e.classList.remove('active'));
   }
 
-  function processMemory() {
-    // 1. Lights
-    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success/20'; // Ready off
-    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error animate-pulse opacity-100'; // Busy on
-    
-    // 2. Show Thinking Bubble
-    if(thoughtBubble) {
-        thoughtBubble.style.opacity = '1';
-        thoughtBubble.style.transform = 'translateX(0)';
-    }
+  function runSequence(index = 0) {
+    const seq = sequences[index % sequences.length];
+    clearActive();
 
-    // 3. Text Stream Simulation
-    const thoughts = [
-        "Parsing user context...",
-        "Vectorizing input...",
-        "<span class='text-lab-accent'>FOUND_MATCH:</span> Previous project",
-        "<span class='text-lab-success'>RECALLING:</span> Vite + React config"
-    ];
+    seq.nodes.forEach((id, i) => {
+      const nodeEl = nodes.find((n) => n.dataset.node === id);
+      if (nodeEl) setTimeout(() => nodeEl.classList.add('active'), 120 * i);
+    });
 
-    let i = 0;
-    if(thoughtContent) {
-        thoughtContent.innerHTML = '';
-        const interval = setInterval(() => {
-            if (i >= thoughts.length) {
-                clearInterval(interval);
-                completeMemory();
-            } else {
-                const p = document.createElement('div');
-                p.innerHTML = `> ${thoughts[i]}`;
-                p.className = "opacity-0 transform translate-y-2 transition-all duration-300";
-                thoughtContent.appendChild(p);
-                
-                requestAnimationFrame(() => {
-                    p.className = "opacity-100 transform translate-y-0 transition-all duration-300";
-                });
-                
-                i++;
-            }
-        }, 600);
-    }
+    seq.edges.forEach((id, i) => {
+      const edgeEl = edges.find((e) => e.dataset.edge === id);
+      if (edgeEl) setTimeout(() => edgeEl.classList.add('active'), 160 * i);
+    });
+
+    setTimeout(() => runSequence(index + 1), 3200);
   }
 
-  function completeMemory() {
-    state = 'success';
-    
-    // Lights Green
-    if(lightBusy) lightBusy.className = 'w-3 h-3 rounded-full bg-lab-error opacity-20';
-    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success';
-    if(slotLight) slotLight.style.opacity = '1';
-
-    // Eject Floppy with Happy Face
-    if(floppy && floppyIdle && floppyHappy) {
-        floppyIdle.classList.add('hidden');
-        floppyHappy.classList.remove('hidden');
-        
-        floppy.style.opacity = '1';
-        floppy.style.transform = 'translateY(30px) scale(1)'; // Slide out happy
-        
-        // Celebrate
-        if(drive) drive.style.transform = "scale(1.02)";
-        setTimeout(() => { if(drive) drive.style.transform = "scale(1)"; }, 200);
-    }
-  }
-
-  function resetMemory() {
-    state = 'idle';
-    if(floppyIdle && floppyHappy) {
-        floppyIdle.classList.remove('hidden');
-        floppyHappy.classList.add('hidden');
-    }
-    if(thoughtBubble) {
-        thoughtBubble.style.opacity = '0';
-        thoughtBubble.style.transform = 'translateX(-10px)';
-    }
-    if(slotLight) slotLight.style.opacity = '0';
-    if(lightReady) lightReady.className = 'w-3 h-3 rounded-full bg-lab-success animate-pulse';
-  }
-
-  // Listen to scroll
-  window.addEventListener('scroll', () => {
-    window.requestAnimationFrame(updateScroll);
-  });
-  
-  // Init
-  updateScroll();
+  runSequence();
 </script>

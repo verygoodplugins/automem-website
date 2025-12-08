@@ -33,8 +33,6 @@ export function buildWelcomeEmail(opts) {
     'Unsubscribe: ' + unsubscribeUrl,
   ].join('\n');
 
-  const robotIcon = `https://automem.ai/robot-icon.svg`;
-
   const html = `
   <!doctype html>
   <html>
@@ -114,7 +112,6 @@ export function buildConfirmEmail(opts) {
     'If this wasn’t you, ignore this email.',
     'Unsubscribe: ' + unsubscribeUrl,
   ].join('\n');
-  const robotIcon = `https://automem.ai/robot-icon.svg`;
   const html = `
   <!doctype html>
   <html>

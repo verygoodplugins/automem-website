@@ -180,7 +180,7 @@ The whole point of open source is that **you own it**. Railway is convenient, bu
 
 ## Need Help?
 
-- [GitHub Discussions](https://github.com/verygoodplugins/automem/discussions) for questions
+- [GitHub Issues](https://github.com/verygoodplugins/automem/issues) for questions
 - [GitHub Issues](https://github.com/verygoodplugins/automem/issues) for bugs
 - [Discord](https://discord.gg/automem) for real-time chat
 
