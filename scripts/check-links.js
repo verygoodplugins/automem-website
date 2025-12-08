@@ -65,8 +65,23 @@ async function main() {
   });
 
   let serverPid = server.pid;
+  let spawnError = null;
+
+  // Handle spawn failure
+  server.on('error', (err) => {
+    spawnError = err;
+    console.error('❌ Failed to spawn server:', err);
+  });
   
   try {
+    // Check if spawn failed before waiting
+    if (spawnError) {
+      throw spawnError;
+    }
+    if (!serverPid || typeof serverPid !== 'number') {
+      throw new Error('Server process failed to start (no PID)');
+    }
+    
     await waitForServer(port);
     console.log(`🔍 Checking links on http://localhost:${port}...`);
 
@@ -110,7 +125,14 @@ async function main() {
 
     console.log('\n✅ All links are valid!');
   } finally {
-    try { process.kill(-serverPid); } catch {}
+    // Only kill if we have a valid PID
+    if (serverPid && typeof serverPid === 'number') {
+      try { 
+        process.kill(-serverPid); 
+      } catch (killErr) {
+        // Ignore kill errors in cleanup
+      }
+    }
   }
 }
 

@@ -101,21 +101,24 @@ const timelineEntries = [
                 delay="{1500}"
                 class="text-lab-muted"
               />
-          </p>
-        </div>
+            </p>
+          </div>
 
           <div class="mt-12 flex flex-wrap gap-4">
             <a href="/docs" class="btn-lab-accent shadow-hard">
               INIT_SYSTEM.sh
             </a>
-            <a href={GITHUB_URL_UTM} class="btn-lab group gap-2">
+            <a
+              href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist"
+              class="btn-lab group gap-2"
+            >
               <span>SOURCE_CODE</span>
               <span class="text-xs bg-lab-text text-lab-bg px-1.5 rounded"
                 >GITHUB</span
               >
             </a>
-                    </div>
-                  </div>
+          </div>
+        </div>
 
         <!-- Right: The Machine (Chat Demo) -->
         <div class="relative">
@@ -199,17 +202,24 @@ const timelineEntries = [
     </section>
 
     <!-- Memory Drive Animation -->
-    <section class="px-6 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden">
-        <div class="comment-header">:: VISUALIZE_MEMORY</div>
-        <div class="relative z-10">
+    <section
+      class="px-6 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
+    >
+      <div class="comment-header">:: VISUALIZE_MEMORY</div>
+      <div class="relative z-10">
         <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">It just clicks.</h2>
-                <p class="text-lab-muted max-w-xl mx-auto">AutoMem runs quietly in the background, organizing your thoughts into a retrieval graph.</p>
-            </div>
-            <MemoryDrive />
+          <h2 class="text-3xl font-bold mb-4">It just clicks.</h2>
+          <p class="text-lab-muted max-w-xl mx-auto">
+            AutoMem runs quietly in the background, organizing your thoughts
+            into a retrieval graph.
+          </p>
         </div>
-         <!-- Background grid for depth -->
-        <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
+        <MemoryDrive />
+      </div>
+      <!-- Background grid for depth -->
+      <div
+        class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"
+      ></div>
     </section>
 
     <!-- Timeline / Changelog -->
@@ -222,25 +232,21 @@ const timelineEntries = [
 
         <div class="space-y-12 relative">
           {timelineEntries.map((entry) => (
-            <div class="timeline-item flex gap-6" data-timeline-item>
-              <div
-                class="font-mono text-sm text-lab-muted text-right w-28 pt-1 hidden md:block"
-              >
-                {entry.date}<br />{entry.time}
-              </div>
-              <div class="flex-1 border-l-2 border-lab-border pl-8 relative">
-                <div
-                  class="timeline-dot"
-                ></div>
-                <div class="md:hidden text-xs font-mono text-lab-muted mb-1">
-                  {entry.date} · {entry.time}
-                </div>
-                <h3 class="text-xl font-bold">{entry.title}</h3>
-                <p class="mt-2 text-lab-text/80 max-w-xl">
-                  {entry.description}
-                </p>
-              </div>
+          <div class="timeline-item flex gap-6" data-timeline-item>
+            <div
+              class="font-mono text-sm text-lab-muted text-right w-28 pt-1 hidden md:block"
+            >
+              {entry.date}<br />{entry.time}
             </div>
+            <div class="flex-1 border-l-2 border-lab-border pl-8 relative">
+              <div class="timeline-dot"></div>
+              <div class="md:hidden text-xs font-mono text-lab-muted mb-1">
+                {entry.date} · {entry.time}
+              </div>
+              <h3 class="text-xl font-bold">{entry.title}</h3>
+              <p class="mt-2 text-lab-text/80 max-w-xl">{entry.description}</p>
+            </div>
+          </div>
           ))}
         </div>
       </div>
@@ -253,12 +259,12 @@ const timelineEntries = [
         <div class="text-center max-w-2xl mx-auto mb-16">
           <h2 class="text-4xl font-bold mb-6 tracking-tighter">
             Open Source & Portable
-        </h2>
+          </h2>
           <p class="text-xl text-lab-muted">
             Your memory infrastructure should be as portable as your code. Run
             it on your laptop, your private cloud, or our managed service.
-            </p>
-          </div>
+          </p>
+        </div>
 
         <div class="grid md:grid-cols-3 gap-8">
           <!-- Option 1: Docker -->
@@ -394,15 +400,17 @@ const timelineEntries = [
   </style>
 
   <script>
-    const timeline = document.getElementById('project-timeline');
-    const items = Array.from(document.querySelectorAll('[data-timeline-item]'));
-    const fill = document.getElementById('timeline-line-fill');
+    const timeline = document.getElementById("project-timeline");
+    const items = Array.from(document.querySelectorAll("[data-timeline-item]"));
+    const fill = document.getElementById("timeline-line-fill");
 
     function updateFill(target) {
       if (!timeline || !fill || !target) return;
-      const containerTop = timeline.getBoundingClientRect().top + window.scrollY;
+      const containerTop =
+        timeline.getBoundingClientRect().top + window.scrollY;
       const rect = target.getBoundingClientRect();
-      const center = rect.top + window.scrollY - containerTop + rect.height * 0.5;
+      const center =
+        rect.top + window.scrollY - containerTop + rect.height * 0.5;
       const maxHeight = timeline.offsetHeight || 0;
       fill.style.height = `${Math.min(center, maxHeight)}px`;
     }
@@ -411,7 +419,7 @@ const timelineEntries = [
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
+            entry.target.classList.add("visible");
             updateFill(entry.target);
           }
         });
