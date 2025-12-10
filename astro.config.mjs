@@ -16,9 +16,16 @@ export default defineConfig({
   adapter: cloudflare({
     mode: 'directory'
   }),
+  server: {
+    host: '0.0.0.0',
+    port: 5000
+  },
   vite: {
     build: {
       minify: 'esbuild'
+    },
+    server: {
+      allowedHosts: true
     }
   }
 });
