@@ -15,6 +15,8 @@ export default {
           secondary: 'rgb(var(--lab-secondary) / <alpha-value>)',
           success: 'rgb(var(--lab-success) / <alpha-value>)',
           error: 'rgb(var(--lab-error) / <alpha-value>)',
+          gold: 'rgb(var(--lab-gold) / <alpha-value>)',
+          'gold-dark': 'rgb(var(--lab-gold-dark) / <alpha-value>)',
         }
       },
       fontFamily: {

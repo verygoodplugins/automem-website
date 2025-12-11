@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
-import Floppy from '../components/Floppy.astro';
+import AutoJack from '../components/AutoJack.astro';
+import AutoJackPeek from '../components/AutoJackPeek.astro';
 
 export interface Props {
   title: string;
@@ -56,28 +57,39 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
         
         <!-- Footer Signature -->
         <footer class="py-12 border-t border-lab-border mt-20 text-lab-muted text-sm relative">
-          <div class="flex justify-between items-center">
-            <div>
-              <span class="text-lab-accent">→</span> End of file
+          <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+              <AutoJack size={24} expression="happy" animate={false} />
+              <span>Made with <span class="text-lab-accent">memory</span> by cool people</span>
             </div>
-            <div>
-              automem.ai v1.0.0
-            </div>
-          </div>
-
-          <!-- Peeking Floppy Mascot -->
-          <div class="absolute bottom-0 right-12 hidden md:block group cursor-pointer pointer-events-auto">
-            <div class="transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300 ease-out">
-               <Floppy variant="peek" width="w-24" height="h-24" />
-            </div>
-             <!-- Speech Bubble (Hidden initially) -->
-            <div class="absolute -top-12 right-0 bg-lab-surface border border-lab-text p-2 rounded text-xs text-lab-text shadow-hard opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                I never forget!
+            <div class="flex items-center gap-4">
+              <a href="https://github.com/verygoodplugins/automem" target="_blank" class="hover:text-lab-accent transition-colors">GitHub</a>
+              <span class="text-lab-border">|</span>
+              <span>automem.ai v1.0.0</span>
             </div>
           </div>
-
         </footer>
       </div>
+      
+      <!-- AutoJack Peek Helper -->
+      <AutoJackPeek position="bottom-right" />
     </div>
+    
+    <!-- Film Grain Overlay -->
+    <div class="grain-overlay"></div>
+    
+    <style is:global>
+      .grain-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      }
+    </style>
   </body>
 </html>
