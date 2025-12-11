@@ -17,15 +17,12 @@
     </div>
 
     <!-- Messages -->
-    <div class="chat-messages p-6 h-[420px] md:h-[480px] overflow-y-auto bg-lab-bg relative flex flex-col">
+    <div class="chat-messages p-6 h-[420px] md:h-[480px] overflow-y-auto bg-lab-bg relative">
       
       <!-- Grid overlay for inside chat -->
       <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
-
-      <div class="messages-wrapper flex flex-col space-y-6 relative z-10">
-        <!-- Spacer that pushes content down initially -->
-        <div class="flex-grow message-spacer"></div>
-        
+      
+      <div class="messages-wrapper flex flex-col space-y-6 relative z-10 pt-[320px] transition-all duration-500" id="messages-wrapper">
         <!-- Initial greeting - visible from start -->
         <div class="message visible" data-delay="0">
         <div class="flex justify-start">
@@ -265,15 +262,6 @@
     transform: translateY(0);
   }
 
-  .message-spacer {
-    min-height: 280px;
-    transition: min-height 0.5s ease-out;
-  }
-
-  .message-spacer.shrink {
-    min-height: 0;
-  }
-
   /* Ensure animations work even if JS fails */
   @media (prefers-reduced-motion: reduce) {
     .message {
@@ -285,13 +273,10 @@
 
 <script>
   const container = document.querySelector('.chat-messages');
+  const wrapper = document.getElementById('messages-wrapper');
   const messages = document.querySelectorAll('.message');
-  const spacer = document.querySelector('.message-spacer');
-
-  function scrollToBottom() {
-    if (!container) return;
-    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-  }
+  
+  const paddingSteps = [320, 280, 240, 200, 160, 120, 80, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   function animateMessages() {
     let visibleCount = 0;
@@ -300,10 +285,18 @@
       setTimeout(() => {
         message.classList.add('visible');
         visibleCount++;
-        if (visibleCount >= 3 && spacer) {
-          spacer.classList.add('shrink');
+        
+        // Reduce top padding as messages accumulate
+        if (wrapper && visibleCount < paddingSteps.length) {
+          wrapper.style.paddingTop = paddingSteps[visibleCount] + 'px';
         }
-        setTimeout(scrollToBottom, 100);
+        
+        // Scroll to keep latest visible once content overflows
+        setTimeout(() => {
+          if (container && container.scrollHeight > container.clientHeight) {
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+          }
+        }, 150);
       }, delay);
     });
   }
@@ -316,7 +309,7 @@
     messages.forEach((message, index) => {
       if (index > 0) message.classList.remove('visible');
     });
-    if (spacer) spacer.classList.remove('shrink');
+    if (wrapper) wrapper.style.paddingTop = '320px';
     if (container) container.scrollTop = 0;
     setTimeout(animateMessages, 1000);
   }, 25000);
