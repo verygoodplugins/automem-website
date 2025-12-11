@@ -17,12 +17,15 @@
     </div>
 
     <!-- Messages -->
-    <div class="chat-messages p-6 min-h-[420px] max-h-[520px] md:max-h-[560px] overflow-y-auto bg-lab-bg relative">
+    <div class="chat-messages p-6 h-[420px] md:h-[480px] overflow-y-auto bg-lab-bg relative flex flex-col">
       
       <!-- Grid overlay for inside chat -->
       <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
 
-      <div class="messages-wrapper flex flex-col justify-start space-y-6 relative z-10">
+      <div class="messages-wrapper flex flex-col space-y-6 relative z-10">
+        <!-- Spacer that pushes content down initially -->
+        <div class="flex-grow message-spacer"></div>
+        
         <!-- Initial greeting - visible from start -->
         <div class="message visible" data-delay="0">
         <div class="flex justify-start">
@@ -252,14 +255,23 @@
   }
 
   .message {
-    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(20px);
   }
 
   .message.visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  .message-spacer {
+    min-height: 280px;
+    transition: min-height 0.5s ease-out;
+  }
+
+  .message-spacer.shrink {
+    min-height: 0;
   }
 
   /* Ensure animations work even if JS fails */
@@ -274,19 +286,24 @@
 <script>
   const container = document.querySelector('.chat-messages');
   const messages = document.querySelectorAll('.message');
+  const spacer = document.querySelector('.message-spacer');
 
-  function scrollToMessage(message) {
-    if (!container || !message) return;
-    const targetTop = Math.max(message.offsetTop - 16, 0);
-    container.scrollTo({ top: targetTop, behavior: 'smooth' });
+  function scrollToBottom() {
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
   }
 
   function animateMessages() {
+    let visibleCount = 0;
     messages.forEach((message, index) => {
       const delay = parseInt(message.getAttribute('data-delay') || '0');
       setTimeout(() => {
         message.classList.add('visible');
-        setTimeout(() => scrollToMessage(message), 100);
+        visibleCount++;
+        if (visibleCount >= 3 && spacer) {
+          spacer.classList.add('shrink');
+        }
+        setTimeout(scrollToBottom, 100);
       }, delay);
     });
   }
@@ -299,6 +316,7 @@
     messages.forEach((message, index) => {
       if (index > 0) message.classList.remove('visible');
     });
+    if (spacer) spacer.classList.remove('shrink');
     if (container) container.scrollTop = 0;
     setTimeout(animateMessages, 1000);
   }, 25000);
