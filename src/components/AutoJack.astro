@@ -1,0 +1,157 @@
+---
+interface Props {
+  expression?: 'confident' | 'wink' | 'happy' | 'sleeping' | 'bliss' | 'focused';
+  size?: number;
+  class?: string;
+  animate?: boolean;
+}
+
+const { 
+  expression = 'confident', 
+  size = 80, 
+  class: className = '',
+  animate = true 
+} = Astro.props;
+
+const strokeWidth = 3 * (size / 100);
+---
+
+<div class={`autojack-container ${className}`} style={`width: ${size}px; height: ${size}px;`}>
+  <svg viewBox="0 0 100 100" class={`autojack-svg ${animate ? 'animate-idle' : ''}`}>
+    <defs>
+      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="2" dy="4" stdDeviation="0" flood-color="#000000" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    
+    <g filter="url(#dropShadow)">
+      <rect x="10" y="10" width="80" height="80" rx="8" 
+            fill="var(--mascot-gold)" 
+            stroke="var(--mascot-stroke)" 
+            stroke-width={strokeWidth}/>
+      
+      <path d="M90 10 L90 30 L70 10 Z" fill="var(--mascot-stroke)"/>
+      
+      <rect x="22" y="10" width="56" height="30" rx="4" 
+            fill="var(--mascot-metal)" 
+            stroke="var(--mascot-stroke)" 
+            stroke-width={strokeWidth * 0.8}/>
+      <rect x="38" y="15" width="14" height="18" rx="2" 
+            fill="var(--mascot-stroke)" 
+            opacity="0.8"/>
+      
+      <rect x="15" y="52" width="70" height="33" rx="4" 
+            fill="var(--mascot-gold-secondary)" 
+            stroke="var(--mascot-stroke)" 
+            stroke-width={strokeWidth * 0.8}/>
+      
+      <g class="face">
+        {expression === 'confident' && (
+          <>
+            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <ellipse cx="62" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <path d="M42 76 Q50 82 58 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+          </>
+        )}
+        
+        {expression === 'wink' && (
+          <>
+            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <path d="M57 66 L67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
+            <path d="M42 76 Q50 82 58 74" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+          </>
+        )}
+        
+        {expression === 'happy' && (
+          <>
+            <path d="M33 66 Q38 60 43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+            <path d="M57 66 Q62 60 67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+            <path d="M40 76 Q50 85 60 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+          </>
+        )}
+        
+        {expression === 'sleeping' && (
+          <>
+            <path d="M33 66 L43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
+            <path d="M57 66 L67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
+            <path d="M45 78 L55 78" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
+          </>
+        )}
+        
+        {expression === 'bliss' && (
+          <>
+            <path d="M33 66 Q38 60 43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+            <path d="M57 66 Q62 60 67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+            <path d="M38 76 Q50 88 62 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
+            <circle cx="28" cy="72" r="4" fill="var(--mascot-blush)" opacity="0.6"/>
+            <circle cx="72" cy="72" r="4" fill="var(--mascot-blush)" opacity="0.6"/>
+          </>
+        )}
+        
+        {expression === 'focused' && (
+          <>
+            <path d="M32 62 L44 62" stroke="var(--mascot-stroke)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M56 62 L68 62" stroke="var(--mascot-stroke)" stroke-width="2" stroke-linecap="round"/>
+            <ellipse cx="38" cy="68" rx="3" ry="4" fill="var(--mascot-stroke)"/>
+            <ellipse cx="62" cy="68" rx="3" ry="4" fill="var(--mascot-stroke)"/>
+            <ellipse cx="50" cy="78" rx="3" ry="2" fill="var(--mascot-stroke)" opacity="0.8"/>
+          </>
+        )}
+      </g>
+      
+      {animate && (
+        <g class="sparkles">
+          <circle cx="8" cy="8" r="2" fill="var(--mascot-gold)" class="sparkle sparkle-1"/>
+          <circle cx="92" cy="15" r="1.5" fill="var(--mascot-gold)" class="sparkle sparkle-2"/>
+          <circle cx="5" cy="50" r="1" fill="var(--mascot-gold)" class="sparkle sparkle-3"/>
+        </g>
+      )}
+    </g>
+  </svg>
+</div>
+
+<style>
+  :root {
+    --mascot-gold: #D4A425;
+    --mascot-gold-secondary: #B8860B;
+    --mascot-gold-glow: rgba(212, 164, 37, 0.4);
+    --mascot-metal: #e5e5e5;
+    --mascot-stroke: #1a1a1a;
+    --mascot-drive-green: #34D399;
+    --mascot-blush: #ff9999;
+  }
+  
+  .autojack-container {
+    display: inline-block;
+    position: relative;
+  }
+  
+  .autojack-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  
+  .animate-idle {
+    animation: idle-sway 4s ease-in-out infinite;
+  }
+  
+  @keyframes idle-sway {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(2deg); }
+    75% { transform: rotate(-2deg); }
+  }
+  
+  .sparkle {
+    animation: sparkle-pulse 2s ease-in-out infinite;
+  }
+  
+  .sparkle-1 { animation-delay: 0s; }
+  .sparkle-2 { animation-delay: 0.5s; }
+  .sparkle-3 { animation-delay: 1s; }
+  
+  @keyframes sparkle-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+</style>
