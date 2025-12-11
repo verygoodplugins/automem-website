@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import cloudflare from '@astrojs/cloudflare';
+import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
@@ -12,9 +12,9 @@ export default defineConfig({
     mdx(),
     sitemap()
   ],
-  output: 'static',
-  adapter: cloudflare({
-    mode: 'directory'
+  output: 'server',
+  adapter: node({
+    mode: 'standalone'
   }),
   server: {
     host: '0.0.0.0',
