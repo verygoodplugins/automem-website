@@ -11,8 +11,9 @@ const { position = 'bottom-right' } = Astro.props;
     <svg viewBox="0 0 100 60" class="peek-svg">
       <defs>
         <linearGradient id="peekGoldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#D4A425"/>
-          <stop offset="100%" style="stop-color:#B8860B"/>
+          <stop offset="0%" style="stop-color:#FFE082"/>
+          <stop offset="50%" style="stop-color:#F9D857"/>
+          <stop offset="100%" style="stop-color:#DAA520"/>
         </linearGradient>
       </defs>
       
@@ -70,7 +71,7 @@ const { position = 'bottom-right' } = Astro.props;
   .peek-svg {
     width: 80px;
     height: 48px;
-    filter: drop-shadow(0 -2px 8px rgba(212, 164, 37, 0.3));
+    filter: drop-shadow(0 -2px 8px rgba(249, 216, 87, 0.3));
     transition: transform 0.3s ease;
   }
   
