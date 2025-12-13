@@ -16,6 +16,8 @@ export default {
           success: 'rgb(var(--lab-success) / <alpha-value>)',
           error: 'rgb(var(--lab-error) / <alpha-value>)',
           gold: 'rgb(var(--lab-gold) / <alpha-value>)',
+          'gold-soft': 'rgb(var(--lab-gold-soft) / <alpha-value>)',
+          'gold-classic': 'rgb(var(--lab-gold-classic) / <alpha-value>)',
           'gold-dark': 'rgb(var(--lab-gold-dark) / <alpha-value>)',
         }
       },

@@ -1,157 +1,123 @@
 ---
 interface Props {
-  expression?: 'confident' | 'wink' | 'happy' | 'sleeping' | 'bliss' | 'focused';
   size?: number;
-  class?: string;
+  expression?: 'confident' | 'wink' | 'happy' | 'sleeping' | 'bliss' | 'focused';
   animate?: boolean;
+  class?: string;
 }
 
 const { 
-  expression = 'confident', 
-  size = 80, 
-  class: className = '',
-  animate = true 
+  size = 100, 
+  expression = 'confident',
+  animate = true,
+  class: className = ''
 } = Astro.props;
-
-const strokeWidth = 3 * (size / 100);
 ---
 
-<div class={`autojack-container ${className}`} style={`width: ${size}px; height: ${size}px;`}>
-  <svg viewBox="0 0 100 100" class={`autojack-svg ${animate ? 'animate-idle' : ''}`}>
+<div class={`autojack-wrapper ${className}`} style={`width: ${size}px; height: ${size}px;`}>
+  <svg viewBox="0 0 100 100" class="autojack-svg" style={`width: ${size}px; height: ${size}px;`}>
     <defs>
-      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="2" dy="4" stdDeviation="0" flood-color="#000000" flood-opacity="0.3"/>
-      </filter>
+      <linearGradient id={`goldGradient-${size}`} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#FFE082"/>
+        <stop offset="50%" style="stop-color:#F9D857"/>
+        <stop offset="100%" style="stop-color:#DAA520"/>
+      </linearGradient>
     </defs>
     
-    <g filter="url(#dropShadow)">
-      <rect x="10" y="10" width="80" height="80" rx="8" 
-            fill="var(--mascot-gold)" 
-            stroke="var(--mascot-stroke)" 
-            stroke-width={strokeWidth}/>
+    <g class="disk-body">
+      <rect x="10" y="10" width="80" height="80" rx="8" fill={`url(#goldGradient-${size})`} stroke="#1a1a1a" stroke-width="3"/>
+      <rect x="30" y="15" width="40" height="25" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="55" y="20" width="12" height="15" rx="2" fill="#1a1a1a"/>
+    </g>
+    
+    <g class="face">
+      {expression === 'confident' && (
+        <>
+          <circle cx="38" cy="60" r="5" fill="#1a1a1a"/>
+          <circle cx="62" cy="60" r="5" fill="#1a1a1a"/>
+          <path d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </>
+      )}
       
-      <path d="M90 10 L90 30 L70 10 Z" fill="var(--mascot-stroke)"/>
+      {expression === 'wink' && (
+        <>
+          <circle cx="38" cy="60" r="5" fill="#1a1a1a"/>
+          <path d="M57 60 Q62 55 67 60" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </>
+      )}
       
-      <rect x="22" y="10" width="56" height="30" rx="4" 
-            fill="var(--mascot-metal)" 
-            stroke="var(--mascot-stroke)" 
-            stroke-width={strokeWidth * 0.8}/>
-      <rect x="38" y="15" width="14" height="18" rx="2" 
-            fill="var(--mascot-stroke)" 
-            opacity="0.8"/>
+      {expression === 'happy' && (
+        <>
+          <path d="M33 60 Q38 55 43 60" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M57 60 Q62 55 67 60" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M38 72 Q50 85 62 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </>
+      )}
       
-      <rect x="15" y="52" width="70" height="33" rx="4" 
-            fill="var(--mascot-gold-secondary)" 
-            stroke="var(--mascot-stroke)" 
-            stroke-width={strokeWidth * 0.8}/>
+      {expression === 'sleeping' && (
+        <>
+          <path d="M33 60 L43 60" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M57 60 L67 60" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M45 74 L55 74" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+        </>
+      )}
       
-      <g class="face">
-        {expression === 'confident' && (
-          <>
-            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
-            <ellipse cx="62" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
-            <path d="M42 76 Q50 82 58 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-          </>
-        )}
-        
-        {expression === 'wink' && (
-          <>
-            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
-            <path d="M57 66 L67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
-            <path d="M42 76 Q50 82 58 74" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-          </>
-        )}
-        
-        {expression === 'happy' && (
-          <>
-            <path d="M33 66 Q38 60 43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-            <path d="M57 66 Q62 60 67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-            <path d="M40 76 Q50 85 60 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-          </>
-        )}
-        
-        {expression === 'sleeping' && (
-          <>
-            <path d="M33 66 L43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
-            <path d="M57 66 L67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
-            <path d="M45 78 L55 78" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} stroke-linecap="round"/>
-          </>
-        )}
-        
-        {expression === 'bliss' && (
-          <>
-            <path d="M33 66 Q38 60 43 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-            <path d="M57 66 Q62 60 67 66" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-            <path d="M38 76 Q50 88 62 76" stroke="var(--mascot-stroke)" stroke-width={strokeWidth} fill="none" stroke-linecap="round"/>
-            <circle cx="28" cy="72" r="4" fill="var(--mascot-blush)" opacity="0.6"/>
-            <circle cx="72" cy="72" r="4" fill="var(--mascot-blush)" opacity="0.6"/>
-          </>
-        )}
-        
-        {expression === 'focused' && (
-          <>
-            <path d="M32 62 L44 62" stroke="var(--mascot-stroke)" stroke-width="2" stroke-linecap="round"/>
-            <path d="M56 62 L68 62" stroke="var(--mascot-stroke)" stroke-width="2" stroke-linecap="round"/>
-            <ellipse cx="38" cy="68" rx="3" ry="4" fill="var(--mascot-stroke)"/>
-            <ellipse cx="62" cy="68" rx="3" ry="4" fill="var(--mascot-stroke)"/>
-            <ellipse cx="50" cy="78" rx="3" ry="2" fill="var(--mascot-stroke)" opacity="0.8"/>
-          </>
-        )}
-      </g>
+      {expression === 'bliss' && (
+        <>
+          <path d="M33 60 Q38 55 43 60" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M57 60 Q62 55 67 60" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M38 72 Q50 85 62 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="28" cy="68" r="4" fill="#ff9999" opacity="0.6"/>
+          <circle cx="72" cy="68" r="4" fill="#ff9999" opacity="0.6"/>
+        </>
+      )}
       
-      {animate && (
-        <g class="sparkles">
-          <circle cx="8" cy="8" r="2" fill="var(--mascot-gold)" class="sparkle sparkle-1"/>
-          <circle cx="92" cy="15" r="1.5" fill="var(--mascot-gold)" class="sparkle sparkle-2"/>
-          <circle cx="5" cy="50" r="1" fill="var(--mascot-gold)" class="sparkle sparkle-3"/>
-        </g>
+      {expression === 'focused' && (
+        <>
+          <path d="M32 56 L44 56" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+          <path d="M56 56 L68 56" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="38" cy="62" rx="3" ry="4" fill="#1a1a1a"/>
+          <ellipse cx="62" cy="62" rx="3" ry="4" fill="#1a1a1a"/>
+          <ellipse cx="50" cy="74" rx="3" ry="2" fill="#1a1a1a" opacity="0.8"/>
+        </>
       )}
     </g>
+    
+    {animate && (
+      <g class="sparkles">
+        <circle cx="15" cy="15" r="2" fill="#F9D857" class="sparkle"/>
+        <circle cx="85" cy="20" r="1.5" fill="#FFE082" class="sparkle"/>
+        <circle cx="20" cy="85" r="1.5" fill="#FFD966" class="sparkle"/>
+        <circle cx="88" cy="82" r="2" fill="#F9D857" class="sparkle"/>
+      </g>
+    )}
   </svg>
 </div>
 
 <style>
-  :root {
-    --mascot-gold: #D4A425;
-    --mascot-gold-secondary: #B8860B;
-    --mascot-gold-glow: rgba(212, 164, 37, 0.4);
-    --mascot-metal: #e5e5e5;
-    --mascot-stroke: #1a1a1a;
-    --mascot-drive-green: #34D399;
-    --mascot-blush: #ff9999;
-  }
-  
-  .autojack-container {
+  .autojack-wrapper {
     display: inline-block;
     position: relative;
   }
   
   .autojack-svg {
-    width: 100%;
-    height: 100%;
     overflow: visible;
-  }
-  
-  .animate-idle {
-    animation: idle-sway 4s ease-in-out infinite;
-  }
-  
-  @keyframes idle-sway {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(2deg); }
-    75% { transform: rotate(-2deg); }
+    filter: drop-shadow(0 2px 8px rgba(249, 216, 87, 0.3));
   }
   
   .sparkle {
+    opacity: 0.4;
     animation: sparkle-pulse 2s ease-in-out infinite;
   }
   
-  .sparkle-1 { animation-delay: 0s; }
-  .sparkle-2 { animation-delay: 0.5s; }
-  .sparkle-3 { animation-delay: 1s; }
+  .sparkle:nth-child(1) { animation-delay: 0s; }
+  .sparkle:nth-child(2) { animation-delay: 0.5s; }
+  .sparkle:nth-child(3) { animation-delay: 1s; }
+  .sparkle:nth-child(4) { animation-delay: 1.5s; }
   
   @keyframes sparkle-pulse {
     0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.2); }
+    50% { opacity: 1; transform: scale(1.4); }
   }
 </style>

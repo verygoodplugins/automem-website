@@ -4,18 +4,20 @@
 
 @layer base {
   :root {
-    /* Default: Memory Lab - Gold Era */
+    /* Default: Memory Lab - Luminous Gold Era */
     --lab-bg: 10 10 10;          /* #0A0A0A */
     --lab-surface: 26 26 26;     /* #1A1A1A */
     --lab-border: 51 51 51;      /* #333333 */
     --lab-text: 224 224 224;     /* #E0E0E0 */
     --lab-muted: 136 136 136;    /* #888888 */
-    --lab-accent: 212 164 37;    /* #D4A425 - AutoJack Gold */
-    --lab-secondary: 168 85 247; /* #A855F7 - Electric Purple */
+    --lab-accent: 249 216 87;    /* #F9D857 - Luminous Gold */
+    --lab-secondary: 91 33 182;  /* #5B21B6 - Deep Violet */
     --lab-success: 52 211 153;   /* #34D399 - Memory Green */
     --lab-error: 239 68 68;      /* #EF4444 */
-    --lab-gold: 212 164 37;      /* #D4A425 */
-    --lab-gold-dark: 184 134 11; /* #B8860B */
+    --lab-gold: 249 216 87;      /* #F9D857 - Luminous */
+    --lab-gold-soft: 255 217 102;/* #FFD966 - Soft Gold */
+    --lab-gold-classic: 255 193 7;/* #FFC107 - Classic */
+    --lab-gold-dark: 218 165 32; /* #DAA520 - Dark Gold */
     --grid-color: #333333;
     --shadow-color: rgba(0,0,0,1);
   }
@@ -27,12 +29,14 @@
     --lab-border: 229 211 171;   /* #E5D3AB - Warm border */
     --lab-text: 38 32 20;        /* #262014 - Dark brown */
     --lab-muted: 128 115 90;     /* #80735A */
-    --lab-accent: 184 134 11;    /* #B8860B - Rich Gold */
-    --lab-secondary: 139 92 246; /* #8B5CF6 - Purple */
+    --lab-accent: 231 177 10;    /* #E7B10A - True Gold */
+    --lab-secondary: 91 33 182;  /* #5B21B6 - Deep Violet */
     --lab-success: 34 197 94;    /* #22C55E */
     --lab-error: 220 38 38;      /* #DC2626 */
-    --lab-gold: 212 164 37;      /* #D4A425 */
-    --lab-gold-dark: 184 134 11; /* #B8860B */
+    --lab-gold: 249 216 87;      /* #F9D857 */
+    --lab-gold-soft: 255 217 102;/* #FFD966 */
+    --lab-gold-classic: 255 193 7;/* #FFC107 */
+    --lab-gold-dark: 218 165 32; /* #DAA520 */
     --grid-color: #E5D3AB;
     --shadow-color: rgba(38, 32, 20, 0.15);
   }

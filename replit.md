@@ -20,11 +20,13 @@ An Astro-based website for AutoMem.AI - an Intelligent Memory Service for AI Age
 The site uses a gold-themed color palette that matches the AutoJack mascot:
 
 **Dark Mode (Default)**
-- `--lab-accent: #D4A425` - AutoJack Gold (primary accent)
-- `--lab-secondary: #A855F7` - Electric Purple (complementary)
+- `--lab-accent: #F9D857` - Luminous Gold (primary accent)
+- `--lab-secondary: #5B21B6` - Deep Violet (complementary)
 - `--lab-success: #34D399` - Memory Green
-- `--lab-gold: #D4A425` - Primary gold
-- `--lab-gold-dark: #B8860B` - Dark gold
+- `--lab-gold: #F9D857` - Luminous Gold
+- `--lab-gold-soft: #FFD966` - Soft Gold (for variety)
+- `--lab-gold-classic: #FFC107` - Classic Gold
+- `--lab-gold-dark: #DAA520` - Dark Gold (shadows)
 
 **Light Mode**
 - `--lab-accent: #B8860B` - Rich Gold
@@ -41,8 +43,9 @@ Gold floppy disk mascot with 6 expressions:
 - **focused** - Processing (heavy brows, concentrated look)
 
 Mascot colors:
-- Primary gold: #D4A425
-- Secondary gold: #B8860B
+- Primary gold: #F9D857 (Luminous)
+- Gradient light: #FFE082
+- Gradient dark: #DAA520
 - Metal shutter: #e5e5e5
 - Stroke: #1a1a1a
 - Drive green: #34D399
