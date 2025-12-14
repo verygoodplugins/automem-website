@@ -8,19 +8,15 @@ const currentDate = new Date().toLocaleDateString('en-US', {
   month: 'long', 
   day: 'numeric' 
 });
-const currentTime = new Date().toLocaleTimeString('en-US', { 
-  hour: '2-digit', 
-  minute: '2-digit' 
-});
 ---
 
 <Layout title="Animation Lab">
   <Navigation currentPath="/animation-lab" />
   
   <main class="w-full min-h-screen bg-[#0d0d0d] pt-20 pb-24 overflow-hidden">
-    <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-5xl mx-auto px-6">
       
-      <div class="text-center mb-12">
+      <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-lab-text mb-4">Animation Lab</h1>
         <p class="text-lab-muted">Prototype: Memory-Powered AI Transformation</p>
         <button id="start-demo" class="mt-6 px-8 py-3 bg-lab-accent text-lab-bg font-bold rounded-lg hover:scale-105 transition-transform">
@@ -31,10 +27,17 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
         </button>
       </div>
       
-      <div class="demo-container relative flex items-start justify-center gap-8 min-h-[600px]">
+      <div class="demo-container relative flex flex-col items-center justify-center min-h-[700px]" id="demo-container">
         
-        <div class="chat-window-wrapper relative" id="chat-wrapper">
-          <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl w-[500px] border border-[#2f2f2f]" id="chat-window">
+        <!-- Memory bubbles container (absolute positioned around chat) -->
+        <div class="memory-bubbles-container absolute inset-0 pointer-events-none" id="memory-bubbles"></div>
+        
+        <!-- SVG for connection lines -->
+        <svg class="connection-lines absolute inset-0 w-full h-full pointer-events-none" id="connection-lines"></svg>
+        
+        <!-- Chat window -->
+        <div class="chat-window-wrapper relative z-10" id="chat-wrapper">
+          <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl w-[520px] border border-[#2f2f2f]" id="chat-window">
             
             <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-[#2f2f2f]">
               <div class="flex items-center gap-2">
@@ -50,7 +53,7 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
               </div>
             </div>
             
-            <div class="chat-body p-6 min-h-[400px] flex flex-col" id="chat-body">
+            <div class="chat-body p-6 min-h-[350px] flex flex-col" id="chat-body">
               
               <div class="flex-1 space-y-4">
                 
@@ -99,53 +102,48 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
                 </div>
               </div>
             </div>
-            
-            <div class="drive-slot absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-16 opacity-0" id="drive-slot">
-              <div class="w-full h-full bg-[#1a1a1a] rounded-r-lg border-2 border-[#333] border-l-0 flex items-center justify-center">
-                <div class="w-1 h-8 bg-[#2a2a2a] rounded"></div>
-              </div>
-            </div>
           </div>
           
-          <div class="autojack-disk absolute -right-20 top-1/2 -translate-y-1/2 opacity-0" id="autojack-disk">
-            <svg viewBox="0 0 80 80" width="70" height="70" class="drop-shadow-lg">
-              <defs>
-                <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#FFE082"/>
-                  <stop offset="50%" style="stop-color:#F9D857"/>
-                  <stop offset="100%" style="stop-color:#DAA520"/>
-                </linearGradient>
-                <filter id="diskGlow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <rect x="8" y="8" width="64" height="64" rx="6" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="2"/>
-              <rect x="24" y="12" width="32" height="20" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="1.5"/>
-              <rect x="44" y="16" width="10" height="12" rx="1" fill="#1a1a1a"/>
-              <circle cx="32" cy="50" r="4" fill="#1a1a1a"/>
-              <circle cx="48" cy="50" r="4" fill="#1a1a1a"/>
-              <path d="M35 60 Q40 66 45 60" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            </svg>
+          <!-- Drive slot at bottom of chat -->
+          <div class="drive-slot absolute left-1/2 -translate-x-1/2 -bottom-3 w-20 h-4 opacity-0" id="drive-slot">
+            <div class="w-full h-full bg-[#1a1a1a] rounded-b-lg border-2 border-[#333] border-t-0 flex items-center justify-center">
+              <div class="w-12 h-1 bg-[#2a2a2a] rounded"></div>
+            </div>
           </div>
         </div>
         
-        <div class="thought-tree-container relative w-[500px] h-[500px] opacity-0" id="thought-tree">
-          <svg class="w-full h-full" viewBox="0 0 500 500" id="tree-svg">
+        <!-- AutoJack disk (rotated 90°, starts below) -->
+        <div class="autojack-disk absolute opacity-0" id="autojack-disk" style="left: 50%; bottom: -100px; transform: translateX(-50%);">
+          <svg viewBox="0 0 100 100" width="80" height="80" class="drop-shadow-lg disk-svg" style="transform: rotate(-90deg);">
             <defs>
-              <filter id="nodeGlow">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
+              <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#FFE082"/>
+                <stop offset="50%" style="stop-color:#F9D857"/>
+                <stop offset="100%" style="stop-color:#DAA520"/>
+              </linearGradient>
+              <filter id="diskGlow">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
                 <feMerge>
-                  <feMergeNode in="blur"/>
+                  <feMergeNode in="coloredBlur"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
             </defs>
-            <g id="connections-layer"></g>
-            <g id="nodes-layer"></g>
+            <!-- Disk body -->
+            <rect x="10" y="10" width="80" height="80" rx="8" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
+            <!-- Metal shutter -->
+            <rect x="30" y="15" width="40" height="25" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="55" y="20" width="12" height="15" rx="2" fill="#1a1a1a"/>
+            <!-- Face - starts confident, will change to bliss -->
+            <g class="disk-face" id="disk-face">
+              <!-- Confident expression (default) -->
+              <circle class="eye-left" cx="38" cy="60" r="5" fill="#1a1a1a"/>
+              <circle class="eye-right" cx="62" cy="60" r="5" fill="#1a1a1a"/>
+              <path class="mouth" d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </g>
+            <!-- Blush cheeks (hidden, shown for bliss) -->
+            <circle class="blush-left" cx="28" cy="68" r="5" fill="#ff9999" opacity="0"/>
+            <circle class="blush-right" cx="72" cy="68" r="5" fill="#ff9999" opacity="0"/>
           </svg>
         </div>
         
@@ -162,7 +160,7 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
   
   .chat-window.powered-up {
     border-color: #F9D857;
-    box-shadow: 0 0 60px rgba(249, 216, 87, 0.3), 0 20px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 0 80px rgba(249, 216, 87, 0.4), 0 20px 40px rgba(0,0,0,0.4);
   }
   
   .status-badge.connected {
@@ -179,24 +177,59 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
     50% { box-shadow: 0 0 0 8px rgba(249, 216, 87, 0); }
   }
   
-  .thought-node {
+  .memory-bubble {
+    position: absolute;
+    background: rgba(18, 18, 18, 0.95);
+    border: 2px solid #F9D857;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #F9D857;
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.5);
     transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(249, 216, 87, 0.2);
+    min-width: 80px;
+    text-align: center;
   }
   
-  .thought-node.visible {
+  .memory-bubble.visible {
     opacity: 1;
     transform: scale(1);
   }
   
-  .thought-connection {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    transition: stroke-dashoffset 0.6s ease-out;
+  .memory-bubble.primary {
+    background: #F9D857;
+    color: #1a1a1a;
+    font-weight: bold;
   }
   
-  .thought-connection.visible {
+  .memory-bubble .bubble-text {
+    min-height: 1em;
+  }
+  
+  .memory-bubble .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: currentColor;
+    margin-left: 1px;
+    animation: blink 0.6s step-end infinite;
+    vertical-align: middle;
+  }
+  
+  .connection-line {
+    stroke: rgba(249, 216, 87, 0.3);
+    stroke-width: 2;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    transition: stroke-dashoffset 0.8s ease-out;
+    fill: none;
+  }
+  
+  .connection-line.visible {
     stroke-dashoffset: 0;
   }
   
@@ -219,22 +252,37 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
     transition: opacity 0.4s ease;
   }
   
+  .memory-bubble.visible .bubble-text {
+    animation: float-text 3s ease-in-out infinite;
+  }
+  
+  .memory-bubble:nth-child(odd).visible .bubble-text {
+    animation-delay: 0.5s;
+  }
+  
+  @keyframes float-text {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+  }
+  
   @media (prefers-reduced-motion: reduce) {
-    .thought-node, .thought-connection, .chat-window {
+    .memory-bubble, .connection-line, .chat-window {
       transition: none;
     }
-    .memory-avatar {
+    .memory-avatar, .memory-bubble.visible {
       animation: none;
     }
   }
 </style>
 
-<script define:vars={{ currentDate, currentTime }}>
+<script define:vars={{ currentDate }}>
   class MemoryDemoAnimation {
     constructor() {
       this.startBtn = document.getElementById('start-demo');
       this.resetBtn = document.getElementById('reset-demo');
       this.chatWindow = document.getElementById('chat-window');
+      this.chatWrapper = document.getElementById('chat-wrapper');
+      this.demoContainer = document.getElementById('demo-container');
       this.userMessage = document.getElementById('user-message');
       this.userText = document.getElementById('user-text');
       this.genericResponse = document.getElementById('generic-response');
@@ -242,43 +290,36 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
       this.memoryResponse = document.getElementById('memory-response');
       this.memoryText = document.getElementById('memory-text');
       this.disk = document.getElementById('autojack-disk');
+      this.diskFace = document.getElementById('disk-face');
       this.driveSlot = document.getElementById('drive-slot');
       this.statusBadge = document.getElementById('status-badge');
-      this.thoughtTree = document.getElementById('thought-tree');
-      this.treeConnections = document.getElementById('connections-layer');
-      this.treeNodes = document.getElementById('nodes-layer');
+      this.memoryBubbles = document.getElementById('memory-bubbles');
+      this.connectionLines = document.getElementById('connection-lines');
       
       this.isPlaying = false;
+      this.bubbleElements = {};
       
       this.userQuestion = "Can you help me fix an Uncaught TypeError on the homepage?";
-      this.genericReply = "I'd be happy to help! Could you provide some more details about the error? Specifically:\n\n1. What does the error message say exactly?\n2. Do you know which part of the code or which script is causing the issue?\n3. Are there any specific actions that trigger the error?";
-      this.memoryReply = `Welcome back, Jack! I see from our last session you were working on the homepage animations. Let me check those console logs...
+      this.genericReply = "I'd be happy to help! Could you provide some more details about the error? Specifically:\n\n1. What does the error message say exactly?\n2. Which script is causing the issue?\n3. What actions trigger the error?";
+      this.memoryReply = `Welcome back, Jack! I see from our last session you were working on the homepage animations. Let me check those logs...
 
-Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses TypeScript syntax in a browser tag that doesn't get transpiled.
+Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript syntax in a browser script tag.
 
-**The fix:** Convert TypeScript class to vanilla JavaScript:
+**Quick fix:** Convert to vanilla JavaScript:
 • Remove type annotations like \`: HTMLElement | null\`
 • Replace \`private\` with direct property assignments
 
-✓ File updated. Reloading page now...`;
+✓ File updated. Reloading now...`;
       
-      this.thoughtNodes = [
-        { id: 'start', text: 'Oh!', x: 50, y: 250, delay: 0 },
-        { id: 'recognize', text: 'I recognize this user...', x: 120, y: 250, delay: 200, parent: 'start' },
-        { id: 'name', text: 'This is Jack!', x: 200, y: 200, delay: 400, parent: 'recognize' },
-        { id: 'project', text: 'AutoMem.ai project', x: 200, y: 300, delay: 500, parent: 'recognize' },
-        { id: 'started', text: 'Started: Nov 2024', x: 290, y: 150, delay: 700, parent: 'name' },
-        { id: 'collab', text: 'Working together 2+ weeks', x: 290, y: 220, delay: 800, parent: 'name' },
-        { id: 'status', text: 'Design: complete ✓', x: 290, y: 280, delay: 900, parent: 'project' },
-        { id: 'current', text: 'Homepage: in progress', x: 290, y: 340, delay: 1000, parent: 'project' },
-        { id: 'time', text: `${currentDate}`, x: 380, y: 120, delay: 1100, parent: 'started' },
-        { id: 'session', text: 'Last: homepage animations', x: 380, y: 190, delay: 1200, parent: 'collab' },
-        { id: 'meeting', text: '📅 Meeting w/ Chris 10:30am', x: 380, y: 260, delay: 1300, parent: 'status' },
-        { id: 'otter', text: 'Otter.ai summary loaded ✅', x: 380, y: 330, delay: 1400, parent: 'current' },
-        { id: 'server', text: 'localhost:5000', x: 450, y: 160, delay: 1500, parent: 'session' },
-        { id: 'dir', text: '/var/web/automem/', x: 450, y: 230, delay: 1600, parent: 'meeting' },
-        { id: 'stack', text: 'Astro + Tailwind + Cloudflare', x: 450, y: 300, delay: 1700, parent: 'otter' },
-        { id: 'cmd', text: 'npm run dev', x: 480, y: 380, delay: 1800, parent: 'stack' },
+      this.memoryNodes = [
+        { id: 'query', text: 'Analyzing query...', position: 'top', offset: 0, delay: 0, isPrimary: true },
+        { id: 'user', text: 'User: Jack Arturo', position: 'top-left', offset: 0, delay: 600, parent: 'query' },
+        { id: 'project', text: 'Project: AutoMem.ai', position: 'top-right', offset: 0, delay: 900, parent: 'query' },
+        { id: 'session', text: 'Last session: homepage work', position: 'left', offset: -40, delay: 1400, parent: 'user' },
+        { id: 'stack', text: 'Stack: Astro + Tailwind', position: 'right', offset: -40, delay: 1700, parent: 'project' },
+        { id: 'file', text: 'Recent: MemoryHero.astro', position: 'left', offset: 40, delay: 2100, parent: 'session' },
+        { id: 'error', text: 'Error context: TypeScript', position: 'right', offset: 40, delay: 2400, parent: 'stack' },
+        { id: 'solution', text: 'Related fix: browser JS', position: 'bottom', offset: 0, delay: 2800, parent: 'error' },
       ];
       
       this.init();
@@ -292,6 +333,29 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses 
       });
     }
     
+    getBubblePosition(position, offset) {
+      const chatRect = this.chatWrapper.getBoundingClientRect();
+      const containerRect = this.demoContainer.getBoundingClientRect();
+      
+      const chatCenterX = chatRect.left - containerRect.left + chatRect.width / 2;
+      const chatCenterY = chatRect.top - containerRect.top + chatRect.height / 2;
+      const chatWidth = chatRect.width;
+      const chatHeight = chatRect.height;
+      
+      const positions = {
+        'top': { x: chatCenterX, y: chatCenterY - chatHeight / 2 - 60 + offset },
+        'top-left': { x: chatCenterX - chatWidth / 2 - 80, y: chatCenterY - chatHeight / 2 - 30 + offset },
+        'top-right': { x: chatCenterX + chatWidth / 2 + 80, y: chatCenterY - chatHeight / 2 - 30 + offset },
+        'left': { x: chatCenterX - chatWidth / 2 - 100, y: chatCenterY + offset },
+        'right': { x: chatCenterX + chatWidth / 2 + 100, y: chatCenterY + offset },
+        'bottom-left': { x: chatCenterX - chatWidth / 2 - 80, y: chatCenterY + chatHeight / 2 + 30 + offset },
+        'bottom-right': { x: chatCenterX + chatWidth / 2 + 80, y: chatCenterY + chatHeight / 2 + 30 + offset },
+        'bottom': { x: chatCenterX, y: chatCenterY + chatHeight / 2 + 80 + offset },
+      };
+      
+      return positions[position] || positions['top'];
+    }
+    
     async play() {
       if (this.isPlaying) return;
       this.isPlaying = true;
@@ -299,116 +363,160 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses 
       
       await this.delay(300);
       this.userMessage.classList.remove('opacity-0');
-      await this.typeText(this.userText, this.userQuestion, 40);
-      
-      await this.delay(800);
-      this.genericResponse.classList.remove('opacity-0');
-      await this.typeText(this.genericText, this.genericReply, 15);
-      
-      await this.delay(1200);
-      this.driveSlot.classList.remove('opacity-0');
-      this.driveSlot.style.opacity = '1';
-      this.disk.classList.remove('opacity-0');
-      this.disk.style.opacity = '1';
-      
-      await this.delay(400);
-      this.disk.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      this.disk.style.transform = 'translateX(-45px) translateY(-50%)';
+      await this.typeText(this.userText, this.userQuestion, 35);
       
       await this.delay(600);
-      this.disk.style.transform = 'translateX(-55px) translateY(-50%)';
+      this.genericResponse.classList.remove('opacity-0');
+      await this.typeText(this.genericText, this.genericReply, 12);
+      
+      await this.delay(800);
+      this.driveSlot.classList.remove('opacity-0');
+      this.driveSlot.style.opacity = '1';
+      this.driveSlot.style.transition = 'opacity 0.3s ease';
+      
+      await this.delay(200);
+      this.disk.classList.remove('opacity-0');
+      this.disk.style.opacity = '1';
+      this.disk.style.transition = 'bottom 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
+      
+      await this.delay(100);
+      const chatRect = this.chatWrapper.getBoundingClientRect();
+      const containerRect = this.demoContainer.getBoundingClientRect();
+      const targetBottom = containerRect.height - (chatRect.bottom - containerRect.top) - 35;
+      this.disk.style.bottom = targetBottom + 'px';
+      
+      await this.delay(600);
+      this.disk.style.bottom = (targetBottom + 8) + 'px';
       
       await this.delay(300);
+      this.showBlissExpression();
       this.chatWindow.classList.add('powered-up');
       this.statusBadge.textContent = 'AutoMem Connected';
       this.statusBadge.classList.add('connected');
       
-      await this.delay(400);
-      this.thoughtTree.classList.remove('opacity-0');
-      this.thoughtTree.style.opacity = '1';
+      await this.delay(600);
+      await this.animateMemoryBubbles();
       
-      await this.animateThoughtTree();
-      
-      await this.delay(800);
+      await this.delay(600);
       this.genericResponse.classList.add('fade-out');
       
-      await this.delay(500);
+      await this.delay(400);
       this.genericResponse.classList.add('hidden');
       this.memoryResponse.classList.remove('hidden');
       this.memoryResponse.classList.remove('opacity-0');
-      await this.typeText(this.memoryText, this.memoryReply, 8);
+      await this.typeText(this.memoryText, this.memoryReply, 6);
       
       await this.delay(500);
       this.resetBtn.classList.remove('hidden');
       this.isPlaying = false;
     }
     
-    async animateThoughtTree() {
-      this.treeConnections.innerHTML = '';
-      this.treeNodes.innerHTML = '';
+    showBlissExpression() {
+      const diskSvg = this.disk.querySelector('svg');
       
-      const nodePositions = {};
-      let lastDelay = 0;
+      const eyeLeft = diskSvg.querySelector('.eye-left');
+      const eyeRight = diskSvg.querySelector('.eye-right');
+      const mouth = diskSvg.querySelector('.mouth');
+      const blushLeft = diskSvg.querySelector('.blush-left');
+      const blushRight = diskSvg.querySelector('.blush-right');
       
-      for (const node of this.thoughtNodes) {
-        const waitTime = node.delay - lastDelay;
-        await this.delay(Math.max(waitTime, 80));
-        lastDelay = node.delay;
+      eyeLeft.setAttribute('r', '0');
+      eyeRight.setAttribute('r', '0');
+      
+      const happyEyeLeft = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      happyEyeLeft.setAttribute('d', 'M33 60 Q38 54 43 60');
+      happyEyeLeft.setAttribute('stroke', '#1a1a1a');
+      happyEyeLeft.setAttribute('stroke-width', '3');
+      happyEyeLeft.setAttribute('fill', 'none');
+      happyEyeLeft.setAttribute('stroke-linecap', 'round');
+      happyEyeLeft.classList.add('happy-eye');
+      
+      const happyEyeRight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      happyEyeRight.setAttribute('d', 'M57 60 Q62 54 67 60');
+      happyEyeRight.setAttribute('stroke', '#1a1a1a');
+      happyEyeRight.setAttribute('stroke-width', '3');
+      happyEyeRight.setAttribute('fill', 'none');
+      happyEyeRight.setAttribute('stroke-linecap', 'round');
+      happyEyeRight.classList.add('happy-eye');
+      
+      this.diskFace.appendChild(happyEyeLeft);
+      this.diskFace.appendChild(happyEyeRight);
+      
+      mouth.setAttribute('d', 'M38 72 Q50 86 62 72');
+      
+      blushLeft.style.transition = 'opacity 0.4s ease';
+      blushRight.style.transition = 'opacity 0.4s ease';
+      blushLeft.style.opacity = '0.6';
+      blushRight.style.opacity = '0.6';
+      
+      diskSvg.style.filter = 'drop-shadow(0 0 20px rgba(249, 216, 87, 0.6))';
+    }
+    
+    async animateMemoryBubbles() {
+      this.memoryBubbles.innerHTML = '';
+      this.connectionLines.innerHTML = '';
+      this.bubbleElements = {};
+      
+      for (const node of this.memoryNodes) {
+        await this.delay(node.delay > 0 ? 400 : 0);
         
-        if (node.parent && nodePositions[node.parent]) {
-          const parent = nodePositions[node.parent];
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', parent.x);
-          line.setAttribute('y1', parent.y);
-          line.setAttribute('x2', node.x);
-          line.setAttribute('y2', node.y);
-          line.setAttribute('stroke', 'rgba(249, 216, 87, 0.4)');
-          line.setAttribute('stroke-width', '2');
-          line.classList.add('thought-connection');
-          this.treeConnections.appendChild(line);
-          
-          setTimeout(() => line.classList.add('visible'), 50);
+        const pos = this.getBubblePosition(node.position, node.offset);
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'memory-bubble' + (node.isPrimary ? ' primary' : '');
+        bubble.style.left = pos.x + 'px';
+        bubble.style.top = pos.y + 'px';
+        bubble.style.transform = 'translate(-50%, -50%) scale(0.5)';
+        bubble.innerHTML = '<span class="bubble-text"></span>';
+        
+        this.memoryBubbles.appendChild(bubble);
+        this.bubbleElements[node.id] = { element: bubble, pos: pos };
+        
+        await this.delay(50);
+        bubble.classList.add('visible');
+        bubble.style.transform = 'translate(-50%, -50%) scale(1)';
+        
+        if (node.parent && this.bubbleElements[node.parent]) {
+          const parentPos = this.bubbleElements[node.parent].pos;
+          this.drawConnection(parentPos, pos);
         }
         
-        const textLength = node.text.length * 4 + 16;
-        const rectWidth = Math.max(textLength, 60);
+        await this.typeBubbleText(bubble.querySelector('.bubble-text'), node.text, 25);
         
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.classList.add('thought-node');
-        
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', node.x - rectWidth / 2);
-        rect.setAttribute('y', node.y - 12);
-        rect.setAttribute('width', rectWidth);
-        rect.setAttribute('height', 24);
-        rect.setAttribute('rx', 12);
-        rect.setAttribute('fill', node.id === 'start' ? '#F9D857' : 'rgba(249, 216, 87, 0.15)');
-        rect.setAttribute('stroke', '#F9D857');
-        rect.setAttribute('stroke-width', '1.5');
-        
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', node.x);
-        text.setAttribute('y', node.y + 4);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', node.id === 'start' ? '#1a1a1a' : '#F9D857');
-        text.setAttribute('font-size', '10');
-        text.setAttribute('font-family', 'JetBrains Mono, monospace');
-        text.textContent = node.text;
-        
-        g.appendChild(rect);
-        g.appendChild(text);
-        this.treeNodes.appendChild(g);
-        
-        nodePositions[node.id] = { x: node.x, y: node.y };
-        
-        setTimeout(() => g.classList.add('visible'), 50);
+        await this.delay(200);
       }
+    }
+    
+    drawConnection(from, to) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2;
+      const curve = `M ${from.x} ${from.y} Q ${midX} ${midY - 20} ${to.x} ${to.y}`;
+      
+      line.setAttribute('d', curve);
+      line.classList.add('connection-line');
+      this.connectionLines.appendChild(line);
+      
+      setTimeout(() => line.classList.add('visible'), 50);
+    }
+    
+    async typeBubbleText(element, text, speed) {
+      element.innerHTML = '<span class="typing-cursor"></span>';
+      
+      for (let i = 0; i < text.length; i++) {
+        element.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+        if (i % 2 === 0) {
+          await this.delay(speed);
+        }
+      }
+      
+      await this.delay(200);
+      element.innerHTML = text;
     }
     
     async typeText(element, text, speed = 30) {
       element.innerHTML = '';
-      const cursor = document.createElement('span');
-      cursor.className = 'typing-cursor';
       
       const lines = text.split('\n');
       
@@ -418,16 +526,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses 
         for (let i = 0; i < line.length; i++) {
           element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
           
-          if (line.substring(i).startsWith('```')) {
-            const endIndex = line.indexOf('```', i + 3);
-            if (endIndex > i) {
-              const codeBlock = line.substring(i, endIndex + 3);
-              element.innerHTML += `<code class="bg-[#1a1a1a] px-1 rounded text-xs">${codeBlock.replace(/```/g, '')}</code>`;
-              i = endIndex + 2;
-            } else {
-              element.innerHTML += line[i];
-            }
-          } else if (line[i] === '*' && line[i+1] === '*') {
+          if (line[i] === '*' && line[i+1] === '*') {
             const endBold = line.indexOf('**', i + 2);
             if (endBold > i) {
               const boldText = line.substring(i + 2, endBold);
@@ -464,14 +563,35 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses 
       this.genericResponse.classList.remove('hidden', 'fade-out');
       this.genericResponse.classList.add('opacity-0');
       this.memoryResponse.classList.add('hidden', 'opacity-0');
+      
       this.disk.style.opacity = '0';
-      this.disk.style.transform = 'translateY(-50%)';
+      this.disk.style.bottom = '-100px';
+      
+      const diskSvg = this.disk.querySelector('svg');
+      const happyEyes = diskSvg.querySelectorAll('.happy-eye');
+      happyEyes.forEach(eye => eye.remove());
+      
+      const eyeLeft = diskSvg.querySelector('.eye-left');
+      const eyeRight = diskSvg.querySelector('.eye-right');
+      const mouth = diskSvg.querySelector('.mouth');
+      const blushLeft = diskSvg.querySelector('.blush-left');
+      const blushRight = diskSvg.querySelector('.blush-right');
+      
+      if (eyeLeft) eyeLeft.setAttribute('r', '5');
+      if (eyeRight) eyeRight.setAttribute('r', '5');
+      if (mouth) mouth.setAttribute('d', 'M42 72 Q50 80 58 72');
+      if (blushLeft) blushLeft.style.opacity = '0';
+      if (blushRight) blushRight.style.opacity = '0';
+      diskSvg.style.filter = '';
+      
       this.driveSlot.style.opacity = '0';
       this.statusBadge.textContent = 'Standard';
       this.statusBadge.classList.remove('connected');
-      this.thoughtTree.style.opacity = '0';
-      this.treeConnections.innerHTML = '';
-      this.treeNodes.innerHTML = '';
+      
+      this.memoryBubbles.innerHTML = '';
+      this.connectionLines.innerHTML = '';
+      this.bubbleElements = {};
+      
       this.userText.innerHTML = '';
       this.genericText.innerHTML = '';
       this.memoryText.innerHTML = '';
