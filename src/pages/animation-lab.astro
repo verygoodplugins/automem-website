@@ -1,0 +1,487 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+
+const currentDate = new Date().toLocaleDateString('en-US', { 
+  weekday: 'long', 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric' 
+});
+const currentTime = new Date().toLocaleTimeString('en-US', { 
+  hour: '2-digit', 
+  minute: '2-digit' 
+});
+---
+
+<Layout title="Animation Lab">
+  <Navigation currentPath="/animation-lab" />
+  
+  <main class="w-full min-h-screen bg-[#0d0d0d] pt-20 pb-24 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-lab-text mb-4">Animation Lab</h1>
+        <p class="text-lab-muted">Prototype: Memory-Powered AI Transformation</p>
+        <button id="start-demo" class="mt-6 px-8 py-3 bg-lab-accent text-lab-bg font-bold rounded-lg hover:scale-105 transition-transform">
+          ▶ Start Demo
+        </button>
+        <button id="reset-demo" class="mt-6 ml-4 px-8 py-3 border-2 border-lab-border text-lab-text font-bold rounded-lg hover:border-lab-accent transition-colors hidden">
+          ↻ Reset
+        </button>
+      </div>
+      
+      <div class="demo-container relative flex items-start justify-center gap-8 min-h-[600px]">
+        
+        <div class="chat-window-wrapper relative" id="chat-wrapper">
+          <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl w-[500px] border border-[#2f2f2f]" id="chat-window">
+            
+            <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-[#2f2f2f]">
+              <div class="flex items-center gap-2">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#10a37f"/>
+                  <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="#fff"/>
+                </svg>
+                <span class="text-white font-medium">ChatGPT</span>
+                <span class="text-xs text-gray-500">4o</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="status-badge text-xs px-2 py-1 rounded-full bg-[#2f2f2f] text-gray-400" id="status-badge">Standard</span>
+              </div>
+            </div>
+            
+            <div class="chat-body p-6 min-h-[400px] flex flex-col" id="chat-body">
+              
+              <div class="flex-1 space-y-4">
+                
+                <div class="user-message opacity-0 flex justify-end" id="user-message">
+                  <div class="bg-[#2f2f2f] rounded-2xl px-4 py-3 max-w-[80%]">
+                    <p class="text-white" id="user-text"></p>
+                  </div>
+                </div>
+                
+                <div class="ai-response opacity-0" id="generic-response">
+                  <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-[#10a37f] flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white">
+                        <circle cx="12" cy="12" r="4"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-gray-300 leading-relaxed" id="generic-text"></p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="ai-response opacity-0 hidden" id="memory-response">
+                  <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-[#F9D857] flex items-center justify-center flex-shrink-0 memory-avatar">
+                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#1a1a1a">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <rect x="8" y="6" width="8" height="5" rx="1" fill="#fff"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-white leading-relaxed" id="memory-text"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="chat-input mt-6 relative">
+                <div class="bg-[#2f2f2f] rounded-xl border border-[#3f3f3f] px-4 py-3 flex items-center gap-3">
+                  <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm" disabled />
+                  <button class="text-gray-500 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="drive-slot absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-16 opacity-0" id="drive-slot">
+              <div class="w-full h-full bg-[#1a1a1a] rounded-r-lg border-2 border-[#333] border-l-0 flex items-center justify-center">
+                <div class="w-1 h-8 bg-[#2a2a2a] rounded"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="autojack-disk absolute -right-20 top-1/2 -translate-y-1/2 opacity-0" id="autojack-disk">
+            <svg viewBox="0 0 80 80" width="70" height="70" class="drop-shadow-lg">
+              <defs>
+                <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#FFE082"/>
+                  <stop offset="50%" style="stop-color:#F9D857"/>
+                  <stop offset="100%" style="stop-color:#DAA520"/>
+                </linearGradient>
+                <filter id="diskGlow">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect x="8" y="8" width="64" height="64" rx="6" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="24" y="12" width="32" height="20" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="1.5"/>
+              <rect x="44" y="16" width="10" height="12" rx="1" fill="#1a1a1a"/>
+              <circle cx="32" cy="50" r="4" fill="#1a1a1a"/>
+              <circle cx="48" cy="50" r="4" fill="#1a1a1a"/>
+              <path d="M35 60 Q40 66 45 60" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="thought-tree-container relative w-[500px] h-[500px] opacity-0" id="thought-tree">
+          <svg class="w-full h-full" viewBox="0 0 500 500" id="tree-svg">
+            <defs>
+              <filter id="nodeGlow">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <g id="connections-layer"></g>
+            <g id="nodes-layer"></g>
+          </svg>
+        </div>
+        
+      </div>
+      
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .chat-window {
+    transition: box-shadow 0.5s ease, border-color 0.5s ease;
+  }
+  
+  .chat-window.powered-up {
+    border-color: #F9D857;
+    box-shadow: 0 0 60px rgba(249, 216, 87, 0.3), 0 20px 40px rgba(0,0,0,0.4);
+  }
+  
+  .status-badge.connected {
+    background: rgba(249, 216, 87, 0.2);
+    color: #F9D857;
+  }
+  
+  .memory-avatar {
+    animation: avatar-pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes avatar-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 216, 87, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(249, 216, 87, 0); }
+  }
+  
+  .thought-node {
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .thought-node.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .thought-connection {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    transition: stroke-dashoffset 0.6s ease-out;
+  }
+  
+  .thought-connection.visible {
+    stroke-dashoffset: 0;
+  }
+  
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: white;
+    margin-left: 2px;
+    animation: blink 0.8s step-end infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  .fade-out {
+    opacity: 0 !important;
+    transition: opacity 0.4s ease;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .thought-node, .thought-connection, .chat-window {
+      transition: none;
+    }
+    .memory-avatar {
+      animation: none;
+    }
+  }
+</style>
+
+<script define:vars={{ currentDate, currentTime }}>
+  class MemoryDemoAnimation {
+    constructor() {
+      this.startBtn = document.getElementById('start-demo');
+      this.resetBtn = document.getElementById('reset-demo');
+      this.chatWindow = document.getElementById('chat-window');
+      this.userMessage = document.getElementById('user-message');
+      this.userText = document.getElementById('user-text');
+      this.genericResponse = document.getElementById('generic-response');
+      this.genericText = document.getElementById('generic-text');
+      this.memoryResponse = document.getElementById('memory-response');
+      this.memoryText = document.getElementById('memory-text');
+      this.disk = document.getElementById('autojack-disk');
+      this.driveSlot = document.getElementById('drive-slot');
+      this.statusBadge = document.getElementById('status-badge');
+      this.thoughtTree = document.getElementById('thought-tree');
+      this.treeConnections = document.getElementById('connections-layer');
+      this.treeNodes = document.getElementById('nodes-layer');
+      
+      this.isPlaying = false;
+      
+      this.userQuestion = "Can you help me fix an Uncaught TypeError on the homepage?";
+      this.genericReply = "I'd be happy to help! Could you provide some more details about the error? Specifically:\n\n1. What does the error message say exactly?\n2. Do you know which part of the code or which script is causing the issue?\n3. Are there any specific actions that trigger the error?";
+      this.memoryReply = `Welcome back, Jack! I see from our last session you were working on the homepage animations. Let me check those console logs...
+
+Found it! The TypeError is in **MemoryHero.astro** line 291 — the script uses TypeScript syntax in a browser tag that doesn't get transpiled.
+
+**The fix:** Convert TypeScript class to vanilla JavaScript:
+• Remove type annotations like \`: HTMLElement | null\`
+• Replace \`private\` with direct property assignments
+
+✓ File updated. Reloading page now...`;
+      
+      this.thoughtNodes = [
+        { id: 'start', text: 'Oh!', x: 50, y: 250, delay: 0 },
+        { id: 'recognize', text: 'I recognize this user...', x: 120, y: 250, delay: 200, parent: 'start' },
+        { id: 'name', text: 'This is Jack!', x: 200, y: 200, delay: 400, parent: 'recognize' },
+        { id: 'project', text: 'AutoMem.ai project', x: 200, y: 300, delay: 500, parent: 'recognize' },
+        { id: 'started', text: 'Started: Nov 2024', x: 290, y: 150, delay: 700, parent: 'name' },
+        { id: 'collab', text: 'Working together 2+ weeks', x: 290, y: 220, delay: 800, parent: 'name' },
+        { id: 'status', text: 'Design: complete ✓', x: 290, y: 280, delay: 900, parent: 'project' },
+        { id: 'current', text: 'Homepage: in progress', x: 290, y: 340, delay: 1000, parent: 'project' },
+        { id: 'time', text: `${currentDate}`, x: 380, y: 120, delay: 1100, parent: 'started' },
+        { id: 'session', text: 'Last: homepage animations', x: 380, y: 190, delay: 1200, parent: 'collab' },
+        { id: 'meeting', text: '📅 Meeting w/ Chris 10:30am', x: 380, y: 260, delay: 1300, parent: 'status' },
+        { id: 'otter', text: 'Otter.ai summary loaded ✅', x: 380, y: 330, delay: 1400, parent: 'current' },
+        { id: 'server', text: 'localhost:5000', x: 450, y: 160, delay: 1500, parent: 'session' },
+        { id: 'dir', text: '/var/web/automem/', x: 450, y: 230, delay: 1600, parent: 'meeting' },
+        { id: 'stack', text: 'Astro + Tailwind + Cloudflare', x: 450, y: 300, delay: 1700, parent: 'otter' },
+        { id: 'cmd', text: 'npm run dev', x: 480, y: 380, delay: 1800, parent: 'stack' },
+      ];
+      
+      this.init();
+    }
+    
+    init() {
+      this.startBtn.addEventListener('click', () => this.play());
+      this.resetBtn.addEventListener('click', () => {
+        this.reset();
+        this.resetBtn.classList.add('hidden');
+      });
+    }
+    
+    async play() {
+      if (this.isPlaying) return;
+      this.isPlaying = true;
+      this.startBtn.classList.add('hidden');
+      
+      await this.delay(300);
+      this.userMessage.classList.remove('opacity-0');
+      await this.typeText(this.userText, this.userQuestion, 40);
+      
+      await this.delay(800);
+      this.genericResponse.classList.remove('opacity-0');
+      await this.typeText(this.genericText, this.genericReply, 15);
+      
+      await this.delay(1200);
+      this.driveSlot.classList.remove('opacity-0');
+      this.driveSlot.style.opacity = '1';
+      this.disk.classList.remove('opacity-0');
+      this.disk.style.opacity = '1';
+      
+      await this.delay(400);
+      this.disk.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      this.disk.style.transform = 'translateX(-45px) translateY(-50%)';
+      
+      await this.delay(600);
+      this.disk.style.transform = 'translateX(-55px) translateY(-50%)';
+      
+      await this.delay(300);
+      this.chatWindow.classList.add('powered-up');
+      this.statusBadge.textContent = 'AutoMem Connected';
+      this.statusBadge.classList.add('connected');
+      
+      await this.delay(400);
+      this.thoughtTree.classList.remove('opacity-0');
+      this.thoughtTree.style.opacity = '1';
+      
+      await this.animateThoughtTree();
+      
+      await this.delay(800);
+      this.genericResponse.classList.add('fade-out');
+      
+      await this.delay(500);
+      this.genericResponse.classList.add('hidden');
+      this.memoryResponse.classList.remove('hidden');
+      this.memoryResponse.classList.remove('opacity-0');
+      await this.typeText(this.memoryText, this.memoryReply, 8);
+      
+      await this.delay(500);
+      this.resetBtn.classList.remove('hidden');
+      this.isPlaying = false;
+    }
+    
+    async animateThoughtTree() {
+      this.treeConnections.innerHTML = '';
+      this.treeNodes.innerHTML = '';
+      
+      const nodePositions = {};
+      let lastDelay = 0;
+      
+      for (const node of this.thoughtNodes) {
+        const waitTime = node.delay - lastDelay;
+        await this.delay(Math.max(waitTime, 80));
+        lastDelay = node.delay;
+        
+        if (node.parent && nodePositions[node.parent]) {
+          const parent = nodePositions[node.parent];
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', parent.x);
+          line.setAttribute('y1', parent.y);
+          line.setAttribute('x2', node.x);
+          line.setAttribute('y2', node.y);
+          line.setAttribute('stroke', 'rgba(249, 216, 87, 0.4)');
+          line.setAttribute('stroke-width', '2');
+          line.classList.add('thought-connection');
+          this.treeConnections.appendChild(line);
+          
+          setTimeout(() => line.classList.add('visible'), 50);
+        }
+        
+        const textLength = node.text.length * 4 + 16;
+        const rectWidth = Math.max(textLength, 60);
+        
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.classList.add('thought-node');
+        
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', node.x - rectWidth / 2);
+        rect.setAttribute('y', node.y - 12);
+        rect.setAttribute('width', rectWidth);
+        rect.setAttribute('height', 24);
+        rect.setAttribute('rx', 12);
+        rect.setAttribute('fill', node.id === 'start' ? '#F9D857' : 'rgba(249, 216, 87, 0.15)');
+        rect.setAttribute('stroke', '#F9D857');
+        rect.setAttribute('stroke-width', '1.5');
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node.x);
+        text.setAttribute('y', node.y + 4);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', node.id === 'start' ? '#1a1a1a' : '#F9D857');
+        text.setAttribute('font-size', '10');
+        text.setAttribute('font-family', 'JetBrains Mono, monospace');
+        text.textContent = node.text;
+        
+        g.appendChild(rect);
+        g.appendChild(text);
+        this.treeNodes.appendChild(g);
+        
+        nodePositions[node.id] = { x: node.x, y: node.y };
+        
+        setTimeout(() => g.classList.add('visible'), 50);
+      }
+    }
+    
+    async typeText(element, text, speed = 30) {
+      element.innerHTML = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'typing-cursor';
+      
+      const lines = text.split('\n');
+      
+      for (let l = 0; l < lines.length; l++) {
+        const line = lines[l];
+        
+        for (let i = 0; i < line.length; i++) {
+          element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+          
+          if (line.substring(i).startsWith('```')) {
+            const endIndex = line.indexOf('```', i + 3);
+            if (endIndex > i) {
+              const codeBlock = line.substring(i, endIndex + 3);
+              element.innerHTML += `<code class="bg-[#1a1a1a] px-1 rounded text-xs">${codeBlock.replace(/```/g, '')}</code>`;
+              i = endIndex + 2;
+            } else {
+              element.innerHTML += line[i];
+            }
+          } else if (line[i] === '*' && line[i+1] === '*') {
+            const endBold = line.indexOf('**', i + 2);
+            if (endBold > i) {
+              const boldText = line.substring(i + 2, endBold);
+              element.innerHTML += `<strong>${boldText}</strong>`;
+              i = endBold + 1;
+            } else {
+              element.innerHTML += line[i];
+            }
+          } else {
+            element.innerHTML += line[i];
+          }
+          
+          element.innerHTML += '<span class="typing-cursor"></span>';
+          
+          if (i % 3 === 0) {
+            await this.delay(speed);
+          }
+        }
+        
+        if (l < lines.length - 1) {
+          element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+          element.innerHTML += '<br><span class="typing-cursor"></span>';
+          await this.delay(speed * 2);
+        }
+      }
+      
+      await this.delay(300);
+      element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+    }
+    
+    reset() {
+      this.chatWindow.classList.remove('powered-up');
+      this.userMessage.classList.add('opacity-0');
+      this.genericResponse.classList.remove('hidden', 'fade-out');
+      this.genericResponse.classList.add('opacity-0');
+      this.memoryResponse.classList.add('hidden', 'opacity-0');
+      this.disk.style.opacity = '0';
+      this.disk.style.transform = 'translateY(-50%)';
+      this.driveSlot.style.opacity = '0';
+      this.statusBadge.textContent = 'Standard';
+      this.statusBadge.classList.remove('connected');
+      this.thoughtTree.style.opacity = '0';
+      this.treeConnections.innerHTML = '';
+      this.treeNodes.innerHTML = '';
+      this.userText.innerHTML = '';
+      this.genericText.innerHTML = '';
+      this.memoryText.innerHTML = '';
+      this.startBtn.classList.remove('hidden');
+    }
+    
+    delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  }
+  
+  new MemoryDemoAnimation();
+</script>
