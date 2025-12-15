@@ -250,7 +250,7 @@
       
       <!-- Replay button -->
       <div class="text-center mt-6">
-        <button class="replay-btn px-6 py-3 bg-lab-accent text-lab-bg font-bold rounded-lg hover:scale-105 transition-transform opacity-0" id="replay-btn">
+        <button class="replay-btn px-6 py-3 bg-lab-accent text-[#1a1a1a] font-bold rounded-lg hover:scale-105 transition-transform opacity-0" id="replay-btn">
           ↻ Replay
         </button>
       </div>
@@ -467,11 +467,11 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       
       await this.delay(400);
       if (this.userMessage) this.userMessage.classList.remove('opacity-0');
-      await this.typeText(this.userText, this.userQuestion, 30);
+      await this.typeText(this.userText, this.userQuestion, 55);
       
-      await this.delay(600);
+      await this.delay(800);
       if (this.genericResponse) this.genericResponse.classList.remove('opacity-0');
-      await this.typeText(this.genericText, this.genericReply, 12);
+      await this.typeText(this.genericText, this.genericReply, 28);
       
       await this.delay(800);
       if (this.graph) this.graph.classList.add('active');
@@ -503,7 +503,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
         this.memoryResponse.classList.remove('hidden');
         this.memoryResponse.classList.remove('opacity-0');
       }
-      await this.typeText(this.memoryText, this.memoryReply, 8);
+      await this.typeText(this.memoryText, this.memoryReply, 22);
       
       await this.delay(600);
       if (this.replayBtn) this.replayBtn.classList.add('visible');

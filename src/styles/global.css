@@ -89,7 +89,7 @@
   }
 
   .btn-lab-accent {
-    @apply bg-lab-accent text-white px-6 py-3 
+    @apply bg-lab-accent text-[#1a1a1a] px-6 py-3 
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
            transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg border-2 border-lab-text;
   }
