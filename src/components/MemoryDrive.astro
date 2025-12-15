@@ -157,15 +157,15 @@
 
     seq.nodes.forEach((id, i) => {
       const nodeEl = nodes.find((n) => n.dataset.node === id);
-      if (nodeEl) setTimeout(() => nodeEl.classList.add('active'), 120 * i);
+      if (nodeEl) setTimeout(() => nodeEl.classList.add('active'), 300 * i);
     });
 
     seq.edges.forEach((id, i) => {
       const edgeEl = edges.find((e) => e.dataset.edge === id);
-      if (edgeEl) setTimeout(() => edgeEl.classList.add('active'), 160 * i);
+      if (edgeEl) setTimeout(() => edgeEl.classList.add('active'), 400 * i);
     });
 
-    setTimeout(() => runSequence(index + 1), 3200);
+    setTimeout(() => runSequence(index + 1), 5500);
   }
 
   runSequence();
