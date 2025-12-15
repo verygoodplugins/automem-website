@@ -14,7 +14,7 @@ const currentDate = new Date().toLocaleDateString('en-US', {
   <Navigation currentPath="/animation-lab" />
   
   <main class="w-full min-h-screen bg-[#0d0d0d] pt-20 pb-24 overflow-hidden">
-    <div class="max-w-5xl mx-auto px-6">
+    <div class="max-w-7xl mx-auto px-6">
       
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-lab-text mb-4">Animation Lab</h1>
@@ -27,124 +27,129 @@ const currentDate = new Date().toLocaleDateString('en-US', {
         </button>
       </div>
       
-      <div class="demo-container relative flex flex-col items-center justify-center min-h-[700px]" id="demo-container">
+      <div class="demo-container relative min-h-[750px]" id="demo-container">
         
-        <!-- Memory bubbles container (absolute positioned around chat) -->
+        <!-- Memory bubbles container (fills right side) -->
         <div class="memory-bubbles-container absolute inset-0 pointer-events-none" id="memory-bubbles"></div>
         
         <!-- SVG for connection lines -->
         <svg class="connection-lines absolute inset-0 w-full h-full pointer-events-none" id="connection-lines"></svg>
         
-        <!-- Chat window -->
-        <div class="chat-window-wrapper relative z-10" id="chat-wrapper">
-          <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl w-[520px] border border-[#2f2f2f]" id="chat-window">
-            
-            <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-[#2f2f2f]">
-              <div class="flex items-center gap-2">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#10a37f"/>
-                  <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="#fff"/>
-                </svg>
-                <span class="text-white font-medium">ChatGPT</span>
-                <span class="text-xs text-gray-500">4o</span>
+        <!-- Main layout: Chat on left, disk animation on right -->
+        <div class="flex items-center justify-start gap-0 h-full min-h-[650px]">
+          
+          <!-- Chat window (LEFT side) -->
+          <div class="chat-window-wrapper relative z-10 flex-shrink-0" id="chat-wrapper">
+            <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl w-[480px] border border-[#2f2f2f]" id="chat-window">
+              
+              <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-[#2f2f2f]">
+                <div class="flex items-center gap-2">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#6366f1"/>
+                    <path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span class="text-white font-medium">ChatABC</span>
+                  <span class="text-xs text-gray-500">Pro</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="status-badge text-xs px-2 py-1 rounded-full bg-[#2f2f2f] text-gray-400" id="status-badge">Standard</span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="status-badge text-xs px-2 py-1 rounded-full bg-[#2f2f2f] text-gray-400" id="status-badge">Standard</span>
+              
+              <div class="chat-body p-6 min-h-[380px] flex flex-col" id="chat-body">
+                
+                <div class="flex-1 space-y-4">
+                  
+                  <div class="user-message opacity-0 flex justify-end" id="user-message">
+                    <div class="bg-[#2f2f2f] rounded-2xl px-4 py-3 max-w-[85%]">
+                      <p class="text-white" id="user-text"></p>
+                    </div>
+                  </div>
+                  
+                  <div class="ai-response opacity-0" id="generic-response">
+                    <div class="flex items-start gap-3">
+                      <div class="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="white">
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-gray-300 leading-relaxed text-sm" id="generic-text"></p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="ai-response opacity-0 hidden" id="memory-response">
+                    <div class="flex items-start gap-3">
+                      <div class="w-8 h-8 rounded-full bg-[#F9D857] flex items-center justify-center flex-shrink-0 memory-avatar">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#1a1a1a">
+                          <rect x="4" y="4" width="16" height="16" rx="2"/>
+                          <rect x="8" y="6" width="8" height="5" rx="1" fill="#fff"/>
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-white leading-relaxed text-sm" id="memory-text"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="chat-input mt-6 relative">
+                  <div class="bg-[#2f2f2f] rounded-xl border border-[#3f3f3f] px-4 py-3 flex items-center gap-3">
+                    <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm" disabled />
+                    <button class="text-gray-500 hover:text-white transition-colors">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div class="chat-body p-6 min-h-[350px] flex flex-col" id="chat-body">
-              
-              <div class="flex-1 space-y-4">
-                
-                <div class="user-message opacity-0 flex justify-end" id="user-message">
-                  <div class="bg-[#2f2f2f] rounded-2xl px-4 py-3 max-w-[80%]">
-                    <p class="text-white" id="user-text"></p>
-                  </div>
-                </div>
-                
-                <div class="ai-response opacity-0" id="generic-response">
-                  <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-[#10a37f] flex items-center justify-center flex-shrink-0">
-                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                        <circle cx="12" cy="12" r="4"/>
-                      </svg>
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-gray-300 leading-relaxed" id="generic-text"></p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="ai-response opacity-0 hidden" id="memory-response">
-                  <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-[#F9D857] flex items-center justify-center flex-shrink-0 memory-avatar">
-                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#1a1a1a">
-                        <rect x="4" y="4" width="16" height="16" rx="2"/>
-                        <rect x="8" y="6" width="8" height="5" rx="1" fill="#fff"/>
-                      </svg>
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-white leading-relaxed" id="memory-text"></p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="chat-input mt-6 relative">
-                <div class="bg-[#2f2f2f] rounded-xl border border-[#3f3f3f] px-4 py-3 flex items-center gap-3">
-                  <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm" disabled />
-                  <button class="text-gray-500 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                  </button>
-                </div>
+            <!-- Drive slot on RIGHT side of chat -->
+            <div class="drive-slot absolute top-1/2 -translate-y-1/2 -right-4 w-6 h-28 opacity-0" id="drive-slot">
+              <div class="w-full h-full bg-[#1a1a1a] rounded-r-lg border-2 border-[#333] border-l-0 flex items-center justify-center">
+                <div class="w-1 h-16 bg-[#2a2a2a] rounded"></div>
               </div>
             </div>
           </div>
           
-          <!-- Drive slot at bottom of chat -->
-          <div class="drive-slot absolute left-1/2 -translate-x-1/2 -bottom-3 w-20 h-4 opacity-0" id="drive-slot">
-            <div class="w-full h-full bg-[#1a1a1a] rounded-b-lg border-2 border-[#333] border-t-0 flex items-center justify-center">
-              <div class="w-12 h-1 bg-[#2a2a2a] rounded"></div>
-            </div>
+          <!-- AutoJack disk (starts far right, slides left into side slot) -->
+          <div class="autojack-disk absolute opacity-0" id="autojack-disk" style="right: -250px; top: 50%; transform: translateY(-50%);">
+            <svg viewBox="0 0 100 100" width="200" height="200" class="drop-shadow-2xl disk-svg">
+              <defs>
+                <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#FFE082"/>
+                  <stop offset="50%" style="stop-color:#F9D857"/>
+                  <stop offset="100%" style="stop-color:#DAA520"/>
+                </linearGradient>
+                <filter id="diskGlow">
+                  <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Disk body -->
+              <rect x="10" y="10" width="80" height="80" rx="8" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
+              <!-- Metal shutter -->
+              <rect x="30" y="15" width="40" height="25" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="55" y="20" width="12" height="15" rx="2" fill="#1a1a1a"/>
+              <!-- Face - starts confident, will change to bliss -->
+              <g class="disk-face" id="disk-face">
+                <!-- Confident expression (default) -->
+                <circle class="eye-left" cx="38" cy="60" r="5" fill="#1a1a1a"/>
+                <circle class="eye-right" cx="62" cy="60" r="5" fill="#1a1a1a"/>
+                <path class="mouth" d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+              </g>
+              <!-- Blush cheeks (hidden, shown for bliss) -->
+              <circle class="blush-left" cx="28" cy="68" r="5" fill="#ff9999" opacity="0"/>
+              <circle class="blush-right" cx="72" cy="68" r="5" fill="#ff9999" opacity="0"/>
+            </svg>
           </div>
-        </div>
-        
-        <!-- AutoJack disk (rotated 90°, starts below) -->
-        <div class="autojack-disk absolute opacity-0" id="autojack-disk" style="left: 50%; bottom: -100px; transform: translateX(-50%);">
-          <svg viewBox="0 0 100 100" width="80" height="80" class="drop-shadow-lg disk-svg" style="transform: rotate(-90deg);">
-            <defs>
-              <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#FFE082"/>
-                <stop offset="50%" style="stop-color:#F9D857"/>
-                <stop offset="100%" style="stop-color:#DAA520"/>
-              </linearGradient>
-              <filter id="diskGlow">
-                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            <!-- Disk body -->
-            <rect x="10" y="10" width="80" height="80" rx="8" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
-            <!-- Metal shutter -->
-            <rect x="30" y="15" width="40" height="25" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
-            <rect x="55" y="20" width="12" height="15" rx="2" fill="#1a1a1a"/>
-            <!-- Face - starts confident, will change to bliss -->
-            <g class="disk-face" id="disk-face">
-              <!-- Confident expression (default) -->
-              <circle class="eye-left" cx="38" cy="60" r="5" fill="#1a1a1a"/>
-              <circle class="eye-right" cx="62" cy="60" r="5" fill="#1a1a1a"/>
-              <path class="mouth" d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
-            </g>
-            <!-- Blush cheeks (hidden, shown for bliss) -->
-            <circle class="blush-left" cx="28" cy="68" r="5" fill="#ff9999" opacity="0"/>
-            <circle class="blush-right" cx="72" cy="68" r="5" fill="#ff9999" opacity="0"/>
-          </svg>
+          
         </div>
         
       </div>
@@ -155,17 +160,23 @@ const currentDate = new Date().toLocaleDateString('en-US', {
 
 <style>
   .chat-window {
-    transition: box-shadow 0.5s ease, border-color 0.5s ease;
+    transition: box-shadow 0.6s ease, border-color 0.6s ease;
   }
   
   .chat-window.powered-up {
     border-color: #F9D857;
-    box-shadow: 0 0 80px rgba(249, 216, 87, 0.4), 0 20px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 0 100px rgba(249, 216, 87, 0.5), 0 0 200px rgba(249, 216, 87, 0.2), 0 20px 40px rgba(0,0,0,0.4);
   }
   
   .status-badge.connected {
     background: rgba(249, 216, 87, 0.2);
     color: #F9D857;
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 216, 87, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(249, 216, 87, 0); }
   }
   
   .memory-avatar {
@@ -179,31 +190,54 @@ const currentDate = new Date().toLocaleDateString('en-US', {
   
   .memory-bubble {
     position: absolute;
-    background: rgba(18, 18, 18, 0.95);
-    border: 2px solid #F9D857;
-    border-radius: 12px;
-    padding: 8px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    background: rgba(13, 13, 13, 0.95);
+    border: 2px solid rgba(249, 216, 87, 0.6);
+    border-radius: 16px;
+    padding: 12px 18px;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 12px;
     color: #F9D857;
     opacity: 0;
-    transform: scale(0.5);
-    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: scale(0.3) translateY(20px);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(249, 216, 87, 0.2);
-    min-width: 80px;
+    box-shadow: 0 8px 32px rgba(249, 216, 87, 0.15), 0 0 0 1px rgba(249, 216, 87, 0.1);
+    min-width: 100px;
     text-align: center;
+    backdrop-filter: blur(8px);
   }
   
   .memory-bubble.visible {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
   
   .memory-bubble.primary {
-    background: #F9D857;
+    background: linear-gradient(135deg, #F9D857 0%, #DAA520 100%);
     color: #1a1a1a;
-    font-weight: bold;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 8px 32px rgba(249, 216, 87, 0.4), 0 0 60px rgba(249, 216, 87, 0.2);
+  }
+  
+  .memory-bubble.category {
+    border-color: rgba(99, 102, 241, 0.6);
+    color: #a5b4fc;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+  }
+  
+  .memory-bubble.detail {
+    font-size: 11px;
+    padding: 8px 14px;
+    border-color: rgba(52, 211, 153, 0.6);
+    color: #6ee7b7;
+    box-shadow: 0 8px 32px rgba(52, 211, 153, 0.15);
+  }
+  
+  .memory-bubble.insight {
+    border-color: rgba(251, 146, 60, 0.6);
+    color: #fdba74;
+    box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15);
   }
   
   .memory-bubble .bubble-text {
@@ -215,22 +249,34 @@ const currentDate = new Date().toLocaleDateString('en-US', {
     width: 2px;
     height: 1em;
     background: currentColor;
-    margin-left: 1px;
-    animation: blink 0.6s step-end infinite;
+    margin-left: 2px;
+    animation: blink 0.5s step-end infinite;
     vertical-align: middle;
   }
   
   .connection-line {
-    stroke: rgba(249, 216, 87, 0.3);
+    stroke: rgba(249, 216, 87, 0.25);
     stroke-width: 2;
-    stroke-dasharray: 200;
-    stroke-dashoffset: 200;
-    transition: stroke-dashoffset 0.8s ease-out;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    transition: stroke-dashoffset 1.2s ease-out;
     fill: none;
   }
   
   .connection-line.visible {
     stroke-dashoffset: 0;
+  }
+  
+  .connection-line.category-line {
+    stroke: rgba(99, 102, 241, 0.3);
+  }
+  
+  .connection-line.detail-line {
+    stroke: rgba(52, 211, 153, 0.3);
+  }
+  
+  .connection-line.insight-line {
+    stroke: rgba(251, 146, 60, 0.3);
   }
   
   .typing-cursor {
@@ -239,7 +285,7 @@ const currentDate = new Date().toLocaleDateString('en-US', {
     height: 1em;
     background: white;
     margin-left: 2px;
-    animation: blink 0.8s step-end infinite;
+    animation: blink 0.7s step-end infinite;
   }
   
   @keyframes blink {
@@ -249,27 +295,40 @@ const currentDate = new Date().toLocaleDateString('en-US', {
   
   .fade-out {
     opacity: 0 !important;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.5s ease;
   }
   
   .memory-bubble.visible .bubble-text {
-    animation: float-text 3s ease-in-out infinite;
+    animation: gentle-float 4s ease-in-out infinite;
   }
   
   .memory-bubble:nth-child(odd).visible .bubble-text {
+    animation-delay: 1s;
+  }
+  
+  .memory-bubble:nth-child(3n).visible .bubble-text {
     animation-delay: 0.5s;
   }
   
-  @keyframes float-text {
+  @keyframes gentle-float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-3px); }
+    50% { transform: translateY(-4px); }
+  }
+  
+  .drive-slot.active {
+    box-shadow: 0 0 30px rgba(249, 216, 87, 0.5);
+  }
+  
+  .drive-slot.active .w-1 {
+    background: #F9D857;
+    box-shadow: 0 0 10px rgba(249, 216, 87, 0.8);
   }
   
   @media (prefers-reduced-motion: reduce) {
     .memory-bubble, .connection-line, .chat-window {
       transition: none;
     }
-    .memory-avatar, .memory-bubble.visible {
+    .memory-avatar, .memory-bubble.visible, .status-badge.connected {
       animation: none;
     }
   }
@@ -312,14 +371,25 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
 ✓ File updated. Reloading now...`;
       
       this.memoryNodes = [
-        { id: 'query', text: 'Analyzing query...', position: 'top', offset: 0, delay: 0, isPrimary: true },
-        { id: 'user', text: 'User: Jack Arturo', position: 'top-left', offset: 0, delay: 600, parent: 'query' },
-        { id: 'project', text: 'Project: AutoMem.ai', position: 'top-right', offset: 0, delay: 900, parent: 'query' },
-        { id: 'session', text: 'Last session: homepage work', position: 'left', offset: -40, delay: 1400, parent: 'user' },
-        { id: 'stack', text: 'Stack: Astro + Tailwind', position: 'right', offset: -40, delay: 1700, parent: 'project' },
-        { id: 'file', text: 'Recent: MemoryHero.astro', position: 'left', offset: 40, delay: 2100, parent: 'session' },
-        { id: 'error', text: 'Error context: TypeScript', position: 'right', offset: 40, delay: 2400, parent: 'stack' },
-        { id: 'solution', text: 'Related fix: browser JS', position: 'bottom', offset: 0, delay: 2800, parent: 'error' },
+        { id: 'query', text: '🔍 Analyzing query...', x: 580, y: 80, delay: 0, isPrimary: true },
+        
+        { id: 'identity', text: '👤 Identity', x: 720, y: 140, delay: 800, parent: 'query', type: 'category' },
+        { id: 'user', text: 'Jack Arturo', x: 850, y: 100, delay: 1200, parent: 'identity', type: 'detail' },
+        { id: 'role', text: 'Full-stack developer', x: 880, y: 160, delay: 1600, parent: 'identity', type: 'detail' },
+        
+        { id: 'context', text: '📂 Project Context', x: 700, y: 240, delay: 2200, parent: 'query', type: 'category' },
+        { id: 'project', text: 'AutoMem.ai website', x: 860, y: 220, delay: 2600, parent: 'context', type: 'detail' },
+        { id: 'stack', text: 'Astro + Tailwind + TS', x: 870, y: 280, delay: 3000, parent: 'context', type: 'detail' },
+        
+        { id: 'history', text: '📜 Session History', x: 680, y: 340, delay: 3600, parent: 'query', type: 'category' },
+        { id: 'session', text: 'Last: homepage animations', x: 850, y: 320, delay: 4000, parent: 'history', type: 'detail' },
+        { id: 'file', text: 'Editing: MemoryHero.astro', x: 860, y: 380, delay: 4400, parent: 'history', type: 'detail' },
+        
+        { id: 'preferences', text: '⚙️ Preferences', x: 640, y: 440, delay: 5000, parent: 'query', type: 'category' },
+        { id: 'style', text: 'Prefers concise fixes', x: 820, y: 440, delay: 5400, parent: 'preferences', type: 'detail' },
+        { id: 'tone', text: 'Direct communication', x: 840, y: 500, delay: 5800, parent: 'preferences', type: 'detail' },
+        
+        { id: 'solution', text: '💡 Solution Found!', x: 720, y: 560, delay: 6400, parent: 'query', type: 'insight' },
       ];
       
       this.init();
@@ -333,80 +403,58 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       });
     }
     
-    getBubblePosition(position, offset) {
-      const chatRect = this.chatWrapper.getBoundingClientRect();
-      const containerRect = this.demoContainer.getBoundingClientRect();
-      
-      const chatCenterX = chatRect.left - containerRect.left + chatRect.width / 2;
-      const chatCenterY = chatRect.top - containerRect.top + chatRect.height / 2;
-      const chatWidth = chatRect.width;
-      const chatHeight = chatRect.height;
-      
-      const positions = {
-        'top': { x: chatCenterX, y: chatCenterY - chatHeight / 2 - 60 + offset },
-        'top-left': { x: chatCenterX - chatWidth / 2 - 80, y: chatCenterY - chatHeight / 2 - 30 + offset },
-        'top-right': { x: chatCenterX + chatWidth / 2 + 80, y: chatCenterY - chatHeight / 2 - 30 + offset },
-        'left': { x: chatCenterX - chatWidth / 2 - 100, y: chatCenterY + offset },
-        'right': { x: chatCenterX + chatWidth / 2 + 100, y: chatCenterY + offset },
-        'bottom-left': { x: chatCenterX - chatWidth / 2 - 80, y: chatCenterY + chatHeight / 2 + 30 + offset },
-        'bottom-right': { x: chatCenterX + chatWidth / 2 + 80, y: chatCenterY + chatHeight / 2 + 30 + offset },
-        'bottom': { x: chatCenterX, y: chatCenterY + chatHeight / 2 + 80 + offset },
-      };
-      
-      return positions[position] || positions['top'];
-    }
-    
     async play() {
       if (this.isPlaying) return;
       this.isPlaying = true;
       this.startBtn.classList.add('hidden');
       
-      await this.delay(300);
+      await this.delay(400);
       this.userMessage.classList.remove('opacity-0');
-      await this.typeText(this.userText, this.userQuestion, 35);
+      await this.typeText(this.userText, this.userQuestion, 40);
       
-      await this.delay(600);
+      await this.delay(700);
       this.genericResponse.classList.remove('opacity-0');
-      await this.typeText(this.genericText, this.genericReply, 12);
+      await this.typeText(this.genericText, this.genericReply, 15);
       
-      await this.delay(800);
+      await this.delay(1000);
       this.driveSlot.classList.remove('opacity-0');
       this.driveSlot.style.opacity = '1';
-      this.driveSlot.style.transition = 'opacity 0.3s ease';
-      
-      await this.delay(200);
-      this.disk.classList.remove('opacity-0');
-      this.disk.style.opacity = '1';
-      this.disk.style.transition = 'bottom 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
-      
-      await this.delay(100);
-      const chatRect = this.chatWrapper.getBoundingClientRect();
-      const containerRect = this.demoContainer.getBoundingClientRect();
-      const targetBottom = containerRect.height - (chatRect.bottom - containerRect.top) - 35;
-      this.disk.style.bottom = targetBottom + 'px';
-      
-      await this.delay(600);
-      this.disk.style.bottom = (targetBottom + 8) + 'px';
+      this.driveSlot.style.transition = 'opacity 0.4s ease';
       
       await this.delay(300);
-      this.showBlissExpression();
-      this.chatWindow.classList.add('powered-up');
-      this.statusBadge.textContent = 'AutoMem Connected';
-      this.statusBadge.classList.add('connected');
+      this.disk.classList.remove('opacity-0');
+      this.disk.style.opacity = '1';
+      this.disk.style.transition = 'right 1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease';
       
-      await this.delay(600);
-      await this.animateMemoryBubbles();
+      await this.delay(150);
+      const chatRect = this.chatWrapper.getBoundingClientRect();
+      const containerRect = this.demoContainer.getBoundingClientRect();
+      const targetRight = containerRect.width - (chatRect.right - containerRect.left) - 80;
+      this.disk.style.right = targetRight + 'px';
       
-      await this.delay(600);
-      this.genericResponse.classList.add('fade-out');
+      await this.delay(800);
+      this.disk.style.right = (targetRight + 15) + 'px';
       
       await this.delay(400);
+      this.showBlissExpression();
+      this.chatWindow.classList.add('powered-up');
+      this.driveSlot.classList.add('active');
+      this.statusBadge.textContent = '✨ AutoMem Connected';
+      this.statusBadge.classList.add('connected');
+      
+      await this.delay(800);
+      await this.animateMemoryBubbles();
+      
+      await this.delay(800);
+      this.genericResponse.classList.add('fade-out');
+      
+      await this.delay(500);
       this.genericResponse.classList.add('hidden');
       this.memoryResponse.classList.remove('hidden');
       this.memoryResponse.classList.remove('opacity-0');
-      await this.typeText(this.memoryText, this.memoryReply, 6);
+      await this.typeText(this.memoryText, this.memoryReply, 8);
       
-      await this.delay(500);
+      await this.delay(600);
       this.resetBtn.classList.remove('hidden');
       this.isPlaying = false;
     }
@@ -424,7 +472,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       eyeRight.setAttribute('r', '0');
       
       const happyEyeLeft = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      happyEyeLeft.setAttribute('d', 'M33 60 Q38 54 43 60');
+      happyEyeLeft.setAttribute('d', 'M33 60 Q38 53 43 60');
       happyEyeLeft.setAttribute('stroke', '#1a1a1a');
       happyEyeLeft.setAttribute('stroke-width', '3');
       happyEyeLeft.setAttribute('fill', 'none');
@@ -432,7 +480,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       happyEyeLeft.classList.add('happy-eye');
       
       const happyEyeRight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      happyEyeRight.setAttribute('d', 'M57 60 Q62 54 67 60');
+      happyEyeRight.setAttribute('d', 'M57 60 Q62 53 67 60');
       happyEyeRight.setAttribute('stroke', '#1a1a1a');
       happyEyeRight.setAttribute('stroke-width', '3');
       happyEyeRight.setAttribute('fill', 'none');
@@ -442,14 +490,15 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       this.diskFace.appendChild(happyEyeLeft);
       this.diskFace.appendChild(happyEyeRight);
       
-      mouth.setAttribute('d', 'M38 72 Q50 86 62 72');
+      mouth.setAttribute('d', 'M38 72 Q50 88 62 72');
       
-      blushLeft.style.transition = 'opacity 0.4s ease';
-      blushRight.style.transition = 'opacity 0.4s ease';
-      blushLeft.style.opacity = '0.6';
-      blushRight.style.opacity = '0.6';
+      blushLeft.style.transition = 'opacity 0.5s ease';
+      blushRight.style.transition = 'opacity 0.5s ease';
+      blushLeft.style.opacity = '0.7';
+      blushRight.style.opacity = '0.7';
       
-      diskSvg.style.filter = 'drop-shadow(0 0 20px rgba(249, 216, 87, 0.6))';
+      diskSvg.style.filter = 'drop-shadow(0 0 40px rgba(249, 216, 87, 0.7))';
+      diskSvg.style.transition = 'filter 0.5s ease';
     }
     
     async animateMemoryBubbles() {
@@ -458,47 +507,54 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       this.bubbleElements = {};
       
       for (const node of this.memoryNodes) {
-        await this.delay(node.delay > 0 ? 400 : 0);
-        
-        const pos = this.getBubblePosition(node.position, node.offset);
+        await this.delay(node.delay > 0 ? 500 : 0);
         
         const bubble = document.createElement('div');
-        bubble.className = 'memory-bubble' + (node.isPrimary ? ' primary' : '');
-        bubble.style.left = pos.x + 'px';
-        bubble.style.top = pos.y + 'px';
-        bubble.style.transform = 'translate(-50%, -50%) scale(0.5)';
+        let bubbleClass = 'memory-bubble';
+        if (node.isPrimary) bubbleClass += ' primary';
+        if (node.type === 'category') bubbleClass += ' category';
+        if (node.type === 'detail') bubbleClass += ' detail';
+        if (node.type === 'insight') bubbleClass += ' primary';
+        bubble.className = bubbleClass;
+        bubble.style.left = node.x + 'px';
+        bubble.style.top = node.y + 'px';
         bubble.innerHTML = '<span class="bubble-text"></span>';
         
         this.memoryBubbles.appendChild(bubble);
-        this.bubbleElements[node.id] = { element: bubble, pos: pos };
+        this.bubbleElements[node.id] = { element: bubble, x: node.x, y: node.y };
         
-        await this.delay(50);
+        await this.delay(80);
         bubble.classList.add('visible');
-        bubble.style.transform = 'translate(-50%, -50%) scale(1)';
         
         if (node.parent && this.bubbleElements[node.parent]) {
-          const parentPos = this.bubbleElements[node.parent].pos;
-          this.drawConnection(parentPos, pos);
+          const parent = this.bubbleElements[node.parent];
+          this.drawConnection(parent.x, parent.y, node.x, node.y, node.type);
         }
         
-        await this.typeBubbleText(bubble.querySelector('.bubble-text'), node.text, 25);
+        await this.typeBubbleText(bubble.querySelector('.bubble-text'), node.text, 35);
         
-        await this.delay(200);
+        await this.delay(150);
       }
     }
     
-    drawConnection(from, to) {
+    drawConnection(fromX, fromY, toX, toY, type) {
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       
-      const midX = (from.x + to.x) / 2;
-      const midY = (from.y + to.y) / 2;
-      const curve = `M ${from.x} ${from.y} Q ${midX} ${midY - 20} ${to.x} ${to.y}`;
+      const midX = (fromX + toX) / 2;
+      const midY = (fromY + toY) / 2;
+      const controlX = midX + (Math.random() - 0.5) * 40;
+      const controlY = midY + (Math.random() - 0.5) * 20;
+      const curve = `M ${fromX + 50} ${fromY + 15} Q ${controlX} ${controlY} ${toX} ${toY + 15}`;
       
       line.setAttribute('d', curve);
-      line.classList.add('connection-line');
+      let lineClass = 'connection-line';
+      if (type === 'category') lineClass += ' category-line';
+      if (type === 'detail') lineClass += ' detail-line';
+      if (type === 'insight') lineClass += ' insight-line';
+      line.setAttribute('class', lineClass);
       this.connectionLines.appendChild(line);
       
-      setTimeout(() => line.classList.add('visible'), 50);
+      setTimeout(() => line.classList.add('visible'), 100);
     }
     
     async typeBubbleText(element, text, speed) {
@@ -506,12 +562,10 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       
       for (let i = 0; i < text.length; i++) {
         element.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
-        if (i % 2 === 0) {
-          await this.delay(speed);
-        }
+        await this.delay(speed);
       }
       
-      await this.delay(200);
+      await this.delay(150);
       element.innerHTML = text;
     }
     
@@ -541,7 +595,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
           
           element.innerHTML += '<span class="typing-cursor"></span>';
           
-          if (i % 3 === 0) {
+          if (i % 2 === 0) {
             await this.delay(speed);
           }
         }
@@ -549,23 +603,25 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
         if (l < lines.length - 1) {
           element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
           element.innerHTML += '<br><span class="typing-cursor"></span>';
-          await this.delay(speed * 2);
+          await this.delay(speed * 3);
         }
       }
       
-      await this.delay(300);
+      await this.delay(200);
       element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
     }
     
     reset() {
       this.chatWindow.classList.remove('powered-up');
+      this.driveSlot.classList.remove('active');
       this.userMessage.classList.add('opacity-0');
       this.genericResponse.classList.remove('hidden', 'fade-out');
       this.genericResponse.classList.add('opacity-0');
       this.memoryResponse.classList.add('hidden', 'opacity-0');
       
       this.disk.style.opacity = '0';
-      this.disk.style.bottom = '-100px';
+      this.disk.style.right = '-250px';
+      this.driveSlot.style.opacity = '0';
       
       const diskSvg = this.disk.querySelector('svg');
       const happyEyes = diskSvg.querySelectorAll('.happy-eye');
@@ -577,24 +633,24 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       const blushLeft = diskSvg.querySelector('.blush-left');
       const blushRight = diskSvg.querySelector('.blush-right');
       
-      if (eyeLeft) eyeLeft.setAttribute('r', '5');
-      if (eyeRight) eyeRight.setAttribute('r', '5');
-      if (mouth) mouth.setAttribute('d', 'M42 72 Q50 80 58 72');
-      if (blushLeft) blushLeft.style.opacity = '0';
-      if (blushRight) blushRight.style.opacity = '0';
+      eyeLeft.setAttribute('r', '5');
+      eyeRight.setAttribute('r', '5');
+      mouth.setAttribute('d', 'M42 72 Q50 80 58 72');
+      blushLeft.style.opacity = '0';
+      blushRight.style.opacity = '0';
       diskSvg.style.filter = '';
       
-      this.driveSlot.style.opacity = '0';
       this.statusBadge.textContent = 'Standard';
       this.statusBadge.classList.remove('connected');
+      
+      this.userText.innerHTML = '';
+      this.genericText.innerHTML = '';
+      this.memoryText.innerHTML = '';
       
       this.memoryBubbles.innerHTML = '';
       this.connectionLines.innerHTML = '';
       this.bubbleElements = {};
       
-      this.userText.innerHTML = '';
-      this.genericText.innerHTML = '';
-      this.memoryText.innerHTML = '';
       this.startBtn.classList.remove('hidden');
     }
     
