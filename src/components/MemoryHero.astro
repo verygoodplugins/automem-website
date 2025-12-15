@@ -143,31 +143,31 @@
             <text x="820" y="545" text-anchor="middle" class="node-label green">Direct tone</text>
           </g>
           
-          <!-- Solution node -->
+          <!-- Solution node - positioned distinctly at top right -->
           <g class="node node-solution" data-delay="5000">
-            <circle cx="830" cy="160" r="26" fill="url(#nodeGlowOrange)" filter="url(#glow)"/>
-            <circle cx="830" cy="160" r="12" fill="#fb923c"/>
-            <text x="830" y="195" text-anchor="middle" class="node-label orange">💡 Solution Found!</text>
+            <circle cx="920" cy="180" r="26" fill="url(#nodeGlowOrange)" filter="url(#glow)"/>
+            <circle cx="920" cy="180" r="12" fill="#fb923c"/>
+            <text x="920" y="215" text-anchor="middle" class="node-label orange">💡 Solution!</text>
           </g>
         </g>
         
-        <!-- AutoJack Disk - positioned to show face clearly -->
-        <g class="disk-group" id="disk-group" transform="translate(440, 200)">
+        <!-- AutoJack Disk - positioned further right to show face clearly -->
+        <g class="disk-group" id="disk-group" transform="translate(500, 180)">
           <g class="autojack-disk" id="autojack-disk">
-            <!-- Larger disk 120x120 -->
-            <rect x="0" y="0" width="120" height="120" rx="12" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
+            <!-- Larger disk 140x140 -->
+            <rect x="0" y="0" width="140" height="140" rx="14" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
             <!-- Metal shutter -->
-            <rect x="30" y="10" width="60" height="36" rx="4" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
-            <rect x="66" y="17" width="18" height="22" rx="2" fill="#1a1a1a"/>
+            <rect x="35" y="12" width="70" height="42" rx="5" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="77" y="20" width="21" height="26" rx="2" fill="#1a1a1a"/>
             <!-- Face -->
             <g class="disk-face" id="disk-face">
-              <circle class="eye-left" cx="42" cy="72" r="7" fill="#1a1a1a"/>
-              <circle class="eye-right" cx="78" cy="72" r="7" fill="#1a1a1a"/>
-              <path class="mouth" d="M48 94 Q60 106 72 94" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <circle class="eye-left" cx="49" cy="84" r="8" fill="#1a1a1a"/>
+              <circle class="eye-right" cx="91" cy="84" r="8" fill="#1a1a1a"/>
+              <path class="mouth" d="M56 110 Q70 124 84 110" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
             </g>
             <!-- Blush circles -->
-            <circle class="blush-left" cx="26" cy="84" r="7" fill="#ff9999" opacity="0"/>
-            <circle class="blush-right" cx="94" cy="84" r="7" fill="#ff9999" opacity="0"/>
+            <circle class="blush-left" cx="30" cy="98" r="8" fill="#ff9999" opacity="0"/>
+            <circle class="blush-right" cx="110" cy="98" r="8" fill="#ff9999" opacity="0"/>
           </g>
         </g>
       </svg>
@@ -523,17 +523,17 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       if (eyeRight) eyeRight.setAttribute('r', '0');
       
       const happyEyeLeft = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      happyEyeLeft.setAttribute('d', 'M34 72 Q42 62 50 72');
+      happyEyeLeft.setAttribute('d', 'M39 84 Q49 72 59 84');
       happyEyeLeft.setAttribute('stroke', '#1a1a1a');
-      happyEyeLeft.setAttribute('stroke-width', '3');
+      happyEyeLeft.setAttribute('stroke-width', '4');
       happyEyeLeft.setAttribute('fill', 'none');
       happyEyeLeft.setAttribute('stroke-linecap', 'round');
       happyEyeLeft.classList.add('happy-eye');
       
       const happyEyeRight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      happyEyeRight.setAttribute('d', 'M70 72 Q78 62 86 72');
+      happyEyeRight.setAttribute('d', 'M81 84 Q91 72 101 84');
       happyEyeRight.setAttribute('stroke', '#1a1a1a');
-      happyEyeRight.setAttribute('stroke-width', '3');
+      happyEyeRight.setAttribute('stroke-width', '4');
       happyEyeRight.setAttribute('fill', 'none');
       happyEyeRight.setAttribute('stroke-linecap', 'round');
       happyEyeRight.classList.add('happy-eye');
@@ -541,7 +541,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       this.diskFace.appendChild(happyEyeLeft);
       this.diskFace.appendChild(happyEyeRight);
       
-      if (mouth) mouth.setAttribute('d', 'M42 94 Q60 115 78 94');
+      if (mouth) mouth.setAttribute('d', 'M49 110 Q70 132 91 110');
       
       if (blushLeft) {
         blushLeft.style.transition = 'opacity 0.5s ease';
@@ -628,9 +628,9 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
         const eyeRight = this.diskFace.querySelector('.eye-right');
         const mouth = this.diskFace.querySelector('.mouth');
         
-        if (eyeLeft) eyeLeft.setAttribute('r', '7');
-        if (eyeRight) eyeRight.setAttribute('r', '7');
-        if (mouth) mouth.setAttribute('d', 'M48 94 Q60 106 72 94');
+        if (eyeLeft) eyeLeft.setAttribute('r', '8');
+        if (eyeRight) eyeRight.setAttribute('r', '8');
+        if (mouth) mouth.setAttribute('d', 'M56 110 Q70 124 84 110');
       }
       
       if (this.disk) {
