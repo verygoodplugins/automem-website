@@ -465,15 +465,15 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       this.isPlaying = true;
       this.reset();
       
-      await this.delay(400);
+      await this.delay(600);
       if (this.userMessage) this.userMessage.classList.remove('opacity-0');
       await this.typeText(this.userText, this.userQuestion, 82);
       
-      await this.delay(800);
+      await this.delay(1200);
       if (this.genericResponse) this.genericResponse.classList.remove('opacity-0');
       await this.typeText(this.genericText, this.genericReply, 42);
       
-      await this.delay(800);
+      await this.delay(1200);
       if (this.graph) this.graph.classList.add('active');
       if (this.disk) this.disk.classList.add('glowing');
       this.showBlissExpression();
@@ -486,18 +486,18 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       for (let i = 0; i < this.nodes.length; i++) {
         const node = this.nodes[i];
         const nodeDelay = parseInt(node.getAttribute('data-delay') || '0');
-        setTimeout(() => node.classList.add('active'), nodeDelay);
+        setTimeout(() => node.classList.add('active'), nodeDelay * 1.5);
       }
       
-      await this.delay(300);
+      await this.delay(450);
       this.connections.forEach((conn, i) => {
-        setTimeout(() => conn.classList.add('active'), i * 150);
+        setTimeout(() => conn.classList.add('active'), i * 225);
       });
       
-      await this.delay(5500);
+      await this.delay(8250);
       if (this.genericResponse) this.genericResponse.classList.add('fade-out');
       
-      await this.delay(500);
+      await this.delay(750);
       if (this.genericResponse) this.genericResponse.classList.add('hidden');
       if (this.memoryResponse) {
         this.memoryResponse.classList.remove('hidden');
@@ -505,7 +505,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       }
       await this.typeText(this.memoryText, this.memoryReply, 33);
       
-      await this.delay(600);
+      await this.delay(900);
       if (this.replayBtn) this.replayBtn.classList.add('visible');
       this.isPlaying = false;
     }
