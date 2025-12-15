@@ -382,9 +382,25 @@
     transition: opacity 0.5s ease;
   }
   
+  .disk-group {
+    opacity: 0;
+    transform: translate(500px, 180px) scale(0.3);
+    transition: opacity 0.8s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .disk-group.peeking {
+    opacity: 1;
+    transform: translate(500px, 180px) scale(0.6);
+  }
+  
+  .disk-group.revealed {
+    opacity: 1;
+    transform: translate(500px, 180px) scale(1);
+  }
+  
   .autojack-disk {
     filter: drop-shadow(0 6px 20px rgba(249, 216, 87, 0.5));
-    transition: filter 0.5s ease;
+    transition: filter 0.8s ease;
   }
   
   .autojack-disk.glowing {
@@ -411,6 +427,7 @@
       this.graph = document.getElementById('memory-graph');
       this.nodes = document.querySelectorAll('.node');
       this.connections = document.querySelectorAll('.connection');
+      this.diskGroup = document.getElementById('disk-group');
       this.disk = document.getElementById('autojack-disk');
       this.diskFace = document.getElementById('disk-face');
       this.chatWindow = document.getElementById('chat-window');
@@ -465,16 +482,24 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
       this.isPlaying = true;
       this.reset();
       
-      await this.delay(600);
+      await this.delay(900);
       if (this.userMessage) this.userMessage.classList.remove('opacity-0');
-      await this.typeText(this.userText, this.userQuestion, 82);
+      await this.typeText(this.userText, this.userQuestion, 120);
       
-      await this.delay(1200);
+      await this.delay(1800);
       if (this.genericResponse) this.genericResponse.classList.remove('opacity-0');
-      await this.typeText(this.genericText, this.genericReply, 42);
+      await this.typeText(this.genericText, this.genericReply, 65);
       
-      await this.delay(1200);
+      await this.delay(1800);
       if (this.graph) this.graph.classList.add('active');
+      
+      if (this.diskGroup) this.diskGroup.classList.add('peeking');
+      await this.delay(1200);
+      
+      if (this.diskGroup) this.diskGroup.classList.remove('peeking');
+      if (this.diskGroup) this.diskGroup.classList.add('revealed');
+      await this.delay(800);
+      
       if (this.disk) this.disk.classList.add('glowing');
       this.showBlissExpression();
       if (this.chatWindow) this.chatWindow.classList.add('powered-up');
@@ -483,29 +508,31 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
         this.statusBadge.classList.add('connected');
       }
       
+      await this.delay(600);
+      
       for (let i = 0; i < this.nodes.length; i++) {
         const node = this.nodes[i];
         const nodeDelay = parseInt(node.getAttribute('data-delay') || '0');
-        setTimeout(() => node.classList.add('active'), nodeDelay * 1.5);
+        setTimeout(() => node.classList.add('active'), nodeDelay * 2.25);
       }
       
-      await this.delay(450);
+      await this.delay(700);
       this.connections.forEach((conn, i) => {
-        setTimeout(() => conn.classList.add('active'), i * 225);
+        setTimeout(() => conn.classList.add('active'), i * 340);
       });
       
-      await this.delay(8250);
+      await this.delay(12500);
       if (this.genericResponse) this.genericResponse.classList.add('fade-out');
       
-      await this.delay(750);
+      await this.delay(1100);
       if (this.genericResponse) this.genericResponse.classList.add('hidden');
       if (this.memoryResponse) {
         this.memoryResponse.classList.remove('hidden');
         this.memoryResponse.classList.remove('opacity-0');
       }
-      await this.typeText(this.memoryText, this.memoryReply, 33);
+      await this.typeText(this.memoryText, this.memoryReply, 50);
       
-      await this.delay(900);
+      await this.delay(1400);
       if (this.replayBtn) this.replayBtn.classList.add('visible');
       this.isPlaying = false;
     }
@@ -598,6 +625,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
     reset() {
       if (this.graph) this.graph.classList.remove('active');
       if (this.chatWindow) this.chatWindow.classList.remove('powered-up');
+      if (this.diskGroup) this.diskGroup.classList.remove('peeking', 'revealed');
       if (this.disk) this.disk.classList.remove('glowing');
       if (this.statusBadge) {
         this.statusBadge.textContent = 'Standard';
