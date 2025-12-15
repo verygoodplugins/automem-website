@@ -175,20 +175,20 @@
     
     <!-- Chat Window (Left side, foreground) -->
     <div class="max-w-md relative z-10 ml-0 md:ml-4">
-      <div class="chat-window bg-[#212121] rounded-2xl overflow-hidden shadow-2xl border border-[#2f2f2f]" id="chat-window">
+      <div class="chat-window bg-lab-surface rounded-2xl overflow-hidden shadow-2xl border-2 border-lab-border" id="chat-window">
         
         <!-- Header -->
-        <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-[#2f2f2f]">
+        <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-lab-border bg-lab-bg/50">
           <div class="flex items-center gap-2">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" fill="#6366f1"/>
               <path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span class="text-white font-medium">ChatABC</span>
-            <span class="text-xs text-gray-500">Pro</span>
+            <span class="text-lab-text font-medium">ChatABC</span>
+            <span class="text-xs text-lab-muted">Pro</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="status-badge text-xs px-2 py-1 rounded-full bg-[#2f2f2f] text-gray-400" id="status-badge">Standard</span>
+            <span class="status-badge text-xs px-2 py-1 rounded-full bg-lab-bg text-lab-muted" id="status-badge">Standard</span>
           </div>
         </div>
         
@@ -199,8 +199,8 @@
             
             <!-- User message -->
             <div class="user-message opacity-0 flex justify-end" id="user-message">
-              <div class="bg-[#2f2f2f] rounded-2xl px-4 py-3 max-w-[85%]">
-                <p class="text-white text-sm" id="user-text"></p>
+              <div class="bg-lab-secondary/20 rounded-2xl px-4 py-3 max-w-[85%]">
+                <p class="text-lab-text text-sm" id="user-text"></p>
               </div>
             </div>
             
@@ -213,7 +213,7 @@
                   </svg>
                 </div>
                 <div class="flex-1">
-                  <p class="text-gray-300 leading-relaxed text-sm" id="generic-text"></p>
+                  <p class="text-lab-muted leading-relaxed text-sm" id="generic-text"></p>
                 </div>
               </div>
             </div>
@@ -221,14 +221,14 @@
             <!-- Memory-powered response -->
             <div class="ai-response opacity-0 hidden" id="memory-response">
               <div class="flex items-start gap-3">
-                <div class="w-7 h-7 rounded-full bg-[#F9D857] flex items-center justify-center flex-shrink-0 memory-avatar">
+                <div class="w-7 h-7 rounded-full bg-lab-accent flex items-center justify-center flex-shrink-0 memory-avatar">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#1a1a1a">
                     <rect x="4" y="4" width="16" height="16" rx="2"/>
                     <rect x="8" y="6" width="8" height="5" rx="1" fill="#fff"/>
                   </svg>
                 </div>
                 <div class="flex-1">
-                  <p class="text-white leading-relaxed text-sm" id="memory-text"></p>
+                  <p class="text-lab-text leading-relaxed text-sm" id="memory-text"></p>
                 </div>
               </div>
             </div>
@@ -236,9 +236,9 @@
           
           <!-- Input -->
           <div class="chat-input mt-4 relative">
-            <div class="bg-[#2f2f2f] rounded-xl border border-[#3f3f3f] px-4 py-2.5 flex items-center gap-3">
-              <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm" disabled />
-              <button class="text-gray-500 hover:text-white transition-colors">
+            <div class="bg-lab-bg rounded-xl border border-lab-border px-4 py-2.5 flex items-center gap-3">
+              <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-lab-text placeholder-lab-muted outline-none text-sm" disabled />
+              <button class="text-lab-muted hover:text-lab-text transition-colors">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
@@ -339,8 +339,8 @@
   }
   
   .chat-window.powered-up {
-    border-color: #F9D857;
-    box-shadow: 0 0 60px rgba(249, 216, 87, 0.4), 0 0 120px rgba(249, 216, 87, 0.2), 0 20px 40px rgba(0,0,0,0.4);
+    border-color: rgb(var(--lab-accent));
+    box-shadow: 0 0 60px rgba(249, 216, 87, 0.4), 0 0 120px rgba(249, 216, 87, 0.2), 0 20px 40px rgba(0,0,0,0.2);
   }
   
   .status-badge.connected {
