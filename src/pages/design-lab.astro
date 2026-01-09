@@ -1,0 +1,372 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Design Lab - Color Exploration">
+  <div class="p-8 md:p-12 min-h-screen">
+    <div class="max-w-6xl mx-auto">
+      <div class="comment-header">:: DESIGN_LAB</div>
+      <h1 class="text-4xl font-bold mb-2">Gold Color Exploration</h1>
+      <p class="text-lab-muted mb-12">Click a swatch to preview it as the accent color. Find the perfect gold.</p>
+
+      <div class="grid gap-12">
+        
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Gold Options</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            
+            <div class="gold-option" data-color="249,216,87">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #F9D857 0%, #FFE082 50%, #F9D857 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">Luminous Gold</p>
+              <p class="text-xs text-lab-muted">#F9D857</p>
+              <p class="text-xs text-lab-secondary">Bright, Cheerful</p>
+            </div>
+
+            <div class="gold-option" data-color="255,217,102">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #FFD966 0%, #FFEB99 50%, #FFD966 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">Soft Gold</p>
+              <p class="text-xs text-lab-muted">#FFD966</p>
+              <p class="text-xs text-lab-secondary">Warm, Friendly</p>
+            </div>
+
+            <div class="gold-option" data-color="255,193,7">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #FFC107 0%, #FFD54F 50%, #FFC107 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">Classic Gold</p>
+              <p class="text-xs text-lab-muted">#FFC107</p>
+              <p class="text-xs text-lab-secondary">Bold, Confident</p>
+            </div>
+
+            <div class="gold-option" data-color="255,179,0">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #FFB300 0%, #FFCA28 50%, #FFB300 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">Amber Gold</p>
+              <p class="text-xs text-lab-muted">#FFB300</p>
+              <p class="text-xs text-lab-secondary">Rich, Warm</p>
+            </div>
+
+            <div class="gold-option" data-color="231,177,10">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #E7B10A 0%, #F5CE4E 50%, #E7B10A 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">True Gold</p>
+              <p class="text-xs text-lab-muted">#E7B10A</p>
+              <p class="text-xs text-lab-secondary">Balanced</p>
+            </div>
+
+            <div class="gold-option" data-color="212,175,55">
+              <div class="swatch shimmer" style="background: linear-gradient(135deg, #D4AF37 0%, #E8C860 50%, #D4AF37 100%);">
+                <span class="glint"></span>
+              </div>
+              <p class="font-mono text-sm mt-2">Metallic Gold</p>
+              <p class="text-xs text-lab-muted">#D4AF37</p>
+              <p class="text-xs text-lab-secondary">Luxurious</p>
+            </div>
+
+            <div class="gold-option current" data-color="212,164,37">
+              <div class="swatch" style="background: #D4A425;">
+              </div>
+              <p class="font-mono text-sm mt-2">Current (Brown-ish)</p>
+              <p class="text-xs text-lab-muted">#D4A425</p>
+              <p class="text-xs text-lab-error">Too muted</p>
+            </div>
+
+            <div class="gold-option" data-color="255,215,0">
+              <div class="swatch shimmer rainbow" style="background: linear-gradient(135deg, #FFD700 0%, #FFF8DC 30%, #FFD700 50%, #DAA520 70%, #FFD700 100%);">
+                <span class="glint"></span>
+                <span class="sparkle s1">✦</span>
+                <span class="sparkle s2">✦</span>
+                <span class="sparkle s3">✦</span>
+              </div>
+              <p class="font-mono text-sm mt-2">PURE GOLD ✨</p>
+              <p class="text-xs text-lab-muted">#FFD700</p>
+              <p class="text-xs text-lab-success">Maximum shine!</p>
+            </div>
+
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Secondary Color Pairings</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            
+            <div class="pairing">
+              <div class="flex gap-2 mb-2">
+                <div class="w-12 h-12 rounded" style="background: #FFD700;"></div>
+                <div class="w-12 h-12 rounded" style="background: #5B21B6;"></div>
+              </div>
+              <p class="text-sm font-bold">Gold + Deep Violet</p>
+              <p class="text-xs text-lab-muted">Royal, Premium</p>
+            </div>
+
+            <div class="pairing">
+              <div class="flex gap-2 mb-2">
+                <div class="w-12 h-12 rounded" style="background: #FFD700;"></div>
+                <div class="w-12 h-12 rounded" style="background: #0D9488;"></div>
+              </div>
+              <p class="text-sm font-bold">Gold + Teal</p>
+              <p class="text-xs text-lab-muted">Fresh, Techy</p>
+            </div>
+
+            <div class="pairing">
+              <div class="flex gap-2 mb-2">
+                <div class="w-12 h-12 rounded" style="background: #FFD700;"></div>
+                <div class="w-12 h-12 rounded" style="background: #EC4899;"></div>
+              </div>
+              <p class="text-sm font-bold">Gold + Hot Pink</p>
+              <p class="text-xs text-lab-muted">Fun, Playful</p>
+            </div>
+
+            <div class="pairing">
+              <div class="flex gap-2 mb-2">
+                <div class="w-12 h-12 rounded" style="background: #FFD700;"></div>
+                <div class="w-12 h-12 rounded" style="background: #06B6D4;"></div>
+              </div>
+              <p class="text-sm font-bold">Gold + Cyan</p>
+              <p class="text-xs text-lab-muted">Electric, Bold</p>
+            </div>
+
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Live Preview</h2>
+          <div class="bg-lab-surface border border-lab-border rounded-xl p-8">
+            <div class="flex items-center gap-6 mb-8">
+              <div class="preview-mascot">
+                <svg viewBox="0 0 100 100" width="120" height="120" class="mascot-preview">
+                  <defs>
+                    <linearGradient id="previewGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" class="gold-stop-light" style="stop-color:#FFE082"/>
+                      <stop offset="50%" class="gold-stop-main" style="stop-color:#FFD700"/>
+                      <stop offset="100%" class="gold-stop-dark" style="stop-color:#DAA520"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="10" y="10" width="80" height="80" rx="8" fill="url(#previewGold)" stroke="#1a1a1a" stroke-width="3"/>
+                  <rect x="30" y="15" width="40" height="25" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+                  <rect x="55" y="20" width="12" height="15" rx="2" fill="#1a1a1a"/>
+                  <circle cx="38" cy="60" r="5" fill="#1a1a1a"/>
+                  <circle cx="62" cy="60" r="5" fill="#1a1a1a"/>
+                  <path d="M42 72 Q50 80 58 72" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold">Recall is <span class="preview-accent" style="color: #FFD700;">Power.</span></h3>
+                <p class="text-lab-muted">The universal memory layer for your AI agents.</p>
+                <button class="preview-btn mt-4 px-6 py-2 rounded-lg font-bold transition-all" style="background: #FFD700; color: #000;">
+                  Get Started
+                </button>
+              </div>
+            </div>
+            
+            <div class="text-sm text-lab-muted">
+              <span class="preview-accent" style="color: #FFD700;">→</span> Click any gold swatch above to preview it here
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Sparkle Effects</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="effect-demo bg-lab-surface border border-lab-border rounded-xl p-6">
+              <div class="demo-box glint-sweep mb-4" style="background: linear-gradient(135deg, #FFD700, #FFC107);">
+                <span class="sweep"></span>
+                Glint Sweep
+              </div>
+              <p class="text-sm text-lab-muted">Animated light sweep on hover</p>
+            </div>
+
+            <div class="effect-demo bg-lab-surface border border-lab-border rounded-xl p-6">
+              <div class="demo-box shimmer-pulse mb-4" style="background: linear-gradient(135deg, #FFD700, #FFC107);">
+                Shimmer Pulse
+              </div>
+              <p class="text-sm text-lab-muted">Gentle pulsing glow</p>
+            </div>
+
+            <div class="effect-demo bg-lab-surface border border-lab-border rounded-xl p-6">
+              <div class="demo-box sparkle-burst mb-4" style="background: linear-gradient(135deg, #FFD700, #FFC107);">
+                <span class="sp sp1">✦</span>
+                <span class="sp sp2">✦</span>
+                <span class="sp sp3">✦</span>
+                <span class="sp sp4">✦</span>
+                Sparkle Burst
+              </div>
+              <p class="text-sm text-lab-muted">Floating sparkle particles</p>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .swatch {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 3px solid transparent;
+  }
+  
+  .gold-option:hover .swatch {
+    transform: scale(1.05);
+    box-shadow: 0 8px 32px rgba(255, 215, 0, 0.4);
+  }
+  
+  .gold-option.active .swatch {
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  }
+  
+  .glint {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: glint-move 3s ease-in-out infinite;
+  }
+  
+  @keyframes glint-move {
+    0%, 100% { left: -100%; }
+    50% { left: 150%; }
+  }
+  
+  .sparkle {
+    position: absolute;
+    color: #fff;
+    font-size: 14px;
+    animation: sparkle-float 2s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(255,255,255,0.8);
+  }
+  
+  .s1 { top: 10%; left: 20%; animation-delay: 0s; }
+  .s2 { top: 30%; right: 15%; animation-delay: 0.5s; }
+  .s3 { bottom: 20%; left: 40%; animation-delay: 1s; }
+  
+  @keyframes sparkle-float {
+    0%, 100% { opacity: 0.3; transform: scale(0.8) translateY(0); }
+    50% { opacity: 1; transform: scale(1.2) translateY(-5px); }
+  }
+  
+  .demo-box {
+    height: 100px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #000;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .glint-sweep {
+    cursor: pointer;
+  }
+  
+  .glint-sweep .sweep {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .glint-sweep:hover .sweep {
+    left: 150%;
+  }
+  
+  .shimmer-pulse {
+    animation: shimmer-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3); }
+  }
+  
+  .sparkle-burst {
+    cursor: pointer;
+  }
+  
+  .sparkle-burst .sp {
+    position: absolute;
+    color: #fff;
+    font-size: 16px;
+    opacity: 0;
+    text-shadow: 0 0 8px rgba(255,255,255,0.9);
+    transition: all 0.3s ease;
+  }
+  
+  .sp1 { top: 10%; left: 15%; }
+  .sp2 { top: 15%; right: 20%; }
+  .sp3 { bottom: 20%; left: 25%; }
+  .sp4 { bottom: 15%; right: 15%; }
+  
+  .sparkle-burst:hover .sp {
+    opacity: 1;
+    animation: burst 0.6s ease-out forwards;
+  }
+  
+  .sparkle-burst:hover .sp1 { animation-delay: 0s; }
+  .sparkle-burst:hover .sp2 { animation-delay: 0.1s; }
+  .sparkle-burst:hover .sp3 { animation-delay: 0.2s; }
+  .sparkle-burst:hover .sp4 { animation-delay: 0.3s; }
+  
+  @keyframes burst {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+    100% { transform: scale(1) rotate(360deg); opacity: 0.8; }
+  }
+  
+  .preview-mascot {
+    filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.4));
+  }
+</style>
+
+<script>
+  const options = document.querySelectorAll('.gold-option');
+  const previewAccents = document.querySelectorAll('.preview-accent');
+  const previewBtn = document.querySelector('.preview-btn');
+  const goldStopMain = document.querySelector('.gold-stop-main');
+  
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      const rgb = option.dataset.color;
+      if (!rgb) return;
+      
+      // Update active state
+      options.forEach(o => o.classList.remove('active'));
+      option.classList.add('active');
+      
+      // Update preview colors
+      const color = `rgb(${rgb})`;
+      previewAccents.forEach(el => {
+        (el as HTMLElement).style.color = color;
+      });
+      if (previewBtn) {
+        (previewBtn as HTMLElement).style.background = color;
+      }
+      
+      // Update CSS variable for live preview
+      document.documentElement.style.setProperty('--lab-accent', rgb);
+    });
+  });
+</script>

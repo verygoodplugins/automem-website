@@ -1,0 +1,400 @@
+---
+interface Props {
+  size?: number;
+  class?: string;
+  autoPlay?: boolean;
+}
+
+const { 
+  size = 200, 
+  class: className = '',
+  autoPlay = true 
+} = Astro.props;
+---
+
+<div class={`autojack-drive ${className}`} data-autoplay={autoPlay}>
+  <div class="drive-container" style={`--drive-size: ${size}px;`}>
+    <div class="drive-slot">
+      <div class="slot-opening">
+        <div class="slot-interior"></div>
+      </div>
+      <div class="drive-indicator"></div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <div class="slot-glow"></div>
+    </div>
+    
+    <div class="disk-wrapper">
+      <svg viewBox="0 0 100 100" class="disk-svg">
+        <defs>
+          <filter id="diskShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="3" dy="5" stdDeviation="0" flood-color="#000000" flood-opacity="0.4"/>
+          </filter>
+        </defs>
+        
+        <g filter="url(#diskShadow)">
+          <rect x="10" y="10" width="80" height="80" rx="8" 
+                fill="var(--mascot-gold)" 
+                stroke="var(--mascot-stroke)" 
+                stroke-width="3"/>
+          
+          <path d="M90 10 L90 30 L70 10 Z" fill="var(--mascot-stroke)"/>
+          
+          <rect x="22" y="10" width="56" height="30" rx="4" 
+                fill="var(--mascot-metal)" 
+                stroke="var(--mascot-stroke)" 
+                stroke-width="2.4"/>
+          <rect x="38" y="15" width="14" height="18" rx="2" 
+                fill="var(--mascot-stroke)" 
+                opacity="0.8"/>
+          
+          <rect x="15" y="52" width="70" height="33" rx="4" 
+                fill="var(--mascot-gold-secondary)" 
+                stroke="var(--mascot-stroke)" 
+                stroke-width="2.4"/>
+          
+          <g class="face face-idle">
+            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <ellipse cx="62" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <ellipse cx="50" cy="78" rx="4" ry="3" fill="var(--mascot-stroke)" opacity="0.8"/>
+          </g>
+          
+          <g class="face face-loading hidden">
+            <ellipse cx="38" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <ellipse cx="62" cy="66" rx="5" ry="6" fill="var(--mascot-stroke)"/>
+            <path d="M42 76 Q50 82 58 76" stroke="var(--mascot-stroke)" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </g>
+          
+          <g class="face face-bliss hidden">
+            <path d="M33 66 Q38 60 43 66" stroke="var(--mascot-stroke)" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M57 66 Q62 60 67 66" stroke="var(--mascot-stroke)" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M38 76 Q50 88 62 76" stroke="var(--mascot-stroke)" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle class="blush-left" cx="28" cy="72" r="4" fill="#ff9999"/>
+            <circle class="blush-right" cx="72" cy="72" r="4" fill="#ff9999"/>
+          </g>
+        </g>
+        
+        <g class="sparkles">
+          <circle cx="5" cy="5" r="2" fill="var(--mascot-gold)" class="sparkle"/>
+          <circle cx="95" cy="12" r="1.5" fill="var(--mascot-gold)" class="sparkle"/>
+          <circle cx="3" cy="50" r="1" fill="var(--mascot-gold)" class="sparkle"/>
+          <circle cx="97" cy="55" r="1.5" fill="var(--mascot-gold)" class="sparkle"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  
+  <div class="drive-status">
+    <span class="status-text">MEMORY_STANDBY</span>
+  </div>
+</div>
+
+<style>
+  :root {
+    --mascot-gold: #F9D857;
+    --mascot-gold-secondary: #DAA520;
+    --mascot-gold-light: #FFE082;
+    --mascot-gold-glow: rgba(249, 216, 87, 0.4);
+    --mascot-metal: #e5e5e5;
+    --mascot-stroke: #1a1a1a;
+    --mascot-drive-green: #34D399;
+    --mascot-blush: #ff9999;
+  }
+  
+  .autojack-drive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .drive-container {
+    position: relative;
+    width: var(--drive-size);
+    height: calc(var(--drive-size) * 1.4);
+  }
+  
+  .drive-slot {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    height: 50%;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 3px solid #333;
+    border-radius: 8px 8px 0 0;
+    box-shadow: inset 0 10px 30px rgba(0,0,0,0.8), 4px 4px 0 #000;
+    overflow: hidden;
+  }
+  
+  .slot-opening {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 75%;
+    height: 12px;
+    background: #000;
+    border: 2px solid #222;
+    border-radius: 2px;
+  }
+  
+  .slot-interior {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #111 0%, #000 100%);
+  }
+  
+  .drive-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 10px;
+    height: 10px;
+    background: #333;
+    border-radius: 50%;
+    border: 2px solid #222;
+    transition: all 0.3s ease;
+  }
+  
+  .drive-indicator.active {
+    background: var(--mascot-drive-green);
+    box-shadow: 0 0 12px var(--mascot-drive-green), 0 0 24px var(--mascot-drive-green);
+  }
+  
+  .progress-bar {
+    position: absolute;
+    top: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .progress-bar.visible {
+    opacity: 1;
+  }
+  
+  .progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--mascot-drive-green), #4ade80);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+  }
+  
+  .slot-glow {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, transparent, var(--mascot-drive-green));
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  
+  .slot-glow.active {
+    opacity: 0.4;
+    animation: glow-pulse 1s ease-in-out infinite;
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+  
+  .disk-wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .disk-wrapper.inserted {
+    transform: translateX(-50%) translateY(-60%);
+  }
+  
+  .disk-wrapper.ejecting {
+    transform: translateX(-50%) translateY(0);
+    transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .disk-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .face { transition: opacity 0.3s ease; }
+  .face.hidden { opacity: 0; pointer-events: none; }
+  .face.visible { opacity: 1; }
+  
+  .sparkle {
+    opacity: 0.3;
+    animation: sparkle-float 3s ease-in-out infinite;
+  }
+  
+  .sparkle:nth-child(1) { animation-delay: 0s; }
+  .sparkle:nth-child(2) { animation-delay: 0.5s; }
+  .sparkle:nth-child(3) { animation-delay: 1s; }
+  .sparkle:nth-child(4) { animation-delay: 1.5s; }
+  
+  @keyframes sparkle-float {
+    0%, 100% { opacity: 0.3; transform: scale(1) translateY(0); }
+    50% { opacity: 1; transform: scale(1.3) translateY(-3px); }
+  }
+  
+  .sparkles.celebrating .sparkle {
+    animation: sparkle-celebrate 0.5s ease-out forwards;
+  }
+  
+  @keyframes sparkle-celebrate {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.5); }
+    100% { opacity: 0.8; transform: scale(1); }
+  }
+  
+  .blush-left, .blush-right {
+    opacity: 0.6;
+  }
+  
+  .drive-status {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--lab-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .status-text.success {
+    color: var(--mascot-drive-green);
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.autojack-drive').forEach((drive) => {
+    const autoPlay = drive.dataset.autoplay === 'true';
+    const diskWrapper = drive.querySelector('.disk-wrapper');
+    const indicator = drive.querySelector('.drive-indicator');
+    const progressBar = drive.querySelector('.progress-bar');
+    const progressFill = drive.querySelector('.progress-fill');
+    const slotGlow = drive.querySelector('.slot-glow');
+    const sparkles = drive.querySelector('.sparkles');
+    const statusText = drive.querySelector('.status-text');
+    
+    const faceIdle = drive.querySelector('.face-idle');
+    const faceLoading = drive.querySelector('.face-loading');
+    const faceBliss = drive.querySelector('.face-bliss');
+    
+    function setFace(face: string) {
+      faceIdle?.classList.add('hidden');
+      faceIdle?.classList.remove('visible');
+      faceLoading?.classList.add('hidden');
+      faceLoading?.classList.remove('visible');
+      faceBliss?.classList.add('hidden');
+      faceBliss?.classList.remove('visible');
+      
+      if (face === 'idle') {
+        faceIdle?.classList.remove('hidden');
+        faceIdle?.classList.add('visible');
+      } else if (face === 'loading') {
+        faceLoading?.classList.remove('hidden');
+        faceLoading?.classList.add('visible');
+      } else if (face === 'bliss') {
+        faceBliss?.classList.remove('hidden');
+        faceBliss?.classList.add('visible');
+      }
+    }
+    
+    async function runAnimation() {
+      // Reset
+      setFace('idle');
+      diskWrapper?.classList.remove('inserted', 'ejecting');
+      indicator?.classList.remove('active');
+      progressBar?.classList.remove('visible');
+      slotGlow?.classList.remove('active');
+      sparkles?.classList.remove('celebrating');
+      if (progressFill) (progressFill as HTMLElement).style.width = '0%';
+      if (statusText) statusText.textContent = 'MEMORY_STANDBY';
+      
+      await delay(500);
+      
+      // Insert
+      if (statusText) statusText.textContent = 'INSERTING...';
+      diskWrapper?.classList.add('inserted');
+      await delay(700);
+      
+      // Light on
+      indicator?.classList.add('active');
+      slotGlow?.classList.add('active');
+      progressBar?.classList.add('visible');
+      if (statusText) statusText.textContent = 'LOADING_MEMORY';
+      setFace('loading');
+      await delay(600);
+      
+      // Progress
+      for (let i = 0; i <= 100; i += 5) {
+        if (progressFill) (progressFill as HTMLElement).style.width = `${i}%`;
+        await delay(80);
+      }
+      
+      // Bliss
+      if (statusText) {
+        statusText.textContent = 'MEMORY_LOADED';
+        statusText.classList.add('success');
+      }
+      setFace('bliss');
+      sparkles?.classList.add('celebrating');
+      await delay(2500);
+      
+      // Eject
+      if (statusText) {
+        statusText.textContent = 'EJECTING...';
+        statusText.classList.remove('success');
+      }
+      indicator?.classList.remove('active');
+      slotGlow?.classList.remove('active');
+      progressBar?.classList.remove('visible');
+      diskWrapper?.classList.remove('inserted');
+      diskWrapper?.classList.add('ejecting');
+      await delay(1000);
+      
+      // Reset
+      diskWrapper?.classList.remove('ejecting');
+      setFace('idle');
+      sparkles?.classList.remove('celebrating');
+      if (statusText) statusText.textContent = 'MEMORY_STANDBY';
+      
+      await delay(2000);
+      
+      if (autoPlay) {
+        runAnimation();
+      }
+    }
+    
+    function delay(ms: number) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    if (autoPlay) {
+      setTimeout(() => runAnimation(), 1000);
+    }
+    
+    // Click to trigger animation
+    drive.addEventListener('click', () => {
+      if (!autoPlay) {
+        runAnimation();
+      }
+    });
+  });
+</script>

@@ -44,7 +44,7 @@ const { text, delay = 0, class: className = "" } = Astro.props;
       if (this.index < this.text.length) {
         this.element.textContent += this.text.charAt(this.index);
         this.index++;
-        setTimeout(() => this.type(), Math.random() * 30 + 30); // Random typing speed
+        setTimeout(() => this.type(), Math.random() * 60 + 80); // Slower typing speed
       } else {
         // Remove cursor from sibling if it exists
         const cursor = this.element.nextElementSibling;

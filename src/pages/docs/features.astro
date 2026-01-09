@@ -8,89 +8,88 @@ import '../../styles/global.css';
   <Navigation currentPath="/docs/features" />
   <main class="min-h-screen py-20 px-6">
     <div class="max-w-4xl mx-auto">
-      <a href="/docs" class="text-automem-primary hover:underline mb-4 inline-block">← Back to Documentation</a>
+      <a href="/docs" class="text-lab-accent hover:underline mb-4 inline-block">← Back to Documentation</a>
       
-      <h1 class="text-5xl font-bold mb-6">
-        <span class="gradient-text">Features</span>
-      </h1>
-      <p class="text-xl text-gray-600 dark:text-gray-300 mb-12">
+      <div class="comment-header">:: FEATURES</div>
+      <h1 class="text-5xl font-bold mb-6 text-lab-text">Features</h1>
+      <p class="text-xl text-lab-muted mb-12">
         Comprehensive guide to AutoMem's capabilities
       </p>
 
       <!-- Memory Types -->
       <section class="mb-16">
-        <h2 class="text-3xl font-bold mb-6">Memory Types</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <h2 class="text-3xl font-bold mb-6 text-lab-text">Memory Types</h2>
+        <p class="text-lab-muted mb-6">
           AutoMem categorizes memories into semantic types for better organization and intelligent retrieval. Each type serves a specific purpose in building your AI's knowledge base.
         </p>
 
         <div class="space-y-4">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-blue-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-secondary">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-semibold">Decision</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-secondary text-lab-secondary rounded-full text-sm font-semibold">Decision</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Architectural choices, technology selections, and strategic decisions</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Chose PostgreSQL over MongoDB for ACID compliance"</p>
+                <p class="text-lab-muted mb-2">Architectural choices, technology selections, and strategic decisions</p>
+                <p class="text-sm text-lab-muted italic">Example: "Chose PostgreSQL over MongoDB for ACID compliance"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-purple-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-accent">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-semibold">Pattern</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-accent text-lab-accent rounded-full text-sm font-semibold">Pattern</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Recurring solutions, code patterns, and established practices</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Always use factory pattern for object creation in services/"</p>
+                <p class="text-lab-muted mb-2">Recurring solutions, code patterns, and established practices</p>
+                <p class="text-sm text-lab-muted italic">Example: "Always use factory pattern for object creation in services/"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-yellow-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-success">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-semibold">Insight</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-success text-lab-success rounded-full text-sm font-semibold">Insight</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Lessons learned, debugging discoveries, and important realizations</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "React re-renders trigger when parent state changes, even with memo"</p>
+                <p class="text-lab-muted mb-2">Lessons learned, debugging discoveries, and important realizations</p>
+                <p class="text-sm text-lab-muted italic">Example: "React re-renders trigger when parent state changes, even with memo"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-green-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-secondary">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-semibold">Preference</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-secondary text-lab-secondary rounded-full text-sm font-semibold">Preference</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">User or team preferences for tools, styles, and approaches</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Prefers Tailwind CSS over styled-components"</p>
+                <p class="text-lab-muted mb-2">User or team preferences for tools, styles, and approaches</p>
+                <p class="text-sm text-lab-muted italic">Example: "Prefers Tailwind CSS over styled-components"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-pink-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-accent">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded-full text-sm font-semibold">Style</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-accent text-lab-accent rounded-full text-sm font-semibold">Style</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Coding style, formatting preferences, and conventions</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Uses 2-space indentation, semicolons required"</p>
+                <p class="text-lab-muted mb-2">Coding style, formatting preferences, and conventions</p>
+                <p class="text-sm text-lab-muted italic">Example: "Uses 2-space indentation, semicolons required"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-gray-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-border">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm font-semibold">Habit</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-muted text-lab-muted rounded-full text-sm font-semibold">Habit</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Regular workflows, routines, and behavioral patterns</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Always runs tests before committing code"</p>
+                <p class="text-lab-muted mb-2">Regular workflows, routines, and behavioral patterns</p>
+                <p class="text-sm text-lab-muted italic">Example: "Always runs tests before committing code"</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-indigo-400">
+          <div class="bg-lab-surface rounded-lg p-6 border-l-4 border-lab-secondary">
             <div class="flex items-start gap-4">
-              <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-full text-sm font-semibold">Context</span>
+              <span class="px-3 py-1 bg-lab-bg border border-lab-secondary text-lab-secondary rounded-full text-sm font-semibold">Context</span>
               <div>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Project background, team information, and situational details</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500 italic">Example: "Working on e-commerce platform for 50k+ daily users"</p>
+                <p class="text-lab-muted mb-2">Project background, team information, and situational details</p>
+                <p class="text-sm text-lab-muted italic">Example: "Working on e-commerce platform for 50k+ daily users"</p>
               </div>
             </div>
           </div>
@@ -99,63 +98,63 @@ import '../../styles/global.css';
 
       <!-- Knowledge Graphs -->
       <section class="mb-16">
-        <h2 class="text-3xl font-bold mb-6">Knowledge Graphs</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <h2 class="text-3xl font-bold mb-6 text-lab-text">Knowledge Graphs</h2>
+        <p class="text-lab-muted mb-6">
           AutoMem creates rich relationships between memories using graph database technology. These connections enable intelligent traversal and context-aware recall.
         </p>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
-          <h3 class="text-xl font-semibold mb-4">11 Relationship Types</h3>
+        <div class="bg-lab-surface rounded-lg p-6 mb-6 border border-lab-border">
+          <h3 class="text-xl font-semibold mb-4 text-lab-text">11 Relationship Types</h3>
           <div class="grid md:grid-cols-2 gap-4">
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">RELATES_TO</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">General connection between related memories</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">RELATES_TO</p>
+              <p class="text-sm text-lab-muted">General connection between related memories</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">LEADS_TO</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Sequential causation or progression</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">LEADS_TO</p>
+              <p class="text-sm text-lab-muted">Sequential causation or progression</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">EVOLVED_INTO</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Updated decision or changed approach</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">EVOLVED_INTO</p>
+              <p class="text-sm text-lab-muted">Updated decision or changed approach</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">DERIVED_FROM</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Based on or inspired by</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">DERIVED_FROM</p>
+              <p class="text-sm text-lab-muted">Based on or inspired by</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">EXEMPLIFIES</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Concrete example of a pattern</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">EXEMPLIFIES</p>
+              <p class="text-sm text-lab-muted">Concrete example of a pattern</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">CONTRADICTS</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Conflicts with another memory</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">CONTRADICTS</p>
+              <p class="text-sm text-lab-muted">Conflicts with another memory</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">REINFORCES</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Strengthens or supports</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">REINFORCES</p>
+              <p class="text-sm text-lab-muted">Strengthens or supports</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">INVALIDATED_BY</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Made obsolete by new information</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">INVALIDATED_BY</p>
+              <p class="text-sm text-lab-muted">Made obsolete by new information</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">OCCURRED_BEFORE</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Temporal ordering of events</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">OCCURRED_BEFORE</p>
+              <p class="text-sm text-lab-muted">Temporal ordering of events</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">PART_OF</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Hierarchical membership</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">PART_OF</p>
+              <p class="text-sm text-lab-muted">Hierarchical membership</p>
             </div>
             <div>
-              <p class="font-mono text-sm text-automem-primary mb-1">PREFERS_OVER</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Preference ranking between options</p>
+              <p class="font-mono text-sm text-lab-accent mb-1">PREFERS_OVER</p>
+              <p class="text-sm text-lab-muted">Preference ranking between options</p>
             </div>
           </div>
         </div>
 
-        <div class="bg-gray-900 text-green-400 rounded-lg p-4">
-          <p class="text-xs mb-2 text-gray-400"># Example: Associate two memories</p>
+        <div class="bg-lab-bg text-lab-success rounded-lg p-4 border border-lab-border">
+          <p class="text-xs mb-2 text-lab-muted"># Example: Associate two memories</p>
           <pre class="text-sm overflow-x-auto"><code>{`POST /associate
 {
   "memory1_id": "decision-postgres",
@@ -168,42 +167,42 @@ import '../../styles/global.css';
 
       <!-- Hybrid Search -->
       <section class="mb-16">
-        <h2 class="text-3xl font-bold mb-6">Hybrid Search</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <h2 class="text-3xl font-bold mb-6 text-lab-text">Hybrid Search</h2>
+        <p class="text-lab-muted mb-6">
           AutoMem combines multiple search strategies to find the most relevant memories:
         </p>
 
         <div class="space-y-4">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-2">🔍 Semantic Search</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-3">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-2 text-lab-text">🔍 Semantic Search</h3>
+            <p class="text-lab-muted mb-3">
               Vector embeddings via OpenAI enable meaning-based search. Finds memories conceptually related to your query, not just keyword matches.
             </p>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-3">
-              <p class="text-sm font-mono">GET /recall?query="how to handle errors"</p>
-              <p class="text-xs text-gray-500 mt-2">→ Returns memories about error handling, try/catch, exceptions, etc.</p>
+            <div class="bg-lab-bg rounded p-3 border border-lab-border">
+              <p class="text-sm font-mono text-lab-secondary">GET /recall?query="how to handle errors"</p>
+              <p class="text-xs text-lab-muted mt-2">→ Returns memories about error handling, try/catch, exceptions, etc.</p>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-2">🏷️ Tag Filtering</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-3">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-2 text-lab-text">🏷️ Tag Filtering</h3>
+            <p class="text-lab-muted mb-3">
               Filter by tags with "any" or "all" matching modes. Narrow down results to specific topics or projects.
             </p>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-3">
-              <p class="text-sm font-mono">GET /recall?tags=typescript,backend&tag_mode=all</p>
-              <p class="text-xs text-gray-500 mt-2">→ Only memories with BOTH tags</p>
+            <div class="bg-lab-bg rounded p-3 border border-lab-border">
+              <p class="text-sm font-mono text-lab-secondary">GET /recall?tags=typescript,backend&tag_mode=all</p>
+              <p class="text-xs text-lab-muted mt-2">→ Only memories with BOTH tags</p>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-2">📅 Time Queries</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-3">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-2 text-lab-text">📅 Time Queries</h3>
+            <p class="text-lab-muted mb-3">
               Natural language time filters: "today", "last week", "last 30 days"
             </p>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-3">
-              <p class="text-sm font-mono">GET /recall?time_query="last 7 days"</p>
-              <p class="text-xs text-gray-500 mt-2">→ Recent memories only</p>
+            <div class="bg-lab-bg rounded p-3 border border-lab-border">
+              <p class="text-sm font-mono text-lab-secondary">GET /recall?time_query="last 7 days"</p>
+              <p class="text-xs text-lab-muted mt-2">→ Recent memories only</p>
             </div>
           </div>
         </div>
@@ -211,48 +210,48 @@ import '../../styles/global.css';
 
       <!-- Automatic Consolidation -->
       <section class="mb-16">
-        <h2 class="text-3xl font-bold mb-6">Automatic Memory Management</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <h2 class="text-3xl font-bold mb-6 text-lab-text">Automatic Memory Management</h2>
+        <p class="text-lab-muted mb-6">
           AutoMem mimics human memory with automatic importance decay and consolidation. Runs in the background without user intervention.
         </p>
 
         <div class="grid md:grid-cols-2 gap-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3">⏰ Importance Decay (Hourly)</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-3 text-lab-text">⏰ Importance Decay (Hourly)</h3>
+            <p class="text-lab-muted text-sm mb-2">
               Memories naturally lose importance over time unless accessed or reinforced. Mimics forgetting in biological memory.
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-500">
-              Configurable via <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">CONSOLIDATION_DECAY_INTERVAL_SECONDS</code>
+            <p class="text-xs text-lab-muted">
+              Configurable via <code class="bg-lab-bg px-1 rounded border border-lab-border text-lab-secondary">CONSOLIDATION_DECAY_INTERVAL_SECONDS</code>
             </p>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3">🎨 Creative Clustering (6 hours)</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-3 text-lab-text">🎨 Creative Clustering (6 hours)</h3>
+            <p class="text-lab-muted text-sm mb-2">
               Groups semantically related memories together. Creates implicit connections without explicit association.
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-500">
-              Configurable via <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">CONSOLIDATION_CREATIVE_INTERVAL_SECONDS</code>
+            <p class="text-xs text-lab-muted">
+              Configurable via <code class="bg-lab-bg px-1 rounded border border-lab-border text-lab-secondary">CONSOLIDATION_CREATIVE_INTERVAL_SECONDS</code>
             </p>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3">🗑️ Forgetting (Daily)</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-3 text-lab-text">🗑️ Forgetting (Daily)</h3>
+            <p class="text-lab-muted text-sm mb-2">
               Removes very low-importance memories to prevent clutter. Keeps your knowledge base focused and relevant.
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-500">
-              Configurable via <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">CONSOLIDATION_FORGET_INTERVAL_SECONDS</code>
+            <p class="text-xs text-lab-muted">
+              Configurable via <code class="bg-lab-bg px-1 rounded border border-lab-border text-lab-secondary">CONSOLIDATION_FORGET_INTERVAL_SECONDS</code>
             </p>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3">📊 Status Check</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+          <div class="bg-lab-surface rounded-lg p-6 border border-lab-border">
+            <h3 class="text-lg font-semibold mb-3 text-lab-text">📊 Status Check</h3>
+            <p class="text-lab-muted text-sm mb-2">
               Monitor consolidation scheduler via API endpoint
             </p>
-            <div class="bg-gray-900 text-green-400 rounded p-2 mt-2">
+            <div class="bg-lab-bg text-lab-success rounded p-2 mt-2 border border-lab-border">
               <p class="text-xs font-mono">GET /consolidate/status</p>
             </div>
           </div>
@@ -261,26 +260,26 @@ import '../../styles/global.css';
 
       <!-- Performance -->
       <section>
-        <h2 class="text-3xl font-bold mb-6">Performance Metrics</h2>
-        <div class="bg-gradient-to-br from-automem-primary/10 to-automem-secondary/10 rounded-lg p-8">
+        <h2 class="text-3xl font-bold mb-6 text-lab-text">Performance Metrics</h2>
+        <div class="bg-lab-surface rounded-lg p-8 border-2 border-lab-text shadow-hard">
           <div class="grid md:grid-cols-3 gap-6 text-center">
             <div>
-              <p class="text-4xl font-bold text-automem-primary mb-2">20-50ms</p>
-              <p class="text-gray-600 dark:text-gray-400">Single memory queries</p>
+              <p class="text-4xl font-bold text-lab-accent mb-2">20-50ms</p>
+              <p class="text-lab-muted">Single memory queries</p>
             </div>
             <div>
-              <p class="text-4xl font-bold text-automem-primary mb-2">&lt;200ms</p>
-              <p class="text-gray-600 dark:text-gray-400">Complex graph traversals</p>
+              <p class="text-4xl font-bold text-lab-accent mb-2">&lt;200ms</p>
+              <p class="text-lab-muted">Complex graph traversals</p>
             </div>
             <div>
-              <p class="text-4xl font-bold text-automem-primary mb-2">Unlimited</p>
-              <p class="text-gray-600 dark:text-gray-400">Memory storage capacity</p>
+              <p class="text-4xl font-bold text-lab-accent mb-2">Unlimited</p>
+              <p class="text-lab-muted">Memory storage capacity</p>
             </div>
           </div>
         </div>
 
-        <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
-          <p class="text-sm text-gray-700 dark:text-gray-300">
+        <div class="mt-6 bg-lab-secondary/10 border-l-4 border-lab-secondary p-4">
+          <p class="text-sm text-lab-text">
             <strong>Note:</strong> Performance metrics measured on Railway deployment with standard tier resources. Local Docker deployments may vary based on hardware.
           </p>
         </div>

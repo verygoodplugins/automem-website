@@ -1,5 +1,5 @@
 ---
-import Floppy from './Floppy.astro';
+import AutoJack from './AutoJack.astro';
 import ThemeToggle from './ThemeToggle.astro';
 
 const { currentPath = '' } = Astro.props;
@@ -17,9 +17,9 @@ const links = [
     <!-- Left: Breadcrumbs / Logo -->
     <div class="flex items-center gap-4">
       <a href="/" class="font-bold text-lab-text hover:text-lab-accent transition-colors flex items-center gap-3 group">
-        <!-- Floppy Logo -->
-        <div class="transform transition-transform group-hover:rotate-12">
-           <Floppy variant="idle" width="w-8" height="h-8" />
+        <!-- AutoJack Logo -->
+        <div class="transform transition-transform group-hover:rotate-12 group-hover:scale-110">
+           <AutoJack size={32} expression="confident" animate={false} />
         </div>
         <span>~/automem</span>
       </a>

@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AutoJack from '../components/AutoJack.astro';
+---
+
+<Layout title="404 - Memory Not Found">
+  <div class="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-1/4 left-1/4 w-32 h-32 border border-lab-accent rounded-full animate-ping" style="animation-duration: 3s;"></div>
+      <div class="absolute top-1/2 right-1/3 w-24 h-24 border border-lab-secondary rounded-full animate-ping" style="animation-duration: 4s;"></div>
+      <div class="absolute bottom-1/3 left-1/2 w-20 h-20 border border-lab-accent rounded-full animate-ping" style="animation-duration: 2.5s;"></div>
+    </div>
+    
+    <div class="text-center z-10">
+      <div class="mb-8 relative inline-block">
+        <div class="confused-jack">
+          <AutoJack size={180} expression="sleeping" animate={false} />
+        </div>
+        <div class="question-marks">
+          <span class="q q1">?</span>
+          <span class="q q2">?</span>
+          <span class="q q3">?</span>
+        </div>
+      </div>
+      
+      <div class="comment-header justify-center">:: MEMORY_NOT_FOUND</div>
+      
+      <h1 class="text-8xl font-bold text-lab-accent mb-4 glitch" data-text="404">404</h1>
+      
+      <p class="text-2xl text-lab-text mb-2">Oops! This memory doesn't exist.</p>
+      <p class="text-lab-muted mb-8 max-w-md mx-auto">
+        Either the page was never stored, or it's been garbage collected. 
+        Even I can't remember everything!
+      </p>
+      
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/" class="btn-lab inline-flex items-center gap-2">
+          <span>← Return Home</span>
+        </a>
+        <a href="/docs" class="btn-lab inline-flex items-center gap-2 bg-lab-accent text-[#1a1a1a] border-lab-accent hover:bg-lab-text hover:text-lab-bg hover:border-lab-text">
+          <span>Read the Docs</span>
+        </a>
+      </div>
+      
+      <div class="mt-16 text-lab-muted text-sm font-mono">
+        <p>Memory address: <span class="text-lab-accent">0x00000000</span></p>
+        <p>Status: <span class="text-lab-error">SEGFAULT</span></p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .confused-jack {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+  
+  .question-marks {
+    position: absolute;
+    top: -20px;
+    right: -30px;
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  .q {
+    position: absolute;
+    color: rgb(var(--lab-accent));
+    animation: question-float 2s ease-in-out infinite;
+  }
+  
+  .q1 { top: 0; right: 0; animation-delay: 0s; }
+  .q2 { top: -15px; right: 20px; animation-delay: 0.3s; font-size: 1.5rem; }
+  .q3 { top: 5px; right: 35px; animation-delay: 0.6s; font-size: 1.2rem; }
+  
+  @keyframes question-float {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-8px); opacity: 1; }
+  }
+  
+  .glitch {
+    position: relative;
+    text-shadow: 
+      2px 2px rgb(var(--lab-secondary)),
+      -2px -2px rgb(var(--lab-success));
+    animation: glitch 3s infinite;
+  }
+  
+  @keyframes glitch {
+    0%, 90%, 100% { 
+      text-shadow: 
+        2px 2px rgb(var(--lab-secondary)),
+        -2px -2px rgb(var(--lab-success));
+    }
+    92% { 
+      text-shadow: 
+        -3px 2px rgb(var(--lab-secondary)),
+        3px -2px rgb(var(--lab-success));
+    }
+    94% { 
+      text-shadow: 
+        3px -3px rgb(var(--lab-secondary)),
+        -3px 3px rgb(var(--lab-success));
+    }
+    96% { 
+      text-shadow: 
+        -2px 3px rgb(var(--lab-secondary)),
+        2px -3px rgb(var(--lab-success));
+    }
+  }
+</style>

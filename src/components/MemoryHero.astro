@@ -1,0 +1,700 @@
+---
+// MemoryHero - Animated transformation showing AI before/after memory
+// Based on Animation Lab design - Chat on left, memory graph on right
+---
+
+<section class="memory-hero relative overflow-hidden py-8 md:py-16" id="memory-hero">
+  
+  <div class="memory-demo relative min-h-[550px] max-w-6xl mx-auto px-6" id="memory-demo">
+    
+    <!-- Memory Graph + Disk (Right side, behind chat) -->
+    <div class="memory-graph absolute inset-0 pointer-events-none" id="memory-graph">
+      <svg class="w-full h-full" viewBox="0 0 1000 550" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#F9D857;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#F9D857;stop-opacity:0"/>
+          </radialGradient>
+          <radialGradient id="nodeGlowPurple" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:0"/>
+          </radialGradient>
+          <radialGradient id="nodeGlowGreen" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#34D399;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#34D399;stop-opacity:0"/>
+          </radialGradient>
+          <radialGradient id="nodeGlowOrange" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#fb923c;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#fb923c;stop-opacity:0"/>
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#FFE082"/>
+            <stop offset="50%" style="stop-color:#F9D857"/>
+            <stop offset="100%" style="stop-color:#DAA520"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Connection lines -->
+        <g class="connections" id="connections">
+          <line class="connection c1" x1="560" y1="275" x2="680" y2="100"/>
+          <line class="connection c2" x1="560" y1="275" x2="730" y2="200"/>
+          <line class="connection c3" x1="560" y1="275" x2="700" y2="320"/>
+          <line class="connection c4" x1="560" y1="275" x2="660" y2="430"/>
+          <line class="connection c5" x1="560" y1="275" x2="830" y2="160"/>
+          <line class="connection c6" x1="680" y1="100" x2="830" y2="80"/>
+          <line class="connection c7" x1="680" y1="100" x2="850" y2="140"/>
+          <line class="connection c8" x1="730" y1="200" x2="860" y2="230"/>
+          <line class="connection c9" x1="730" y1="200" x2="880" y2="280"/>
+          <line class="connection c10" x1="700" y1="320" x2="850" y2="360"/>
+          <line class="connection c11" x1="700" y1="320" x2="840" y2="420"/>
+          <line class="connection c12" x1="660" y1="430" x2="800" y2="480"/>
+          <line class="connection c13" x1="660" y1="430" x2="820" y2="520"/>
+        </g>
+        
+        <!-- Memory nodes -->
+        <g class="nodes" id="nodes">
+          <!-- Center search node -->
+          <g class="node node-center" data-delay="0">
+            <circle cx="560" cy="275" r="30" fill="url(#nodeGlow)" filter="url(#glow)"/>
+            <circle cx="560" cy="275" r="15" fill="#F9D857"/>
+            <text x="560" y="280" text-anchor="middle" class="node-label center-label">🔍</text>
+          </g>
+          
+          <!-- Identity branch -->
+          <g class="node node-1" data-delay="400">
+            <circle cx="680" cy="100" r="22" fill="url(#nodeGlowPurple)" filter="url(#glow)"/>
+            <circle cx="680" cy="100" r="10" fill="#a78bfa"/>
+            <text x="680" y="75" text-anchor="middle" class="node-label purple">👤 Identity</text>
+          </g>
+          
+          <g class="node node-2" data-delay="800">
+            <circle cx="830" cy="80" r="16" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="830" cy="80" r="7" fill="#34D399"/>
+            <text x="830" y="60" text-anchor="middle" class="node-label green">Jack Arturo</text>
+          </g>
+          
+          <g class="node node-3" data-delay="1100">
+            <circle cx="850" cy="140" r="14" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="850" cy="140" r="6" fill="#34D399"/>
+            <text x="850" y="165" text-anchor="middle" class="node-label green">Full-stack Dev</text>
+          </g>
+          
+          <!-- Project branch -->
+          <g class="node node-4" data-delay="1500">
+            <circle cx="730" cy="200" r="22" fill="url(#nodeGlowPurple)" filter="url(#glow)"/>
+            <circle cx="730" cy="200" r="10" fill="#a78bfa"/>
+            <text x="730" y="180" text-anchor="middle" class="node-label purple">📂 Project</text>
+          </g>
+          
+          <g class="node node-5" data-delay="1900">
+            <circle cx="860" cy="230" r="16" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="860" cy="230" r="7" fill="#34D399"/>
+            <text x="860" y="210" text-anchor="middle" class="node-label green">AutoMem.ai</text>
+          </g>
+          
+          <g class="node node-6" data-delay="2200">
+            <circle cx="880" cy="280" r="14" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="880" cy="280" r="6" fill="#34D399"/>
+            <text x="880" y="305" text-anchor="middle" class="node-label green">Astro + TS</text>
+          </g>
+          
+          <!-- History branch -->
+          <g class="node node-7" data-delay="2600">
+            <circle cx="700" cy="320" r="22" fill="url(#nodeGlowPurple)" filter="url(#glow)"/>
+            <circle cx="700" cy="320" r="10" fill="#a78bfa"/>
+            <text x="700" y="300" text-anchor="middle" class="node-label purple">📜 History</text>
+          </g>
+          
+          <g class="node node-8" data-delay="3000">
+            <circle cx="850" cy="360" r="16" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="850" cy="360" r="7" fill="#34D399"/>
+            <text x="850" y="340" text-anchor="middle" class="node-label green">Homepage work</text>
+          </g>
+          
+          <g class="node node-9" data-delay="3300">
+            <circle cx="840" cy="420" r="14" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="840" cy="420" r="6" fill="#34D399"/>
+            <text x="840" y="445" text-anchor="middle" class="node-label green">MemoryHero.astro</text>
+          </g>
+          
+          <!-- Preferences branch -->
+          <g class="node node-10" data-delay="3700">
+            <circle cx="660" cy="430" r="22" fill="url(#nodeGlowPurple)" filter="url(#glow)"/>
+            <circle cx="660" cy="430" r="10" fill="#a78bfa"/>
+            <text x="660" y="410" text-anchor="middle" class="node-label purple">⚙️ Preferences</text>
+          </g>
+          
+          <g class="node node-11" data-delay="4100">
+            <circle cx="800" cy="480" r="14" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="800" cy="480" r="6" fill="#34D399"/>
+            <text x="800" y="505" text-anchor="middle" class="node-label green">Concise fixes</text>
+          </g>
+          
+          <g class="node node-12" data-delay="4400">
+            <circle cx="820" cy="520" r="14" fill="url(#nodeGlowGreen)" filter="url(#glow)"/>
+            <circle cx="820" cy="520" r="6" fill="#34D399"/>
+            <text x="820" y="545" text-anchor="middle" class="node-label green">Direct tone</text>
+          </g>
+          
+          <!-- Solution node - positioned distinctly at top right -->
+          <g class="node node-solution" data-delay="5000">
+            <circle cx="920" cy="180" r="26" fill="url(#nodeGlowOrange)" filter="url(#glow)"/>
+            <circle cx="920" cy="180" r="12" fill="#fb923c"/>
+            <text x="920" y="215" text-anchor="middle" class="node-label orange">💡 Solution!</text>
+          </g>
+        </g>
+        
+        <!-- AutoJack Disk - positioned further right to show face clearly -->
+        <g class="disk-group" id="disk-group" transform="translate(500, 180)">
+          <g class="autojack-disk" id="autojack-disk">
+            <!-- Larger disk 140x140 -->
+            <rect x="0" y="0" width="140" height="140" rx="14" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
+            <!-- Metal shutter -->
+            <rect x="35" y="12" width="70" height="42" rx="5" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="77" y="20" width="21" height="26" rx="2" fill="#1a1a1a"/>
+            <!-- Face -->
+            <g class="disk-face" id="disk-face">
+              <circle class="eye-left" cx="49" cy="84" r="8" fill="#1a1a1a"/>
+              <circle class="eye-right" cx="91" cy="84" r="8" fill="#1a1a1a"/>
+              <path class="mouth" d="M56 110 Q70 124 84 110" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </g>
+            <!-- Blush circles -->
+            <circle class="blush-left" cx="30" cy="98" r="8" fill="#ff9999" opacity="0"/>
+            <circle class="blush-right" cx="110" cy="98" r="8" fill="#ff9999" opacity="0"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    
+    <!-- Chat Window (Left side, foreground) -->
+    <div class="max-w-md relative z-10 ml-0 md:ml-4">
+      <div class="chat-window bg-lab-surface rounded-2xl overflow-hidden shadow-2xl border-2 border-lab-border" id="chat-window">
+        
+        <!-- Header -->
+        <div class="chat-header flex items-center justify-between px-4 py-3 border-b border-lab-border bg-lab-bg/50">
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="#6366f1"/>
+              <path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="text-lab-text font-medium">ChatABC</span>
+            <span class="text-xs text-lab-muted">Pro</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="status-badge text-xs px-2 py-1 rounded-full bg-lab-bg text-lab-muted" id="status-badge">Standard</span>
+          </div>
+        </div>
+        
+        <!-- Body -->
+        <div class="chat-body p-5 min-h-[300px] flex flex-col" id="chat-body">
+          
+          <div class="flex-1 space-y-4">
+            
+            <!-- User message -->
+            <div class="user-message opacity-0 flex justify-end" id="user-message">
+              <div class="bg-lab-secondary/20 rounded-2xl px-4 py-3 max-w-[85%]">
+                <p class="text-lab-text text-sm" id="user-text"></p>
+              </div>
+            </div>
+            
+            <!-- Generic AI response -->
+            <div class="ai-response opacity-0" id="generic-response">
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full bg-[#6366f1] flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="white">
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-lab-muted leading-relaxed text-sm" id="generic-text"></p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Memory-powered response -->
+            <div class="ai-response opacity-0 hidden" id="memory-response">
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full bg-lab-accent flex items-center justify-center flex-shrink-0 memory-avatar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#1a1a1a">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <rect x="8" y="6" width="8" height="5" rx="1" fill="#fff"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-lab-text leading-relaxed text-sm" id="memory-text"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Input -->
+          <div class="chat-input mt-4 relative">
+            <div class="bg-lab-bg rounded-xl border border-lab-border px-4 py-2.5 flex items-center gap-3">
+              <input type="text" placeholder="Ask anything" class="flex-1 bg-transparent text-lab-text placeholder-lab-muted outline-none text-sm" disabled />
+              <button class="text-lab-muted hover:text-lab-text transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Replay button -->
+      <div class="text-center mt-6">
+        <button class="replay-btn px-6 py-3 bg-lab-accent text-[#1a1a1a] font-bold rounded-lg hover:scale-105 transition-transform opacity-0" id="replay-btn">
+          ↻ Replay
+        </button>
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+<style>
+  .memory-demo {
+    min-height: 550px;
+  }
+  
+  .memory-graph {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  
+  .memory-graph.active {
+    opacity: 1;
+  }
+  
+  .connection {
+    stroke: rgba(249, 216, 87, 0.2);
+    stroke-width: 2;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    transition: stroke-dashoffset 1s ease-out, stroke 0.4s ease;
+  }
+  
+  .connection.active {
+    stroke-dashoffset: 0;
+    stroke: rgba(249, 216, 87, 0.5);
+  }
+  
+  .node {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .node.active {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .node.active circle:first-child {
+    animation: pulse-glow 2.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.15); }
+  }
+  
+  .node-label {
+    fill: rgba(249, 216, 87, 0.95);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  
+  .node-label.purple {
+    fill: #c4b5fd;
+  }
+  
+  .node-label.green {
+    fill: #6ee7b7;
+    font-size: 11px;
+  }
+  
+  .node-label.orange {
+    fill: #fdba74;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  
+  .center-label {
+    fill: #1a1a1a;
+    font-size: 16px;
+  }
+  
+  .chat-window {
+    transition: box-shadow 0.6s ease, border-color 0.6s ease;
+  }
+  
+  .chat-window.powered-up {
+    border-color: rgb(var(--lab-accent));
+    box-shadow: 0 0 60px rgba(249, 216, 87, 0.4), 0 0 120px rgba(249, 216, 87, 0.2), 0 20px 40px rgba(0,0,0,0.2);
+  }
+  
+  .status-badge.connected {
+    background: rgba(249, 216, 87, 0.2);
+    color: #F9D857;
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 216, 87, 0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(249, 216, 87, 0); }
+  }
+  
+  .memory-avatar {
+    animation: avatar-pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes avatar-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 216, 87, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(249, 216, 87, 0); }
+  }
+  
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: white;
+    margin-left: 2px;
+    animation: blink 0.7s step-end infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  .fade-out {
+    opacity: 0 !important;
+    transition: opacity 0.5s ease;
+  }
+  
+  .disk-group {
+    opacity: 0;
+    transform: translate(500px, 180px) scale(0.3);
+    transition: opacity 0.8s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .disk-group.peeking {
+    opacity: 1;
+    transform: translate(500px, 180px) scale(0.6);
+  }
+  
+  .disk-group.revealed {
+    opacity: 1;
+    transform: translate(500px, 180px) scale(1);
+  }
+  
+  .autojack-disk {
+    filter: drop-shadow(0 6px 20px rgba(249, 216, 87, 0.5));
+    transition: filter 0.8s ease;
+  }
+  
+  .autojack-disk.glowing {
+    filter: drop-shadow(0 0 40px rgba(249, 216, 87, 0.8));
+  }
+  
+  .replay-btn.visible {
+    opacity: 1;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .node, .connection, .chat-window, .autojack-disk {
+      transition: none;
+    }
+    .node.active circle:first-child, .memory-avatar, .status-badge.connected {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  class MemoryHeroAnimation {
+    constructor() {
+      this.graph = document.getElementById('memory-graph');
+      this.nodes = document.querySelectorAll('.node');
+      this.connections = document.querySelectorAll('.connection');
+      this.diskGroup = document.getElementById('disk-group');
+      this.disk = document.getElementById('autojack-disk');
+      this.diskFace = document.getElementById('disk-face');
+      this.chatWindow = document.getElementById('chat-window');
+      this.userMessage = document.getElementById('user-message');
+      this.userText = document.getElementById('user-text');
+      this.genericResponse = document.getElementById('generic-response');
+      this.genericText = document.getElementById('generic-text');
+      this.memoryResponse = document.getElementById('memory-response');
+      this.memoryText = document.getElementById('memory-text');
+      this.statusBadge = document.getElementById('status-badge');
+      this.replayBtn = document.getElementById('replay-btn');
+      
+      this.isPlaying = false;
+      
+      this.userQuestion = "Can you help me fix an Uncaught TypeError on the homepage?";
+      this.genericReply = "I'd be happy to help! Could you provide some more details about the error? Specifically:\n\n1. What does the error message say?\n2. Which script is causing the issue?\n3. What actions trigger the error?";
+      this.memoryReply = `Welcome back, Jack! I see from our last session you were working on the homepage animations.
+
+Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript syntax in a browser script tag.
+
+**Quick fix:** Remove type annotations and use vanilla JS.
+
+✓ File updated. Reloading now...`;
+      
+      this.init();
+    }
+    
+    init() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        this.showFinalState();
+        return;
+      }
+      
+      if (this.replayBtn) {
+        this.replayBtn.addEventListener('click', () => this.play());
+      }
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !this.isPlaying) {
+            setTimeout(() => this.play(), 500);
+          }
+        });
+      }, { threshold: 0.3 });
+      
+      const hero = document.getElementById('memory-hero');
+      if (hero) observer.observe(hero);
+    }
+    
+    async play() {
+      if (this.isPlaying) return;
+      this.isPlaying = true;
+      this.reset();
+      
+      await this.delay(900);
+      if (this.userMessage) this.userMessage.classList.remove('opacity-0');
+      await this.typeText(this.userText, this.userQuestion, 120);
+      
+      await this.delay(1800);
+      if (this.genericResponse) this.genericResponse.classList.remove('opacity-0');
+      await this.typeText(this.genericText, this.genericReply, 65);
+      
+      await this.delay(1800);
+      if (this.graph) this.graph.classList.add('active');
+      
+      if (this.diskGroup) this.diskGroup.classList.add('peeking');
+      await this.delay(1200);
+      
+      if (this.diskGroup) this.diskGroup.classList.remove('peeking');
+      if (this.diskGroup) this.diskGroup.classList.add('revealed');
+      await this.delay(800);
+      
+      if (this.disk) this.disk.classList.add('glowing');
+      this.showBlissExpression();
+      if (this.chatWindow) this.chatWindow.classList.add('powered-up');
+      if (this.statusBadge) {
+        this.statusBadge.textContent = '✨ AutoMem Connected';
+        this.statusBadge.classList.add('connected');
+      }
+      
+      await this.delay(600);
+      
+      for (let i = 0; i < this.nodes.length; i++) {
+        const node = this.nodes[i];
+        const nodeDelay = parseInt(node.getAttribute('data-delay') || '0');
+        setTimeout(() => node.classList.add('active'), nodeDelay * 2.25);
+      }
+      
+      await this.delay(700);
+      this.connections.forEach((conn, i) => {
+        setTimeout(() => conn.classList.add('active'), i * 340);
+      });
+      
+      await this.delay(12500);
+      if (this.genericResponse) this.genericResponse.classList.add('fade-out');
+      
+      await this.delay(1100);
+      if (this.genericResponse) this.genericResponse.classList.add('hidden');
+      if (this.memoryResponse) {
+        this.memoryResponse.classList.remove('hidden');
+        this.memoryResponse.classList.remove('opacity-0');
+      }
+      await this.typeText(this.memoryText, this.memoryReply, 50);
+      
+      await this.delay(1400);
+      if (this.replayBtn) this.replayBtn.classList.add('visible');
+      this.isPlaying = false;
+    }
+    
+    showBlissExpression() {
+      if (!this.diskFace || !this.disk) return;
+      
+      const eyeLeft = this.diskFace.querySelector('.eye-left');
+      const eyeRight = this.diskFace.querySelector('.eye-right');
+      const mouth = this.diskFace.querySelector('.mouth');
+      const blushLeft = this.disk.querySelector('.blush-left');
+      const blushRight = this.disk.querySelector('.blush-right');
+      
+      if (eyeLeft) eyeLeft.setAttribute('r', '0');
+      if (eyeRight) eyeRight.setAttribute('r', '0');
+      
+      const happyEyeLeft = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      happyEyeLeft.setAttribute('d', 'M39 84 Q49 72 59 84');
+      happyEyeLeft.setAttribute('stroke', '#1a1a1a');
+      happyEyeLeft.setAttribute('stroke-width', '4');
+      happyEyeLeft.setAttribute('fill', 'none');
+      happyEyeLeft.setAttribute('stroke-linecap', 'round');
+      happyEyeLeft.classList.add('happy-eye');
+      
+      const happyEyeRight = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      happyEyeRight.setAttribute('d', 'M81 84 Q91 72 101 84');
+      happyEyeRight.setAttribute('stroke', '#1a1a1a');
+      happyEyeRight.setAttribute('stroke-width', '4');
+      happyEyeRight.setAttribute('fill', 'none');
+      happyEyeRight.setAttribute('stroke-linecap', 'round');
+      happyEyeRight.classList.add('happy-eye');
+      
+      this.diskFace.appendChild(happyEyeLeft);
+      this.diskFace.appendChild(happyEyeRight);
+      
+      if (mouth) mouth.setAttribute('d', 'M49 110 Q70 132 91 110');
+      
+      if (blushLeft) {
+        blushLeft.style.transition = 'opacity 0.5s ease';
+        blushLeft.style.opacity = '0.7';
+      }
+      if (blushRight) {
+        blushRight.style.transition = 'opacity 0.5s ease';
+        blushRight.style.opacity = '0.7';
+      }
+    }
+    
+    async typeText(element, text, speed = 30) {
+      if (!element) return;
+      element.innerHTML = '';
+      
+      const lines = text.split('\n');
+      
+      for (let l = 0; l < lines.length; l++) {
+        const line = lines[l];
+        
+        for (let i = 0; i < line.length; i++) {
+          element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+          
+          if (line[i] === '*' && line[i+1] === '*') {
+            const endBold = line.indexOf('**', i + 2);
+            if (endBold > i) {
+              const boldText = line.substring(i + 2, endBold);
+              element.innerHTML += `<strong class="text-[#F9D857]">${boldText}</strong>`;
+              i = endBold + 1;
+            } else {
+              element.innerHTML += line[i];
+            }
+          } else {
+            element.innerHTML += line[i];
+          }
+          
+          element.innerHTML += '<span class="typing-cursor"></span>';
+          
+          if (i % 2 === 0) {
+            await this.delay(speed);
+          }
+        }
+        
+        if (l < lines.length - 1) {
+          element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+          element.innerHTML += '<br><span class="typing-cursor"></span>';
+          await this.delay(100);
+        }
+      }
+      
+      element.innerHTML = element.innerHTML.replace('<span class="typing-cursor"></span>', '');
+    }
+    
+    reset() {
+      if (this.graph) this.graph.classList.remove('active');
+      if (this.chatWindow) this.chatWindow.classList.remove('powered-up');
+      if (this.diskGroup) this.diskGroup.classList.remove('peeking', 'revealed');
+      if (this.disk) this.disk.classList.remove('glowing');
+      if (this.statusBadge) {
+        this.statusBadge.textContent = 'Standard';
+        this.statusBadge.classList.remove('connected');
+      }
+      
+      this.nodes.forEach(n => n.classList.remove('active'));
+      this.connections.forEach(c => c.classList.remove('active'));
+      
+      if (this.userMessage) this.userMessage.classList.add('opacity-0');
+      if (this.userText) this.userText.innerHTML = '';
+      if (this.genericResponse) {
+        this.genericResponse.classList.add('opacity-0');
+        this.genericResponse.classList.remove('fade-out', 'hidden');
+      }
+      if (this.genericText) this.genericText.innerHTML = '';
+      if (this.memoryResponse) {
+        this.memoryResponse.classList.add('opacity-0', 'hidden');
+      }
+      if (this.memoryText) this.memoryText.innerHTML = '';
+      if (this.replayBtn) this.replayBtn.classList.remove('visible');
+      
+      if (this.diskFace) {
+        const happyEyes = this.diskFace.querySelectorAll('.happy-eye');
+        happyEyes.forEach(eye => eye.remove());
+        
+        const eyeLeft = this.diskFace.querySelector('.eye-left');
+        const eyeRight = this.diskFace.querySelector('.eye-right');
+        const mouth = this.diskFace.querySelector('.mouth');
+        
+        if (eyeLeft) eyeLeft.setAttribute('r', '8');
+        if (eyeRight) eyeRight.setAttribute('r', '8');
+        if (mouth) mouth.setAttribute('d', 'M56 110 Q70 124 84 110');
+      }
+      
+      if (this.disk) {
+        const blushLeft = this.disk.querySelector('.blush-left');
+        const blushRight = this.disk.querySelector('.blush-right');
+        if (blushLeft) blushLeft.style.opacity = '0';
+        if (blushRight) blushRight.style.opacity = '0';
+      }
+    }
+    
+    showFinalState() {
+      if (this.graph) this.graph.classList.add('active');
+      if (this.chatWindow) this.chatWindow.classList.add('powered-up');
+      if (this.disk) this.disk.classList.add('glowing');
+      if (this.statusBadge) {
+        this.statusBadge.textContent = '✨ AutoMem Connected';
+        this.statusBadge.classList.add('connected');
+      }
+      this.nodes.forEach(n => n.classList.add('active'));
+      this.connections.forEach(c => c.classList.add('active'));
+      if (this.userMessage) {
+        this.userMessage.classList.remove('opacity-0');
+        if (this.userText) this.userText.textContent = this.userQuestion;
+      }
+      if (this.genericResponse) this.genericResponse.classList.add('hidden');
+      if (this.memoryResponse) {
+        this.memoryResponse.classList.remove('hidden', 'opacity-0');
+        if (this.memoryText) this.memoryText.innerHTML = this.memoryReply.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#F9D857]">$1</strong>').replace(/\n/g, '<br>');
+      }
+      this.showBlissExpression();
+    }
+    
+    delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  }
+  
+  new MemoryHeroAnimation();
+</script>
