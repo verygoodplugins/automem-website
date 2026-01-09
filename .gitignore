@@ -30,3 +30,4 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+CLAUDE.md
