@@ -23,6 +23,12 @@ pnpm-debug.log*
 *.swo
 *~
 .DS_Store
+.cursor/screenshots/
+attached_assets/
+
+# Replit
+.replit
+replit.md
 
 # Cloudflare
 .wrangler/
@@ -30,4 +36,3 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
-CLAUDE.md

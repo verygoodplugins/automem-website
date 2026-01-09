@@ -442,15 +442,15 @@
       
       this.isPlaying = false;
       
-      this.userQuestion = "Can you help me fix an Uncaught TypeError on the homepage?";
-      this.genericReply = "I'd be happy to help! Could you provide some more details about the error? Specifically:\n\n1. What does the error message say?\n2. Which script is causing the issue?\n3. What actions trigger the error?";
-      this.memoryReply = `Welcome back, Jack! I see from our last session you were working on the homepage animations.
+      this.userQuestion = "I need to add user authentication to this project.";
+      this.genericReply = "I'd be happy to help! Could you provide some more details? Specifically:\n\n1. What framework are you using?\n2. Do you need OAuth, JWT, or session-based auth?\n3. What providers do you want to support?";
+      this.memoryReply = `Welcome back, Jack! Based on your previous projects, here's what I'd recommend:
 
-Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript syntax in a browser script tag.
+You've used **Lucia Auth** in 3 projects and prefer **GitHub + Google OAuth**. Your go-to session store is **Redis**.
 
-**Quick fix:** Remove type annotations and use vanilla JS.
+I'll scaffold the auth module using your usual patterns from the **EchoDash** project.
 
-✓ File updated. Reloading now...`;
+✓ Auth routes created. Ready for your API keys.`;
       
       this.init();
     }
