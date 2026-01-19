@@ -3,13 +3,13 @@
 // Based on Animation Lab design - Chat on left, memory graph on right
 ---
 
-<section class="memory-hero relative overflow-hidden py-8 md:py-16" id="memory-hero">
-  
-  <div class="memory-demo relative min-h-[550px] max-w-6xl mx-auto px-6" id="memory-demo">
-    
-    <!-- Memory Graph + Disk (Right side, behind chat) -->
-    <div class="memory-graph absolute inset-0 pointer-events-none" id="memory-graph">
-      <svg class="w-full h-full" viewBox="0 0 1000 550" preserveAspectRatio="xMidYMid slice">
+<section class="memory-hero relative overflow-hidden" id="memory-hero">
+
+  <div class="memory-demo relative min-h-[420px] md:min-h-[550px] max-w-6xl mx-auto px-4 md:px-6" id="memory-demo">
+
+    <!-- Memory Graph + Disk (Right side, hidden on mobile except disk) -->
+    <div class="memory-graph hidden md:block absolute inset-0 pointer-events-none" id="memory-graph">
+      <svg class="w-full h-full" viewBox="0 0 1000 550" preserveAspectRatio="xMidYMid meet">
         <defs>
           <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" style="stop-color:#F9D857;stop-opacity:1"/>
@@ -173,8 +173,28 @@
       </svg>
     </div>
     
-    <!-- Chat Window (Left side, foreground) -->
-    <div class="max-w-md relative z-10 ml-0 md:ml-4">
+    <!-- Chat Window (Left side on desktop, centered on mobile) -->
+    <div class="w-full max-w-md relative z-10 mx-auto md:mx-0 md:ml-4">
+      <!-- Mobile-only disk that rises from center bottom -->
+      <div class="mobile-disk md:hidden absolute -bottom-10 left-1/2 z-20" id="mobile-disk">
+        <svg width="80" height="80" viewBox="0 0 140 140">
+          <defs>
+            <linearGradient id="diskGoldMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#FFE082"/>
+              <stop offset="50%" style="stop-color:#F9D857"/>
+              <stop offset="100%" style="stop-color:#DAA520"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="140" height="140" rx="14" fill="url(#diskGoldMobile)" stroke="#1a1a1a" stroke-width="3"/>
+          <rect x="35" y="12" width="70" height="42" rx="5" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+          <rect x="77" y="20" width="21" height="26" rx="2" fill="#1a1a1a"/>
+          <g class="mobile-disk-face" id="mobile-disk-face">
+            <circle class="eye-left" cx="49" cy="84" r="8" fill="#1a1a1a"/>
+            <circle class="eye-right" cx="91" cy="84" r="8" fill="#1a1a1a"/>
+            <path class="mouth" d="M56 110 Q70 124 84 110" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
       <div class="chat-window bg-lab-surface rounded-2xl overflow-hidden shadow-2xl border-2 border-lab-border" id="chat-window">
         
         <!-- Header -->
@@ -260,8 +280,43 @@
 </section>
 
 <style>
+  .memory-hero {
+    margin: 0 -1rem;
+    padding: 3rem 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .memory-hero {
+      margin: 0;
+      padding: 4rem 0;
+    }
+  }
+
   .memory-demo {
-    min-height: 550px;
+    min-height: 400px;
+  }
+
+  @media (min-width: 768px) {
+    .memory-demo {
+      min-height: 550px;
+    }
+  }
+
+  /* Mobile disk animation - rises from center bottom */
+  .mobile-disk {
+    opacity: 0;
+    transform: translateX(-50%) translateY(60px) scale(0.6);
+    transition: opacity 0.6s ease, transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 4px 12px rgba(249, 216, 87, 0.3));
+  }
+
+  .mobile-disk.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  .mobile-disk.glowing {
+    filter: drop-shadow(0 0 25px rgba(249, 216, 87, 0.7));
   }
   
   .memory-graph {
@@ -383,19 +438,28 @@
   }
   
   .disk-group {
+    --disk-x: 500px;
+    --disk-y: 180px;
     opacity: 0;
-    transform: translate(500px, 180px) scale(0.3);
+    transform: translate(var(--disk-x), var(--disk-y)) scale(0.3);
     transition: opacity 0.8s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  
+
   .disk-group.peeking {
     opacity: 1;
-    transform: translate(500px, 180px) scale(0.6);
+    transform: translate(var(--disk-x), var(--disk-y)) scale(0.6);
   }
-  
+
   .disk-group.revealed {
     opacity: 1;
-    transform: translate(500px, 180px) scale(1);
+    transform: translate(var(--disk-x), var(--disk-y)) scale(1);
+  }
+
+  @media (max-width: 767px) {
+    .disk-group {
+      --disk-x: 380px;
+      --disk-y: 120px;
+    }
   }
   
   .autojack-disk {
@@ -430,6 +494,9 @@
       this.diskGroup = document.getElementById('disk-group');
       this.disk = document.getElementById('autojack-disk');
       this.diskFace = document.getElementById('disk-face');
+      this.mobileDisk = document.getElementById('mobile-disk');
+      this.mobileDiskFace = document.getElementById('mobile-disk-face');
+      this.isMobile = window.innerWidth < 768;
       this.chatWindow = document.getElementById('chat-window');
       this.userMessage = document.getElementById('user-message');
       this.userText = document.getElementById('user-text');
@@ -491,37 +558,53 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
       await this.typeText(this.genericText, this.genericReply, 65);
       
       await this.delay(1800);
-      if (this.graph) this.graph.classList.add('active');
-      
-      if (this.diskGroup) this.diskGroup.classList.add('peeking');
-      await this.delay(1200);
-      
-      if (this.diskGroup) this.diskGroup.classList.remove('peeking');
-      if (this.diskGroup) this.diskGroup.classList.add('revealed');
-      await this.delay(800);
-      
-      if (this.disk) this.disk.classList.add('glowing');
-      this.showBlissExpression();
-      if (this.chatWindow) this.chatWindow.classList.add('powered-up');
-      if (this.statusBadge) {
-        this.statusBadge.textContent = '✨ AutoMem Connected';
-        this.statusBadge.classList.add('connected');
+
+      if (this.isMobile) {
+        // Mobile: show disk peeking from corner
+        if (this.mobileDisk) this.mobileDisk.classList.add('visible');
+        await this.delay(800);
+        if (this.mobileDisk) this.mobileDisk.classList.add('glowing');
+        this.showBlissExpression(true);
+        if (this.chatWindow) this.chatWindow.classList.add('powered-up');
+        if (this.statusBadge) {
+          this.statusBadge.textContent = '✨ AutoMem Connected';
+          this.statusBadge.classList.add('connected');
+        }
+        await this.delay(2000);
+      } else {
+        // Desktop: full graph animation
+        if (this.graph) this.graph.classList.add('active');
+
+        if (this.diskGroup) this.diskGroup.classList.add('peeking');
+        await this.delay(1200);
+
+        if (this.diskGroup) this.diskGroup.classList.remove('peeking');
+        if (this.diskGroup) this.diskGroup.classList.add('revealed');
+        await this.delay(800);
+
+        if (this.disk) this.disk.classList.add('glowing');
+        this.showBlissExpression(false);
+        if (this.chatWindow) this.chatWindow.classList.add('powered-up');
+        if (this.statusBadge) {
+          this.statusBadge.textContent = '✨ AutoMem Connected';
+          this.statusBadge.classList.add('connected');
+        }
+
+        await this.delay(600);
+
+        for (let i = 0; i < this.nodes.length; i++) {
+          const node = this.nodes[i];
+          const nodeDelay = parseInt(node.getAttribute('data-delay') || '0');
+          setTimeout(() => node.classList.add('active'), nodeDelay * 2.25);
+        }
+
+        await this.delay(700);
+        this.connections.forEach((conn, i) => {
+          setTimeout(() => conn.classList.add('active'), i * 340);
+        });
+
+        await this.delay(12500);
       }
-      
-      await this.delay(600);
-      
-      for (let i = 0; i < this.nodes.length; i++) {
-        const node = this.nodes[i];
-        const nodeDelay = parseInt(node.getAttribute('data-delay') || '0');
-        setTimeout(() => node.classList.add('active'), nodeDelay * 2.25);
-      }
-      
-      await this.delay(700);
-      this.connections.forEach((conn, i) => {
-        setTimeout(() => conn.classList.add('active'), i * 340);
-      });
-      
-      await this.delay(12500);
       if (this.genericResponse) this.genericResponse.classList.add('fade-out');
       
       await this.delay(1100);
@@ -537,14 +620,16 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
       this.isPlaying = false;
     }
     
-    showBlissExpression() {
-      if (!this.diskFace || !this.disk) return;
-      
-      const eyeLeft = this.diskFace.querySelector('.eye-left');
-      const eyeRight = this.diskFace.querySelector('.eye-right');
-      const mouth = this.diskFace.querySelector('.mouth');
-      const blushLeft = this.disk.querySelector('.blush-left');
-      const blushRight = this.disk.querySelector('.blush-right');
+    showBlissExpression(isMobile = false) {
+      const face = isMobile ? this.mobileDiskFace : this.diskFace;
+      const diskEl = isMobile ? this.mobileDisk : this.disk;
+      if (!face) return;
+
+      const eyeLeft = face.querySelector('.eye-left');
+      const eyeRight = face.querySelector('.eye-right');
+      const mouth = face.querySelector('.mouth');
+      const blushLeft = diskEl?.querySelector('.blush-left');
+      const blushRight = diskEl?.querySelector('.blush-right');
       
       if (eyeLeft) eyeLeft.setAttribute('r', '0');
       if (eyeRight) eyeRight.setAttribute('r', '0');
@@ -565,8 +650,8 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
       happyEyeRight.setAttribute('stroke-linecap', 'round');
       happyEyeRight.classList.add('happy-eye');
       
-      this.diskFace.appendChild(happyEyeLeft);
-      this.diskFace.appendChild(happyEyeRight);
+      face.appendChild(happyEyeLeft);
+      face.appendChild(happyEyeRight);
       
       if (mouth) mouth.setAttribute('d', 'M49 110 Q70 132 91 110');
       
@@ -623,18 +708,20 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
     }
     
     reset() {
+      this.isMobile = window.innerWidth < 768;
       if (this.graph) this.graph.classList.remove('active');
       if (this.chatWindow) this.chatWindow.classList.remove('powered-up');
       if (this.diskGroup) this.diskGroup.classList.remove('peeking', 'revealed');
       if (this.disk) this.disk.classList.remove('glowing');
+      if (this.mobileDisk) this.mobileDisk.classList.remove('visible', 'glowing');
       if (this.statusBadge) {
         this.statusBadge.textContent = 'Standard';
         this.statusBadge.classList.remove('connected');
       }
-      
+
       this.nodes.forEach(n => n.classList.remove('active'));
       this.connections.forEach(c => c.classList.remove('active'));
-      
+
       if (this.userMessage) this.userMessage.classList.add('opacity-0');
       if (this.userText) this.userText.innerHTML = '';
       if (this.genericResponse) {
@@ -647,20 +734,35 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
       }
       if (this.memoryText) this.memoryText.innerHTML = '';
       if (this.replayBtn) this.replayBtn.classList.remove('visible');
-      
+
+      // Reset desktop disk face
       if (this.diskFace) {
         const happyEyes = this.diskFace.querySelectorAll('.happy-eye');
         happyEyes.forEach(eye => eye.remove());
-        
+
         const eyeLeft = this.diskFace.querySelector('.eye-left');
         const eyeRight = this.diskFace.querySelector('.eye-right');
         const mouth = this.diskFace.querySelector('.mouth');
-        
+
         if (eyeLeft) eyeLeft.setAttribute('r', '8');
         if (eyeRight) eyeRight.setAttribute('r', '8');
         if (mouth) mouth.setAttribute('d', 'M56 110 Q70 124 84 110');
       }
-      
+
+      // Reset mobile disk face
+      if (this.mobileDiskFace) {
+        const happyEyes = this.mobileDiskFace.querySelectorAll('.happy-eye');
+        happyEyes.forEach(eye => eye.remove());
+
+        const eyeLeft = this.mobileDiskFace.querySelector('.eye-left');
+        const eyeRight = this.mobileDiskFace.querySelector('.eye-right');
+        const mouth = this.mobileDiskFace.querySelector('.mouth');
+
+        if (eyeLeft) eyeLeft.setAttribute('r', '8');
+        if (eyeRight) eyeRight.setAttribute('r', '8');
+        if (mouth) mouth.setAttribute('d', 'M56 110 Q70 124 84 110');
+      }
+
       if (this.disk) {
         const blushLeft = this.disk.querySelector('.blush-left');
         const blushRight = this.disk.querySelector('.blush-right');
@@ -670,15 +772,21 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
     }
     
     showFinalState() {
-      if (this.graph) this.graph.classList.add('active');
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile && this.graph) this.graph.classList.add('active');
       if (this.chatWindow) this.chatWindow.classList.add('powered-up');
-      if (this.disk) this.disk.classList.add('glowing');
+      if (!isMobile && this.disk) this.disk.classList.add('glowing');
+      if (isMobile && this.mobileDisk) {
+        this.mobileDisk.classList.add('visible', 'glowing');
+      }
       if (this.statusBadge) {
         this.statusBadge.textContent = '✨ AutoMem Connected';
         this.statusBadge.classList.add('connected');
       }
-      this.nodes.forEach(n => n.classList.add('active'));
-      this.connections.forEach(c => c.classList.add('active'));
+      if (!isMobile) {
+        this.nodes.forEach(n => n.classList.add('active'));
+        this.connections.forEach(c => c.classList.add('active'));
+      }
       if (this.userMessage) {
         this.userMessage.classList.remove('opacity-0');
         if (this.userText) this.userText.textContent = this.userQuestion;
@@ -688,7 +796,7 @@ I'll scaffold the auth module using your usual patterns from the **EchoDash** pr
         this.memoryResponse.classList.remove('hidden', 'opacity-0');
         if (this.memoryText) this.memoryText.innerHTML = this.memoryReply.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#F9D857]">$1</strong>').replace(/\n/g, '<br>');
       }
-      this.showBlissExpression();
+      this.showBlissExpression(isMobile);
     }
     
     delay(ms) {

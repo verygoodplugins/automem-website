@@ -13,39 +13,19 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 
 const timelineEntries = [
   {
-    date: '2025-10-04',
-    time: '09:00 UTC',
-    title: '0.6.0 • Performance & Async Pipeline',
+    date: 'Coming Soon',
+    time: '',
+    title: '0.10.0 • Visualization & Monitoring',
     description:
-      'Embedding batching, async embedding generation, and relationship-count caching land. /memory gets 60% faster; consolidation runs 5x quicker with structured logging and health metrics.',
+      'Interactive visualization viewer for exploring memory graphs. Real-time monitoring dashboard. Improved automatic embeddings with better semantic chunking. Performance optimizations plus expanded hosting and model selection options.',
+    pending: true,
   },
   {
-    date: '2025-10-17',
-    time: '12:00 UTC',
-    title: '0.7.0 • MCP over SSE Sidecar',
+    date: '2025-12-04',
+    time: '16:00 UTC',
+    title: 'MCP 0.8.1 • Spec Compliance',
     description:
-      'Hosted MCP server over SSE so ChatGPT, Claude Web/Mobile, and ElevenLabs can stream memories. Railway template now provisions API + SSE + FalkorDB together.',
-  },
-  {
-    date: '2025-11-08',
-    time: '10:00 UTC',
-    title: '0.8.0 • API Modularization & Security',
-    description:
-      'Refactored monolithic app into modular blueprints, hardened memory IDs to server-generated UUIDs, and fixed Railway secrets/volumes for reliable deploys.',
-  },
-  {
-    date: '2025-11-20',
-    time: '09:30 UTC',
-    title: '0.9.0 • Retrieval Engine Upgrade',
-    description:
-      'Multi-hop bridge discovery, temporal alignment scoring, and weighted hybrid scoring (vector, keyword, relation, temporal, importance) boost recall precision.',
-  },
-  {
-    date: '2025-12-02',
-    time: '08:00 UTC',
-    title: '0.9.1 • Entity Expansion + SOTA',
-    description:
-      'Added expand_entities/entity_expansion params for graph hops and hit 90.53% on LoCoMo-10 (multi-hop up to 50%).',
+      'All MCP tools now return structuredContent with outputSchema, aligning recall outputs (results, dedup_removed) to spec.',
   },
   {
     date: '2025-12-02',
@@ -55,11 +35,39 @@ const timelineEntries = [
       'Exposed expand_entities/relations, auto_decompose, context-aware boosts, and full tool metadata in the MCP client; simplified Claude Code integration.',
   },
   {
-    date: '2025-12-04',
-    time: '16:00 UTC',
-    title: 'MCP 0.8.1 • Spec Compliance',
+    date: '2025-12-02',
+    time: '08:00 UTC',
+    title: '0.9.1 • Entity Expansion + SOTA',
     description:
-      'All MCP tools now return structuredContent with outputSchema, aligning recall outputs (results, dedup_removed) to spec.',
+      'Added expand_entities/entity_expansion params for graph hops and hit 90.53% on LoCoMo-10 (multi-hop up to 50%).',
+  },
+  {
+    date: '2025-11-20',
+    time: '09:30 UTC',
+    title: '0.9.0 • Retrieval Engine Upgrade',
+    description:
+      'Multi-hop bridge discovery, temporal alignment scoring, and weighted hybrid scoring (vector, keyword, relation, temporal, importance) boost recall precision.',
+  },
+  {
+    date: '2025-11-08',
+    time: '10:00 UTC',
+    title: '0.8.0 • API Modularization & Security',
+    description:
+      'Refactored monolithic app into modular blueprints, hardened memory IDs to server-generated UUIDs, and fixed Railway secrets/volumes for reliable deploys.',
+  },
+  {
+    date: '2025-10-17',
+    time: '12:00 UTC',
+    title: '0.7.0 • MCP over SSE Sidecar',
+    description:
+      'Hosted MCP server over SSE so ChatGPT, Claude Web/Mobile, and ElevenLabs can stream memories. Railway template now provisions API + SSE + FalkorDB together.',
+  },
+  {
+    date: '2025-10-04',
+    time: '09:00 UTC',
+    title: '0.6.0 • Performance & Async Pipeline',
+    description:
+      'Embedding batching, async embedding generation, and relationship-count caching land. /memory gets 60% faster; consolidation runs 5x quicker with structured logging and health metrics.',
   },
 ];
 ---
@@ -71,7 +79,7 @@ const timelineEntries = [
   <main class="w-full pt-12 pb-24">
     <!-- Hero Section: Memory Lab -->
     <section
-      class="px-6 md:px-12 pt-12 pb-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
+      class="px-4 md:px-12 pt-12 pb-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
     >
       <!-- Lab Label -->
       <div class="comment-header">:: SEQUENCE_INIT</div>
@@ -133,7 +141,7 @@ const timelineEntries = [
 
     <!-- Memory Transformation: Before/After Animation -->
     <section
-      class="px-6 md:px-12 py-16 border-b border-lab-border bg-lab-bg relative overflow-hidden"
+      class="px-4 md:px-12 py-12 md:py-16 border-b border-lab-border bg-lab-bg relative overflow-hidden"
     >
       <div class="comment-header">:: MEMORY_TRANSFORMATION</div>
       <div class="relative z-10">
@@ -152,7 +160,7 @@ const timelineEntries = [
 
     <!-- Features: The Circuit -->
     <section
-      class="px-6 md:px-12 py-24 border-b border-lab-border bg-lab-bg/50 relative"
+      class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg/50 relative"
     >
       <div class="comment-header">:: SYSTEM_ARCHITECTURE</div>
 
@@ -223,7 +231,7 @@ const timelineEntries = [
 
     <!-- Memory Graph Visualization -->
     <section
-      class="px-6 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
+      class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
     >
       <div class="comment-header">:: VISUALIZE_MEMORY</div>
       <div class="relative z-10">
@@ -242,7 +250,7 @@ const timelineEntries = [
     </section>
 
     <!-- Timeline / Changelog -->
-    <section class="px-6 md:px-12 py-24 border-b border-lab-border bg-lab-bg">
+    <section class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg">
       <div class="comment-header">:: MEMORY_STREAM</div>
 
       <div class="max-w-4xl mx-auto relative mt-12" id="project-timeline">
@@ -251,18 +259,29 @@ const timelineEntries = [
 
         <div class="space-y-12 relative">
           {timelineEntries.map((entry) => (
-          <div class="timeline-item flex gap-6" data-timeline-item>
+          <div class={`timeline-item flex gap-6 ${entry.pending ? 'pending' : ''}`} data-timeline-item>
             <div
               class="font-mono text-sm text-lab-muted text-right w-28 pt-1 hidden md:block"
             >
-              {entry.date}<br />{entry.time}
+              {entry.pending ? (
+                <span class="text-lab-accent font-bold">{entry.date}</span>
+              ) : (
+                <>{entry.date}<br />{entry.time}</>
+              )}
             </div>
-            <div class="flex-1 border-l-2 border-lab-border pl-8 relative">
-              <div class="timeline-dot"></div>
+            <div class={`flex-1 border-l-2 ${entry.pending ? 'border-lab-accent border-dashed' : 'border-lab-border'} pl-8 relative`}>
+              <div class={`timeline-dot ${entry.pending ? 'pending' : ''}`}></div>
               <div class="md:hidden text-xs font-mono text-lab-muted mb-1">
-                {entry.date} · {entry.time}
+                {entry.pending ? (
+                  <span class="text-lab-accent font-bold">{entry.date}</span>
+                ) : (
+                  <>{entry.date} · {entry.time}</>
+                )}
               </div>
-              <h3 class="text-xl font-bold">{entry.title}</h3>
+              <h3 class="text-xl font-bold">
+                {entry.pending && <span class="text-lab-accent">[PENDING] </span>}
+                {entry.title}
+              </h3>
               <p class="mt-2 text-lab-text/80 max-w-xl">{entry.description}</p>
             </div>
           </div>
@@ -272,7 +291,7 @@ const timelineEntries = [
     </section>
 
     <!-- Deployment Options -->
-    <section class="px-6 md:px-12 py-24 bg-lab-surface">
+    <section class="px-4 md:px-12 py-24 bg-lab-surface">
       <div class="comment-header">:: DEPLOYMENT_PROTOCOLS</div>
       <div class="max-w-6xl mx-auto">
         <div class="text-center max-w-2xl mx-auto mb-16">
@@ -415,6 +434,21 @@ const timelineEntries = [
       border: 2px solid #f472b6;
       border-radius: 999px;
       box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12);
+    }
+
+    .timeline-dot.pending {
+      border-color: rgb(var(--lab-accent));
+      box-shadow: 0 0 0 3px rgba(var(--lab-accent), 0.2);
+      animation: pending-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pending-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(var(--lab-accent), 0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(var(--lab-accent), 0.1); }
+    }
+
+    .timeline-item.pending {
+      opacity: 0.9;
     }
   </style>
 
