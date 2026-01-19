@@ -182,7 +182,7 @@ The whole point of open source is that **you own it**. Railway is convenient, bu
 
 - [GitHub Issues](https://github.com/verygoodplugins/automem/issues) for questions
 - [GitHub Issues](https://github.com/verygoodplugins/automem/issues) for bugs
-- [Discord](https://discord.gg/automem) for real-time chat
+- [Discord](https://automem.ai/discord) for real-time chat
 
 Self-hosting isn't hard. If you can run Docker, you can run AutoMem.
 

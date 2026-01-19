@@ -128,7 +128,7 @@ Tested with 10k+ memories on a MacBook Air. Stays smooth.
 
 Soon. We're in testing now.
 
-**Want early access?** [Star the repo](https://github.com/verygoodplugins/automem) and watch for the v0.10.0 release. Or [join the Discord](https://discord.gg/automem) — beta testers get it first.
+**Want early access?** [Star the repo](https://github.com/verygoodplugins/automem) and watch for the v0.10.0 release. Or [join the Discord](https://automem.ai/discord) — beta testers get it first.
 
 Your memories aren't a black box anymore. Time to see what your AI actually knows.
 
