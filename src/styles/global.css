@@ -11,7 +11,7 @@
     --lab-text: 224 224 224;     /* #E0E0E0 */
     --lab-muted: 136 136 136;    /* #888888 */
     --lab-accent: 249 216 87;    /* #F9D857 - Luminous Gold */
-    --lab-secondary: 91 33 182;  /* #5B21B6 - Deep Violet */
+    --lab-secondary: 139 92 246; /* #8B5CF6 - Bright Violet (improved contrast) */
     --lab-success: 52 211 153;   /* #34D399 - Memory Green */
     --lab-error: 239 68 68;      /* #EF4444 */
     --lab-gold: 249 216 87;      /* #F9D857 - Luminous */
@@ -29,8 +29,8 @@
     --lab-border: 229 211 171;   /* #E5D3AB - Warm border */
     --lab-text: 38 32 20;        /* #262014 - Dark brown */
     --lab-muted: 128 115 90;     /* #80735A */
-    --lab-accent: 231 177 10;    /* #E7B10A - True Gold */
-    --lab-secondary: 91 33 182;  /* #5B21B6 - Deep Violet */
+    --lab-accent: 168 94 10;     /* #A85E0A - Dark gold (improved contrast) */
+    --lab-secondary: 139 92 246; /* #8B5CF6 - Bright Violet (improved contrast) */
     --lab-success: 34 197 94;    /* #22C55E */
     --lab-error: 220 38 38;      /* #DC2626 */
     --lab-gold: 249 216 87;      /* #F9D857 */
@@ -92,6 +92,19 @@
     @apply bg-lab-accent text-[#1a1a1a] px-6 py-3 
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
            transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg border-2 border-lab-text;
+  }
+
+  /* Improve contrast for links on light backgrounds (inverted sections) */
+  .prose a,
+  a.text-lab-accent {
+    @apply underline;
+  }
+
+  /* In dark mode, links with lab-accent on light backgrounds need dark text color instead */
+  @supports (color: rgb(var(--lab-accent))) {
+    :is(.bg-lab-text, [class*="bg-lab-text"]) a.text-lab-accent {
+      @apply text-[#1a1a1a] font-bold;
+    }
   }
 }
 
