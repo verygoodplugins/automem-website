@@ -29,6 +29,7 @@ attached_assets/
 # Replit
 .replit
 replit.md
+img/*.jpeg
 
 # Cloudflare
 .wrangler/
