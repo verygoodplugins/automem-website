@@ -13,12 +13,32 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 
 const timelineEntries = [
   {
-    date: 'Coming Soon',
-    time: '',
-    title: '0.10.0 • Visualization & Monitoring',
+    date: '2026-02-07',
+    time: '10:00 UTC',
+    title: '0.10.0 • Visualization & Observability',
     description:
-      'Interactive visualization viewer for exploring memory graphs. Real-time monitoring dashboard. Improved automatic embeddings with better semantic chunking. Performance optimizations plus expanded hosting and model selection options.',
-    pending: true,
+      'Interactive graph visualization API. automem-watch real-time observability with SSE streaming and TUI. Ollama embedding provider for fully local deployments. Memory content size governance with auto-summarization. Streamable HTTP transport for MCP connections.',
+  },
+  {
+    date: '2026-02-06',
+    time: '14:00 UTC',
+    title: 'MCP 0.12.0 • OpenClaw Integration',
+    description:
+      'Native OpenClaw integration replacing mcporter dependency chain. Direct HTTP API calls to AutoMem with new SKILL.md template. Simplified setup and troubleshooting documentation.',
+  },
+  {
+    date: '2026-02-03',
+    time: '12:00 UTC',
+    title: 'MCP 0.11.0 • Claude Code Plugin',
+    description:
+      'Claude Code plugin with automatic memory capture hooks. Session start recall, session end summary. Integration tests and CLI smoke tests.',
+  },
+  {
+    date: '2025-12-10',
+    time: '11:00 UTC',
+    title: '0.9.2 • Expansion Filtering',
+    description:
+      'expand_min_strength and expand_min_importance parameters for fine-grained graph traversal control. Vector dimension autodetect for embedding providers.',
   },
   {
     date: '2025-12-04',
@@ -54,20 +74,6 @@ const timelineEntries = [
     title: '0.8.0 • API Modularization & Security',
     description:
       'Refactored monolithic app into modular blueprints, hardened memory IDs to server-generated UUIDs, and fixed Railway secrets/volumes for reliable deploys.',
-  },
-  {
-    date: '2025-10-17',
-    time: '12:00 UTC',
-    title: '0.7.0 • MCP over SSE Sidecar',
-    description:
-      'Hosted MCP server over SSE so ChatGPT, Claude Web/Mobile, and ElevenLabs can stream memories. Railway template now provisions API + SSE + FalkorDB together.',
-  },
-  {
-    date: '2025-10-04',
-    time: '09:00 UTC',
-    title: '0.6.0 • Performance & Async Pipeline',
-    description:
-      'Embedding batching, async embedding generation, and relationship-count caching land. /memory gets 60% faster; consolidation runs 5x quicker with structured logging and health metrics.',
   },
 ];
 ---
@@ -177,8 +183,9 @@ const timelineEntries = [
             </div>
             <h3 class="text-xl font-bold mb-2 mt-2">Universal I/O</h3>
             <p class="text-lab-muted text-sm leading-relaxed">
-              Compatible with Cursor, Claude, and ChatGPT. Connects to any LLM
-              via MCP or SSE sidecar.
+              Compatible with Claude Code, Cursor, ChatGPT, OpenClaw, and any
+              MCP client. Local or remote — works everywhere via MCP and
+              Streamable HTTP.
             </p>
             <div class="mt-4 flex gap-2">
               <span
