@@ -12,6 +12,7 @@ export default {
           text: 'rgb(var(--lab-text) / <alpha-value>)',
           muted: 'rgb(var(--lab-muted) / <alpha-value>)',
           accent: 'rgb(var(--lab-accent) / <alpha-value>)',
+          'accent-text': 'rgb(var(--lab-accent-text) / <alpha-value>)',
           secondary: 'rgb(var(--lab-secondary) / <alpha-value>)',
           success: 'rgb(var(--lab-success) / <alpha-value>)',
           error: 'rgb(var(--lab-error) / <alpha-value>)',
