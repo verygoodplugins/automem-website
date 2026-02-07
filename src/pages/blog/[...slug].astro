@@ -43,8 +43,8 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   />
   <Navigation currentPath="/blog" />
 
-  <main class="min-h-screen py-20 px-6 bg-lab-bg">
-    <article class="max-w-3xl mx-auto">
+  <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
+    <article class="max-w-3xl mx-auto min-w-0">
       <!-- Back to Blog -->
       <a
         href="/blog"
@@ -54,12 +54,12 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
       </a>
 
       <!-- Post Header -->
-      <header class="mb-12 bg-lab-surface p-8 rounded-lg border-2 border-lab-text shadow-hard">
+      <header class="mb-10 sm:mb-12 bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text shadow-hard min-w-0">
         <div class="comment-header mb-4">:: POST_CONTENT</div>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight break-words">
           {post.data.title}
         </h1>
-        <p class="text-xl text-lab-muted mb-6 font-mono border-l-4 border-lab-accent pl-4">
+        <p class="text-base sm:text-xl text-lab-muted mb-6 font-mono border-l-4 border-lab-accent pl-4 break-words">
           {post.data.description}
         </p>
         <div class="flex flex-wrap items-center gap-4 text-sm">
@@ -67,7 +67,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
             {formattedDate}
           </time>
           {post.data.tags && post.data.tags.length > 0 && (
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               {post.data.tags.map(tag => (
                 <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
                   {tag}
@@ -79,7 +79,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
       </header>
 
       <!-- Post Content -->
-      <div class="prose prose-lg max-w-none bg-lab-surface p-8 rounded-lg border-2 border-lab-text">
+      <div class="prose prose-lg max-w-none bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text min-w-0">
         <Content />
       </div>
 
@@ -88,7 +88,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
 
       <!-- Footer -->
       <footer class="mt-16 pt-8 border-t-2 border-lab-border">
-        <div class="flex items-center justify-between font-mono text-sm">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-sm">
           <a
             href="/blog"
             class="text-lab-accent hover:underline"
@@ -111,6 +111,18 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   /* Prose styling for blog content - Memory Lab theme */
   .prose {
     @apply text-lab-text font-mono text-base leading-relaxed;
+  }
+
+
+  .prose :global(*) {
+    @apply break-words;
+  }
+
+  .prose :global(img),
+  .prose :global(video),
+  .prose :global(iframe),
+  .prose :global(table) {
+    @apply max-w-full h-auto;
   }
 
   .prose :global(h2) {
