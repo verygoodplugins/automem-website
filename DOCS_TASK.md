@@ -1,4 +1,14 @@
-# Starlight Docs Content Generation Task
+# Starlight Docs — Content Conversion Task
+
+## CRITICAL: This is a FORMAT CONVERSION, not a rewrite
+
+DO NOT summarize, condense, shorten, or editorialize the DeepWiki source content. Your job is to **convert** it from scraped DeepWiki format into clean Starlight markdown. Think of yourself as a format converter, not a writer.
+
+**Keep:** Every table, every property, every validation rule, every code example, every implementation detail, every threshold, every parameter.
+**Remove:** Only DeepWiki-specific chrome (sidebar nav, "Relevant source files" headers, "Loading..." placeholders, ToC sections, FileRef tags).
+**Add:** Mermaid diagrams from the pre-extracted `.mmd` files, proper Starlight frontmatter, internal links between pages, and :::note/:::tip admonitions where helpful.
+
+If a DeepWiki page is 400 lines of useful technical content, the output page should be ~400 lines too.
 
 ## Context
 
@@ -13,7 +23,7 @@ The Starlight infrastructure is set up:
 
 ## Your Job
 
-Create all remaining markdown files in `src/content/docs/docs/`. Note the double `docs/` — the first is the Starlight content collection root, the second is a subdirectory that gives all routes a `/docs/` URL prefix.
+Convert DeepWiki content into markdown files in `src/content/docs/docs/`. Note the double `docs/` — the first is the Starlight content collection root, the second is a subdirectory that gives all routes a `/docs/` URL prefix.
 
 The sidebar in `astro.config.mjs` defines every page — each `slug` starts with `docs/` and maps to a file path under `src/content/docs/docs/`. For example, slug `docs/getting-started/introduction` → file `src/content/docs/docs/getting-started/introduction.md` → URL `/docs/getting-started/introduction/`.
 
@@ -90,25 +100,13 @@ The automem (server) wiki is more recent (Feb 17 vs Feb 11) and more detailed. I
 
 ### Mermaid Diagrams
 
-DeepWiki renders diagrams client-side — they won't be in the scraped markdown. Recreate these KEY diagrams as ```mermaid code blocks (Starlight renders them natively):
+228 Mermaid diagrams have been pre-extracted from both DeepWiki wikis into `.mmd` files:
+- `.deepwiki-raw/diagrams/` — 127 diagrams from automem wiki
+- `.deepwiki-raw/diagrams-mcp/` — 101 diagrams from mcp-automem wiki
 
-1. **System Overview** (architecture/overview.md) — Full 3-tier: AI Platforms → MCP Bridge → AutoMem API → FalkorDB + Qdrant
-2. **Memory Lifecycle** (core-concepts/memory-model.md) — Store → Enrich → Embed → Index → Recall → Decay
-3. **Hybrid Search Pipeline** (core-concepts/hybrid-search.md) — Query → 4 strategies → Merge → Score → Return
-4. **Enrichment Pipeline** (architecture/enrichment.md) — Queue → Entity Extract → Summary → Temporal Link → Pattern Detect
-5. **Worker Coordination** (architecture/background-processing.md) — 4 workers with queues and tracking sets
-6. **MCP Bridge Flow** (architecture/mcp-bridge.md) — AI Platform ↔ stdio ↔ MCP Server ↔ HTTP ↔ AutoMem API
+Each directory has an `INDEX.txt` mapping filename → section heading. Read the `.mmd` file and paste its contents into a ```mermaid code block in the corresponding docs page.
 
-Skip diagrams for: platform guides, CLI reference, best practices (text is sufficient).
-
-### Pre-extracted Mermaid Diagrams (NEW)
-228 Mermaid diagrams have been extracted from both DeepWiki wikis:
-- `.deepwiki-raw/diagrams/` — 127 diagrams from automem wiki (see `INDEX.txt`)
-- `.deepwiki-raw/diagrams-mcp/` — 101 diagrams from mcp-automem wiki (see `INDEX.txt`)
-
-Each `.mmd` file contains one diagram. Match diagrams to pages by their heading names in INDEX.txt.
-Include relevant diagrams as ```mermaid code blocks in the corresponding docs pages.
-For architecture and core-concept pages, use multiple diagrams per page — they're already created for you.
+For architecture and core-concept pages, include ALL relevant diagrams from the source — don't skip them. Match by heading name in INDEX.txt.
 
 ### Other DeepWiki Artifacts to Remove
 
@@ -123,44 +121,12 @@ For architecture and core-concept pages, use multiple diagrams per page — they
 - Direct, casual but technical. No corporate fluff.
 - Use "you" directly.
 - Include actual code examples, config snippets, and CLI commands.
-- Use Mermaid diagrams liberally — 228 pre-extracted diagrams are available (see below).
+- Use Mermaid diagrams liberally — 228 pre-extracted diagrams are available (see Mermaid section above).
 - Starlight supports :::note, :::tip, :::caution, :::danger admonitions.
-- Page length depends on the section type (see below).
 
-## Page Depth Guidelines — IMPORTANT
+## IMPORTANT: Do NOT shorten pages
 
-NOT all pages should be the same depth. Different sections serve different purposes:
-
-### Deep reference pages (aim for 200-500 lines, preserve ALL technical detail)
-These pages are where developers go to look things up. Keep every table, every validation rule, every parameter. The DeepWiki content for these pages is already good — clean it up but do NOT summarize or shorten.
-
-- `core-concepts/*` — Memory Model, Relationship Types, Hybrid Search, Consolidation
-- `architecture/*` — System Overview, MCP Bridge, Data Stores, Enrichment, Embeddings, Background Processing
-- `reference/api/*` — All API endpoint pages
-- `reference/configuration.md` — Full env var reference
-- `reference/authentication.md` — Auth flow details
-
-For these pages, KEEP:
-- Full property tables with types, defaults, and descriptions
-- Validation rules (ranges, formats, edge cases)
-- Code examples showing request/response bodies
-- Implementation details (algorithms, thresholds, retry counts)
-- The system prompt text used for LLM classification
-- Storage representation details (indexes, dimensions, payload structure)
-- Cost estimates where relevant ($0.02/month for classification etc)
-- Configuration thresholds (similarity > 0.8, batch size 20, etc)
-
-### Medium-depth guides (aim for 100-200 lines)
-- `getting-started/*` — Focused tutorials, but include all relevant config options
-- `platforms/*` — Complete setup guides with full config snippets
-- `deployment/*` — Deployment-specific details
-- `cli/*` — Command reference with all flags and options
-- `operations/*` — Operational procedures with specific commands
-
-### Concise narrative pages (aim for 80-150 lines)
-- `best-practices/*` — Opinionated advice, examples over exhaustive docs
-- `development/*` — Contributing guides
-- `research.md` — Motivation and benchmarks
+There are NO line limits. If the source material is 400 lines, the output should be ~400 lines. If a DeepWiki page has 15 properties in a table, your output should have 15 properties in a table. The only content that should be shorter than the source is content you're removing because it's DeepWiki chrome (nav, ToC, "Loading..." placeholders).
 
 ## Files to Create
 
