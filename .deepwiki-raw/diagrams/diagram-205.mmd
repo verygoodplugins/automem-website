@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant Alexa as "Alexa Device"
+    participant Endpoint as "/alexa endpoint"
+    participant Slot as "getSlot()"
+    participant Tags as "buildAlexaTags()"
+    participant Client as "AutoMemClient"
+    participant API as "POST /memory"
+
+    Alexa->>Endpoint: "RememberIntent<br/>{note: 'Buy milk'}"
+    Endpoint->>Slot: "Extract 'note' slot"
+    Slot-->>Endpoint: "'Buy milk'"
+    Endpoint->>Tags: "Build tags from request"
+    Tags-->>Endpoint: "['alexa', 'user:xyz', 'device:abc']"
+    Endpoint->>Client: "storeMemory(content, tags)"
+    Client->>API: "POST /memory"
+    API-->>Client: "{memory_id: '...'}"
+    Client-->>Endpoint: "Success"
+    Endpoint->>Alexa: "Saved to memory."

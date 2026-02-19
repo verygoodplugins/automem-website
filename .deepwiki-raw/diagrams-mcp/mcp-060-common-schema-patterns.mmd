@@ -1,0 +1,30 @@
+graph TB
+    subgraph "String Parameters"
+        STR["type: 'string'"]
+        STR --> DESC1["description"]
+        STR --> ENUM["enum: [...] (optional)"]
+    end
+    
+    subgraph "Array Parameters"
+        ARR["type: 'array'"]
+        ARR --> ITEMS["items: {type: 'string'}"]
+        ARR --> DESC2["description"]
+    end
+    
+    subgraph "Numeric Parameters"
+        NUM["type: 'number' or 'integer'"]
+        NUM --> MIN["minimum: value"]
+        NUM --> MAX["maximum: value"]
+        NUM --> DEFAULT["default: value"]
+        NUM --> DESC3["description"]
+    end
+    
+    subgraph "Object Parameters"
+        OBJ["type: 'object'"]
+        OBJ --> DESC4["description<br/>(freeform metadata)"]
+    end
+    
+    subgraph "Required Fields"
+        REQ["required: string[]"]
+        REQ --> CHECK["Validates presence<br/>before execution"]
+    end

@@ -1,0 +1,37 @@
+graph LR
+    subgraph "Token Sources"
+        BearerHeader["Authorization: Bearer TOKEN"]
+        APIKeyHeader["X-API-Key: TOKEN"]
+        QueryParam["?api_key=TOKEN"]
+    end
+
+    subgraph "mcp-sse-server :8080"
+        GetAuthToken["getAuthToken(req)<br/>server.js:507-515"]
+        ValidateToken["Compare vs<br/>AUTOMEM_API_TOKEN"]
+        AddAuthHeader["Add Authorization:<br/>Bearer header"]
+    end
+
+    subgraph "Flask API :8001"
+        RequireAPIToken["@require_api_token<br/>automem/api/auth.py"]
+        ExtractToken["extract_token(request)<br/>multiple sources"]
+        CheckLevel["Check endpoint<br/>requires ADMIN?"]
+        ValidateAdmin["Validate<br/>ADMIN_API_TOKEN"]
+        ProcessRequest["Route to handler"]
+    end
+
+    BearerHeader --> GetAuthToken
+    APIKeyHeader --> GetAuthToken
+    QueryParam --> GetAuthToken
+    
+    GetAuthToken --> ValidateToken
+    ValidateToken -->|Valid| AddAuthHeader
+    ValidateToken -->|Invalid| Reject401["401 Unauthorized"]
+    
+    AddAuthHeader --> RequireAPIToken
+    RequireAPIToken --> ExtractToken
+    ExtractToken --> CheckLevel
+    
+    CheckLevel -->|Standard| ProcessRequest
+    CheckLevel -->|Admin endpoint| ValidateAdmin
+    ValidateAdmin -->|Valid| ProcessRequest
+    ValidateAdmin -->|Invalid| Reject403["403 Forbidden"]

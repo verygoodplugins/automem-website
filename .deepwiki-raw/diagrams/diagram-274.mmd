@@ -1,0 +1,25 @@
+graph LR
+    subgraph "FakeGraph State"
+        relationship_counts["relationship_counts: Dict[str, int]"]
+        sample_rows["sample_rows: List[List[Any]]"]
+        existing_pairs["existing_pairs: set[frozenset[str]]"]
+        cluster_rows["cluster_rows: List[List[Any]]"]
+        decay_rows["decay_rows: List[List[Any]]"]
+        forgetting_rows["forgetting_rows: List[List[Any]]"]
+        deleted["deleted: List[str]"]
+        archived["archived: List[tuple[str, float]]"]
+        queries["queries: List[tuple[str, Dict]]"]
+    end
+    
+    subgraph "FakeGraph Methods"
+        query_method["query(query: str, params: Dict)<br/>→ FakeResult"]
+    end
+    
+    query_method --> relationship_counts
+    query_method --> sample_rows
+    query_method --> cluster_rows
+    query_method --> decay_rows
+    query_method --> forgetting_rows
+    query_method --> deleted
+    query_method --> archived
+    query_method --> queries

@@ -1,0 +1,25 @@
+graph TB
+    subgraph "Claude Desktop Application"
+        UI["Claude Desktop UI"]
+        MCP_CLIENT["MCP Client<br/>(built-in)"]
+    end
+    
+    subgraph "MCP Server Process"
+        STDIO["StdioServerTransport<br/>src/index.ts:75-87"]
+        TOOLS["Tool Registry<br/>6 MCP Tools"]
+        CLIENT["AutoMemClient<br/>src/automem-client.ts"]
+    end
+    
+    subgraph "AutoMem Service"
+        API["HTTP API<br/>:8001"]
+        FALKOR[("FalkorDB<br/>Graph")]
+        QDRANT[("Qdrant<br/>Vectors")]
+    end
+    
+    UI --> MCP_CLIENT
+    MCP_CLIENT -->|"JSON-RPC<br/>via stdio"| STDIO
+    STDIO --> TOOLS
+    TOOLS --> CLIENT
+    CLIENT -->|"HTTP Requests<br/>AUTOMEM_ENDPOINT"| API
+    API --> FALKOR
+    API --> QDRANT

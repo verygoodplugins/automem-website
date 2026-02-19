@@ -1,0 +1,66 @@
+graph TB
+    subgraph internet["External Clients"]
+        DirectAPI["Direct API Clients<br/>curl, Python, MCP package"]
+        CloudAI["Cloud AI Platforms<br/>ChatGPT, Claude.ai, ElevenLabs"]
+        LocalTools["Local Development Tools<br/>Cursor, Claude Desktop"]
+    end
+
+    subgraph railway["Railway Project"]
+        subgraph public["Public Layer"]
+            Domain1["automem.up.railway.app<br/>HTTPS/443"]
+            Domain2["mcp.up.railway.app<br/>HTTPS/443"]
+            LB["Railway Load Balancer<br/>SSL Termination"]
+        end
+
+        subgraph services["Service Layer"]
+            subgraph api["memory-service"]
+                FlaskApp["app.py<br/>Flask + Gunicorn<br/>PORT=8001"]
+                Workers["Background Workers<br/>enrichment_worker<br/>embedding_worker<br/>consolidation_worker<br/>sync_worker"]
+            end
+
+            subgraph mcp["mcp-sse-server"]
+                MCPBridge["server.js<br/>Express + SSE<br/>PORT=8080"]
+            end
+
+            subgraph db["falkordb"]
+                FalkorDB["FalkorDB Container<br/>Port 6379<br/>FALKOR_PASSWORD"]
+                Volume["Persistent Volume<br/>/var/lib/falkordb/data<br/>50GB"]
+            end
+        end
+
+        subgraph networking["Internal Network"]
+            DNS["*.railway.internal<br/>IPv6 DNS<br/>RAILWAY_PRIVATE_DOMAIN"]
+        end
+
+        subgraph external["External Services"]
+            Qdrant["Qdrant Cloud<br/>QDRANT_URL<br/>QDRANT_API_KEY"]
+            OpenAI["OpenAI API<br/>OPENAI_API_KEY"]
+            Voyage["Voyage AI<br/>VOYAGE_API_KEY"]
+            S3["S3 Bucket<br/>Backups"]
+        end
+    end
+
+    DirectAPI -->|HTTPS| Domain1
+    CloudAI -->|HTTPS/SSE| Domain2
+    LocalTools -->|HTTPS| Domain1
+
+    LB --> Domain1
+    LB --> Domain2
+    Domain1 --> FlaskApp
+    Domain2 --> MCPBridge
+
+    MCPBridge -->|"http://memory-service.railway.internal:8001<br/>AUTOMEM_API_URL"| FlaskApp
+
+    FlaskApp -->|"redis://falkordb.railway.internal:6379<br/>FALKORDB_HOST"| FalkorDB
+    FlaskApp -->|HTTPS| Qdrant
+    FlaskApp -->|HTTPS| OpenAI
+    FlaskApp -->|HTTPS| Voyage
+
+    Workers --> FalkorDB
+    Workers --> Qdrant
+
+    FalkorDB --> Volume
+
+    DNS -.->|Resolves| FlaskApp
+    DNS -.->|Resolves| MCPBridge
+    DNS -.->|Resolves| FalkorDB

@@ -1,0 +1,12 @@
+flowchart TD
+    Store["POST /memory"] --> Queue["embedding_queue"]
+    Queue --> Worker["embedding_worker thread"]
+    Worker --> Check{"Batch ready?"}
+    Check -->|"size >= EMBEDDING_BATCH_SIZE"| Process["_process_embedding_batch()"]
+    Check -->|"timeout >= 2s"| Process
+    Check -->|"Neither"| Wait["time.sleep(0.1)"]
+    Wait --> Check
+    Process --> Generate["_generate_real_embeddings_batch()"]
+    Generate --> OpenAI["OpenAI API<br/>(single bulk request)"]
+    OpenAI --> Store1["_store_embedding_in_qdrant()"]
+    Store1 --> Store2["Update FalkorDB node"]

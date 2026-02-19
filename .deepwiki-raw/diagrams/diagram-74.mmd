@@ -1,0 +1,18 @@
+graph TB
+    subgraph vector_module["automem/stores/vector_store.py"]
+        build_filter["_build_qdrant_tag_filter()<br/>Filter object construction"]
+        
+        normalize["_normalize_qdrant_payload()<br/>Payload sanitization"]
+        
+        ensure["_ensure_collection_exists()<br/>Auto-create collection"]
+        
+        batch_ops["Batch operations:<br/>upsert_batch(),<br/>delete_batch()"]
+    end
+    
+    app["app.py Request Handlers"]
+    workers["Background Workers"]
+    
+    app-->build_filter
+    app-->normalize
+    app-->ensure
+    workers-->batch_ops

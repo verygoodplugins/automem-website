@@ -1,0 +1,33 @@
+graph TB
+    subgraph "Recall Request"
+        Input["GET /recall<br/>?query=database<br/>&tags=decision<br/>&time_query=last month"]
+    end
+    
+    subgraph "Parallel Search"
+        Vector["_vector_search()<br/>Qdrant cosine similarity<br/>OpenAI embedding"]
+        
+        Keyword["_graph_keyword_search()<br/>FalkorDB Cypher<br/>Content + tags"]
+        
+        Trending["_graph_trending_results()<br/>High importance<br/>No query provided"]
+    end
+    
+    subgraph "Scoring Pipeline"
+        Combine["_compute_metadata_score()<br/>Weighted combination"]
+        
+        Weights["SEARCH_WEIGHT_VECTOR: 0.35<br/>SEARCH_WEIGHT_KEYWORD: 0.35<br/>SEARCH_WEIGHT_TAG: 0.15<br/>SEARCH_WEIGHT_IMPORTANCE: 0.10<br/>SEARCH_WEIGHT_RECENCY: 0.10<br/>SEARCH_WEIGHT_EXACT: 0.15"]
+        
+        Dedupe["Deduplicate by memory_id<br/>Keep highest score"]
+    end
+    
+    Input --> Vector
+    Input --> Keyword
+    Input --> Trending
+    
+    Vector --> Combine
+    Keyword --> Combine
+    Trending --> Combine
+    
+    Combine --> Weights
+    Weights --> Dedupe
+    
+    Dedupe --> Output["Ranked results<br/>with relations"]

@@ -1,0 +1,22 @@
+graph TB
+    Start["embedding_worker() loop"]
+    CheckQueue["queue.get_nowait()"]
+    AddToBatch["Add job to batch[]"]
+    CheckSize{"len(batch) >= <br/>EMBEDDING_BATCH_SIZE?"}
+    CheckTimeout{"time_since_first<br/>>= BATCH_TIMEOUT?"}
+    ProcessBatch["_process_embedding_batch(batch)"]
+    Sleep["time.sleep(0.1)"]
+    
+    Start --> CheckQueue
+    CheckQueue -->|"job available"| AddToBatch
+    CheckQueue -->|"Empty exception"| CheckTimeout
+    
+    AddToBatch --> CheckSize
+    CheckSize -->|"Yes (20 items)"| ProcessBatch
+    CheckSize -->|"No"| CheckTimeout
+    
+    CheckTimeout -->|"Yes (2s elapsed)"| ProcessBatch
+    CheckTimeout -->|"No"| Sleep
+    
+    ProcessBatch --> Start
+    Sleep --> Start

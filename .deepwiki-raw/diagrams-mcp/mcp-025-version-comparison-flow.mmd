@@ -1,0 +1,44 @@
+graph TB
+    START["applyCursorSetup() called"]
+    
+    START --> CHECK_EXISTS{"automem.mdc<br/>exists?"}
+    
+    CHECK_EXISTS -->|"No"| INSTALL["shouldUpdate = true<br/>Install new file"]
+    CHECK_EXISTS -->|"Yes"| READ_EXISTING["Read existing content<br/>fs.readFileSync()"]
+    
+    READ_EXISTING --> EXTRACT["extractMdcVersion()<br/>Parse version marker"]
+    
+    EXTRACT --> HAS_VERSION{"Version<br/>found?"}
+    
+    HAS_VERSION -->|"No"| LEGACY["Legacy file<br/>(no version marker)"]
+    HAS_VERSION -->|"Yes"| COMPARE["compareVersions()<br/>Package vs Existing"]
+    
+    COMPARE --> VERSION_CMP{Compare}
+    
+    VERSION_CMP -->|"Same"| SAME["Log 'up to date'<br/>shouldUpdate = false"]
+    VERSION_CMP -->|"Package newer"| NEWER["Log new version available<br/>Prompt if interactive"]
+    VERSION_CMP -->|"Existing newer"| OLDER["Log warning<br/>shouldUpdate = false"]
+    
+    NEWER --> INTERACTIVE{"--yes flag<br/>or skipPrompts?"}
+    LEGACY --> INTERACTIVE
+    
+    INTERACTIVE -->|"Yes"| AUTO_UPDATE["shouldUpdate = true"]
+    INTERACTIVE -->|"No"| PROMPT_USER["promptUser()<br/>'Update? [Y/n]'"]
+    
+    PROMPT_USER --> USER_CHOICE{"User<br/>response"}
+    USER_CHOICE -->|"Yes"| AUTO_UPDATE
+    USER_CHOICE -->|"No"| SKIP_UPDATE["shouldUpdate = false<br/>Log skip message"]
+    
+    SAME --> CHECK_MCP["checkCursorMcpConfigured()"]
+    OLDER --> CHECK_MCP
+    SKIP_UPDATE --> CHECK_MCP
+    AUTO_UPDATE --> PROCEED["Load template<br/>replaceTemplateVars()"]
+    INSTALL --> PROCEED
+    
+    PROCEED --> WRITE["writeFileWithBackup()<br/>Create .bak if exists"]
+    WRITE --> CHECK_MCP
+    
+    CHECK_MCP --> MCP_STATUS{"MCP configured?"}
+    MCP_STATUS -->|"Yes"| DONE["✅ Setup complete"]
+    MCP_STATUS -->|"No"| WARN["⚠️ Print config snippet"]
+    WARN --> DONE

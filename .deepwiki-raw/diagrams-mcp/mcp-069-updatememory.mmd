@@ -1,0 +1,8 @@
+graph TB
+    INPUT["UpdateMemoryArgs<br/>{memory_id, content?, tags?,<br/>importance?, metadata?,<br/>timestamp?, updated_at?,<br/>last_accessed?, type?,<br/>confidence?}"]
+    
+    INPUT --> EXTRACT["Extract memory_id<br/>Separate updates"]
+    EXTRACT --> VALIDATE["Validate memory_id exists"]
+    VALIDATE --> PATCH["PATCH /memory/:id"]
+    PATCH --> RESPONSE["Response<br/>{memory_id or use input id,<br/>message}"]
+    RESPONSE --> OUTPUT["{memory_id, message}"]

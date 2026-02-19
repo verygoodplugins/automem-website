@@ -1,0 +1,20 @@
+graph TB
+    Write["POST /memory<br/>Store request"]
+    
+    FalkorWrite["FalkorDB write<br/>(canonical)"]
+    
+    QdrantWrite["Qdrant write<br/>(best-effort)"]
+    
+    QdrantCheck{"Qdrant<br/>available?"}
+    
+    Success["201 Created<br/>memory_id returned"]
+    
+    Write --> FalkorWrite
+    
+    FalkorWrite --> QdrantCheck
+    
+    QdrantCheck -->|"Yes"| QdrantWrite
+    QdrantCheck -->|"No"| QdrantLog["Log warning<br/>Continue"]
+    
+    QdrantWrite --> Success
+    QdrantLog --> Success

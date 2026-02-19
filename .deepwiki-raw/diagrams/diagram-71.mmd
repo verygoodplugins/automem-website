@@ -1,0 +1,41 @@
+graph TB
+    Client["Client: GET /recall"]
+    
+    subgraph request_handler["Request Handler (app.py:2521-2908)"]
+        parse["Parse Parameters:<br/>query, tags, time_query,<br/>expand_relations"]
+        
+        auth["require_api_token()<br/>Middleware"]
+        
+        embed["Generate Query Embedding<br/>_generate_real_embedding()"]
+        
+        subgraph hybrid["Hybrid Search (Parallel)"]
+            vector["_vector_search()<br/>Qdrant similarity"]
+            keyword["_graph_keyword_search()<br/>Cypher text matching"]
+            tag["_vector_filter_only_tag_search()<br/>Tag-based scroll"]
+        end
+        
+        merge["Merge Results<br/>seen_ids deduplication"]
+        
+        score["_compute_metadata_score()<br/>9-component hybrid scoring"]
+        
+        rank["Sort by final score<br/>Top N results"]
+        
+        expand["Expand Relations [optional]<br/>_fetch_expanded_relations()"]
+        
+        response["Return JSON:<br/>{results, scores, sources}"]
+    end
+    
+    Client-->auth
+    auth-->parse
+    parse-->embed
+    embed-->vector
+    embed-->keyword
+    parse-->tag
+    vector-->merge
+    keyword-->merge
+    tag-->merge
+    merge-->score
+    score-->rank
+    rank-->expand
+    expand-->response
+    response-->Client

@@ -1,0 +1,39 @@
+graph TB
+    Start["Application Startup"]
+    
+    subgraph "Configuration Sources (Precedence Order)"
+        Env1["1. Process Environment<br/>export VAR=value"]
+        Env2["2. Project .env<br/>./env"]
+        Env3["3. User Config<br/>~/.config/automem/.env"]
+    end
+    
+    subgraph "Validation Layer"
+        Required["Required Variables<br/>AUTOMEM_API_TOKEN<br/>ADMIN_API_TOKEN<br/>FALKORDB_HOST"]
+        Optional["Optional Variables<br/>QDRANT_URL<br/>OPENAI_API_KEY<br/>VOYAGE_API_KEY"]
+        Defaults["Default Values<br/>PORT=8001<br/>VECTOR_SIZE=3072<br/>EMBEDDING_PROVIDER=auto"]
+    end
+    
+    subgraph "Service Initialization"
+        FalkorInit["FalkorDB Connection<br/>connect_falkordb()"]
+        QdrantInit["Qdrant Connection<br/>Optional, graceful degradation"]
+        EmbedInit["Embedding Provider<br/>init_embedding_provider()"]
+        WorkerInit["Background Workers<br/>enrichment/consolidation"]
+    end
+    
+    Start --> Env1
+    Env1 -->|"Override"| Env2
+    Env2 -->|"Fallback"| Env3
+    
+    Env3 --> Required
+    Env3 --> Optional
+    Env3 --> Defaults
+    
+    Required -->|"Fail if missing"| FalkorInit
+    Optional -->|"Continue if missing"| QdrantInit
+    Defaults -->|"Use if unset"| EmbedInit
+    
+    FalkorInit --> WorkerInit
+    QdrantInit --> WorkerInit
+    EmbedInit --> WorkerInit
+    
+    WorkerInit --> Ready["Service Ready<br/>Flask API starts"]

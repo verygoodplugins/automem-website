@@ -1,0 +1,46 @@
+graph TB
+    subgraph api["Flask API Layer"]
+        StoreMemory["POST /memory<br/>app.py:~467-600"]
+        RecallMemory["GET /recall<br/>app.py:~602-900"]
+        UpdateMemory["PATCH /memory/:id<br/>app.py:~902-1000"]
+    end
+
+    subgraph canonical["Canonical Storage FalkorDB"]
+        GraphDB[("FalkorDB<br/>FALKORDB_HOST:FALKORDB_PORT")]
+        
+        subgraph nodes["Node Types"]
+            MemoryNode["Memory nodes<br/>Properties: id, content,<br/>tags, importance,<br/>timestamp, type,<br/>confidence"]
+            PatternNode["Pattern nodes<br/>Shared patterns<br/>across memories"]
+            EntityNode["Entity nodes<br/>People, tools,<br/>projects, concepts"]
+        end
+        
+        subgraph edges["Relationship Types"]
+            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF"]
+        end
+    end
+
+    subgraph optional["Optional Vector Search Qdrant"]
+        VectorDB[("Qdrant<br/>QDRANT_URL")]
+        Collection["Collection: COLLECTION_NAME<br/>Dimensions: VECTOR_SIZE<br/>Distance: Cosine"]
+        Payload["Payload:<br/>Full memory properties<br/>for filtering"]
+    end
+
+    StoreMemory -->|"1. Always succeeds"| GraphDB
+    StoreMemory -.->|"2. Best-effort"| VectorDB
+    
+    RecallMemory -->|"1. Keyword/Graph search"| GraphDB
+    RecallMemory -.->|"2. Semantic search<br/>if available"| VectorDB
+    
+    UpdateMemory -->|"1. Update canonical"| GraphDB
+    UpdateMemory -.->|"2. Update vector<br/>if content changed"| VectorDB
+    
+    GraphDB --- MemoryNode
+    GraphDB --- PatternNode
+    GraphDB --- EntityNode
+    GraphDB --- RelTypes
+    
+    VectorDB --- Collection
+    Collection --- Payload
+    
+    style GraphDB fill:#f9f9f9,stroke:#333
+    style VectorDB fill:#f9f9f9,stroke:#333,stroke-dasharray: 5 5

@@ -1,0 +1,9 @@
+graph LR
+    Operation["Memory operation<br/>store, recall, update"]
+    EmitEvent["emit_event()<br/>automem.api.stream"]
+    Blueprint["SSE Blueprint<br/>/stream endpoint"]
+    Client["Connected clients<br/>Streaming listeners"]
+    
+    Operation --> EmitEvent
+    EmitEvent --> Blueprint
+    Blueprint --> Client

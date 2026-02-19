@@ -1,0 +1,42 @@
+graph TB
+    subgraph "Package Entry Points"
+        PKG[package.json]
+        BIN["bin: { mcp-automem: dist/index.js }"]
+        MAIN["main: dist/index.js"]
+    end
+    
+    subgraph "Installation Methods"
+        NPX["npx @verygoodplugins/mcp-automem"]
+        GLOBAL["npm install -g"]
+        LOCAL["git clone + npm install"]
+    end
+    
+    subgraph "Execution Modes"
+        CLI["CLI Mode<br/>(with args)"]
+        SERVER["Server Mode<br/>(no args)"]
+    end
+    
+    subgraph "Runtime"
+        INDEX["src/index.ts"]
+        SETUP["src/cli/setup.js"]
+        MCP["MCP Server<br/>(stdio transport)"]
+    end
+    
+    PKG --> BIN
+    PKG --> MAIN
+    
+    NPX --> BIN
+    GLOBAL --> BIN
+    LOCAL --> INDEX
+    
+    BIN --> INDEX
+    
+    INDEX --> CLI
+    INDEX --> SERVER
+    
+    CLI --> SETUP
+    SERVER --> MCP
+    
+    style PKG fill:#f9f9f9
+    style INDEX fill:#f9f9f9
+    style SETUP fill:#f9f9f9

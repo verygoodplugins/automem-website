@@ -1,0 +1,19 @@
+graph LR
+    subgraph "Sidecar Service Endpoints"
+        HTTP["/mcp<br/>(POST)<br/>Streamable HTTP"]
+        SSE_STREAM["/mcp/sse<br/>(GET)<br/>SSE Stream"]
+        SSE_MSG["/mcp/messages<br/>(POST)<br/>SSE Client→Server"]
+        HEALTH["/health<br/>(GET)<br/>Health Check"]
+    end
+    
+    subgraph "Transport Type"
+        HTTP --> STREAMABLE["Full-duplex<br/>Recommended"]
+        SSE_STREAM --> LEGACY["Server→Client<br/>Events"]
+        SSE_MSG --> LEGACY
+    end
+    
+    subgraph "AutoMem Backend"
+        STREAMABLE --> API["AutoMem API<br/>:8001"]
+        LEGACY --> API
+        HEALTH --> API
+    end

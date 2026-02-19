@@ -1,0 +1,15 @@
+graph TB
+    subgraph "Configuration Resolution Priority"
+        direction TB
+        CMD["1. Command-line args<br/>--endpoint, --api-key"]
+        ENV_FILE["2. .env file<br/>current directory"]
+        PROCESS_ENV["3. Process environment<br/>shell exports"]
+        DEFAULT["4. Default<br/>http://localhost:8001"]
+    end
+    
+    AUTO_CLIENT["AutoMemClient<br/>src/automem-client.ts"] --> CMD
+    CMD -->|Not found| ENV_FILE
+    ENV_FILE -->|Not found| PROCESS_ENV
+    PROCESS_ENV -->|Not found| DEFAULT
+    
+    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_ENDPOINT<br/>loads AUTOMEM_API_KEY"]

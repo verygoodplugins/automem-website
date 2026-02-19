@@ -1,0 +1,24 @@
+graph TB
+    Request["HTTP Request"]
+    
+    BeforeRequest["@app.before_request<br/>require_api_token()"]
+    
+    CheckEndpoint{endpoint in<br/>{None, 'health'}?}
+    
+    ExtractToken["_extract_api_token()<br/>Check Authorization header,<br/>X-API-Key header,<br/>api_key query param"]
+    
+    ValidateToken{token ==<br/>AUTOMEM_API_TOKEN?}
+    
+    Endpoint["Execute endpoint handler"]
+    
+    Unauthorized["abort(401,<br/>'Unauthorized')"]
+    
+    Request --> BeforeRequest
+    BeforeRequest --> CheckEndpoint
+    
+    CheckEndpoint -->|Yes| Endpoint
+    CheckEndpoint -->|No| ExtractToken
+    
+    ExtractToken --> ValidateToken
+    ValidateToken -->|Yes| Endpoint
+    ValidateToken -->|No| Unauthorized

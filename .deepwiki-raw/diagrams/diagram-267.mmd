@@ -1,0 +1,44 @@
+graph TB
+    subgraph "Flask API Service"
+        AppPy["app.py"]
+        
+        subgraph "Route Handlers"
+            MemoryRoute["/memory → store_memory()"]
+            RecallRoute["/recall → recall_memories()"]
+            AssociateRoute["/associate → associate_memories()"]
+            ConsolidateRoute["/consolidate → trigger_consolidation()"]
+            HealthRoute["/health → health_check()"]
+        end
+        
+        subgraph "Background Threads"
+            EnrichThread["enrichment_worker()<br/>(Line ~1200)"]
+            EmbedThread["embedding_worker()<br/>(Line ~1900)"]
+            ConsThread["ConsolidationScheduler.run_scheduled_tasks()<br/>(imported from consolidation.py)"]
+        end
+    end
+    
+    subgraph "Data Layer Connections"
+        FalkorDB["FalkorDB<br/>(FalkorDB object @ app.py:~3300)"]
+        QdrantClient["QdrantClient<br/>(QdrantClient object @ app.py:~3350)"]
+    end
+    
+    subgraph "External Integration"
+        MCPServer["mcp-sse-server/index.js<br/>(Express on port 8080)"]
+    end
+    
+    MemoryRoute -->|"writes to"| FalkorDB
+    MemoryRoute -->|"queues embedding"| EmbedThread
+    MemoryRoute -->|"queues enrichment"| EnrichThread
+    
+    RecallRoute -->|"queries"| FalkorDB
+    RecallRoute -->|"searches"| QdrantClient
+    
+    EmbedThread -->|"stores vectors"| QdrantClient
+    EnrichThread -->|"creates relationships"| FalkorDB
+    EnrichThread -->|"queries vectors"| QdrantClient
+    
+    ConsThread -->|"updates scores"| FalkorDB
+    ConsThread -->|"deletes vectors"| QdrantClient
+    
+    MCPServer -->|"HTTP POST/GET"| MemoryRoute
+    MCPServer -->|"HTTP POST/GET"| RecallRoute

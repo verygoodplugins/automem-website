@@ -1,0 +1,13 @@
+graph LR
+    Input["User Query"]
+    Embed["Generate Embedding"]
+    VectorDB["Vector Database<br/>Cosine similarity only"]
+    Retrieve["Retrieve Top-K"]
+    LLM["LLM with Context"]
+    Output["Response"]
+    
+    Input --> Embed
+    Embed --> VectorDB
+    VectorDB --> Retrieve
+    Retrieve --> LLM
+    LLM --> Output

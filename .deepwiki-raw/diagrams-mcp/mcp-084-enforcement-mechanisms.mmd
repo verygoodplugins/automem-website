@@ -1,0 +1,17 @@
+graph LR
+    DEV["Developer<br/>Commits Code"]
+    HUSKY["Husky Hook<br/>.husky/commit-msg"]
+    LINT["commitlint<br/>@commitlint/config-conventional"]
+    PR["Pull Request<br/>Created"]
+    SEMANTIC["semantic-pr-title.yml<br/>Validates PR Title"]
+    MERGE["Squash Merge<br/>PR Title → Commit"]
+    
+    DEV --> HUSKY
+    HUSKY --> LINT
+    LINT -->|Valid| PR
+    LINT -->|Invalid| REJECT1["❌ Rejected<br/>Locally"]
+    PR --> SEMANTIC
+    SEMANTIC -->|Valid| MERGE
+    SEMANTIC -->|Invalid| REJECT2["❌ Rejected<br/>in CI"]
+    
+    MERGE --> MAIN["main Branch"]

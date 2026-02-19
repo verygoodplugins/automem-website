@@ -1,0 +1,38 @@
+graph LR
+    subgraph "ServiceState Dataclass"
+        direction TB
+        
+        subgraph "Database Connections"
+            MemoryGraph["memory_graph: FalkorDB<br/>Canonical graph store"]
+            QdrantClient["qdrant: QdrantClient<br/>Vector search (optional)"]
+            OpenAIClient["openai_client: OpenAI<br/>Embeddings/classification"]
+        end
+        
+        subgraph "Background Queues"
+            EnrichQueue["enrichment_queue: Queue<br/>Entity extraction pipeline"]
+            EmbedQueue["embedding_queue: Queue<br/>Batch embedding generation"]
+            EnrichPending["enrichment_pending: Set<br/>Dedup tracking"]
+            EmbedPending["embedding_pending: Set<br/>Dedup tracking"]
+        end
+        
+        subgraph "Worker Threads"
+            EnrichThread["enrichment_thread: Thread<br/>NER + pattern detection"]
+            EmbedThread["embedding_thread: Thread<br/>Batch API calls"]
+            ConsolThread["consolidation_thread: Thread<br/>Decay/forget cycles"]
+            SyncThread["sync_thread: Thread<br/>Drift monitoring"]
+        end
+        
+        subgraph "Stats and Locks"
+            EnrichStats["enrichment_stats: EnrichmentStats<br/>Success/failure counts"]
+            Locks["Various Lock objects<br/>Thread-safe access"]
+        end
+    end
+    
+    MemoryGraph -.-> EnrichThread
+    MemoryGraph -.-> ConsolThread
+    MemoryGraph -.-> SyncThread
+    QdrantClient -.-> EmbedThread
+    QdrantClient -.-> SyncThread
+    OpenAIClient -.-> EmbedThread
+    EnrichQueue --> EnrichThread
+    EmbedQueue --> EmbedThread

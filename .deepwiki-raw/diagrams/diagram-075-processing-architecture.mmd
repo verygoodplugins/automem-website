@@ -1,0 +1,35 @@
+graph TB
+    Request["POST /admin/reembed<br/>{batch_size: 32, limit: 1000}"]
+    Auth["_require_admin_token()"]
+    Init["Initialize OpenAI client<br/>init_openai()"]
+    
+    FetchIDs["Query FalkorDB:<br/>MATCH (m:Memory)<br/>RETURN m.id<br/>LIMIT $limit"]
+    
+    subgraph "Batch Processing Loop"
+        Slice["Slice next batch_size IDs"]
+        FetchContent["Query content for batch:<br/>MATCH (m:Memory)<br/>WHERE m.id IN $ids<br/>RETURN m.id, m.content"]
+        
+        CallOpenAI["OpenAI API:<br/>embeddings.create()<br/>model=text-embedding-3-small<br/>input=[contents]"]
+        
+        subgraph "Update Dual Storage"
+            UpdateQdrant["Qdrant: upsert()<br/>PointStruct<br/>id, vector, payload"]
+            UpdateFalkor["FalkorDB:<br/>MATCH (m:Memory {id: $id})<br/>SET m.embedding = $vector"]
+        end
+        
+        IncrCount["processed_count += batch_size"]
+    end
+    
+    Response["Return summary:<br/>processed, batch_size,<br/>total_memories"]
+    
+    Request-->Auth
+    Auth-->Init
+    Init-->FetchIDs
+    FetchIDs-->Slice
+    Slice-->FetchContent
+    FetchContent-->CallOpenAI
+    CallOpenAI-->UpdateQdrant
+    CallOpenAI-->UpdateFalkor
+    UpdateFalkor-->IncrCount
+    UpdateQdrant-->IncrCount
+    IncrCount-->|More batches?|Slice
+    IncrCount-->|Done|Response

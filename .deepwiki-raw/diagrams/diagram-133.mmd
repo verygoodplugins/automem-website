@@ -1,0 +1,51 @@
+graph TB
+    subgraph external["External Clients"]
+        ChatGPT["ChatGPT<br/>Cloud Platform"]
+        ClaudeAI["Claude.ai<br/>Web Interface"]
+        ElevenLabs["ElevenLabs Agents<br/>Voice AI"]
+        Alexa["Amazon Alexa<br/>Voice Skills"]
+    end
+    
+    subgraph bridge["MCP Bridge (server.js)"]
+        direction TB
+        
+        subgraph transport["Transport Layer"]
+            StreamableHTTP["StreamableHTTPServerTransport<br/>:8080/mcp"]
+            SSETransport["SSEServerTransport<br/>:8080/mcp/sse"]
+            AlexaEndpoint["/alexa endpoint<br/>Custom handler"]
+        end
+        
+        subgraph protocol["Protocol Translation"]
+            MCPServer["MCP Server<br/>buildMcpServer()"]
+            ToolHandlers["CallToolRequestSchema<br/>ListToolsRequestSchema"]
+        end
+        
+        subgraph client["HTTP Client"]
+            AutoMemClient["AutoMemClient<br/>_request() wrapper"]
+        end
+        
+        subgraph session["Session State"]
+            SessionMap["sessions Map<br/>sessionId -> transport/server"]
+            EventStore["InMemoryEventStore<br/>Last-Event-ID support"]
+        end
+    end
+    
+    subgraph automem["AutoMem Service"]
+        FlaskAPI["Flask API<br/>:8001"]
+    end
+    
+    ChatGPT -->|"POST /mcp<br/>Streamable HTTP"| StreamableHTTP
+    ClaudeAI -->|"POST /mcp<br/>Streamable HTTP"| StreamableHTTP
+    ElevenLabs -->|"GET /mcp/sse<br/>POST /mcp/messages"| SSETransport
+    Alexa -->|"POST /alexa<br/>JSON body"| AlexaEndpoint
+    
+    StreamableHTTP --> SessionMap
+    SSETransport --> SessionMap
+    StreamableHTTP --> EventStore
+    
+    SessionMap --> MCPServer
+    MCPServer --> ToolHandlers
+    ToolHandlers --> AutoMemClient
+    AlexaEndpoint --> AutoMemClient
+    
+    AutoMemClient -->|"HTTP requests<br/>Bearer auth"| FlaskAPI

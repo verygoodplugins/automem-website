@@ -1,0 +1,42 @@
+graph TB
+    subgraph "Cloud AI Platforms"
+        ChatGPT["ChatGPT"]
+        ClaudeWeb["Claude.ai"]
+        ClaudeMobile["Claude Mobile"]
+        ElevenLabs["ElevenLabs Agents"]
+    end
+    
+    subgraph "mcp-sse-server (Node.js :8080)"
+        StreamableHTTP["StreamableHTTPServerTransport<br/>/mcp endpoint<br/>POST initialize, GET/POST messages"]
+        SSETransport["SSEServerTransport<br/>/mcp/sse endpoint<br/>GET stream, POST /mcp/messages"]
+        
+        subgraph "Session Management"
+            SessionStore["sessions Map<br/>sessionId → {transport, server, type}"]
+            EventStore["InMemoryEventStore<br/>Last-Event-ID support<br/>1 hour TTL"]
+        end
+        
+        MCPServer["MCP Server<br/>buildMcpServer()<br/>ListToolsRequestSchema<br/>CallToolRequestSchema"]
+        
+        AutoMemClient["AutoMemClient<br/>storeMemory()<br/>recallMemory()<br/>associateMemories()<br/>updateMemory()<br/>deleteMemory()<br/>checkHealth()"]
+        
+        AlexaEndpoint["/alexa endpoint<br/>RememberIntent<br/>RecallIntent"]
+    end
+    
+    subgraph "AutoMem API (memory-service :8001)"
+        FlaskAPI["Flask API<br/>POST /memory<br/>GET /recall<br/>POST /associate<br/>PATCH /memory/:id<br/>DELETE /memory/:id<br/>GET /health"]
+    end
+    
+    ChatGPT -->|"Streamable HTTP<br/>JSON-RPC 2.0"| StreamableHTTP
+    ClaudeWeb -->|"Streamable HTTP<br/>JSON-RPC 2.0"| StreamableHTTP
+    ClaudeMobile -->|"Streamable HTTP<br/>JSON-RPC 2.0"| StreamableHTTP
+    ElevenLabs -->|"SSE or Streamable HTTP<br/>JSON-RPC 2.0"| SSETransport
+    
+    StreamableHTTP --> SessionStore
+    SSETransport --> SessionStore
+    StreamableHTTP --> EventStore
+    
+    SessionStore --> MCPServer
+    MCPServer --> AutoMemClient
+    AlexaEndpoint --> AutoMemClient
+    
+    AutoMemClient -->|"HTTP REST<br/>Authorization: Bearer"| FlaskAPI

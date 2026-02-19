@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant Client as Client/Browser
+    participant API as Flask API<br/>(app.py)
+    participant FalkorDB as FalkorDB<br/>(falkordb service)
+    participant Qdrant as Qdrant<br/>(qdrant service)
+    
+    Note over Client,Qdrant: Health Check (No Auth Required)
+    Client->>API: GET /health
+    API->>FalkorDB: PING
+    FalkorDB-->>API: PONG
+    API->>Qdrant: GET /healthz
+    Qdrant-->>API: 200 OK
+    API-->>Client: 200 {"status": "healthy",<br/>"falkordb": "connected",<br/>"qdrant": "connected"}
+    
+    Note over Client,Qdrant: Test Memory Storage (Auth Required)
+    Client->>API: POST /memory<br/>Authorization: Bearer TOKEN<br/>{"content": "test"}
+    API->>FalkorDB: MERGE (m:Memory)
+    FalkorDB-->>API: memory_id
+    API->>Qdrant: upsert(id, vector)
+    Qdrant-->>API: success
+    API-->>Client: 201 {"memory_id": "...",<br/>"status": "success"}

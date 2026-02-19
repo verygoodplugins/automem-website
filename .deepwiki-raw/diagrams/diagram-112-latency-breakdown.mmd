@@ -1,0 +1,10 @@
+flowchart TD
+    subgraph "Before v0.6.0"
+        Old1["POST /memory: 250-400ms"] --> Old2["- FalkorDB write: 50ms<br/>- OpenAI embedding: 200-350ms"]
+        Old3["Consolidation (10k): 5 min"] --> Old4["- Graph queries: 10,000<br/>- Avg 30ms/query"]
+    end
+    
+    subgraph "After v0.6.0"
+        New1["POST /memory: 100-150ms"] --> New2["- FalkorDB write: 50ms<br/>- Queue embedding: 1ms<br/>- Response: 50-100ms"]
+        New3["Consolidation (10k): 1 min"] --> New4["- Graph queries: 2,000<br/>- Cache hits: 80%<br/>- Avg 6ms/query"]
+    end

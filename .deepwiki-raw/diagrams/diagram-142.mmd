@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant User as "Alexa User"
+    participant Alexa as "Alexa Service"
+    participant Bridge as "POST /alexa"
+    participant Client as "AutoMemClient"
+    participant API as "AutoMem API"
+    
+    User->>Alexa: "Alexa, tell AutoMem to remember I prefer dark mode"
+    Alexa->>Bridge: POST /alexa<br/>{request: {type: 'IntentRequest',<br/>intent: {name: 'RememberIntent',<br/>slots: {note: {value: '...'}}}}}
+    Bridge->>Bridge: buildAlexaTags(body)<br/>Extract userId, deviceId
+    Bridge->>Client: new AutoMemClient({endpoint, apiKey})
+    Bridge->>Client: storeMemory({content: note, tags})
+    Client->>API: POST /memory
+    API-->>Client: {memory_id: 'abc'}
+    Client-->>Bridge: {memory_id: 'abc'}
+    Bridge-->>Alexa: speech('Saved to memory.', {endSession: false})
+    Alexa-->>User: "Saved to memory."
+    
+    User->>Alexa: "Alexa, ask AutoMem what I prefer"
+    Alexa->>Bridge: POST /alexa<br/>{request: {intent: {name: 'RecallIntent',<br/>slots: {query: {value: 'prefer'}}}}}
+    Bridge->>Client: recallMemory({query: 'prefer', tags, limit: 5})
+    Client->>API: GET /recall?query=prefer&tags=alexa&...
+    API-->>Client: {results: [{memory: {...}}]}
+    Client-->>Bridge: {results: [...]}
+    Bridge->>Bridge: formatRecallSpeech(results, {limit: 3})
+    Bridge-->>Alexa: speech('Item 1: I prefer dark mode...')
+    Alexa-->>User: "Item 1: I prefer dark mode..."

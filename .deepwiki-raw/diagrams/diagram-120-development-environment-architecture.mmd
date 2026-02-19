@@ -1,0 +1,28 @@
+graph TB
+    subgraph "Developer Machine"
+        subgraph "Virtual Environment (venv)"
+            Flask["app.py<br/>Flask API<br/>Port 8001"]
+            Consol["consolidation.py<br/>Background Engine"]
+        end
+        
+        subgraph "Docker Compose Stack (make dev)"
+            DC["docker-compose.yml"]
+            Falkor["falkordb/falkordb:latest<br/>Port 6379<br/>Volume: ./data/falkordb"]
+            Qdrant["qdrant/qdrant:latest<br/>Port 6333<br/>Volume: ./data/qdrant"]
+            APIContainer["memory-service<br/>Port 8001<br/>Optional"]
+        end
+        
+        subgraph "External Services (Optional)"
+            ExtFalkor["External FalkorDB<br/>localhost:6379"]
+            ExtQdrant["External Qdrant<br/>localhost:6333"]
+        end
+    end
+    
+    Flask -->|"FALKORDB_HOST=localhost<br/>FALKORDB_PORT=6379"| Falkor
+    Flask -->|"QDRANT_URL=http://localhost:6333"| Qdrant
+    Flask -.->|"Alternative"| ExtFalkor
+    Flask -.->|"Alternative"| ExtQdrant
+    
+    DC --> Falkor
+    DC --> Qdrant
+    DC -.->|"Optional"| APIContainer

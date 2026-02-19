@@ -1,0 +1,24 @@
+graph TB
+    Start[Recovery Complete]
+    
+    Start --> V1{1. Database<br/>Connectivity}
+    V1 -->|Pass| V2{2. Memory<br/>Count Match}
+    V1 -->|Fail| Fix1[Check connection strings<br/>Verify credentials]
+    
+    V2 -->|Pass| V3{3. Relationship<br/>Integrity}
+    V2 -->|Fail| Fix2[Re-run recovery<br/>Check for errors]
+    
+    V3 -->|Pass| V4{4. Embedding<br/>Coverage}
+    V3 -->|Fail| Fix3[Investigate missing edges<br/>Check entity extraction]
+    
+    V4 -->|Pass| V5{5. Search<br/>Functionality}
+    V4 -->|Fail| Fix4[Re-run embedding worker<br/>Verify Qdrant indexes]
+    
+    V5 -->|Pass| Complete[✓ Validation Complete<br/>Resume Operations]
+    V5 -->|Fail| Fix5[Test vector search<br/>Rebuild Qdrant collection]
+    
+    Fix1 --> V1
+    Fix2 --> V2
+    Fix3 --> V3
+    Fix4 --> V4
+    Fix5 --> V5

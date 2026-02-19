@@ -1,0 +1,23 @@
+graph TB
+    subgraph "Railway Infrastructure"
+        Vol[Volume: falkordb_data]
+        Snap1[Snapshot: 2025-10-20 14:00]
+        Snap2[Snapshot: 2025-10-19 14:00]
+        Snap3[Snapshot: 2025-10-18 14:00]
+        
+        Vol -.->|Auto-snapshot<br/>every 24h| Snap1
+        Vol -.->|Retention| Snap2
+        Vol -.->|Retention| Snap3
+    end
+    
+    subgraph "FalkorDB Service"
+        Container[FalkorDB Container]
+        Mount[/var/lib/falkordb/data]
+        
+        Container -->|Reads/writes| Mount
+        Mount -->|Persists to| Vol
+    end
+    
+    Operator[Operator] -->|Restore action| Snap1
+    Snap1 -->|Replaces volume| Vol
+    Vol -->|Container restart| Container

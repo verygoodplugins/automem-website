@@ -1,0 +1,30 @@
+graph TB
+    subgraph "Warp Terminal"
+        WARP_AI["Warp AI Assistant"]
+        WARP_MCP["MCP Client"]
+        WARP_SHELL["Shell Context"]
+    end
+    
+    subgraph "AutoMem MCP (Removed in v0.6.0)"
+        WARP_RULES["warp-rules.md<br/>Memory-first instructions"]
+        MCP_CONFIG["mcp.json<br/>Server configuration"]
+    end
+    
+    subgraph "MCP Server Layer"
+        MCP_SERVER["mcp-automem<br/>src/index.ts"]
+    end
+    
+    subgraph "AutoMem Service"
+        API["HTTP API<br/>:8001"]
+        FALKOR["FalkorDB"]
+        QDRANT["Qdrant"]
+    end
+    
+    WARP_AI --> WARP_MCP
+    WARP_SHELL --> WARP_AI
+    WARP_RULES -.->|"Informs"| WARP_AI
+    MCP_CONFIG -.->|"Configures"| WARP_MCP
+    WARP_MCP -->|"MCP Protocol"| MCP_SERVER
+    MCP_SERVER --> API
+    API --> FALKOR
+    API --> QDRANT

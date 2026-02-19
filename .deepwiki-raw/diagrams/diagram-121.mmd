@@ -1,0 +1,33 @@
+classDiagram
+    class MemoryConsolidator {
+        +GraphLike graph
+        +VectorStoreProtocol vector_store
+        +float base_decay_rate
+        +float reinforcement_bonus
+        +float relationship_preservation
+        +int min_cluster_size
+        +float similarity_threshold
+        +float archive_threshold
+        +float delete_threshold
+        +calculate_relevance_score(memory, current_time) float
+        +discover_creative_associations(sample_size) List~Dict~
+        +cluster_similar_memories() List~Dict~
+        +apply_controlled_forgetting(dry_run) Dict
+        +consolidate(mode, dry_run, decay_threshold) Dict
+        -_apply_decay(importance_threshold) Dict
+        -_get_relationship_count(memory_id) int
+        -_query_graph(query, params) List
+    }
+    
+    class GraphLike {
+        <<protocol>>
+        +query(query, params) Any
+    }
+    
+    class VectorStoreProtocol {
+        <<protocol>>
+        +delete(collection_name, points_selector) Any
+    }
+    
+    MemoryConsolidator --> GraphLike
+    MemoryConsolidator --> VectorStoreProtocol

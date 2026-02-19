@@ -1,0 +1,14 @@
+graph LR
+    Memory["Memory<br/>relevance_score"]
+    
+    High["relevance >= 0.2<br/>PRESERVE<br/>Update score only"]
+    Archive["0.05 <= relevance < 0.2<br/>ARCHIVE<br/>SET archived = true"]
+    Delete["relevance < 0.05<br/>DELETE<br/>DETACH DELETE + vector delete"]
+    
+    Memory -->|"Calculate current relevance"| High
+    Memory --> Archive
+    Memory --> Delete
+    
+    Archive --> Graph["Mark in FalkorDB<br/>SET m.archived = true<br/>SET m.archived_at = now()"]
+    Delete --> GraphDel["Delete from FalkorDB<br/>DETACH DELETE m"]
+    Delete --> VectorDel["Delete from Qdrant<br/>vector_store.delete()"]

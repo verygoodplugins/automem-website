@@ -1,0 +1,15 @@
+graph TB
+    subgraph "Hook System Evolution"
+        V0_5["v0.5.0<br/>Cursor hooks introduced"]
+        Issues["Reliability issues:<br/>- Hook firing inconsistently<br/>- Queue corruption<br/>- Stdio flapping"]
+        
+        V0_6["v0.6.0<br/>Cursor hooks removed"]
+        Philosophy["Philosophy shift:<br/>'Trust Claude + good<br/>instructions > automated<br/>hooks that guess significance'"]
+        
+        MDC["Solution: .mdc rule files<br/>Claude decides what to store"]
+    end
+    
+    V0_5 --> Issues
+    Issues --> V0_6
+    V0_6 --> Philosophy
+    Philosophy --> MDC

@@ -1,0 +1,44 @@
+graph TB
+    subgraph "Optimization 1: Embedding Batching"
+        EmbedRequest["Memory POST requests<br/>app.py:/memory"]
+        EmbedQueue["embedding_queue<br/>ServiceState.embedding_queue"]
+        BatchCollect["Batch Collection<br/>Size: EMBEDDING_BATCH_SIZE=20<br/>Timeout: EMBEDDING_BATCH_TIMEOUT_SECONDS=2.0"]
+        BatchProcess["_process_embedding_batch()<br/>Single API call for 20 items"]
+        
+        EmbedRequest --> EmbedQueue
+        EmbedQueue --> BatchCollect
+        BatchCollect --> BatchProcess
+    end
+    
+    subgraph "Optimization 2: LRU Caching"
+        ConsolRequest["Consolidation cycles<br/>Decay/Creative/Cluster"]
+        CacheImpl["_get_relationship_count_cached_impl()<br/>@lru_cache(maxsize=10000)"]
+        CacheKey["Cache key: memory_id + hour_timestamp<br/>Automatic hourly invalidation"]
+        
+        ConsolRequest --> CacheImpl
+        CacheImpl --> CacheKey
+    end
+    
+    subgraph "Optimization 3: Async Processing"
+        MemoryPOST["/memory endpoint<br/>app.py"]
+        SyncWrite["FalkorDB write<br/>Immediate, blocking"]
+        AsyncEmbed["Embedding generation<br/>Queued for background"]
+        AsyncEnrich["Enrichment<br/>Queued for background"]
+        Return["Return 200 OK<br/>100-150ms total"]
+        
+        MemoryPOST --> SyncWrite
+        MemoryPOST --> AsyncEmbed
+        MemoryPOST --> AsyncEnrich
+        SyncWrite --> Return
+    end
+    
+    subgraph "Optimization 4: Structured Logging"
+        APIRequest["API Request"]
+        PerfCounters["time.perf_counter()<br/>Start/End timestamps"]
+        StructuredLog["logger.info()<br/>extra={'query': ..., 'latency_ms': ..., 'results': ...}"]
+        QueryTimeField["Response JSON<br/>query_time_ms field"]
+        
+        APIRequest --> PerfCounters
+        PerfCounters --> StructuredLog
+        PerfCounters --> QueryTimeField
+    end

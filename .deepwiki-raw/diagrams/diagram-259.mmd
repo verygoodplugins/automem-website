@@ -1,0 +1,48 @@
+graph TB
+    subgraph "Docker Compose Stack"
+        direction TB
+        
+        subgraph "flask-api Container"
+            FlaskApp["app.py<br/>Flask application"]
+            Workers["Background threads:<br/>EnrichmentWorker<br/>EmbeddingWorker<br/>ConsolidationWorker<br/>SyncWorker"]
+            Config[".env / Environment<br/>AUTOMEM_API_TOKEN<br/>OPENAI_API_KEY<br/>PORT=8001"]
+        end
+        
+        subgraph "falkordb Container"
+            FalkorService["FalkorDB :6379<br/>Redis protocol"]
+            FalkorVol["falkordb_data volume<br/>/data"]
+            FalkorBackup["backups/falkordb<br/>Local backups"]
+        end
+        
+        subgraph "qdrant Container"
+            QdrantService["Qdrant :6333<br/>REST API"]
+            QdrantVol["qdrant_data volume<br/>/qdrant/storage"]
+            QdrantBackup["backups/qdrant<br/>Local backups"]
+        end
+        
+        subgraph "Optional: falkordb-browser"
+            Browser["FalkorDB Browser :3001<br/>Web UI for graph viz"]
+        end
+        
+        subgraph "Host Machine"
+            SourceCode[". volume mount<br/>Live code reload"]
+            ModelsCache["fastembed_models volume<br/>~/.config/automem/models"]
+        end
+    end
+    
+    FlaskApp --> FalkorService
+    FlaskApp --> QdrantService
+    Workers --> FalkorService
+    Workers --> QdrantService
+    FlaskApp --> Config
+    FalkorService --> FalkorVol
+    FalkorService --> FalkorBackup
+    QdrantService --> QdrantVol
+    QdrantService --> QdrantBackup
+    Browser --> FalkorService
+    FlaskApp --> SourceCode
+    FlaskApp --> ModelsCache
+
+    style FlaskApp fill:#f9f9f9
+    style FalkorService fill:#f9f9f9
+    style QdrantService fill:#f9f9f9

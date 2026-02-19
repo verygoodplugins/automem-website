@@ -1,0 +1,39 @@
+graph TB
+    subgraph Claude["Claude Desktop / Cursor / Claude Code"]
+        CD_JSON["claude_desktop_config.json<br/>or ~/.cursor/mcp.json<br/>or ~/.claude.json"]
+        CD_SERVERS["mcpServers"]
+        CD_MEMORY["'memory' server entry"]
+        CD_CMD["command: 'npx'"]
+        CD_ARGS["args: ['-y', '@verygoodplugins/mcp-automem']"]
+        CD_ENV["env: { AUTOMEM_ENDPOINT, AUTOMEM_API_KEY }"]
+        
+        CD_JSON --> CD_SERVERS
+        CD_SERVERS --> CD_MEMORY
+        CD_MEMORY --> CD_CMD
+        CD_MEMORY --> CD_ARGS
+        CD_MEMORY --> CD_ENV
+    end
+    
+    subgraph Codex["OpenAI Codex"]
+        COD_TOML["~/.codex/config.toml"]
+        COD_SERVER["[mcp_servers.memory]"]
+        COD_CMD["command = 'npx'"]
+        COD_ARGS["args = ['-y', '@verygoodplugins/mcp-automem']"]
+        COD_ENV["[mcp_servers.memory.env]<br/>AUTOMEM_ENDPOINT<br/>AUTOMEM_API_KEY"]
+        
+        COD_TOML --> COD_SERVER
+        COD_SERVER --> COD_CMD
+        COD_SERVER --> COD_ARGS
+        COD_SERVER --> COD_ENV
+    end
+    
+    subgraph OpenClaw["OpenClaw (Direct API)"]
+        OC_JSON["~/.openclaw/openclaw.json"]
+        OC_ENV["environment"]
+        OC_ENDPOINT["automem_endpoint"]
+        OC_KEY["automem_api_token"]
+        
+        OC_JSON --> OC_ENV
+        OC_ENV --> OC_ENDPOINT
+        OC_ENV --> OC_KEY
+    end

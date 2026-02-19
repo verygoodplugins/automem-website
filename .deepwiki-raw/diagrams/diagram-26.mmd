@@ -1,0 +1,37 @@
+graph TB
+    Scheduler["ConsolidationScheduler<br/>consolidation.py"]
+    ControlNode["Control Node<br/>FalkorDB:<br/>CONSOLIDATION_CONTROL_NODE_ID"]
+    
+    Scheduler -->|"every TICK_SECONDS"| CheckDue["check_and_run_due_tasks()<br/>Load last_run timestamps"]
+    
+    CheckDue -->|reads| ControlNode
+    
+    subgraph "Task Execution"
+        DecayCheck{"decay_due?<br/>now - last_decay_run >= DECAY_INTERVAL"}
+        CreativeCheck{"creative_due?<br/>now - last_creative_run >= CREATIVE_INTERVAL"}
+        ClusterCheck{"cluster_due?<br/>now - last_cluster_run >= CLUSTER_INTERVAL"}
+        ForgetCheck{"forget_due?<br/>FORGET_INTERVAL > 0<br/>AND now - last_forget_run >= FORGET_INTERVAL"}
+        
+        DecayRun["run_decay_consolidation()<br/>Update importance scores"]
+        CreativeRun["run_creative_consolidation()<br/>Discover associations"]
+        ClusterRun["run_cluster_consolidation()<br/>Group similar memories"]
+        ForgetRun["run_forget_consolidation()<br/>Archive/delete low-value"]
+    end
+    
+    CheckDue --> DecayCheck
+    DecayCheck -->|Yes| DecayRun
+    DecayRun --> UpdateControl["Update control node<br/>last_decay_run = now"]
+    
+    CheckDue --> CreativeCheck
+    CreativeCheck -->|Yes| CreativeRun
+    CreativeRun --> UpdateControl
+    
+    CheckDue --> ClusterCheck
+    ClusterCheck -->|Yes| ClusterRun
+    ClusterRun --> UpdateControl
+    
+    CheckDue --> ForgetCheck
+    ForgetCheck -->|Yes| ForgetRun
+    ForgetRun --> UpdateControl
+    
+    UpdateControl -->|persists| ControlNode

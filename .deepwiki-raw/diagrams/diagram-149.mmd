@@ -1,0 +1,28 @@
+graph LR
+    subgraph "automem/utils/"
+        TextUtils["text.py<br/>_extract_keywords()<br/>summarize_content()<br/>should_summarize_content()"]
+        TimeUtils["time.py<br/>_parse_iso_datetime()<br/>_parse_time_expression()<br/>utc_now()"]
+    end
+    
+    subgraph "Flask API"
+        MemoryAPI["POST /memory<br/>Content size governance"]
+        RecallAPI["GET /recall<br/>Keyword extraction<br/>Time filtering"]
+        Middleware["Authentication<br/>Timestamp validation"]
+    end
+    
+    subgraph "Background Workers"
+        EnrichWorker["Enrichment Pipeline<br/>Entity filtering"]
+        ConsolWorker["Consolidation Engine<br/>Timestamp comparison"]
+    end
+    
+    subgraph "Storage"
+        FalkorDB["FalkorDB<br/>Timestamp fields"]
+    end
+    
+    MemoryAPI --> TextUtils
+    RecallAPI --> TextUtils
+    RecallAPI --> TimeUtils
+    Middleware --> TimeUtils
+    EnrichWorker --> TextUtils
+    ConsolWorker --> TimeUtils
+    FalkorDB --> TimeUtils

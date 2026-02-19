@@ -1,0 +1,46 @@
+graph TB
+    Input["Natural Language Expression"]
+    
+    Today["'today', 'this day'<br/>00:00:00 → 23:59:59"]
+    Yesterday["'yesterday'<br/>-1 day range"]
+    Last24["'last 24 hours'<br/>now - 24h → now"]
+    Last48["'past 48 hours'<br/>now - 48h → now"]
+    
+    ThisWeek["'this week'<br/>Monday 00:00 → Sunday 23:59"]
+    LastWeek["'last week', 'past week'<br/>Previous Monday → Sunday"]
+    
+    ThisMonth["'this month'<br/>1st 00:00 → last day 23:59"]
+    LastMonth["'last month', 'past month'<br/>Previous month range"]
+    
+    LastNDays["'last N days'<br/>now - N days → now"]
+    
+    ThisYear["'this year'<br/>Jan 1 00:00 → Dec 31 23:59"]
+    LastYear["'last year', 'past year'<br/>Previous year range"]
+    
+    Range["Return (start_iso, end_iso)"]
+    Invalid["Return (None, None)"]
+    
+    Input --> Today
+    Input --> Yesterday
+    Input --> Last24
+    Input --> Last48
+    Input --> ThisWeek
+    Input --> LastWeek
+    Input --> ThisMonth
+    Input --> LastMonth
+    Input --> LastNDays
+    Input --> ThisYear
+    Input --> LastYear
+    Input --> Invalid
+    
+    Today --> Range
+    Yesterday --> Range
+    Last24 --> Range
+    Last48 --> Range
+    ThisWeek --> Range
+    LastWeek --> Range
+    ThisMonth --> Range
+    LastMonth --> Range
+    LastNDays --> Range
+    ThisYear --> Range
+    LastYear --> Range

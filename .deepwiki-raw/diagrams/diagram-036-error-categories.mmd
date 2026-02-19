@@ -1,0 +1,27 @@
+graph TB
+    subgraph "Client Errors (4xx)"
+        E400["400 Bad Request<br/>Invalid JSON, missing fields,<br/>type mismatches"]
+        E401["401 Unauthorized<br/>Missing or invalid API token"]
+        E403["403 Forbidden<br/>Missing admin token for<br/>admin endpoints"]
+        E404["404 Not Found<br/>Memory ID not found"]
+    end
+    
+    subgraph "Server Errors (5xx)"
+        E500["500 Internal Error<br/>Unexpected exceptions,<br/>graph query failures"]
+        E503["503 Service Unavailable<br/>FalkorDB disconnected,<br/>required Qdrant missing"]
+    end
+    
+    subgraph "Error Handlers"
+        HTTPExc["@app.errorhandler(HTTPException)<br/>Werkzeug exceptions"]
+        GenExc["@app.errorhandler(Exception)<br/>Uncaught exceptions"]
+    end
+    
+    E400 --> HTTPExc
+    E401 --> HTTPExc
+    E403 --> HTTPExc
+    E404 --> HTTPExc
+    E500 --> GenExc
+    E503 --> HTTPExc
+    
+    HTTPExc -->|"JSON response"| Client["HTTP Client"]
+    GenExc -->|"JSON response"| Client

@@ -1,0 +1,27 @@
+graph TB
+    Startup["app.py startup<br/>Module load"]
+    
+    Startup --> LoadConfig["automem.config imports<br/>Parse environment"]
+    
+    LoadConfig --> InitServices["init_services()<br/>ServiceState creation"]
+    
+    InitServices --> CheckFalkor["FalkorDB(host, port, password)<br/>Test connection"]
+    
+    CheckFalkor -->|Success| SetGraphState["state.memory_graph = client"]
+    CheckFalkor -->|Failure| HealthFail["Health endpoint returns 503<br/>Service unavailable"]
+    
+    InitServices --> CheckQdrant{"QDRANT_URL<br/>configured?"}
+    
+    CheckQdrant -->|Yes| TestQdrant["QdrantClient(url, api_key)<br/>Test connection"]
+    CheckQdrant -->|No| NoQdrant["state.qdrant = None<br/>Graph-only mode"]
+    
+    TestQdrant -->|Success| SetQdrantState["state.qdrant = client"]
+    TestQdrant -->|Failure| LogWarning["Log warning<br/>Continue without Qdrant"]
+    LogWarning --> NoQdrant
+    
+    InitServices --> InitProvider["init_embedding_provider()<br/>Based on EMBEDDING_PROVIDER"]
+    
+    InitProvider --> ValidateDim["validate_vector_dimensions()<br/>Check VECTOR_SIZE vs Qdrant"]
+    
+    ValidateDim -->|Match| Ready["Service ready<br/>/health returns 200"]
+    ValidateDim -->|"Mismatch"| DimError["Raise ValueError<br/>Prevent startup"]

@@ -1,0 +1,59 @@
+graph TB
+    subgraph "Memory Write Operations"
+        PostMem["POST /memory"]
+        PatchMem["PATCH /memory/:id"]
+        AdminReproc["POST /enrichment/reprocess"]
+    end
+    
+    subgraph "Queue System"
+        EnrichQueue["enrichment_queue<br/>Queue[EnrichmentJob]"]
+        
+        subgraph "Tracking Sets"
+            Pending["enrichment_pending<br/>Set[str]"]
+            Inflight["enrichment_inflight<br/>Set[str]"]
+        end
+        
+        Lock["enrichment_lock<br/>Thread-safe coordination"]
+    end
+    
+    subgraph "Worker Thread"
+        Dequeue["Dequeue Job<br/>ENRICHMENT_IDLE_SLEEP"]
+        Extract["Entity Extraction<br/>spaCy NER + Regex"]
+        Summary["Summary Generation<br/>First sentence, 240 char max"]
+        Temporal["Temporal Linking<br/>PRECEDED_BY edges"]
+        Patterns["Pattern Detection<br/>EXEMPLIFIES edges"]
+        Semantic["Semantic Linking<br/>SIMILAR_TO edges via Qdrant"]
+        WriteBack["Write to FalkorDB<br/>enriched=true, enriched_at"]
+        UpdateStats["Update EnrichmentStats<br/>successes/failures"]
+    end
+    
+    subgraph "Storage Layer"
+        FalkorDB[("FalkorDB<br/>Entities, relationships, metadata")]
+        Qdrant[("Qdrant<br/>Vector similarity search")]
+    end
+    
+    PostMem --> EnrichQueue
+    PatchMem --> EnrichQueue
+    AdminReproc --> EnrichQueue
+    
+    EnrichQueue --> Pending
+    EnrichQueue --> Lock
+    
+    Dequeue --> Inflight
+    Dequeue --> Extract
+    Extract --> Summary
+    Summary --> Temporal
+    Temporal --> Patterns
+    Patterns --> Semantic
+    Semantic --> WriteBack
+    WriteBack --> UpdateStats
+    
+    UpdateStats --> Pending
+    UpdateStats --> Inflight
+    
+    Extract --> FalkorDB
+    Temporal --> FalkorDB
+    Patterns --> FalkorDB
+    Semantic --> FalkorDB
+    Semantic --> Qdrant
+    WriteBack --> FalkorDB

@@ -1,0 +1,50 @@
+graph TB
+    subgraph "Client Layer"
+        LocalIDE["Local MCP Clients<br/>Cursor, Claude Desktop<br/>@verygoodplugins/mcp-automem"]
+        CloudAI["Cloud AI Platforms<br/>ChatGPT, Claude.ai<br/>ElevenLabs Agents"]
+        DirectHTTP["Direct HTTP Clients<br/>Python, curl, custom apps"]
+        AlexaSkill["Alexa Custom Skill<br/>Voice interface"]
+    end
+
+    subgraph "Transport Layer"
+        MCPPackage["NPM Package<br/>stdio transport<br/>connects to http://localhost:8001"]
+        MCPBridge["mcp-sse-server<br/>Node.js :8080<br/>Streamable HTTP + SSE"]
+    end
+
+    subgraph "AutoMem Core :8001"
+        FlaskApp["app.py<br/>Flask application"]
+        
+        subgraph "Route Handlers"
+            MemoryAPI["/memory endpoints<br/>automem/api/memory.py"]
+            RecallAPI["/recall endpoint<br/>automem/api/recall.py"]
+            AssocAPI["/associate endpoint<br/>automem/api/relationships.py"]
+            HealthAPI["/health endpoint<br/>automem/api/health.py"]
+        end
+        
+        AuthMiddleware["require_api_token()<br/>automem/api/auth.py"]
+    end
+
+    subgraph "Storage"
+        FalkorDB["FalkorDB<br/>:6379"]
+        Qdrant["Qdrant<br/>:6333"]
+    end
+
+    LocalIDE -->|"HTTP to localhost:8001"| MCPPackage
+    CloudAI -->|"HTTPS Streamable HTTP"| MCPBridge
+    AlexaSkill -->|"POST /alexa"| MCPBridge
+    DirectHTTP -->|"HTTP REST"| FlaskApp
+    
+    MCPPackage -->|"Authorization: Bearer"| FlaskApp
+    MCPBridge -->|"Internal routing<br/>Authorization: Bearer"| FlaskApp
+    
+    FlaskApp --> AuthMiddleware
+    AuthMiddleware --> MemoryAPI
+    AuthMiddleware --> RecallAPI
+    AuthMiddleware --> AssocAPI
+    AuthMiddleware --> HealthAPI
+    
+    MemoryAPI --> FalkorDB
+    MemoryAPI --> Qdrant
+    RecallAPI --> FalkorDB
+    RecallAPI --> Qdrant
+    AssocAPI --> FalkorDB

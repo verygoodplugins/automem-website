@@ -1,0 +1,23 @@
+graph TB
+    Request["Flask Request<br/>GET /recall"]
+    Params["Extract query, tags, time_query"]
+    
+    VectorSearch["_vector_search()<br/>QdrantClient.search()"]
+    KeywordSearch["_graph_keyword_search()<br/>FalkorDB Cypher query"]
+    
+    Merge["Deduplicate by memory_id"]
+    Score["_compute_metadata_score()<br/>Weighted combination"]
+    Relations["_fetch_relations()<br/>MATCH (m)-[r]->(n)"]
+    
+    Response["JSON response<br/>Sorted by final score"]
+    
+    Request --> Params
+    Params --> VectorSearch
+    Params --> KeywordSearch
+    
+    VectorSearch --> Merge
+    KeywordSearch --> Merge
+    
+    Merge --> Score
+    Score --> Relations
+    Relations --> Response

@@ -1,0 +1,25 @@
+graph TB
+    CheckProvider{"Embedding<br/>Provider"}
+    CheckQdrant{"Qdrant<br/>available?"}
+    
+    VoyageOpenAI["Voyage/OpenAI<br/>Available"]
+    FastEmbedOllama["FastEmbed/Ollama<br/>Available"]
+    PlaceholderOnly["Placeholder<br/>Only"]
+    
+    FullMode["Full Mode:<br/>Semantic embeddings<br/>+ vector search"]
+    GraphWithEmbeds["Graph Mode:<br/>Semantic embeddings<br/>+ keyword search only"]
+    PlaceholderMode["Placeholder Mode:<br/>Deterministic vectors<br/>+ vector search"]
+    GraphOnly["Graph-Only Mode:<br/>Keyword search only"]
+    
+    CheckProvider -->|"priority 1-2"| VoyageOpenAI
+    CheckProvider -->|"priority 3-4"| FastEmbedOllama
+    CheckProvider -->|"fallback"| PlaceholderOnly
+    
+    VoyageOpenAI --> CheckQdrant
+    FastEmbedOllama --> CheckQdrant
+    PlaceholderOnly --> CheckQdrant
+    
+    CheckQdrant -->|"Yes"| FullMode
+    CheckQdrant -->|"No (Voyage/OpenAI)"| GraphWithEmbeds
+    CheckQdrant -->|"Yes (Placeholder)"| PlaceholderMode
+    CheckQdrant -->|"No (Placeholder)"| GraphOnly

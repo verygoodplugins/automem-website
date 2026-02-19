@@ -1,0 +1,7 @@
+graph LR
+    CONFIG["AutoMemConfig"]
+    
+    CONFIG -->|"endpoint: string"| ENDPOINT["Base URL<br/>e.g. 'http://127.0.0.1:8001'"]
+    CONFIG -->|"apiKey?: string"| API_KEY["Optional Bearer Token<br/>from AUTOMEM_API_KEY"]
+    
+    ENDPOINT --> VALIDATION["Trailing slash normalized<br/>in makeRequest()"]

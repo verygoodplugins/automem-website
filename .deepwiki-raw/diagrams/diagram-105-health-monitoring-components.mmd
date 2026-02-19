@@ -1,0 +1,44 @@
+graph TB
+    subgraph "Health Monitoring System"
+        HealthEndpoint["/health Endpoint<br/>app.py"]
+        HealthMonitor["health_monitor.py<br/>Continuous Monitoring"]
+        GHAWorkflow[".github/workflows/backup.yml<br/>Scheduled Checks"]
+    end
+    
+    subgraph "Data Stores"
+        FalkorDB["FalkorDB<br/>Graph Database<br/>Port 6379"]
+        Qdrant["Qdrant<br/>Vector Database<br/>Port 6333"]
+    end
+    
+    subgraph "Monitoring Outputs"
+        Dashboard["Railway Dashboard<br/>Service Metrics"]
+        Webhooks["Slack/Discord<br/>Alert Webhooks"]
+        AutoRecovery["recover_from_qdrant.py<br/>Auto-Recovery Script"]
+    end
+    
+    subgraph "External Tools"
+        UptimeRobot["UptimeRobot<br/>External Monitoring"]
+        Grafana["Grafana Cloud<br/>Observability"]
+    end
+    
+    HealthEndpoint -->|"Check Status"| FalkorDB
+    HealthEndpoint -->|"Check Status"| Qdrant
+    
+    HealthMonitor -->|"Poll /health"| HealthEndpoint
+    HealthMonitor -->|"Count Memories"| FalkorDB
+    HealthMonitor -->|"Count Vectors"| Qdrant
+    HealthMonitor -->|"Calculate Drift"| DriftCheck{"Drift > 5%?"}
+    
+    GHAWorkflow -->|"Scheduled Check"| HealthEndpoint
+    
+    DriftCheck -->|"Warning"| Webhooks
+    DriftCheck -->|"Critical > 50%"| Webhooks
+    DriftCheck -->|"Critical + Auto-Recover"| AutoRecovery
+    
+    HealthMonitor -->|"Metrics"| Dashboard
+    
+    UptimeRobot -->|"HTTP Checks"| HealthEndpoint
+    Grafana -->|"Metrics Aggregation"| HealthEndpoint
+    
+    AutoRecovery -->|"Rebuild Graph"| FalkorDB
+    AutoRecovery -->|"Source Data"| Qdrant

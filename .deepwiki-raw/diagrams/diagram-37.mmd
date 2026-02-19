@@ -1,0 +1,20 @@
+graph LR
+    subgraph "Core Relationships"
+        RELATES_TO["RELATES_TO<br/>General connection"]
+        LEADS_TO["LEADS_TO<br/>Causal relationship"]
+        OCCURRED_BEFORE["OCCURRED_BEFORE<br/>Temporal sequence"]
+    end
+    
+    subgraph "Knowledge Relationships"
+        PREFERS_OVER["PREFERS_OVER<br/>Preference ranking"]
+        EXEMPLIFIES["EXEMPLIFIES<br/>Pattern example"]
+        CONTRADICTS["CONTRADICTS<br/>Conflicting info"]
+        REINFORCES["REINFORCES<br/>Supporting evidence"]
+    end
+    
+    subgraph "Evolution Relationships"
+        INVALIDATED_BY["INVALIDATED_BY<br/>Superseded info"]
+        EVOLVED_INTO["EVOLVED_INTO<br/>Knowledge evolution"]
+        DERIVED_FROM["DERIVED_FROM<br/>Source tracking"]
+        PART_OF["PART_OF<br/>Hierarchical structure"]
+    end

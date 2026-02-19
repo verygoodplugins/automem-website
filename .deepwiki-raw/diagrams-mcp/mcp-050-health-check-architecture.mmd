@@ -1,0 +1,33 @@
+graph TB
+    Tool["check_database_health<br/>MCP Tool"]
+    Client["AutoMemClient.checkHealth()"]
+    API["AutoMem API<br/>GET /health"]
+    
+    Tool --> Client
+    Client --> API
+    
+    API --> FDB_Check["FalkorDB Health Check"]
+    API --> QDR_Check["Qdrant Health Check"]
+    
+    FDB_Check --> FDB_Conn["Test connection"]
+    FDB_Check --> FDB_Stats["Query node count"]
+    FDB_Check --> FDB_Graph["Validate graph schema"]
+    
+    QDR_Check --> QDR_Conn["Test connection"]
+    QDR_Check --> QDR_Stats["Query vector count"]
+    QDR_Check --> QDR_Coll["Validate collection"]
+    
+    FDB_Conn --> Status1["Connection status"]
+    FDB_Stats --> Status1
+    FDB_Graph --> Status1
+    
+    QDR_Conn --> Status2["Connection status"]
+    QDR_Stats --> Status2
+    QDR_Coll --> Status2
+    
+    Status1 --> Aggregate["Aggregate health status"]
+    Status2 --> Aggregate
+    
+    Aggregate --> Response["HealthStatus object"]
+    Response --> Client
+    Client --> Tool

@@ -1,0 +1,33 @@
+graph TB
+    Input["User Query"]
+    
+    subgraph "Multi-Strategy Retrieval"
+        Vector["Vector Similarity<br/>Semantic match"]
+        Graph["Graph Search<br/>Relationships + traversal"]
+        Keyword["Keyword Match<br/>Exact content search"]
+        Temporal["Temporal Filter<br/>Time-based constraints"]
+        Tags["Tag Filter<br/>Categorical match"]
+    end
+    
+    Combine["Weighted Score Combination"]
+    Relations["Fetch Related Memories<br/>PREFERS_OVER, EXEMPLIFIES, etc."]
+    Context["Rich Context<br/>Memory + relationships + metadata"]
+    LLM["LLM with Enhanced Context"]
+    Output["Informed Response"]
+    
+    Input --> Vector
+    Input --> Graph
+    Input --> Keyword
+    Input --> Temporal
+    Input --> Tags
+    
+    Vector --> Combine
+    Graph --> Combine
+    Keyword --> Combine
+    Temporal --> Combine
+    Tags --> Combine
+    
+    Combine --> Relations
+    Relations --> Context
+    Context --> LLM
+    LLM --> Output

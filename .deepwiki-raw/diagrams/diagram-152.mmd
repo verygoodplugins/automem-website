@@ -1,0 +1,25 @@
+graph LR
+    subgraph "Request Schema"
+        Content["content<br/>string (required)<br/>Memory text"]
+        Type["type<br/>string (optional)<br/>Decision/Pattern/etc"]
+        Tags["tags<br/>string[] (optional)<br/>Categorization"]
+        Importance["importance<br/>float (0-1)<br/>Priority score"]
+        Metadata["metadata<br/>object (optional)<br/>Custom fields"]
+        Embedding["embedding<br/>float[] (optional)<br/>Pre-computed vector"]
+        Timestamp["timestamp<br/>ISO8601 (optional)<br/>Defaults to now"]
+    end
+    
+    subgraph "Stored Properties"
+        ID["id<br/>UUID<br/>Auto-generated"]
+        TagPrefixes["tag_prefixes<br/>string[]<br/>Auto-computed"]
+        Confidence["confidence<br/>float (0-1)<br/>Type confidence"]
+        Enriched["enriched<br/>boolean<br/>Processing status"]
+        LastAccessed["last_accessed<br/>ISO8601<br/>Access tracking"]
+        UpdatedAt["updated_at<br/>ISO8601<br/>Modification time"]
+    end
+    
+    Content --> ID
+    Type --> Confidence
+    Tags --> TagPrefixes
+    Timestamp --> UpdatedAt
+    Embedding --> ID

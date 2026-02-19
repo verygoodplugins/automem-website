@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant AI as "AI Platform"
+    participant MCP as "MCP Server"
+    participant Client as "AutoMemClient"
+    participant API as "AutoMem API"
+    participant FDB as "FalkorDB"
+    
+    AI->>MCP: "associate_memories({<br/>memory1_id, memory2_id,<br/>type, strength})"
+    MCP->>MCP: "Validate parameters"
+    MCP->>Client: "associateMemories(args)"
+    Client->>Client: "Build POST /associate request"
+    Client->>API: "POST /associate<br/>{memory1_id, memory2_id,<br/>type, strength}"
+    API->>FDB: "CREATE EDGE<br/>type=LEADS_TO<br/>strength=0.9"
+    FDB-->>API: "Edge created"
+    API-->>Client: "{success: true, message}"
+    Client-->>MCP: "Response"
+    MCP-->>AI: "{success: boolean,<br/>message: string}"

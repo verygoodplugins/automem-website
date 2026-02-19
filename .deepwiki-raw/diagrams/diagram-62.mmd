@@ -1,0 +1,36 @@
+flowchart LR
+    subgraph input ["Tag Query Input"]
+        TagFilters["tags parameter<br/>['slack', 'entity:person']"]
+        TagMode["tag_mode:<br/>'any' or 'all'"]
+        TagMatch["tag_match:<br/>'prefix' or 'exact'"]
+    end
+    
+    subgraph normalization ["Tag Normalization"]
+        Normalize["_normalize_tag_list()<br/>Lowercase, trim, dedupe"]
+        Prepare["_prepare_tag_filters()<br/>Prepare for matching"]
+    end
+    
+    subgraph matching ["Match Strategies"]
+        ExactMatch["Exact match:<br/>tag IN filter_set"]
+        PrefixMatch["Prefix match:<br/>Use tag_prefixes field<br/>or startswith()"]
+    end
+    
+    subgraph modes ["Match Modes"]
+        AnyMode["'any' mode:<br/>Match if ANY filter matches"]
+        AllMode["'all' mode:<br/>Match if ALL filters match"]
+    end
+    
+    Filtered["Filtered results"]
+    
+    TagFilters --> Normalize
+    Normalize --> Prepare
+    Prepare --> ExactMatch
+    Prepare --> PrefixMatch
+    TagMatch --> ExactMatch
+    TagMatch --> PrefixMatch
+    TagMode --> AnyMode
+    TagMode --> AllMode
+    ExactMatch --> Filtered
+    PrefixMatch --> Filtered
+    AnyMode --> Filtered
+    AllMode --> Filtered

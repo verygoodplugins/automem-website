@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Client
+    participant Flask as "Flask API<br/>/startup-recall"
+    participant TrendingFn as "_graph_trending_results()"
+    participant FalkorDB
+    
+    Client->>Flask: GET /startup-recall
+    Flask->>Flask: Set limit=10, seen_ids={}
+    
+    Flask->>TrendingFn: Get trending memories
+    TrendingFn->>FalkorDB: MATCH (m:Memory)<br/>ORDER BY importance DESC<br/>LIMIT 10
+    FalkorDB-->>TrendingFn: result_set
+    TrendingFn->>TrendingFn: _format_graph_result()<br/>for each row
+    TrendingFn-->>Flask: results (count=N)
+    
+    alt N < 10 (need more memories)
+        Flask->>FalkorDB: MATCH (m:Memory)<br/>WHERE NOT m.id IN seen_ids<br/>ORDER BY timestamp DESC<br/>LIMIT (10-N)
+        FalkorDB-->>Flask: recent memories
+        Flask->>Flask: _format_graph_result()<br/>for each row
+        Flask->>Flask: Append to results
+    end
+    
+    Flask-->>Client: HTTP 200 + JSON<br/>{memories, count, timestamp}

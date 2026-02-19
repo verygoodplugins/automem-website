@@ -1,0 +1,26 @@
+graph TB
+    subgraph "ConsolidationScheduler"
+        Scheduler["ConsolidationScheduler<br/>consolidation.py:791-1033"]
+        
+        Decay["decay<br/>Hourly<br/>Exponential relevance scoring"]
+        Creative["creative<br/>Hourly<br/>REM-like associations"]
+        Cluster["cluster<br/>6 Hours<br/>Semantic grouping"]
+        Forget["forget<br/>Daily<br/>Archive/delete low-relevance"]
+    end
+    
+    subgraph "Human Sleep Parallel"
+        H1["Memory Consolidation<br/>(NREM sleep)"]
+        H2["Creative Association<br/>(REM sleep)"]
+        H3["Pattern Formation<br/>(Slow-wave sleep)"]
+        H4["Synaptic Pruning<br/>(Sleep homeostasis)"]
+    end
+    
+    Scheduler --> Decay
+    Scheduler --> Creative
+    Scheduler --> Cluster
+    Scheduler --> Forget
+    
+    H1 -.-> Decay
+    H2 -.-> Creative
+    H3 -.-> Cluster
+    H4 -.-> Forget

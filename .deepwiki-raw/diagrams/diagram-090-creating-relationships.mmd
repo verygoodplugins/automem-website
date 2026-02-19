@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant Client
+    participant Flask["@app.route('/associate')<br/>POST"]
+    participant Falkor["FalkorDB"]
+    
+    Client->>Flask: POST /associate<br/>{memory1_id, memory2_id, type}
+    Flask->>Flask: validate relationship type
+    Flask->>Falkor: MATCH (m1:Memory {id: $id1})<br/>MATCH (m2:Memory {id: $id2})
+    Flask->>Falkor: MERGE (m1)-[r:TYPE]->(m2)
+    Flask->>Falkor: SET r.strength = $strength
+    Flask-->>Client: 200 OK

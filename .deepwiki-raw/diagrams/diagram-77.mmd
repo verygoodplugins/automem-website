@@ -1,0 +1,29 @@
+graph TB
+    subgraph "FalkorDB - Graph Store (Required)"
+        MemNode["Memory Nodes<br/>(id, content, type, importance, tags)"]
+        Relationships["Relationship Edges<br/>(RELATES_TO, LEADS_TO, etc.)"]
+        Metadata["Metadata Properties<br/>(entities, patterns, enrichment)"]
+    end
+    
+    subgraph "Qdrant - Vector Store (Optional)"
+        Embeddings["768-d Embeddings<br/>(text-embedding-3-small)"]
+        Payloads["Payload Mirror<br/>(content, tags, importance, timestamp)"]
+    end
+    
+    subgraph "Core Operations"
+        Store["/memory POST"]
+        Recall["/recall GET"]
+        Associate["/associate POST"]
+    end
+    
+    Store -->|"MERGE Memory node"| MemNode
+    Store -->|"CREATE relationship"| Relationships
+    Store -->|"Store vector + payload"| Embeddings
+    
+    Recall -->|"Keyword search (fallback)"| MemNode
+    Recall -->|"Vector similarity (primary)"| Embeddings
+    Recall -->|"Fetch relationships"| Relationships
+    
+    Associate -->|"CREATE edge"| Relationships
+    
+    MemNode -->|"Enrichment writes"| Metadata

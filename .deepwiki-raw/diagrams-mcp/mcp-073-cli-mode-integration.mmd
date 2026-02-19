@@ -1,0 +1,6 @@
+graph TB
+    CLI_COMMAND["CLI Command<br/>(e.g., recall)"]
+    
+    CLI_COMMAND --> CREATE["Create Client Instance<br/>new AutoMemClient(config)"]
+    CREATE --> CALL["Call API Method<br/>client.recallMemory(args)"]
+    CALL --> OUTPUT["Output JSON to stdout<br/>JSON.stringify(results, null, 2)"]

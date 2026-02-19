@@ -1,0 +1,16 @@
+graph TB
+    Start["Choose Installation Method"]
+    
+    Start --> Q1{"Multi-device access<br/>or team sharing?"}
+    Q1 -->|Yes| Railway["Railway Cloud Deploy<br/>One-click or manual"]
+    Q1 -->|No| Q2{"Full local stack<br/>with dependencies?"}
+    
+    Q2 -->|Yes| Docker["Docker Compose<br/>All services bundled"]
+    Q2 -->|No| Q3{"External FalkorDB<br/>already available?"}
+    
+    Q3 -->|Yes| Bare["Bare Metal Python<br/>Direct app.py execution"]
+    Q3 -->|No| Docker
+    
+    Railway --> RNote["✓ Always-on availability<br/>✓ HTTPS public endpoint<br/>✓ ~$0.50/month after trial<br/>✓ Persistent volumes"]
+    Docker --> DNote["✓ Complete isolation<br/>✓ One-command startup<br/>✓ Development-ready<br/>✓ No cloud costs"]
+    Bare --> BNote["✓ Fastest iteration<br/>✓ Minimal resource usage<br/>✓ Direct debugging<br/>✓ Requires external DB"]

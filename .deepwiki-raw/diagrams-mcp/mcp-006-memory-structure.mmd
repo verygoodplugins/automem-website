@@ -1,0 +1,14 @@
+graph TB
+    Memory["MemoryRecord<br/>(TypeScript type)"]
+    
+    Memory --> Content["content: string<br/>The actual information"]
+    Memory --> Tags["tags?: string[]<br/>Categorization labels"]
+    Memory --> Importance["importance?: number<br/>Score 0.0-1.0"]
+    Memory --> Embedding["embedding?: number[]<br/>768-dim vector"]
+    Memory --> Metadata["metadata?: Record<string,any><br/>Structured data"]
+    Memory --> Timestamp["timestamp?: string<br/>ISO 8601 datetime"]
+    
+    Content --> Storage["Stored in:<br/>FalkorDB (graph)<br/>Qdrant (vector)"]
+    Embedding --> VectorSearch["Enables<br/>Semantic Search"]
+    Tags --> Filtering["Enables<br/>Categorical Filtering"]
+    Importance --> Ranking["Affects<br/>Recall Priority"]

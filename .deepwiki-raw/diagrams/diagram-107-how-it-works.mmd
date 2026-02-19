@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant Operator
+    participant Script as recover_from_qdrant.py
+    participant Qdrant as Qdrant Client
+    participant FalkorDB as FalkorDB Connection
+    
+    Operator->>Script: Execute recovery
+    Script->>Qdrant: Scroll all points<br/>qdrant_client.scroll()
+    Qdrant-->>Script: Return 780 memories<br/>with full payloads
+    
+    loop For each memory
+        Script->>Script: Extract fields from payload<br/>content, type, confidence, etc.
+        Script->>Script: Filter metadata fields<br/>RESERVED_FIELDS blocklist
+        Script->>FalkorDB: MERGE (m:Memory {id, content})<br/>SET m.type, m.confidence...
+        Script->>FalkorDB: Extract relationships<br/>from metadata.relationships
+        Script->>FalkorDB: CREATE edge patterns<br/>RELATES_TO, PREFERS_OVER, etc.
+    end
+    
+    Script->>Script: Calculate stats<br/>memories, relationships, entities
+    Script-->>Operator: Recovery complete<br/>778/780 recovered (99.7%)

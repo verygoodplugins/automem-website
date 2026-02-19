@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Platform
+    participant Process as "MCP Server Process"
+    participant Transport as "StdioServerTransport"
+    participant Server as "MCP Server Instance"
+    participant Client as "AutoMemClient"
+    
+    Platform->>Process: Spawn with stdio
+    Process->>Process: Detect server mode<br/>(no CLI args)
+    Process->>Process: Redirect console.log<br/>to stderr
+    Process->>Process: Load .env quietly<br/>(DOTENV_CONFIG_QUIET)
+    Process->>Transport: Create stdio transport
+    Process->>Server: Initialize with tools[]
+    Server->>Transport: Connect via transport.start()
+    
+    loop Request/Response Cycle
+        Platform->>Transport: JSON-RPC request via stdin
+        Transport->>Server: Parse & route request
+        Server->>Server: Match CallToolRequestSchema
+        Server->>Client: Call AutoMemClient method
+        Client->>Client: HTTP request with retry
+        Client-->>Server: Return response/error
+        Server->>Transport: Format JSON-RPC response
+        Transport->>Platform: Write to stdout
+    end
+    
+    Platform->>Process: Close stdin (EOF)
+    Transport->>Transport: Detect EPIPE/ECONNRESET
+    Process->>Process: Exit gracefully

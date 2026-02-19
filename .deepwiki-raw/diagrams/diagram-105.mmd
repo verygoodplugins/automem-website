@@ -1,0 +1,36 @@
+flowchart TB
+    Content["Memory Content"]
+    
+    subgraph "Primary: spaCy NER"
+        SpacyCheck{"spacy<br/>available?"}
+        LoadModel["_get_spacy_nlp()<br/>Load en_core_web_sm"]
+        NER["Named Entity Recognition<br/>PERSON, ORG, PRODUCT, etc."]
+    end
+    
+    subgraph "Fallback: Regex Patterns"
+        PeopleRegex["People:<br/>'met with', 'talked to' + Name"]
+        ToolsRegex["Tools:<br/>'using', 'deploy' + Capitalized"]
+        ProjectsRegex["Projects:<br/>'project called', backticks, Project Name"]
+    end
+    
+    subgraph "Validation"
+        Validate["_is_valid_entity()<br/>Length, stopwords, case, symbols"]
+    end
+    
+    subgraph "Output"
+        EntityDict["entities:<br/>tools, projects, people,<br/>organizations, concepts"]
+        EntityTags["Auto-tags:<br/>entity:tool:postgresql<br/>entity:person:sarah"]
+    end
+    
+    Content --> SpacyCheck
+    SpacyCheck -->|Yes| LoadModel
+    SpacyCheck -->|No| PeopleRegex
+    LoadModel --> NER
+    
+    NER --> Validate
+    PeopleRegex --> Validate
+    ToolsRegex --> Validate
+    ProjectsRegex --> Validate
+    
+    Validate --> EntityDict
+    EntityDict --> EntityTags

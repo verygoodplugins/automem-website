@@ -1,0 +1,20 @@
+graph TD
+    TOOL["Tool Invocation"]
+    TOOL --> Q1{"Does it modify<br/>data?"}
+    Q1 -->|No| READONLY["readOnlyHint: true"]
+    Q1 -->|Yes| Q2{"Does it delete<br/>permanently?"}
+    
+    Q2 -->|Yes| DESTRUCTIVE["destructiveHint: true"]
+    Q2 -->|No| NONDESTRUCTIVE["destructiveHint: false"]
+    
+    READONLY --> Q3{"Same args =<br/>same result?"}
+    NONDESTRUCTIVE --> Q3
+    DESTRUCTIVE --> Q3
+    
+    Q3 -->|Yes| IDEMPOTENT["idempotentHint: true"]
+    Q3 -->|No| NONIDEMPOTENT["idempotentHint: false"]
+    
+    IDEMPOTENT --> EXAMPLES1["recall_memory<br/>update_memory<br/>delete_memory<br/>associate_memories<br/>check_database_health"]
+    NONIDEMPOTENT --> EXAMPLES2["store_memory<br/>(generates new memory_id)"]
+    READONLY --> EXAMPLES3["recall_memory<br/>check_database_health"]
+    DESTRUCTIVE --> EXAMPLES4["delete_memory"]

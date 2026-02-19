@@ -1,0 +1,19 @@
+graph TB
+    subgraph "LoCoMo Benchmark"
+        L1["152 conversations<br/>10 participants"]
+        L2["29 probe questions<br/>Per participant"]
+        L3["Metric: Exact match<br/>+ Semantic similarity"]
+    end
+    
+    subgraph "AutoMem Test Suite"
+        T1["TESTING.md:203-275<br/>test_locomo.py"]
+        T2["Store memories<br/>via POST /memory"]
+        T3["Answer probes<br/>via GET /recall"]
+        T4["Score responses<br/>Exact + semantic"]
+    end
+    
+    L1 --> T2
+    L2 --> T3
+    L3 --> T4
+    
+    T1 --> Command["make test-locomo<br/>Requires LOCOMO_DATASET_PATH"]

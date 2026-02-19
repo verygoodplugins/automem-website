@@ -1,0 +1,22 @@
+flowchart TD
+    Error["401 Unauthorized Error"]
+    
+    Error --> Check1{"Which endpoint<br/>failing?"}
+    
+    Check1 -->|"/admin/*"| AdminToken["Check ADMIN_API_TOKEN"]
+    Check1 -->|"Other endpoints"| StdToken["Check AUTOMEM_API_TOKEN"]
+    
+    AdminToken --> Verify1["Compare token in request<br/>vs Railway variables"]
+    StdToken --> Verify2["Compare token in request<br/>vs Railway variables"]
+    
+    Verify1 --> Match1{"Tokens match?"}
+    Verify2 --> Match2{"Tokens match?"}
+    
+    Match1 -->|No| Rotate1["Update token in:<br/>1. Railway variables<br/>2. Client config<br/>3. MCP bridge"]
+    Match2 -->|No| Rotate2["Update token in:<br/>1. Railway variables<br/>2. Client config<br/>3. MCP bridge"]
+    
+    Match1 -->|Yes| CheckMethod1["Check auth method"]
+    Match2 -->|Yes| CheckMethod2["Check auth method"]
+    
+    CheckMethod1 --> Methods["Supported methods:<br/>1. Authorization: Bearer TOKEN<br/>2. X-API-Key: TOKEN<br/>3. ?api_key=TOKEN"]
+    CheckMethod2 --> Methods

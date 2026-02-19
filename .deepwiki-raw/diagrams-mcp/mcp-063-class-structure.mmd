@@ -1,0 +1,25 @@
+graph TB
+    subgraph "AutoMemClient Class"
+        CONSTRUCTOR["constructor(config: AutoMemConfig)"]
+        PRIVATE_REQ["makeRequest(method, path, body, retryCount)"]
+        
+        STORE["storeMemory(args: StoreMemoryArgs)"]
+        RECALL["recallMemory(args: RecallMemoryArgs)"]
+        ASSOC["associateMemories(args: AssociateMemoryArgs)"]
+        UPDATE["updateMemory(args: UpdateMemoryArgs)"]
+        DELETE["deleteMemory(args: DeleteMemoryArgs)"]
+        HEALTH["checkHealth()"]
+        TAG["searchByTag(args: TagSearchArgs)"]
+    end
+    
+    CONSTRUCTOR -->|"stores"| CONFIG_FIELD["private config: AutoMemConfig"]
+    
+    STORE --> PRIVATE_REQ
+    RECALL --> PRIVATE_REQ
+    ASSOC --> PRIVATE_REQ
+    UPDATE --> PRIVATE_REQ
+    DELETE --> PRIVATE_REQ
+    HEALTH --> PRIVATE_REQ
+    TAG --> PRIVATE_REQ
+    
+    PRIVATE_REQ -->|"node-fetch"| NETWORK["HTTP Network Layer"]

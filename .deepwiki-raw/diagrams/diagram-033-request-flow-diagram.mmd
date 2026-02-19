@@ -1,0 +1,54 @@
+graph TB
+    Client["HTTP Client<br/>curl, MCP, direct API"]
+    
+    subgraph "Werkzeug/Flask Layer"
+        Route["Route matching<br/>@app.route decorator"]
+    end
+    
+    subgraph "Authentication Middleware"
+        AuthCheck{"require_api_token()<br/>Check headers/query"}
+        PublicPath{"Endpoint type?"}
+        AdminCheck{"Admin endpoint?<br/>Requires ADMIN_TOKEN"}
+    end
+    
+    subgraph "Route Handlers"
+        Handler["Route handler function<br/>e.g., post_memory()"]
+        Validation["Request validation<br/>JSON schema, types"]
+        Business["Business logic<br/>Memory operations"]
+    end
+    
+    subgraph "Service Layer"
+        GraphOps["FalkorDB operations<br/>state.memory_graph"]
+        VectorOps["Qdrant operations<br/>state.qdrant (optional)"]
+        QueueOps["Queue operations<br/>enrichment_queue, embedding_queue"]
+    end
+    
+    subgraph "Response Generation"
+        Success["Success response<br/>{status: 'success', ...}"]
+        Error["Error response<br/>{status: 'error', message: '...'}"]
+    end
+    
+    Client -->|"HTTP request"| Route
+    Route --> AuthCheck
+    AuthCheck -->|"/health endpoint"| PublicPath
+    AuthCheck -->|"Other endpoints"| PublicPath
+    PublicPath -->|"Public"| Handler
+    PublicPath -->|"Standard"| AdminCheck
+    AdminCheck -->|"Standard endpoint"| Handler
+    AdminCheck -->|"Admin endpoint"| Handler
+    AdminCheck -->|"Missing admin token"| Error
+    
+    Handler --> Validation
+    Validation -->|"Valid"| Business
+    Validation -->|"Invalid"| Error
+    
+    Business --> GraphOps
+    Business --> VectorOps
+    Business --> QueueOps
+    
+    GraphOps --> Success
+    VectorOps --> Success
+    QueueOps --> Success
+    
+    Success --> Client
+    Error --> Client

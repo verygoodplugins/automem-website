@@ -1,0 +1,40 @@
+sequenceDiagram
+    participant HM as health_monitor.py
+    participant API as Flask API /health
+    participant FK as FalkorDB
+    participant QD as Qdrant
+    participant WH as Webhook<br/>(Slack/Discord)
+    participant REC as recover_from_qdrant.py
+    
+    Note over HM: Check Interval<br/>(300s default)
+    
+    HM->>API: GET /health
+    API-->>HM: {"status": "healthy", ...}
+    
+    HM->>FK: MATCH (m:Memory) RETURN count(m)
+    FK-->>HM: falkor_count: 884
+    
+    HM->>QD: GET /collections/memories
+    QD-->>HM: qdrant_count: 884
+    
+    HM->>HM: Calculate drift %<br/>|FK - QD| / max(FK, QD)
+    
+    alt Drift < 5%
+        Note over HM: Normal - No action
+    else Drift 5-50%
+        HM->>WH: POST warning alert
+        Note over WH: "Warning: 12% drift detected"
+    else Drift > 50%
+        HM->>WH: POST critical alert
+        Note over WH: "Critical: 52% drift detected"
+        
+        alt Auto-Recover Enabled
+            HM->>REC: Execute recovery script
+            REC->>QD: Read all vectors + payloads
+            REC->>FK: Rebuild graph structure
+            REC-->>HM: Recovery complete
+            HM->>WH: POST success notification
+        else Manual Mode
+            Note over HM: Log critical event<br/>Wait for manual intervention
+        end
+    end

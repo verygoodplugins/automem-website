@@ -1,0 +1,19 @@
+graph LR
+    subgraph "MELODI Compression"
+        M1["Full Content<br/>(Initial storage)"]
+        M2["Gist Generation<br/>(Lossy compression)"]
+        M3["Semantic Preservation<br/>(Vector unchanged)"]
+    end
+    
+    subgraph "AutoMem Implementation"
+        A1["memory.content<br/>Full text stored"]
+        A2["generate_summary()<br/>First sentence + truncation"]
+        A3["memory.embedding<br/>768-d vector<br/>Not regenerated"]
+    end
+    
+    M1 --> A1
+    M2 --> A2
+    M3 --> A3
+    
+    A2 --> C1["app.py:1195-1214<br/>generate_summary()"]
+    A3 --> C2["Qdrant storage<br/>Unchanged after compression"]

@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant Client as "AI Platform"
+    participant SSEEndpoint as "GET /mcp/sse"
+    participant Transport as "SSEServerTransport"
+    participant Sessions as "sessions Map"
+    participant MCPServer as "MCP Server"
+    participant Messages as "POST /mcp/messages"
+    
+    Note over Client,Messages: Connection
+    Client->>SSEEndpoint: GET /mcp/sse<br/>Accept: text/event-stream
+    SSEEndpoint->>Transport: new SSEServerTransport('/mcp/messages', res)
+    SSEEndpoint->>MCPServer: buildMcpServer(client)
+    SSEEndpoint->>MCPServer: server.connect(transport)
+    SSEEndpoint->>Sessions: sessions.set(transport.sessionId, {<br/>transport, server, res, heartbeat, type: 'sse'})
+    Transport->>Transport: start() - sends endpoint event
+    Transport-->>Client: SSE stream (event: endpoint)
+    SSEEndpoint->>SSEEndpoint: setInterval heartbeat (20s)
+    
+    Note over Client,Messages: JSON-RPC Messages
+    Client->>Messages: POST /mcp/messages?sessionId=xyz<br/>JSON-RPC request body
+    Messages->>Sessions: sessions.get(sessionId)
+    Sessions-->>Messages: {transport, server}
+    Messages->>Transport: handlePostMessage(req, res, body)
+    Transport->>MCPServer: Process JSON-RPC
+    MCPServer-->>Transport: Response
+    Transport->>Client: SSE event via stream
+    Messages-->>Client: 200 OK (ack)
+    
+    Note over Client,Messages: Connection Close
+    Client->>Client: Close connection
+    SSEEndpoint->>SSEEndpoint: res.on('close') event
+    SSEEndpoint->>Sessions: clearInterval(heartbeat)<br/>sessions.delete(sessionId)

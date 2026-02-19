@@ -1,0 +1,105 @@
+graph TB
+    subgraph "Repository Root"
+        AppPy["app.py<br/>Flask entrypoint<br/>Legacy routes"]
+        Requirements["requirements.txt<br/>requirements-dev.txt"]
+        DockerCompose["docker-compose.yml"]
+        Makefile["Makefile"]
+    end
+    
+    subgraph "automem/ Package"
+        direction TB
+        
+        subgraph "Core Services"
+            GraphPy["graph.py<br/>FalkorDBGraph<br/>Graph operations"]
+            VectorPy["vector.py<br/>QdrantVector<br/>Vector operations"]
+            ServiceState["service_state.py<br/>ServiceState<br/>Global state + queues"]
+        end
+        
+        subgraph "API Layer"
+            APIInit["api/__init__.py<br/>Blueprint registration"]
+            MemoryRoutes["api/memory.py<br/>POST /memory<br/>PATCH /memory/:id<br/>DELETE /memory/:id"]
+            RecallRoutes["api/recall.py<br/>GET /recall<br/>GET /startup-recall"]
+            GraphRoutes["api/graph.py<br/>POST /associate<br/>GET /analyze"]
+            ConsolRoutes["api/consolidation.py<br/>POST /consolidate<br/>GET /consolidate/status"]
+            EnrichRoutes["api/enrichment.py<br/>GET /enrichment/status<br/>POST /enrichment/reprocess"]
+            AdminRoutes["api/admin.py<br/>POST /admin/reembed"]
+        end
+        
+        subgraph "Background Workers"
+            Enrichment["enrichment.py<br/>EnrichmentWorker<br/>Entity extraction<br/>Pattern detection"]
+            Embedding["embedding_worker.py<br/>EmbeddingWorker<br/>Batch embedding"]
+            Consolidation["consolidation.py<br/>ConsolidationWorker<br/>Decay/Creative/Cluster/Forget"]
+            Sync["sync_worker.py<br/>SyncWorker<br/>Drift detection"]
+        end
+        
+        subgraph "Utilities"
+            TextUtils["text_utils.py<br/>Keyword extraction<br/>Summarization"]
+            TimeUtils["time_utils.py<br/>ISO parsing<br/>Time expressions"]
+            Classifier["classifier.py<br/>Memory classification<br/>LLM + keyword"]
+        end
+        
+        subgraph "Embedding Providers"
+            EmbedInit["embedding/__init__.py<br/>EmbeddingProvider"]
+            OpenAIEmbed["embedding/openai.py<br/>OpenAIEmbeddingProvider"]
+            FastEmbed["embedding/fastembed.py<br/>FastEmbedProvider"]
+            Placeholder["embedding/placeholder.py<br/>PlaceholderEmbeddingProvider"]
+        end
+    end
+    
+    subgraph "scripts/ Maintenance Tools"
+        Backup["backup_automem.py"]
+        Recover["recover_from_qdrant.py"]
+        Reembed["reembed_embeddings.py"]
+        Monitor["health_monitor.py"]
+    end
+    
+    subgraph "tests/ Test Suite"
+        TestApp["test_app.py<br/>API endpoint tests"]
+        TestIntegration["test_integration.py<br/>Full stack tests"]
+        TestConsolidation["test_consolidation_engine.py"]
+        TestEnrichment["test_enrichment.py"]
+        LoCoMo["benchmarks/locomo/<br/>LoCoMo benchmark"]
+    end
+    
+    subgraph "mcp-sse-server/ MCP Bridge"
+        MCPServer["index.js<br/>SSE server :8080<br/>Protocol translation"]
+    end
+
+    AppPy --> GraphPy
+    AppPy --> VectorPy
+    AppPy --> ServiceState
+    AppPy --> APIInit
+    
+    APIInit --> MemoryRoutes
+    APIInit --> RecallRoutes
+    APIInit --> GraphRoutes
+    APIInit --> ConsolRoutes
+    APIInit --> EnrichRoutes
+    APIInit --> AdminRoutes
+    
+    MemoryRoutes --> GraphPy
+    MemoryRoutes --> VectorPy
+    MemoryRoutes --> Enrichment
+    MemoryRoutes --> Embedding
+    
+    RecallRoutes --> GraphPy
+    RecallRoutes --> VectorPy
+    
+    Enrichment --> GraphPy
+    Enrichment --> VectorPy
+    Embedding --> VectorPy
+    Consolidation --> GraphPy
+    Consolidation --> VectorPy
+    Sync --> GraphPy
+    Sync --> VectorPy
+    
+    MemoryRoutes --> Classifier
+    Enrichment --> TextUtils
+    Embedding --> EmbedInit
+    EmbedInit --> OpenAIEmbed
+    EmbedInit --> FastEmbed
+    EmbedInit --> Placeholder
+
+    style GraphPy fill:#f9f9f9
+    style VectorPy fill:#f9f9f9
+    style ServiceState fill:#f9f9f9

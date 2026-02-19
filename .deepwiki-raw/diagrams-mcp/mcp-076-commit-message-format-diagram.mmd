@@ -1,0 +1,18 @@
+graph LR
+    COMMIT["Commit Message"]
+    
+    COMMIT --> TYPE["type"]
+    COMMIT --> SCOPE["(scope)"]
+    COMMIT --> BREAKING["!"]
+    COMMIT --> DESC[": description"]
+    
+    TYPE --> FIX["fix: → patch bump"]
+    TYPE --> FEAT["feat: → minor bump"]
+    TYPE --> CHORE["chore: → no bump"]
+    
+    BREAKING --> MAJOR["! → major bump"]
+    
+    style MAJOR fill:#ffcccc
+    style FIX fill:#ccffcc
+    style FEAT fill:#ccccff
+    style CHORE fill:#eeeeee

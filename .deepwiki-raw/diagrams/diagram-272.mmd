@@ -1,0 +1,15 @@
+graph LR
+    Edit["Edit Code<br/>(app.py, consolidation.py)"]
+    Reload["Flask Auto-Reload<br/>(if FLASK_DEBUG=1)"]
+    Manual["Manual Restart<br/>(Ctrl+C, restart)"]
+    Test["Run Tests<br/>(make test)"]
+    Format["Format Code<br/>(black .)"]
+    Lint["Lint Code<br/>(flake8 .)"]
+    Commit["Commit Changes<br/>(git commit)"]
+    
+    Edit --> Reload
+    Edit --> Manual
+    Edit --> Test
+    Test --> Format
+    Format --> Lint
+    Lint --> Commit

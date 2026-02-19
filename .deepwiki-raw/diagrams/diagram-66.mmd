@@ -1,0 +1,27 @@
+flowchart LR
+    Query["Query:<br/>'What is Sarah's sister's job?'"]
+    
+    subgraph seed ["Seed Results"]
+        S1["Memory 1:<br/>'Sarah mentioned her sister Rachel'<br/>tags: ['entity:person:sarah']"]
+    end
+    
+    subgraph entity_extract ["Entity Extraction"]
+        Extract["Extract entities from<br/>seed result content<br/>via extract_entities()"]
+        EntityTags["Extracted entities:<br/>['Rachel']"]
+        TagForm["Convert to tags:<br/>['entity:person:rachel']"]
+    end
+    
+    subgraph entity_search ["Entity Tag Search"]
+        TagQuery["Search by tag:<br/>tag_filters=['entity:person:rachel']<br/>tag_match='prefix'"]
+        EntityResults["Entity matches:<br/>'Rachel works as counselor'<br/>tags: ['entity:person:rachel']"]
+    end
+    
+    Combined["Combined results:<br/>Seed + Entity expansion"]
+    
+    Query --> S1
+    S1 --> Extract
+    Extract --> EntityTags
+    EntityTags --> TagForm
+    TagForm --> TagQuery
+    TagQuery --> EntityResults
+    EntityResults --> Combined

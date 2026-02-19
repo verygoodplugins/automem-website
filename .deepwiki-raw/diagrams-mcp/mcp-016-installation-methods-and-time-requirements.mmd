@@ -1,0 +1,23 @@
+graph TB
+    subgraph "One-Click (< 1 minute)"
+        CD_MCPB["Claude Desktop<br/>.mcpb file"]
+        CUR_DEEP["Cursor<br/>deeplink"]
+    end
+    
+    subgraph "CLI Single Command (1-2 minutes)"
+        CUR_CLI["Cursor<br/>npx cursor"]
+        CC_CLI["Claude Code<br/>npx claude-code"]
+        COD_CLI["Codex<br/>npx codex"]
+        OC_CLI["OpenClaw<br/>npx openclaw"]
+    end
+    
+    subgraph "Manual Config (2-5 minutes)"
+        CD_JSON["Claude Desktop<br/>JSON edit"]
+        CUR_JSON["Cursor<br/>mcp.json edit"]
+        COD_TOML["Codex<br/>TOML edit"]
+        WARP_FILES["Warp<br/>copy templates"]
+    end
+    
+    subgraph "Deploy + Config (5-15 minutes)"
+        REMOTE["Remote MCP<br/>sidecar deploy"]
+    end

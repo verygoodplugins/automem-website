@@ -1,0 +1,62 @@
+graph TB
+    subgraph client["Client Layer"]
+        DirectAPI["Direct API Clients<br/>curl, Python, HTTP"]
+        CloudAI["Cloud AI Platforms<br/>ChatGPT, Claude.ai"]
+        LocalTools["Local Tools<br/>Cursor, Claude Desktop"]
+    end
+
+    subgraph railway["Railway Project"]
+        subgraph services["Services"]
+            subgraph mcp["mcp-sse-server (optional)"]
+                MCPServer["Node.js Express<br/>PORT: 8080<br/>Dockerfile: mcp-sse-server/Dockerfile"]
+                MCPDomain["Public Domain<br/>RAILWAY_PUBLIC_DOMAIN"]
+            end
+
+            subgraph api["memory-service"]
+                FlaskAPI["Flask/Gunicorn<br/>PORT: 8001<br/>app.py"]
+                Workers["Background Workers<br/>enrichment_worker()<br/>embedding_worker()<br/>consolidation_worker()"]
+                APIDomain["Public Domain<br/>RAILWAY_PUBLIC_DOMAIN"]
+            end
+
+            subgraph db["falkordb"]
+                FalkorDB["FalkorDB Container<br/>PORT: 6379<br/>falkordb/falkordb:latest"]
+                Volume["Persistent Volume<br/>/var/lib/falkordb/data"]
+                TCPProxy["TCP Proxy (optional)<br/>RAILWAY_TCP_PROXY_DOMAIN<br/>RAILWAY_TCP_PROXY_PORT"]
+            end
+        end
+
+        subgraph network["Internal Network"]
+            DNS["IPv6 DNS<br/>*.railway.internal<br/>fd12:ca03:42be:..."]
+        end
+    end
+
+    subgraph external["External Services"]
+        Qdrant["Qdrant Cloud<br/>QDRANT_URL"]
+        OpenAI["OpenAI API<br/>OPENAI_API_KEY"]
+        S3["S3 Backups (optional)<br/>AWS_ACCESS_KEY_ID"]
+    end
+
+    DirectAPI -->|HTTPS| APIDomain
+    CloudAI -->|HTTPS| MCPDomain
+    LocalTools -->|HTTPS| APIDomain
+
+    MCPDomain --> MCPServer
+    APIDomain --> FlaskAPI
+
+    MCPServer -->|http://memory-service.railway.internal:8001<br/>AUTOMEM_API_URL| FlaskAPI
+
+    FlaskAPI -->|redis://falkordb.railway.internal:6379<br/>FALKORDB_HOST| FalkorDB
+    FlaskAPI --> Qdrant
+    FlaskAPI --> OpenAI
+
+    Workers --> FalkorDB
+    Workers --> Qdrant
+
+    FalkorDB --> Volume
+    FalkorDB --> TCPProxy
+
+    DNS -.->|Resolves| MCPServer
+    DNS -.->|Resolves| FlaskAPI
+    DNS -.->|Resolves| FalkorDB
+
+    TCPProxy -.->|External Access<br/>GitHub Actions| S3

@@ -1,0 +1,13 @@
+graph TB
+    VectorSize["VECTOR_SIZE<br/>Environment Variable"]
+    QdrantCollection["Qdrant Collection<br/>Vector Configuration"]
+    EmbeddingProvider["Embedding Provider<br/>generate_embedding()"]
+    
+    VectorSize -->|must match| QdrantCollection
+    VectorSize -->|configures| EmbeddingProvider
+    
+    EmbeddingProvider -->|generates| Embedding["Embedding Vector<br/>List[float]"]
+    Embedding -->|validated by| ValidationFunc["validate_vector_dimensions()<br/>automem.utils.validation"]
+    
+    ValidationFunc -->|"if mismatch"| FailFast["Raise ValueError<br/>Prevent data corruption"]
+    ValidationFunc -->|"if valid"| UpsertQdrant["qdrant.upsert()<br/>Store vector"]

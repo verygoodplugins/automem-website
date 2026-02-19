@@ -1,0 +1,31 @@
+graph TB
+    subgraph "API Layer"
+        PostConsolidate["/consolidate<br/>POST endpoint"]
+        GetStatus["/consolidate/status<br/>GET endpoint"]
+    end
+    
+    subgraph "Consolidation Module"
+        Scheduler["ConsolidationScheduler<br/>(Background thread)"]
+        Consolidator["MemoryConsolidator<br/>(Task executor)"]
+    end
+    
+    subgraph "Data Stores"
+        FalkorGraph[("FalkorDB Graph<br/>GRAPH_NAME")]
+        QdrantVectors[("Qdrant Vectors<br/>COLLECTION_NAME")]
+        ControlNode["ConsolidationControl node<br/>(Graph metadata)"]
+        RunHistory["ConsolidationRun nodes<br/>(Execution logs)"]
+    end
+    
+    PostConsolidate -->|"Trigger task"| Consolidator
+    GetStatus -->|"Query state"| Scheduler
+    GetStatus -->|"Read history"| ControlNode
+    GetStatus -->|"Read history"| RunHistory
+    
+    Scheduler -->|"Periodic check"| Consolidator
+    Consolidator -->|"Read memories"| FalkorGraph
+    Consolidator -->|"Semantic search"| QdrantVectors
+    Consolidator -->|"Update relevance"| FalkorGraph
+    Consolidator -->|"Create edges"| FalkorGraph
+    Consolidator -->|"Archive/delete"| FalkorGraph
+    Consolidator -->|"Record runs"| ControlNode
+    Consolidator -->|"Record runs"| RunHistory

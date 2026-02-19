@@ -1,0 +1,24 @@
+graph LR
+    Memory["Memory Node<br/>(FalkorDB)"]
+    
+    subgraph "Factors"
+        Age["Age Factor<br/>exp(-0.1 * days)"]
+        Access["Access Factor<br/>exp(-0.05 * days_since_access)"]
+        Rel["Relationship Factor<br/>1 + 0.3 * log(1 + rel_count)"]
+        Imp["Importance<br/>0.5 + user_importance"]
+        Conf["Confidence<br/>0.7 + 0.3 * confidence"]
+    end
+    
+    Memory --> Age
+    Memory --> Access
+    Memory --> Rel
+    Memory --> Imp
+    Memory --> Conf
+    
+    Age --> Score["Relevance Score<br/>= decay * access * rel * imp * conf"]
+    Access --> Score
+    Rel --> Score
+    Imp --> Score
+    Conf --> Score
+    
+    Score --> Update["SET m.relevance_score"]

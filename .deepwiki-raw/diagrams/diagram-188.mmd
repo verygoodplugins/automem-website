@@ -1,0 +1,38 @@
+sequenceDiagram
+    participant Client as "AI Platform"
+    participant Transport as "StreamableHTTPServerTransport<br/>/mcp"
+    participant SessionMgr as "sessions Map"
+    participant EventStore as "InMemoryEventStore"
+    participant MCP as "MCP Server"
+    participant AutoMem as "AutoMemClient"
+    
+    Note over Client,AutoMem: Session Initialization
+    Client->>Transport: POST /mcp<br/>isInitializeRequest(body)
+    Transport->>SessionMgr: sessionIdGenerator()
+    SessionMgr-->>Transport: sessionId (UUID)
+    Transport->>EventStore: create stream
+    Transport->>SessionMgr: set(sessionId, {transport, server, type})
+    Transport->>MCP: connect(transport)
+    Transport-->>Client: 200 OK<br/>Mcp-Session-Id: {sessionId}
+    
+    Note over Client,AutoMem: Tool Invocation
+    Client->>Transport: POST /mcp<br/>Mcp-Session-Id: {sessionId}<br/>tool: recall_memory
+    Transport->>SessionMgr: get(sessionId)
+    SessionMgr-->>Transport: {transport, server}
+    Transport->>MCP: CallToolRequestSchema
+    MCP->>AutoMem: recallMemory(args)
+    AutoMem-->>MCP: {results: [...]}
+    MCP-->>Transport: JSON-RPC response
+    Transport->>EventStore: storeEvent(sessionId, message)
+    Transport-->>Client: SSE event + JSON-RPC result
+    
+    Note over Client,AutoMem: Resumability (connection drop)
+    Client->>Transport: GET /mcp<br/>Mcp-Session-Id: {sessionId}<br/>Last-Event-ID: {lastId}
+    Transport->>EventStore: replayEventsAfter(sessionId, lastId)
+    EventStore-->>Transport: missed events
+    Transport-->>Client: SSE stream with replayed events
+    
+    Note over Client,AutoMem: Session Cleanup
+    Transport->>SessionMgr: check lastAccess timestamp
+    SessionMgr->>SessionMgr: delete if > 1 hour idle
+    SessionMgr->>EventStore: removeStream(sessionId)

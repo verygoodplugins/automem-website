@@ -1,0 +1,23 @@
+flowchart TD
+    Start["ECONNREFUSED Error"]
+    
+    CheckPort{"PORT variable<br/>set in memory-service?"}
+    CheckIPv6{"Flask binding<br/>to :: or 0.0.0.0?"}
+    CheckHostname{"AUTOMEM_API_URL<br/>correct hostname?"}
+    
+    Start --> CheckPort
+    
+    CheckPort -->|Missing| FixPort["Add PORT=8001<br/>to memory-service variables"]
+    CheckPort -->|Present| CheckIPv6
+    
+    CheckIPv6 -->|"0.0.0.0 (wrong)"| FixIPv6["Update code to bind to ::<br/>(latest version does this)"]
+    CheckIPv6 -->|":: (correct)"| CheckHostname
+    
+    CheckHostname -->|"Wrong"| FixHostname["Set to:<br/>memory-service.railway.internal:8001"]
+    CheckHostname -->|"Correct"| CheckLogs["Check logs:<br/>railway logs --service memory-service"]
+    
+    FixPort --> Redeploy["Redeploy memory-service"]
+    FixIPv6 --> Redeploy
+    FixHostname --> Redeploy
+    
+    Redeploy --> Verify["Verify:<br/>curl AUTOMEM_API_URL/health"]

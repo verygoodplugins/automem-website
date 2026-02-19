@@ -1,0 +1,12 @@
+graph LR
+    Problem["Memory: Problem<br/>Slow queries"]
+    Option1["Memory: Option<br/>Add index"]
+    Option2["Memory: Option<br/>Denormalize"]
+    Decision["Memory: Decision<br/>Added composite index"]
+    Outcome["Memory: Outcome<br/>50% faster"]
+    
+    Problem-->|"LEADS_TO"|Option1
+    Problem-->|"LEADS_TO"|Option2
+    Decision-->|"PREFERS_OVER<br/>reason: minimal-schema-change"|Option2
+    Decision-->|"DERIVED_FROM"|Option1
+    Decision-->|"LEADS_TO"|Outcome

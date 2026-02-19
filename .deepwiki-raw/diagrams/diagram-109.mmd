@@ -1,0 +1,29 @@
+flowchart TB
+    Memory["Current Memory"]
+    
+    subgraph "Pattern Detection"
+        MatchType["MATCH memories<br/>WHERE type = current.type"]
+        ExtractKeywords["Extract frequent keywords<br/>TF-IDF or frequency analysis"]
+        IdentifyPattern["Identify common themes:<br/>e.g., 'boring technology',<br/>'operational simplicity'"]
+    end
+    
+    subgraph "Pattern Node Management"
+        CheckExist{"Pattern node<br/>exists?"}
+        Merge["MERGE (p:Pattern)<br/>SET occurrences += 1"]
+        Create["CREATE (p:Pattern)<br/>SET occurrences = 1"]
+    end
+    
+    subgraph "Link Creation"
+        Exemplifies["CREATE (memory)<br/>-[:EXEMPLIFIES {<br/>pattern_type: type,<br/>confidence: score,<br/>key_terms: [...]<br/>}]->(pattern)"]
+    end
+    
+    Memory --> MatchType
+    MatchType --> ExtractKeywords
+    ExtractKeywords --> IdentifyPattern
+    IdentifyPattern --> CheckExist
+    
+    CheckExist -->|Yes| Merge
+    CheckExist -->|No| Create
+    
+    Merge --> Exemplifies
+    Create --> Exemplifies

@@ -1,0 +1,16 @@
+graph LR
+    Main["Main Thread<br/>Flask app"]
+    
+    subgraph "Background Threads (daemon=True)"
+        ET["enrichment_worker<br/>Thread"]
+        EmT["embedding_worker<br/>Thread"]
+        CT["consolidation_scheduler<br/>APScheduler"]
+    end
+    
+    Main -->|"Thread(target=enrichment_worker).start()"| ET
+    Main -->|"Thread(target=embedding_worker).start()"| EmT
+    Main -->|"scheduler.start()"| CT
+    
+    ET -->|"polls forever"| EQ["enrichment_queue"]
+    EmT -->|"polls forever"| EmQ["embedding_queue"]
+    CT -->|"periodic wake"| Tasks["scheduled tasks"]

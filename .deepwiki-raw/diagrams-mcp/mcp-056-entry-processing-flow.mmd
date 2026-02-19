@@ -1,0 +1,34 @@
+graph TB
+    START["For each line in queue"]
+    
+    PARSE["JSON.parse(line)"]
+    PARSE -->|Parse error| LOG_SKIP["Log: 'Skipping invalid entry'<br/>skippedCount++"]
+    PARSE -->|Success| CONTENT{"content exists<br/>and non-empty?"}
+    
+    CONTENT -->|No| LOG_NO_CONTENT["Log: 'Skipping entry without content'<br/>skippedCount++"]
+    CONTENT -->|Yes| BUILD["Build StoreMemoryArgs"]
+    
+    BUILD --> NORMALIZE["normalizeTags(parsed.tags)"]
+    BUILD --> ENSURE["ensureObject(parsed.metadata)"]
+    BUILD --> TYPE_CHECK{"parsed.type exists<br/>and not in metadata?"}
+    
+    TYPE_CHECK -->|Yes| ADD_TYPE["metadata.type = parsed.type"]
+    TYPE_CHECK -->|No| DRYRUN_CHECK
+    ADD_TYPE --> DRYRUN_CHECK
+    
+    DRYRUN_CHECK{"options.dryRun?"}
+    DRYRUN_CHECK -->|Yes| LOG_DRYRUN["Log: '[dry-run] would store...'<br/>storedCount++"]
+    DRYRUN_CHECK -->|No| STORE["client.storeMemory(record)"]
+    
+    STORE -->|Success| LOG_SUCCESS["Log: 'Stored memory {id}'<br/>storedCount++"]
+    STORE -->|Failure| LOG_ERROR["Log: 'Failed to store memory'<br/>remaining.push(line)"]
+    
+    LOG_SUCCESS --> ASSOC_CHECK{"parsed.relatesTo exists?"}
+    ASSOC_CHECK -->|Yes| QUEUE_ASSOC["Queue association:<br/>{source, target, type, strength}"]
+    ASSOC_CHECK -->|No| NEXT
+    
+    QUEUE_ASSOC --> NEXT["Next entry"]
+    LOG_DRYRUN --> NEXT
+    LOG_ERROR --> NEXT
+    LOG_SKIP --> NEXT
+    LOG_NO_CONTENT --> NEXT

@@ -1,0 +1,28 @@
+graph TB
+    subgraph "Option A: Variable References"
+        RefPattern["${{shared.AUTOMEM_API_TOKEN}}<br/>${{FalkorDB.RAILWAY_PRIVATE_DOMAIN}}"]
+        RefPros["✅ Auto-updates on redeploy<br/>✅ Shared across services<br/>✅ DRY principle"]
+        RefCons["❌ Only works in templates<br/>❌ Harder to debug<br/>❌ Opaque resolution"]
+    end
+    
+    subgraph "Option B: Hardcoded Values"
+        HardPattern["falkordb.railway.internal<br/>direct-copied-token-value"]
+        HardPros["✅ Works in manual setup<br/>✅ Easy to debug<br/>✅ Visible in logs"]
+        HardCons["❌ Must sync manually<br/>❌ Repetition across services"]
+    end
+    
+    TemplateSetup["Railway Template<br/>One-Click Deploy"] --> RefPattern
+    ManualSetup["Manual Service<br/>Configuration"] --> HardPattern
+    
+    RefPattern --> RefPros
+    RefPattern --> RefCons
+    HardPattern --> HardPros
+    HardPattern --> HardCons
+    
+    Decision{"Which to use?"}
+    RefPattern --> Decision
+    HardPattern --> Decision
+    
+    Decision -->|"Template deployment"| UseRef["Use References"]
+    Decision -->|"Manual setup"| UseHard["Use Hardcoded"]
+    Decision -->|"Troubleshooting"| UseHard

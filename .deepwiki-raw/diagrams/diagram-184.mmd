@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant LocalClient as "Cursor IDE"
+    participant NPMPkg as "@verygoodplugins/mcp-automem"
+    participant FlaskAPI as "Flask API :8001"
+    participant MCPBridge as "mcp-sse-server :8080"
+    participant CloudClient as "ChatGPT"
+    participant DB as "FalkorDB/Qdrant"
+
+    Note over LocalClient,DB: Local MCP Flow (stdio)
+    LocalClient->>NPMPkg: MCP request via stdio
+    NPMPkg->>FlaskAPI: POST /memory<br/>Authorization: Bearer TOKEN
+    FlaskAPI->>DB: Store memory
+    DB-->>FlaskAPI: Success
+    FlaskAPI-->>NPMPkg: 201 Created
+    NPMPkg-->>LocalClient: MCP response
+
+    Note over LocalClient,DB: Cloud MCP Flow (Streamable HTTP)
+    CloudClient->>MCPBridge: POST /mcp<br/>tool: store_memory<br/>?api_token=TOKEN
+    MCPBridge->>MCPBridge: Extract token<br/>getAuthToken(req)
+    MCPBridge->>FlaskAPI: POST /memory<br/>Authorization: Bearer TOKEN
+    FlaskAPI->>DB: Store memory
+    DB-->>FlaskAPI: Success
+    FlaskAPI-->>MCPBridge: 201 Created
+    MCPBridge-->>CloudClient: JSON-RPC response
+
+    Note over LocalClient,DB: Direct HTTP Flow
+    LocalClient->>FlaskAPI: POST /memory<br/>Authorization: Bearer TOKEN
+    FlaskAPI->>DB: Store memory
+    DB-->>FlaskAPI: Success
+    FlaskAPI-->>LocalClient: 201 Created

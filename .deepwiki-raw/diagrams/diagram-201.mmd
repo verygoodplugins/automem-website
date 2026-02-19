@@ -1,0 +1,13 @@
+graph LR
+    Client["Client Request"]
+    APIAuth["API Token Validation"]
+    AdminAuth["Admin Token Validation"]
+    Execute["Execute Admin Operation"]
+    
+    Client -->|"Authorization: Bearer"| APIAuth
+    Client -->|"X-Admin-Token"| AdminAuth
+    APIAuth -->|Valid| AdminAuth
+    AdminAuth -->|Valid| Execute
+    
+    APIAuth -->|Invalid| Deny401["401 Unauthorized"]
+    AdminAuth -->|Invalid| Deny401

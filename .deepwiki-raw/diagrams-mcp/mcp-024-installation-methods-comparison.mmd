@@ -1,0 +1,44 @@
+graph TB
+    START["User wants Cursor + AutoMem"]
+    
+    START --> METHOD_CHOICE{"Choose Method"}
+    
+    METHOD_CHOICE -->|"Quick"| DEEPLINK["One-Click Deeplink"]
+    METHOD_CHOICE -->|"Comprehensive"| CLI["CLI Installer"]
+    
+    subgraph "One-Click Path"
+        DEEPLINK --> DL_CLICK["Click deeplink button<br/>cursor://...mcp/install"]
+        DL_CLICK --> DL_INSTALL["Cursor auto-adds to<br/>~/.cursor/mcp.json"]
+        DL_INSTALL --> DL_MANUAL["User manually updates<br/>AUTOMEM_ENDPOINT"]
+        DL_MANUAL --> DL_RESTART["Restart Cursor"]
+        DL_RESTART --> DL_DONE["✅ MCP Server Active"]
+    end
+    
+    subgraph "CLI Path"
+        CLI --> CLI_DETECT["applyCursorSetup()<br/>src/cli/cursor.ts:241"]
+        CLI_DETECT --> CLI_PROJECT["detectProjectName()<br/>package.json or git remote"]
+        CLI_PROJECT --> CLI_VERSION["Check existing .mdc version<br/>extractMdcVersion()"]
+        CLI_VERSION --> VERSION_DECISION{"Version Check"}
+        
+        VERSION_DECISION -->|"Up to date"| SKIP["Skip update<br/>checkCursorMcpConfigured()"]
+        VERSION_DECISION -->|"New available"| PROMPT["Prompt user<br/>promptUser() if interactive"]
+        VERSION_DECISION -->|"None found"| INSTALL_NEW["Install new"]
+        
+        PROMPT --> UPDATE_DECISION{"Update?"}
+        UPDATE_DECISION -->|"Yes"| INSTALL_NEW
+        UPDATE_DECISION -->|"No"| SKIP
+        
+        INSTALL_NEW --> CLI_TEMPLATE["Load automem.mdc.template<br/>replaceTemplateVars()"]
+        CLI_TEMPLATE --> CLI_WRITE["writeFileWithBackup()<br/>.cursor/rules/automem.mdc"]
+        CLI_WRITE --> CLI_MCP_CHECK["detectCursorAutoMemServerName()<br/>Check ~/.cursor/mcp.json"]
+        
+        SKIP --> CLI_MCP_CHECK
+        
+        CLI_MCP_CHECK --> MCP_STATUS{"MCP<br/>Configured?"}
+        MCP_STATUS -->|"Yes"| CLI_COMPLETE["✅ Setup Complete"]
+        MCP_STATUS -->|"No"| CLI_WARN["⚠️ Print config snippet<br/>User must add manually"]
+        CLI_WARN --> CLI_COMPLETE
+    end
+    
+    DL_DONE --> USAGE["Cursor uses memory tools"]
+    CLI_COMPLETE --> USAGE

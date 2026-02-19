@@ -1,0 +1,43 @@
+stateDiagram-v2
+    [*] --> EntryPoint: "npm exec or npx"
+    
+    EntryPoint --> ModeDetection: "Parse argv[2]"
+    
+    ModeDetection --> CLIMode: "command present"
+    ModeDetection --> ServerMode: "no command"
+    
+    CLIMode --> Setup: "setup"
+    CLIMode --> Config: "config"
+    CLIMode --> Cursor: "cursor"
+    CLIMode --> ClaudeCode: "claude-code"
+    CLIMode --> Codex: "codex"
+    CLIMode --> OpenClaw: "openclaw"
+    CLIMode --> Migrate: "migrate"
+    CLIMode --> Uninstall: "uninstall"
+    CLIMode --> Queue: "queue"
+    CLIMode --> Recall: "recall"
+    
+    Setup --> [*]: "process.exit(0)"
+    Config --> [*]: "process.exit(0)"
+    Cursor --> [*]: "process.exit(0)"
+    ClaudeCode --> [*]: "process.exit(0)"
+    Codex --> [*]: "process.exit(0)"
+    OpenClaw --> [*]: "process.exit(0)"
+    Migrate --> [*]: "process.exit(0)"
+    Uninstall --> [*]: "process.exit(0)"
+    Queue --> [*]: "process.exit(0)"
+    Recall --> [*]: "process.exit(0)"
+    
+    ServerMode --> InitLogging: "Redirect to stderr"
+    InitLogging --> SetProcessTitle: "AUTOMEM_PROCESS_TAG"
+    SetProcessTitle --> LoadEnv: "dotenv.config()"
+    LoadEnv --> CreateClient: "new AutoMemClient()"
+    CreateClient --> CreateServer: "new Server()"
+    CreateServer --> RegisterHandlers: "ListTools, CallTool"
+    RegisterHandlers --> InstallGuards: "installStdioErrorGuards()"
+    InstallGuards --> ConnectTransport: "server.connect(transport)"
+    ConnectTransport --> Running: "Await requests"
+    
+    Running --> Running: "Handle tool calls"
+    Running --> [*]: "EPIPE/ECONNRESET"
+    Running --> [*]: "Fatal error"

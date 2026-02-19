@@ -1,0 +1,29 @@
+graph LR
+    subgraph Platform_Config["Platform Configuration"]
+        CD_JSON["claude_desktop_config.json<br/>~/.config/Claude/"]
+        CURSOR_MCP["mcp.json<br/>~/.cursor/"]
+        CODEX_TOML["config.toml<br/>~/.codex/"]
+        COPILOT_JSON["MCP configuration<br/>GitHub repo settings"]
+    end
+    
+    subgraph Rule_Files["Memory-First Rules"]
+        CURSOR_MDC["automem.mdc<br/>.cursor/rules/"]
+        CLAUDE_MD["CLAUDE.md<br/>~/.claude/"]
+        AGENTS_MD["AGENTS.md<br/>project root"]
+    end
+    
+    subgraph MCP_Server["MCP Server Process"]
+        NPX["npx -y<br/>@verygoodplugins/mcp-automem"]
+        SERVER_PROC["Server Mode<br/>stdio transport"]
+    end
+    
+    CD_JSON -->|"Launch command"| NPX
+    CURSOR_MCP -->|"Launch command"| NPX
+    CODEX_TOML -->|"Launch command"| NPX
+    COPILOT_JSON -->|"Launch command"| NPX
+    
+    NPX --> SERVER_PROC
+    
+    CURSOR_MDC -.->|"Guides behavior"| SERVER_PROC
+    CLAUDE_MD -.->|"Guides behavior"| SERVER_PROC
+    AGENTS_MD -.->|"Guides behavior"| SERVER_PROC

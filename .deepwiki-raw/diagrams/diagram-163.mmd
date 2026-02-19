@@ -1,0 +1,40 @@
+graph TB
+    Query["Query Input"]
+    
+    subgraph VectorSearch["Vector Search (Qdrant)"]
+        VectorComp["Vector Component<br/>Weight: SEARCH_WEIGHT_VECTOR<br/>Cosine similarity score"]
+    end
+    
+    subgraph KeywordSearch["Keyword Search (FalkorDB)"]
+        KeywordComp["Keyword Component<br/>Weight: SEARCH_WEIGHT_KEYWORD<br/>TF-IDF + phrase matching"]
+        ExactComp["Exact Component<br/>Weight: SEARCH_WEIGHT_EXACT<br/>Direct content overlap"]
+    end
+    
+    subgraph MetadataScoring["Metadata Scoring"]
+        ImportanceComp["Importance Component<br/>Weight: SEARCH_WEIGHT_IMPORTANCE<br/>User-assigned priority"]
+        ConfidenceComp["Confidence Component<br/>Weight: SEARCH_WEIGHT_CONFIDENCE<br/>Classification confidence"]
+        RecencyComp["Recency Component<br/>Weight: SEARCH_WEIGHT_RECENCY<br/>Freshness boost"]
+        TagComp["Tag Component<br/>Weight: SEARCH_WEIGHT_TAG<br/>Tag overlap score"]
+    end
+    
+    subgraph ContextScoring["Context Scoring"]
+        RelationComp["Relation Component<br/>Computed from graph edges"]
+        TemporalComp["Temporal Component<br/>Time alignment score"]
+    end
+    
+    FinalScore["Final Weighted Score<br/>Sum of all components"]
+    
+    Query --> VectorSearch
+    Query --> KeywordSearch
+    Query --> MetadataScoring
+    Query --> ContextScoring
+    
+    VectorComp --> FinalScore
+    KeywordComp --> FinalScore
+    ExactComp --> FinalScore
+    ImportanceComp --> FinalScore
+    ConfidenceComp --> FinalScore
+    RecencyComp --> FinalScore
+    TagComp --> FinalScore
+    RelationComp --> FinalScore
+    TemporalComp --> FinalScore

@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Hook as "Hook Script"
+    participant Queue as "memory-queue.jsonl"
+    participant Processor as "drain-queue.sh"
+    participant CLI as "npx mcp-automem queue"
+    participant Client as "AutoMemClient"
+    participant API as "AutoMem API"
+    
+    Note over Hook,Queue: Event Capture Phase
+    Hook->>Queue: Append JSONL line
+    Hook->>Queue: Append JSONL line
+    Hook->>Queue: Append JSONL line
+    
+    Note over Processor,CLI: Processing Phase (Session End or Manual)
+    Processor->>CLI: Execute queue command
+    CLI->>Queue: Read all lines
+    CLI->>Queue: Parse JSONL
+    
+    loop For each memory
+        CLI->>Client: storeMemory(entry)
+        Client->>API: POST /memory
+        API-->>Client: {memory_id}
+        Client-->>CLI: Success
+    end
+    
+    CLI->>Queue: Delete file
+    CLI-->>Processor: Complete

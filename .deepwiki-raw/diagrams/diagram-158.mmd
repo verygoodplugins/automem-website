@@ -1,0 +1,16 @@
+graph LR
+    Input["tags=['slack:channel', 'deployment']<br/>tag_match='prefix'<br/>tag_mode='any'"]
+    
+    GraphFilter["_build_graph_tag_predicate()<br/>Generate Cypher WHERE clause"]
+    
+    QdrantFilter["_build_qdrant_tag_filter()<br/>Generate qdrant_models.Filter"]
+    
+    CypherWHERE["WHERE ANY(req IN $tag_filters<br/>WHERE req IN m.tag_prefixes)"]
+    
+    QdrantMatch["Filter(must=[<br/>FieldCondition(key='tag_prefixes',<br/>match=MatchAny(any=tags))<br/>])"]
+    
+    Input --> GraphFilter
+    Input --> QdrantFilter
+    
+    GraphFilter --> CypherWHERE
+    QdrantFilter --> QdrantMatch

@@ -1,0 +1,18 @@
+graph TB
+    subgraph "~/.codex/config.toml"
+        ROOT["[mcp_servers.memory]<br/>Server definition"]
+        CMD["command = 'npx'"]
+        ARGS["args = ['-y', '@verygoodplugins/mcp-automem']"]
+        ENV_SECTION["[mcp_servers.memory.env]<br/>Environment variables"]
+        ENDPOINT["AUTOMEM_ENDPOINT = 'http://...'"]
+        KEY["AUTOMEM_API_KEY = '...'"]
+    end
+    
+    ROOT --> CMD
+    ROOT --> ARGS
+    ROOT --> ENV_SECTION
+    ENV_SECTION --> ENDPOINT
+    ENV_SECTION --> KEY
+    
+    style ROOT fill:#f9f9f9
+    style ENV_SECTION fill:#f9f9f9

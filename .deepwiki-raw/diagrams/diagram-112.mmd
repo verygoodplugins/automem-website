@@ -1,0 +1,51 @@
+graph TB
+    Start["init_embedding_provider()"]
+    CheckMode{"EMBEDDING_PROVIDER<br/>config value"}
+    
+    AutoMode["Mode: auto<br/>(default)"]
+    ExplicitMode["Mode: explicit<br/>(voyage/openai/local/ollama/placeholder)"]
+    
+    TryVoyage{"VOYAGE_API_KEY<br/>set?"}
+    TryOpenAI{"OPENAI_API_KEY<br/>set?"}
+    TryFastEmbed{"FastEmbed<br/>available?"}
+    TryOllama{"Ollama<br/>reachable?"}
+    FallbackPlaceholder["Placeholder<br/>Always available"]
+    
+    UseVoyage["VoyageEmbeddingProvider<br/>voyage-4 or voyage-4-large"]
+    UseOpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small/large"]
+    UseFastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5"]
+    UseOllama["OllamaEmbeddingProvider<br/>nomic-embed-text"]
+    UsePlaceholder["PlaceholderEmbeddingProvider<br/>Hash-based vectors"]
+    
+    ExplicitVoyage["Force Voyage<br/>Fail if key missing"]
+    ExplicitOpenAI["Force OpenAI<br/>Fail if key missing"]
+    ExplicitLocal["Force FastEmbed<br/>Fail if unavailable"]
+    ExplicitOllama["Force Ollama<br/>Fail if unreachable"]
+    ExplicitPlaceholder["Force Placeholder<br/>Always succeeds"]
+    
+    Start --> CheckMode
+    CheckMode -->|"auto or unset"| AutoMode
+    CheckMode -->|"explicit"| ExplicitMode
+    
+    AutoMode --> TryVoyage
+    TryVoyage -->|"Yes"| UseVoyage
+    TryVoyage -->|"No"| TryOpenAI
+    TryOpenAI -->|"Yes"| UseOpenAI
+    TryOpenAI -->|"No"| TryFastEmbed
+    TryFastEmbed -->|"Yes"| UseFastEmbed
+    TryFastEmbed -->|"No"| TryOllama
+    TryOllama -->|"Yes"| UseOllama
+    TryOllama -->|"No"| FallbackPlaceholder
+    FallbackPlaceholder --> UsePlaceholder
+    
+    ExplicitMode -->|"voyage"| ExplicitVoyage
+    ExplicitMode -->|"openai"| ExplicitOpenAI
+    ExplicitMode -->|"local"| ExplicitLocal
+    ExplicitMode -->|"ollama"| ExplicitOllama
+    ExplicitMode -->|"placeholder"| ExplicitPlaceholder
+    
+    ExplicitVoyage --> UseVoyage
+    ExplicitOpenAI --> UseOpenAI
+    ExplicitLocal --> UseFastEmbed
+    ExplicitOllama --> UseOllama
+    ExplicitPlaceholder --> UsePlaceholder

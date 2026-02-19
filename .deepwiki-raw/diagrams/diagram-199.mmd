@@ -1,0 +1,34 @@
+graph LR
+    POST["POST /memory"]
+    
+    subgraph "Synchronous Path"
+        Validate["Validate payload<br/>~1ms"]
+        Classify["Classify type<br/>~5ms regex<br/>~200ms LLM"]
+        FalkorWrite["FalkorDB MERGE<br/>~10-50ms"]
+        QdrantWrite["Qdrant upsert<br/>~20-100ms"]
+        Response["201 Created<br/>Total: ~50-400ms"]
+    end
+    
+    subgraph "Asynchronous Path"
+        EnrichQueue["enrichment_queue"]
+        EmbedQueue["embedding_queue"]
+        
+        Entities["Extract entities<br/>spaCy NLP"]
+        Temporal["Create PRECEDED_BY<br/>FalkorDB query"]
+        Semantic["Find SIMILAR_TO<br/>Qdrant search"]
+        Patterns["Detect patterns<br/>EXEMPLIFIES edges"]
+    end
+    
+    POST --> Validate
+    Validate --> Classify
+    Classify --> FalkorWrite
+    FalkorWrite --> QdrantWrite
+    QdrantWrite --> Response
+    
+    FalkorWrite --> EnrichQueue
+    FalkorWrite --> EmbedQueue
+    
+    EnrichQueue --> Entities
+    EnrichQueue --> Temporal
+    EnrichQueue --> Semantic
+    EnrichQueue --> Patterns

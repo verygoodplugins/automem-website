@@ -1,0 +1,22 @@
+graph TB
+    Request["GET /memory/by-tag?tags=A,B&limit=N"]
+    
+    ParseTags["_normalize_tag_list(tags)<br/>Split comma-separated,<br/>flatten arrays"]
+    
+    VectorQuery["_vector_filter_only_tag_search()<br/>Qdrant scroll with tag filter"]
+    
+    GraphQuery["Cypher query:<br/>MATCH (m:Memory)<br/>WHERE tag IN m.tags<br/>ORDER BY importance, timestamp"]
+    
+    FetchRelations["_fetch_relations()<br/>Load connected memories"]
+    
+    FormatResults["Format as recall-style response"]
+    
+    Request --> ParseTags
+    
+    ParseTags --> VectorQuery
+    ParseTags --> GraphQuery
+    
+    VectorQuery --> FetchRelations
+    GraphQuery --> FetchRelations
+    
+    FetchRelations --> FormatResults

@@ -1,0 +1,26 @@
+graph TB
+    subgraph "ReadAgent Episodic Memory"
+        R1["Temporal Chunking<br/>(Session boundaries)"]
+        R2["Sequential Access<br/>(Time-ordered retrieval)"]
+        R3["Episode Compression<br/>(Summarize old sessions)"]
+    end
+    
+    subgraph "AutoMem Implementation"
+        A1["memory.timestamp<br/>ISO 8601 timestamps<br/>_parse_time_expression()"]
+        A2["OCCURRED_BEFORE edges<br/>Temporal relationships<br/>Recency scoring"]
+        A3["ConsolidationScheduler<br/>decay_memory_relevance()<br/>Archive old memories"]
+    end
+    
+    R1 --> A1
+    R2 --> A2
+    R3 --> A3
+    
+    subgraph "Code Components"
+        C1["app.py:363-425<br/>_parse_time_expression()"]
+        C2["app.py:1745-2063<br/>Enrichment temporal links"]
+        C3["consolidation.py:261-340<br/>Decay task"]
+    end
+    
+    A1 --> C1
+    A2 --> C2
+    A3 --> C3

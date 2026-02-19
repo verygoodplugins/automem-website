@@ -1,0 +1,15 @@
+graph TB
+    RecallTool["recall_memory()"]
+    
+    RecallTool --> Strategy1["Semantic Search<br/>(Qdrant vectors)"]
+    RecallTool --> Strategy2["Keyword Search<br/>(FalkorDB properties)"]
+    RecallTool --> Strategy3["Tag Filtering<br/>(FalkorDB labels)"]
+    RecallTool --> Strategy4["Time Filtering<br/>(Timestamp range)"]
+    
+    Strategy1 --> Merge["Merge & Deduplicate"]
+    Strategy2 --> Merge
+    Strategy3 --> Merge
+    Strategy4 --> Merge
+    
+    Merge --> Sort["Sort by final_score"]
+    Sort --> Results["RecallResult"]

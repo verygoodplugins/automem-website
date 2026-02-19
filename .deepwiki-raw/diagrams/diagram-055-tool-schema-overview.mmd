@@ -1,0 +1,27 @@
+graph TB
+    subgraph tools["MCP Tools (buildMcpServer)"]
+        direction TB
+        
+        T1["store_memory<br/>Required: content<br/>Optional: tags, importance,<br/>embedding, metadata, timestamps"]
+        T2["recall_memory<br/>Optional: query, queries,<br/>embedding, limit, sort,<br/>time filters, tags,<br/>expand options, context hints"]
+        T3["associate_memories<br/>Required: memory1_id,<br/>memory2_id, type, strength"]
+        T4["update_memory<br/>Required: memory_id<br/>Optional: content, tags,<br/>importance, metadata, timestamps"]
+        T5["delete_memory<br/>Required: memory_id"]
+        T6["check_database_health<br/>No parameters"]
+    end
+    
+    subgraph schemas["Input Schemas"]
+        S1["type: object<br/>properties: {content, tags[],<br/>importance, embedding[], ...}<br/>required: ['content']"]
+        S2["type: object<br/>properties: {query, queries[],<br/>embedding[], limit, sort,<br/>expand_relations, expand_entities,<br/>context, language, ...}"]
+        S3["type: object<br/>properties: {memory1_id,<br/>memory2_id, type, strength}<br/>required: all"]
+        S4["type: object<br/>properties: {memory_id,<br/>content, tags[], importance, ...}<br/>required: ['memory_id']"]
+        S5["type: object<br/>properties: {memory_id}<br/>required: ['memory_id']"]
+        S6["type: object<br/>properties: {}"]
+    end
+    
+    T1 --- S1
+    T2 --- S2
+    T3 --- S3
+    T4 --- S4
+    T5 --- S5
+    T6 --- S6

@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant GHA as "GitHub Actions<br/>npm-publish Job"
+    participant NPM as "npm Registry"
+    participant TP as "Trusted Publishing<br/>OIDC Provider"
+    
+    Note over GHA,TP: Release Created Event
+    GHA->>GHA: "actions/checkout@v4"
+    GHA->>GHA: "actions/setup-node@v4<br/>registry-url=npm"
+    GHA->>GHA: "npm ci"
+    GHA->>GHA: "npm run build"
+    GHA->>GHA: "npm test"
+    
+    Note over GHA,TP: Authentication Phase
+    GHA->>TP: "Request OIDC Token<br/>id-token: write"
+    TP-->>GHA: "JWT Token<br/>(GitHub-issued)"
+    
+    Note over GHA,NPM: Publishing Phase
+    GHA->>NPM: "npm publish --provenance<br/>with OIDC Token"
+    NPM->>NPM: "Verify GitHub OIDC<br/>Check Trusted Publisher"
+    NPM-->>GHA: "Package Published<br/>with Provenance Data"

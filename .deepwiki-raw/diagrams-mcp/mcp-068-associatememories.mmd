@@ -1,0 +1,7 @@
+graph TB
+    INPUT["AssociateMemoryArgs<br/>{memory1_id, memory2_id,<br/>type, strength}"]
+    
+    INPUT --> VALIDATE["Required fields:<br/>all four parameters"]
+    VALIDATE --> POST["POST /associate"]
+    POST --> RESPONSE["Response<br/>{message}"]
+    RESPONSE --> OUTPUT["{success: true, message}"]

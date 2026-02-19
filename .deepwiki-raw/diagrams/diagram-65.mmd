@@ -1,0 +1,37 @@
+flowchart TD
+    Query["User Query:<br/>'Why boring tech for Kafka?'"]
+    
+    subgraph initial ["Initial Recall"]
+        Seed1["Seed Memory 1:<br/>PostgreSQL migration<br/>score: 0.85<br/>DERIVED_FROM: ???"]
+        Seed2["Seed Memory 2:<br/>Kafka vs RabbitMQ<br/>score: 0.82<br/>DERIVED_FROM: ???"]
+    end
+    
+    subgraph bridge ["Bridge Discovery"]
+        FetchBoth["_fetch_relations(Seed1)<br/>_fetch_relations(Seed2)"]
+        FindCommon["Find common targets<br/>Intersection of relation IDs"]
+        BridgeMem["Bridge Memory:<br/>'Team prefers boring technology'<br/>Pattern type: architectural-philosophy"]
+    end
+    
+    subgraph scoring ["Bridge Scoring"]
+        SumStrength["Bridge score =<br/>relation_strength(Seed1→Bridge)<br/>+ relation_strength(Seed2→Bridge)"]
+        MinFilter["Filter by:<br/>expand_min_strength<br/>expand_min_importance"]
+    end
+    
+    subgraph final ["Final Results"]
+        Combined["Combined results:<br/>1. Seed memories<br/>2. Bridge memories<br/>3. Other expansions"]
+        LimitApply["Apply RECALL_EXPANSION_LIMIT<br/>Default: 25"]
+    end
+    
+    FinalResults["Results with bridges<br/>explaining connections"]
+    
+    Query --> Seed1
+    Query --> Seed2
+    Seed1 --> FetchBoth
+    Seed2 --> FetchBoth
+    FetchBoth --> FindCommon
+    FindCommon --> BridgeMem
+    BridgeMem --> SumStrength
+    SumStrength --> MinFilter
+    MinFilter --> Combined
+    Combined --> LimitApply
+    LimitApply --> FinalResults

@@ -1,0 +1,45 @@
+graph TB
+    START["checkCursorMcpConfigured()"]
+    
+    START --> GET_PATH["getCursorMcpConfigPath()<br/>~/.cursor/mcp.json"]
+    
+    GET_PATH --> DETECT["detectCursorAutoMemServerName()"]
+    
+    DETECT --> EXISTS{"Config file<br/>exists?"}
+    
+    EXISTS -->|"No"| RETURN_UNCONFIGURED["Return:<br/>{configured: false,<br/>configPath: path}"]
+    EXISTS -->|"Yes"| PARSE["JSON.parse(config)"]
+    
+    PARSE --> HAS_SERVERS{"mcpServers<br/>key exists?"}
+    
+    HAS_SERVERS -->|"No"| RETURN_UNCONFIGURED
+    HAS_SERVERS -->|"Yes"| CHECK_PREFERRED["Check preferred names:<br/>memory, automem"]
+    
+    CHECK_PREFERRED --> FOUND_PREFERRED{"Preferred name<br/>found?"}
+    
+    FOUND_PREFERRED -->|"Yes"| VERIFY_PREFERRED["isCursorAutoMemServerConfig()<br/>Verify args/env"]
+    FOUND_PREFERRED -->|"No"| SCAN_ALL["Scan all server configs"]
+    
+    VERIFY_PREFERRED --> IS_AUTOMEM{"Is AutoMem<br/>config?"}
+    
+    IS_AUTOMEM -->|"Yes"| RETURN_VERIFIED["Return:<br/>{configured: true,<br/>serverName: name,<br/>verified: true}"]
+    IS_AUTOMEM -->|"No"| SCAN_ALL
+    
+    SCAN_ALL --> LOOP["For each server config"]
+    
+    LOOP --> CHECK_ARGS{"Args contain<br/>mcp-automem?"}
+    LOOP --> CHECK_ENV{"Env has<br/>AUTOMEM_*?"}
+    
+    CHECK_ARGS -->|"Yes"| RETURN_VERIFIED
+    CHECK_ENV -->|"Yes"| RETURN_VERIFIED
+    
+    CHECK_ARGS -->|"No"| NEXT["Next server"]
+    CHECK_ENV -->|"No"| NEXT
+    
+    NEXT --> MORE{"More<br/>servers?"}
+    MORE -->|"Yes"| LOOP
+    MORE -->|"No"| FALLBACK["Fallback: Check if<br/>memory or automem key exists"]
+    
+    FALLBACK --> FALLBACK_EXISTS{"Key<br/>exists?"}
+    FALLBACK_EXISTS -->|"Yes"| RETURN_UNVERIFIED["Return:<br/>{configured: false,<br/>serverName: name,<br/>verified: false}"]
+    FALLBACK_EXISTS -->|"No"| RETURN_UNCONFIGURED

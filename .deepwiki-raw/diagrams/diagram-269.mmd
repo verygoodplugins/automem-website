@@ -1,0 +1,34 @@
+graph LR
+    AppPy["app.py"]
+    ConsPy["consolidation.py"]
+    
+    subgraph "Standard Library"
+        OS["os, sys, json, logging"]
+        Threading["threading, queue"]
+        DateTime["datetime, timezone"]
+    end
+    
+    subgraph "Third-Party"
+        Flask["flask"]
+        FalkorDB["falkordb"]
+        Qdrant["qdrant_client"]
+        OpenAI["openai"]
+        Spacy["spacy (optional)"]
+        Dotenv["python-dotenv"]
+    end
+    
+    AppPy -->|"imports"| ConsPy
+    AppPy -->|"uses"| Flask
+    AppPy -->|"uses"| FalkorDB
+    AppPy -->|"uses"| Qdrant
+    AppPy -->|"uses"| OpenAI
+    AppPy -->|"uses"| Spacy
+    AppPy -->|"uses"| Dotenv
+    AppPy -->|"uses"| Threading
+    
+    ConsPy -->|"uses"| FalkorDB
+    ConsPy -->|"uses"| Qdrant
+    ConsPy -->|"does NOT import"| Flask
+    
+    ConsPy -->|"uses"| DateTime
+    ConsPy -->|"uses"| OS

@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant Client
+    participant API as "app.py<br/>/health"
+    participant Falkor as "FalkorDB<br/>redis_ping()"
+    participant Qdrant as "Qdrant<br/>client.get_collections()"
+
+    Client->>API: GET /health
+    
+    API->>Falkor: Test connection<br/>redis_ping()
+    alt FalkorDB Available
+        Falkor-->>API: PONG
+        API->>API: Set falkordb: connected
+    else FalkorDB Unavailable
+        Falkor-->>API: Exception
+        API->>API: Set falkordb: unavailable
+        API-->>Client: 503 Service Unavailable
+    end
+
+    API->>Qdrant: Test connection<br/>get_collections()
+    alt Qdrant Available
+        Qdrant-->>API: Collections list
+        API->>API: Set qdrant: connected
+    else Qdrant Unavailable
+        Qdrant-->>API: Exception
+        API->>API: Set qdrant: unavailable<br/>(continue anyway)
+    end
+
+    API->>Falkor: Count memories<br/>MATCH (m:Memory) RETURN count(m)
+    Falkor-->>API: count
+
+    API->>API: Check enrichment queue<br/>ServiceState.enrichment_queue
+    
+    API-->>Client: 200 OK<br/>{status, falkordb, qdrant,<br/>memory_count, enrichment}

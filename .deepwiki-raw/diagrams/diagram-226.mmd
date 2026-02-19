@@ -1,0 +1,32 @@
+graph TB
+    subgraph "Railway Internal Network"
+        MemService["memory-service<br/>Container"]
+        FalkorService["falkordb<br/>Container"]
+        MCPService["mcp-sse-server<br/>Container"]
+        
+        MemDomain["memory-service.railway.internal<br/>IPv6: fd12:ca03:..."]
+        FalkorDomain["falkordb.railway.internal<br/>IPv6: fd12:ca03:..."]
+    end
+    
+    subgraph "Public Internet"
+        Client["External Client<br/>(Browser, API)"]
+        PublicDomain["automem.up.railway.app<br/>IPv4/IPv6"]
+    end
+    
+    subgraph "Configuration"
+        MemConfig["memory-service vars:<br/>FALKORDB_HOST=falkordb.railway.internal<br/>PORT=8001<br/>Bind to :: (IPv6 dual-stack)"]
+        
+        MCPConfig["mcp-sse-server vars:<br/>AUTOMEM_API_URL=http://memory-service.railway.internal:8001<br/>PORT=8080"]
+    end
+    
+    Client -->|HTTPS| PublicDomain
+    PublicDomain --> MemService
+    
+    MCPService -->|"Internal HTTP<br/>IPv6"| MemDomain
+    MemDomain --> MemService
+    
+    MemService -->|"Internal Redis<br/>IPv6"| FalkorDomain
+    FalkorDomain --> FalkorService
+    
+    MemConfig -.->|Configures| MemService
+    MCPConfig -.->|Configures| MCPService

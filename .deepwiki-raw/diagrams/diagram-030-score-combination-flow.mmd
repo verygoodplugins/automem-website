@@ -1,0 +1,57 @@
+flowchart TD
+    subgraph sources ["Data Source Scores"]
+        VS["Vector Search<br/>Qdrant similarity<br/>0.0 - 1.0"]
+        KS["Keyword Search<br/>TF-IDF score<br/>Normalized"]
+        GS["Graph Score<br/>Importance fallback"]
+    end
+    
+    subgraph weights ["Weight Application"]
+        VW["× SEARCH_WEIGHT_VECTOR<br/>0.25"]
+        KW["× SEARCH_WEIGHT_KEYWORD<br/>0.15"]
+        RW["× relation_strength<br/>0.25"]
+        CW["× content_overlap<br/>0.25"]
+        TW["× SEARCH_WEIGHT_TEMPORAL<br/>0.15"]
+        TagW["× SEARCH_WEIGHT_TAG<br/>0.10"]
+        IW["× SEARCH_WEIGHT_IMPORTANCE<br/>0.05"]
+        ConfW["× SEARCH_WEIGHT_CONFIDENCE<br/>0.05"]
+        RecW["× SEARCH_WEIGHT_RECENCY<br/>0.10"]
+    end
+    
+    subgraph combination ["Score Combination"]
+        Sum["SUM all weighted<br/>components"]
+        Normalize["Normalize to 0.0 - 1.0"]
+    end
+    
+    subgraph output ["Final Ranking"]
+        Sort["Sort by final_score DESC"]
+        Dedup["Deduplicate by memory_id<br/>using seen_ids set"]
+        Limit["Apply limit parameter"]
+    end
+    
+    Results["Ranked results array"]
+    
+    VS --> VW
+    KS --> KW
+    GS --> RW
+    VS --> CW
+    VS --> TW
+    VS --> TagW
+    VS --> IW
+    VS --> ConfW
+    VS --> RecW
+    
+    VW --> Sum
+    KW --> Sum
+    RW --> Sum
+    CW --> Sum
+    TW --> Sum
+    TagW --> Sum
+    IW --> Sum
+    ConfW --> Sum
+    RecW --> Sum
+    
+    Sum --> Normalize
+    Normalize --> Sort
+    Sort --> Dedup
+    Dedup --> Limit
+    Limit --> Results

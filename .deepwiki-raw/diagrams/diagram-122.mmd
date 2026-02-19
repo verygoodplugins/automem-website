@@ -1,0 +1,17 @@
+classDiagram
+    class ConsolidationScheduler {
+        +MemoryConsolidator consolidator
+        +Dict schedules
+        +List history
+        +should_run(task_type) bool
+        +run_scheduled_tasks(force, decay_threshold) List~Dict~
+        +get_next_runs() Dict~str_str~
+    }
+    
+    class ScheduleEntry {
+        +timedelta interval
+        +datetime last_run
+    }
+    
+    ConsolidationScheduler --> MemoryConsolidator
+    ConsolidationScheduler --> ScheduleEntry : schedules

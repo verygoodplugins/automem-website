@@ -1,0 +1,36 @@
+graph LR
+    subgraph "MCP Tool Schemas"
+        StoreSchema["store_memory<br/>required: content<br/>optional: tags, importance,<br/>metadata, embedding,<br/>timestamps, type, confidence"]
+        RecallSchema["recall_memory<br/>optional: query, queries,<br/>embedding, limit, time_query,<br/>expand_relations, expand_entities,<br/>context, language, active_path"]
+        AssocSchema["associate_memories<br/>required: memory1_id, memory2_id,<br/>type, strength"]
+        UpdateSchema["update_memory<br/>required: memory_id<br/>optional: content, tags,<br/>metadata, timestamps"]
+        DeleteSchema["delete_memory<br/>required: memory_id"]
+        HealthSchema["check_database_health<br/>no parameters"]
+    end
+    
+    subgraph "CallToolRequestSchema Handler"
+        Router["switch(name)<br/>at server.js:356"]
+    end
+    
+    subgraph "AutoMemClient Methods"
+        Store["storeMemory()<br/>POST /memory"]
+        Recall["recallMemory()<br/>GET /recall?query=..."]
+        Assoc["associateMemories()<br/>POST /associate"]
+        Update["updateMemory()<br/>PATCH /memory/{id}"]
+        Delete["deleteMemory()<br/>DELETE /memory/{id}"]
+        Health["checkHealth()<br/>GET /health"]
+    end
+    
+    StoreSchema --> Router
+    RecallSchema --> Router
+    AssocSchema --> Router
+    UpdateSchema --> Router
+    DeleteSchema --> Router
+    HealthSchema --> Router
+    
+    Router --> Store
+    Router --> Recall
+    Router --> Assoc
+    Router --> Update
+    Router --> Delete
+    Router --> Health

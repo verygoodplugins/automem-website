@@ -1,0 +1,33 @@
+graph TB
+    subgraph external["External Network (Public Internet)"]
+        Client["API Clients"]
+        GHA["GitHub Actions<br/>Backup Workflow"]
+    end
+
+    subgraph railway["Railway Internal Network (IPv6)"]
+        subgraph dns["DNS Resolution"]
+            Internal["*.railway.internal<br/>RAILWAY_PRIVATE_DOMAIN"]
+            IPv6["fd12:ca03:42be:...:8001"]
+        end
+
+        subgraph services["Services"]
+            API["memory-service<br/>Binds to :: (dual-stack)<br/>app.py:run(host='::')"]
+            DB["falkordb<br/>Binds to :: (Redis default)"]
+        end
+
+        Internal -.->|Resolves to| IPv6
+        IPv6 --> API
+        IPv6 --> DB
+    end
+
+    subgraph public["Public Access"]
+        PublicDomain["Public Domains<br/>RAILWAY_PUBLIC_DOMAIN<br/>*.up.railway.app"]
+        TCPProxy["TCP Proxy (optional)<br/>monorail.proxy.rlwy.net:12345<br/>RAILWAY_TCP_PROXY_DOMAIN<br/>RAILWAY_TCP_PROXY_PORT"]
+    end
+
+    Client -->|HTTPS| PublicDomain
+    PublicDomain --> API
+
+    GHA -->|Cannot access .railway.internal| Internal
+    GHA -->|Must use TCP Proxy| TCPProxy
+    TCPProxy --> DB

@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant Client
+    participant Middleware["require_api_token<br/>Middleware"]
+    participant Route["Flask Route<br/>Handler"]
+    participant FalkorDB["state.memory_graph<br/>FalkorDB"]
+    participant Qdrant["state.qdrant<br/>QdrantClient"]
+    participant Queue["ServiceState<br/>enrichment_queue"]
+
+    Client->>Middleware: "POST /memory<br/>Authorization: Bearer TOKEN"
+    Middleware->>Middleware: "Validate API_TOKEN<br/>(app.py:1229-1250)"
+    
+    alt Invalid Token
+        Middleware-->>Client: "401 Unauthorized"
+    end
+    
+    Middleware->>Route: "Request approved"
+    Route->>Route: "Validate payload<br/>_validate_memory_data()"
+    
+    alt Validation Failed
+        Route-->>Client: "400 Bad Request"
+    end
+    
+    Route->>FalkorDB: "MERGE (m:Memory)<br/>Canonical write"
+    FalkorDB-->>Route: "memory_id"
+    
+    Route->>Qdrant: "upsert(vector, payload)<br/>Best-effort write"
+    
+    Route->>Queue: "enqueue(memory_id)<br/>Async enrichment"
+    
+    Route-->>Client: "201 Created<br/>{status, memory_id}"

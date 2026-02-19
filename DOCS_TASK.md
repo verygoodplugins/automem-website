@@ -99,7 +99,16 @@ DeepWiki renders diagrams client-side — they won't be in the scraped markdown.
 5. **Worker Coordination** (architecture/background-processing.md) — 4 workers with queues and tracking sets
 6. **MCP Bridge Flow** (architecture/mcp-bridge.md) — AI Platform ↔ stdio ↔ MCP Server ↔ HTTP ↔ AutoMem API
 
-Skip diagrams for: platform guides, CLI reference, operations, best practices (text is sufficient).
+Skip diagrams for: platform guides, CLI reference, best practices (text is sufficient).
+
+### Pre-extracted Mermaid Diagrams (NEW)
+228 Mermaid diagrams have been extracted from both DeepWiki wikis:
+- `.deepwiki-raw/diagrams/` — 127 diagrams from automem wiki (see `INDEX.txt`)
+- `.deepwiki-raw/diagrams-mcp/` — 101 diagrams from mcp-automem wiki (see `INDEX.txt`)
+
+Each `.mmd` file contains one diagram. Match diagrams to pages by their heading names in INDEX.txt.
+Include relevant diagrams as ```mermaid code blocks in the corresponding docs pages.
+For architecture and core-concept pages, use multiple diagrams per page — they're already created for you.
 
 ### Other DeepWiki Artifacts to Remove
 
@@ -114,7 +123,7 @@ Skip diagrams for: platform guides, CLI reference, operations, best practices (t
 - Direct, casual but technical. No corporate fluff.
 - Use "you" directly.
 - Include actual code examples, config snippets, and CLI commands.
-- Use Mermaid diagrams ONLY for the 6 key diagrams listed above.
+- Use Mermaid diagrams liberally — 228 pre-extracted diagrams are available (see below).
 - Starlight supports :::note, :::tip, :::caution, :::danger admonitions.
 - Page length depends on the section type (see below).
 

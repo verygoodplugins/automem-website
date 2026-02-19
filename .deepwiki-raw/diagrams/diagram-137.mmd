@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant Handler as "Tool Handler"
+    participant Client as "AutoMemClient"
+    participant Request as "_request(method, path, body)"
+    participant API as "Flask API :8001"
+    
+    Handler->>Client: client.storeMemory({content, tags, ...})
+    Client->>Client: Build request body with all fields
+    Client->>Request: _request('POST', 'memory', body)
+    Request->>Request: Construct URL:<br/>endpoint + '/' + path
+    Request->>Request: Add headers:<br/>Content-Type: application/json<br/>Authorization: Bearer ${apiKey}
+    Request->>API: fetch(url, {method, headers, body})
+    API-->>Request: HTTP response
+    Request->>Request: await res.json()
+    alt Response OK
+        Request-->>Client: Parsed JSON data
+        Client-->>Handler: {memory_id, message}
+    else Response Error
+        Request->>Request: throw Error(data.message || data.detail)
+        Request-->>Handler: Error thrown
+    end

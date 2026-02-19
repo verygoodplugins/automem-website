@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant Client
+    participant RecallAPI as "GET /recall"
+    participant Embeddings as "EmbeddingProvider"
+    participant Qdrant
+    participant FalkorDB as "FalkorDB Graph"
+    participant Scoring as "Scoring Module"
+    
+    Client->>RecallAPI: GET /recall?query=...&tags=...&expand_relations=true
+    
+    alt Has query text
+        RecallAPI->>Embeddings: generate_embedding(query_text)
+        Embeddings-->>RecallAPI: query_vector
+    end
+    
+    par Vector Search
+        RecallAPI->>Qdrant: search(query_vector, tag_filter, limit)
+        Qdrant-->>RecallAPI: vector_candidates with scores
+    and Keyword Search
+        RecallAPI->>FalkorDB: Cypher keyword query<br/>MATCH (m:Memory) WHERE content CONTAINS...
+        FalkorDB-->>RecallAPI: keyword_candidates with scores
+    end
+    
+    RecallAPI->>RecallAPI: Merge candidates<br/>Deduplicate by memory_id
+    
+    loop For each candidate
+        RecallAPI->>FalkorDB: _fetch_relations(memory_id)
+        FalkorDB-->>RecallAPI: relations list
+    end
+    
+    RecallAPI->>Scoring: Apply 9-component scoring<br/>_compute_metadata_score()
+    Scoring-->>RecallAPI: final_scores
+    
+    RecallAPI->>RecallAPI: Sort by score DESC
+    
+    alt expand_relations=true
+        RecallAPI->>FalkorDB: Find bridge memories<br/>Common relation targets
+        FalkorDB-->>RecallAPI: bridge_candidates
+        RecallAPI->>RecallAPI: Filter by expand_min_strength<br/>expand_min_importance
+    end
+    
+    alt expand_entities=true
+        RecallAPI->>RecallAPI: extract_entities(seed_results)
+        RecallAPI->>FalkorDB: Search by entity tags
+        FalkorDB-->>RecallAPI: entity_candidates
+    end
+    
+    RecallAPI->>RecallAPI: Apply RECALL_EXPANSION_LIMIT<br/>Final deduplication
+    
+    RecallAPI->>FalkorDB: UPDATE last_accessed = NOW()
+    
+    RecallAPI-->>Client: JSON response<br/>results, scores, metadata

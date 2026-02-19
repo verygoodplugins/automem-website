@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Client as "ChatGPT/Claude.ai"
+    participant LB as "Railway Load Balancer<br/>HTTPS Termination"
+    participant MCP as "mcp-sse-server<br/>:8080 (public)"
+    participant API as "memory-service<br/>:8001 (internal)"
+    participant DB as "FalkorDB<br/>:6379 (internal)"
+    
+    Client->>LB: HTTPS request to<br/>mcp.up.railway.app/mcp
+    LB->>MCP: HTTP to container :8080
+    MCP->>MCP: getAuthToken(req)<br/>Extract API token
+    MCP->>API: HTTP to<br/>memory-service.railway.internal:8001<br/>Authorization: Bearer TOKEN
+    API->>API: require_api_token middleware
+    API->>DB: Redis protocol to<br/>falkordb.railway.internal:6379
+    DB-->>API: Graph data
+    API-->>MCP: JSON response
+    MCP-->>LB: Format as MCP JSON-RPC
+    LB-->>Client: HTTPS response

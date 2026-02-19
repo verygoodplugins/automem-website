@@ -1,0 +1,13 @@
+graph LR
+    Batch["batch: List[Dict]<br/>(up to 20 jobs)"]
+    Extract["Extract content<br/>text: List[str]"]
+    Generate["_generate_real_embeddings_batch()<br/>OpenAI bulk request"]
+    Embeddings["embeddings: List[List[float]]<br/>(768-dimensional)"]
+    Store["_store_embedding_in_qdrant()<br/>For each (memory_id, embedding)"]
+    Success["Log success<br/>+ stats update"]
+    
+    Batch --> Extract
+    Extract --> Generate
+    Generate --> Embeddings
+    Embeddings --> Store
+    Store --> Success

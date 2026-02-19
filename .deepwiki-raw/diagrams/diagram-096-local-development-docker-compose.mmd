@@ -1,0 +1,35 @@
+graph TB
+    subgraph host["Host Machine"]
+        Make["make dev<br/>docker-compose up"]
+        
+        subgraph docker["Docker Network<br/>automem_default"]
+            API["memory-service<br/>app.py<br/>localhost:8001"]
+            Falkor["falkordb<br/>localhost:6379"]
+            QdrantLocal["qdrant<br/>localhost:6333"]
+        end
+
+        subgraph volumes["Docker Volumes"]
+            FalkorVol["falkordb_data<br/>/var/lib/falkordb/data"]
+            QdrantVol["qdrant_data<br/>/qdrant/storage"]
+        end
+    end
+
+    subgraph tools["Development Tools"]
+        Curl["curl<br/>localhost:8001"]
+        Python["Python Scripts<br/>scripts/"]
+        Tests["pytest<br/>tests/"]
+    end
+
+    Make --> API
+    Make --> Falkor
+    Make --> QdrantLocal
+
+    API --> Falkor
+    API --> QdrantLocal
+
+    Falkor --> FalkorVol
+    QdrantLocal --> QdrantVol
+
+    Curl --> API
+    Python --> API
+    Tests --> API

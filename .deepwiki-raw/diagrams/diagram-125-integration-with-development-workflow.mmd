@@ -1,0 +1,36 @@
+graph LR
+    subgraph "Developer Workflow"
+        Edit["Edit Python Files"]
+        Format["Run black ."]
+        Check["black --check ."]
+        Commit["git commit"]
+    end
+    
+    Edit --> Format
+    Format --> Check
+    Check -->|"Pass"| Commit
+    Check -->|"Fail"| Format
+    
+    subgraph "Black Behavior"
+        Scan["Scan Python Files"]
+        Parse["Parse AST"]
+        Reformat["Apply Formatting Rules"]
+        Write["Write Formatted Code"]
+        
+        Format --> Scan
+        Scan --> Parse
+        Parse --> Reformat
+        Reformat --> Write
+    end
+    
+    subgraph "Files Formatted"
+        AppPy["app.py"]
+        ConsolPy["consolidation.py"]
+        Scripts["scripts/*.py"]
+        Tests["tests/*.py"]
+    end
+    
+    Scan --> AppPy
+    Scan --> ConsolPy
+    Scan --> Scripts
+    Scan --> Tests

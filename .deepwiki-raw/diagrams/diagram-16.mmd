@@ -1,0 +1,27 @@
+graph TB
+    Root["automem/<br/>(project root)"]
+    
+    subgraph Core["Core Application Files"]
+        App["app.py<br/>Flask API + workers"]
+        Cons["consolidation.py<br/>Background tasks"]
+        Proto["protocols.py<br/>Database abstractions"]
+    end
+    
+    subgraph Config["Configuration"]
+        Env[".env<br/>Local overrides"]
+        ReqProd["requirements.txt<br/>Production deps"]
+        ReqDev["requirements-dev.txt<br/>Dev + test deps"]
+    end
+    
+    subgraph Scripts["Utility Scripts"]
+        Migrate["scripts/migrate_mcp_sqlite.py"]
+        Backup["scripts/backup_automem.py"]
+        Recover["scripts/recover_from_qdrant.py"]
+    end
+    
+    Root --> Core
+    Root --> Config
+    Root --> Scripts
+    
+    App -.->|imports| Cons
+    App -.->|imports| Proto

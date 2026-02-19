@@ -1,0 +1,11 @@
+graph LR
+    AppInit["app.py module load"]
+    CreateQueue["embedding_queue = Queue()"]
+    CreateThread["Thread(target=embedding_worker)"]
+    StartThread["thread.daemon = True<br/>thread.start()"]
+    APIReady["Flask API ready"]
+    
+    AppInit --> CreateQueue
+    CreateQueue --> CreateThread
+    CreateThread --> StartThread
+    StartThread --> APIReady

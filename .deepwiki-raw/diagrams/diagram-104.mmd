@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant API as Flask API
+    participant Queue as enrichment_queue
+    participant Worker as Enrichment Worker
+    participant Graph as FalkorDB
+    participant Vector as Qdrant
+    
+    API->>Queue: enqueue(EnrichmentJob)
+    Note over Queue: Add to enrichment_pending
+    
+    Worker->>Queue: dequeue (blocking)
+    Note over Worker: Move to enrichment_inflight
+    
+    Worker->>Graph: MATCH memory by ID
+    Worker->>Worker: extract_entities(content)
+    Worker->>Worker: generate_summary(content)
+    
+    Worker->>Graph: MATCH recent memories<br/>CREATE PRECEDED_BY edges
+    
+    Worker->>Vector: search(embedding, limit=5, threshold=0.8)
+    Vector-->>Worker: similar_memories
+    Worker->>Graph: CREATE SIMILAR_TO edges<br/>SET strength = cosine_score
+    
+    Worker->>Graph: MATCH memories by type<br/>Detect pattern keywords
+    Worker->>Graph: MERGE Pattern node<br/>CREATE EXEMPLIFIES edges
+    
+    Worker->>Graph: SET enriched=true<br/>SET enriched_at=timestamp<br/>SET metadata.enrichment
+    
+    Note over Worker: Remove from enrichment_inflight
+    Worker->>Queue: record_success

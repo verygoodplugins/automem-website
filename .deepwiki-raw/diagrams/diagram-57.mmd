@@ -1,0 +1,65 @@
+flowchart TD
+    Query["User Query"]
+    
+    subgraph sources ["Data Sources"]
+        Qdrant[("Qdrant<br/>Vector Store<br/>collection: memories")]
+        FalkorDB[("FalkorDB<br/>Graph Store<br/>graph: memories")]
+    end
+    
+    subgraph search ["Search Operations"]
+        VectorSearch["_vector_search()<br/>Semantic similarity<br/>cosine distance"]
+        KeywordSearch["_graph_keyword_search()<br/>Lexical matching<br/>TF-IDF scoring"]
+        TrendingSearch["_graph_trending_results()<br/>High-importance fallback"]
+    end
+    
+    subgraph scoring ["Scoring Components"]
+        Vector["SEARCH_WEIGHT_VECTOR<br/>25%"]
+        Keyword["SEARCH_WEIGHT_KEYWORD<br/>15%"]
+        Relation["Relation strength<br/>25%"]
+        Content["Content overlap<br/>25%"]
+        Temporal["SEARCH_WEIGHT_TEMPORAL<br/>15%"]
+        Tag["SEARCH_WEIGHT_TAG<br/>10%"]
+        Importance["SEARCH_WEIGHT_IMPORTANCE<br/>5%"]
+        Confidence["SEARCH_WEIGHT_CONFIDENCE<br/>5%"]
+        Recency["SEARCH_WEIGHT_RECENCY<br/>10%"]
+    end
+    
+    subgraph expansion ["Optional Expansion"]
+        Bridge["Bridge discovery<br/>Multi-hop graph traversal"]
+        Entity["Entity expansion<br/>Follow entity: tags"]
+    end
+    
+    Results["Ranked Results<br/>Merged and deduplicated"]
+    
+    Query --> VectorSearch
+    Query --> KeywordSearch
+    Query --> TrendingSearch
+    
+    Qdrant --> VectorSearch
+    FalkorDB --> KeywordSearch
+    FalkorDB --> TrendingSearch
+    
+    VectorSearch --> Vector
+    KeywordSearch --> Keyword
+    VectorSearch --> Relation
+    KeywordSearch --> Content
+    Query --> Temporal
+    Query --> Tag
+    Query --> Importance
+    Query --> Confidence
+    Query --> Recency
+    
+    Vector --> Results
+    Keyword --> Results
+    Relation --> Results
+    Content --> Results
+    Temporal --> Results
+    Tag --> Results
+    Importance --> Results
+    Confidence --> Results
+    Recency --> Results
+    
+    Results --> Bridge
+    Results --> Entity
+    Bridge --> Results
+    Entity --> Results

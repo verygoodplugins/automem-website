@@ -1,0 +1,36 @@
+graph TB
+    subgraph "Unit Tests (make test)"
+        UnitConfig["No external services<br/>Mock configuration<br/>Fast execution"]
+        
+        MockFalkor["DummyGraph fixture<br/>In-memory stubs"]
+        MockQdrant["Mock Qdrant client<br/>No network calls"]
+        MockProvider["Mock embedding provider<br/>Deterministic outputs"]
+    end
+    
+    subgraph "Integration Tests (make test-integration)"
+        IntConfig["Real services via Docker<br/>Actual configuration<br/>Comprehensive validation"]
+        
+        DockerServices["docker-compose up<br/>FalkorDB + Qdrant"]
+        RealConfig["Load from .env<br/>or environment"]
+        TestAPICalls["HTTP requests to API<br/>AUTOMEM_TEST_BASE_URL"]
+    end
+    
+    subgraph "Live Tests (make test-live)"
+        LiveConfig["Railway deployment<br/>Production-like environment<br/>Safety checks"]
+        
+        ConfirmPrompt["Interactive confirmation<br/>AUTOMEM_ALLOW_LIVE=1"]
+        RailwayAPI["https://automem.up.railway.app"]
+        CleanupTests["Unique UUIDs<br/>Self-cleaning"]
+    end
+    
+    UnitConfig --> MockFalkor
+    UnitConfig --> MockQdrant
+    UnitConfig --> MockProvider
+    
+    IntConfig --> DockerServices
+    DockerServices --> RealConfig
+    RealConfig --> TestAPICalls
+    
+    LiveConfig --> ConfirmPrompt
+    ConfirmPrompt --> RailwayAPI
+    RailwayAPI --> CleanupTests

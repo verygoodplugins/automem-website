@@ -1,0 +1,40 @@
+graph TB
+    subgraph "Causal & Temporal"
+        M1["Memory: Problem"]
+        M2["Memory: Solution"]
+        M3["Memory: Planning"]
+        M4["Memory: Execution"]
+        
+        M1 -->|LEADS_TO| M2
+        M3 -->|OCCURRED_BEFORE| M4
+    end
+    
+    subgraph "Preference & Pattern"
+        M5["Memory: PostgreSQL Decision"]
+        M6["Memory: MongoDB Evaluation"]
+        M7["Memory: Code Review"]
+        M8["Memory: Best Practice"]
+        
+        M5 -->|PREFERS_OVER| M6
+        M7 -->|EXEMPLIFIES| M8
+    end
+    
+    subgraph "Knowledge Evolution"
+        M9["Memory: Initial Design"]
+        M10["Memory: Final Design"]
+        M11["Memory: Old Docs"]
+        M12["Memory: New Docs"]
+        
+        M9 -->|EVOLVED_INTO| M10
+        M11 -->|INVALIDATED_BY| M12
+    end
+    
+    subgraph "Hierarchical"
+        M13["Memory: User Story"]
+        M14["Memory: Epic"]
+        M15["Memory: Feature Spec"]
+        M16["Memory: Implementation"]
+        
+        M13 -->|PART_OF| M14
+        M16 -->|DERIVED_FROM| M15
+    end

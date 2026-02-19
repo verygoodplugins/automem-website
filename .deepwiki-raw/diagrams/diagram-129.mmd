@@ -1,0 +1,13 @@
+graph LR
+    Client["POST /consolidate<br/>{mode: 'decay',<br/>dry_run: true}"]
+    Auth["Verify ADMIN_API_TOKEN"]
+    Validate["Validate mode<br/>(full, decay, creative,<br/>cluster, forget)"]
+    Execute["consolidator.consolidate()"]
+    Control["Update ConsolidationControl node<br/>(last_run, result)"]
+    Response["200 OK + results"]
+    
+    Client --> Auth
+    Auth --> Validate
+    Validate --> Execute
+    Execute --> Control
+    Control --> Response

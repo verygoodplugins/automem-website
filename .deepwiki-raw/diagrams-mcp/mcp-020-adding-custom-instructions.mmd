@@ -1,0 +1,21 @@
+graph LR
+    subgraph "Claude Desktop UI"
+        SETTINGS["Settings Icon<br/>(bottom-left)"]
+        MENU["Custom Instructions<br/>Menu Option"]
+        EDITOR["Instructions Editor"]
+        SAVE["Save Button"]
+    end
+    
+    subgraph "Instruction Triggers"
+        START["Conversation Start"]
+        CONTENT["Before Creating Content"]
+        DECISION["During Decisions"]
+    end
+    
+    SETTINGS --> MENU
+    MENU --> EDITOR
+    EDITOR --> SAVE
+    
+    SAVE -.->|"Applied to all chats"| START
+    SAVE -.->|"Applied to all chats"| CONTENT
+    SAVE -.->|"Applied to all chats"| DECISION

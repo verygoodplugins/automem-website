@@ -1,0 +1,14 @@
+graph LR
+    UnitTests["make test<br/>Unit tests<br/>DummyGraph mock"]
+    IntegTests["make test-integration<br/>Integration tests<br/>Docker services"]
+    LiveTests["make test-live<br/>Live tests<br/>Railway production"]
+    Benchmark["make test-locomo-live<br/>LoCoMo benchmark<br/>90.53% baseline"]
+    
+    UnitTests --> IntegTests
+    IntegTests --> LiveTests
+    LiveTests --> Benchmark
+
+    style UnitTests fill:#f9f9f9
+    style IntegTests fill:#f9f9f9
+    style LiveTests fill:#f9f9f9
+    style Benchmark fill:#f9f9f9

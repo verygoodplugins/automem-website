@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant Client
+    participant POST_memory as "/memory endpoint"
+    participant Classifier as "MemoryClassifier"
+    participant Graph as "state.memory_graph<br/>(FalkorDB)"
+    participant EnrichQ as "state.enrichment_queue"
+    participant EmbedQ as "state.embedding_queue"
+    participant Qdrant as "state.qdrant<br/>(QdrantClient)"
+    
+    Client->>POST_memory: POST /memory<br/>{content, type?, tags, importance}
+    
+    alt Type Not Provided
+        POST_memory->>Classifier: classify(content)
+        Classifier-->>POST_memory: (type, confidence)
+    end
+    
+    POST_memory->>POST_memory: _normalize_tag_list(tags)
+    POST_memory->>POST_memory: _compute_tag_prefixes(tags)
+    POST_memory->>POST_memory: _normalize_timestamp(timestamp)
+    
+    POST_memory->>Graph: MERGE Memory node<br/>(id, content, type, tags, importance,<br/>timestamp, metadata, confidence)
+    Graph-->>POST_memory: Node created
+    
+    POST_memory->>EnrichQ: enqueue_enrichment(memory_id)
+    
+    alt Embedding Provided
+        POST_memory->>Qdrant: upsert(id, embedding, payload)
+        Qdrant-->>POST_memory: Stored
+    else No Embedding
+        POST_memory->>EmbedQ: Queue for generation
+    end
+    
+    POST_memory-->>Client: 201 Created<br/>{memory_id, type, confidence,<br/>enrichment: "queued"}

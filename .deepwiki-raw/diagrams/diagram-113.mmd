@@ -1,0 +1,12 @@
+graph TB
+    Generate["provider.generate_embeddings_batch(texts)"]
+    Validate{"len(embedding)<br/>== VECTOR_SIZE?"}
+    Store["_store_embedding_in_qdrant()"]
+    FailFast["Raise ValueError<br/>Prevent corruption"]
+    LogWarning["Log dimension mismatch<br/>Continue with FalkorDB"]
+    
+    Generate --> Validate
+    Validate -->|"Match"| Store
+    Validate -->|"Mismatch"| FailFast
+    FailFast --> LogWarning
+    LogWarning -.->|"Graceful degradation"| Store

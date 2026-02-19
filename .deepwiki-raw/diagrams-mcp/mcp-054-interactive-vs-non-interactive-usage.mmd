@@ -1,0 +1,41 @@
+graph TB
+    subgraph Interactive["Interactive: setup command"]
+        I_START["User runs setup"]
+        I_PROMPT1["Prompt for endpoint"]
+        I_PROMPT2["Prompt for API key"]
+        I_WRITE["Write .env"]
+        I_VALIDATE["Validate connection"]
+        I_OUTPUT["Show success + snippets"]
+        
+        I_START --> I_PROMPT1
+        I_PROMPT1 --> I_PROMPT2
+        I_PROMPT2 --> I_WRITE
+        I_WRITE --> I_VALIDATE
+        I_VALIDATE --> I_OUTPUT
+    end
+    
+    subgraph NonInteractive["Non-Interactive: config command"]
+        N_START["User runs config"]
+        N_READ["Read existing env vars"]
+        N_SKIP["Skip validation<br/>(assumed working)"]
+        N_OUTPUT["Print snippets only"]
+        
+        N_START --> N_READ
+        N_READ --> N_SKIP
+        N_SKIP --> N_OUTPUT
+    end
+    
+    subgraph Shared["Shared Components"]
+        ENV_READER["readAutoMemApiKeyFromEnv()<br/>src/env.js"]
+        SNIPPET_GEN["Config snippet generator<br/>Platform-specific formats"]
+    end
+    
+    I_WRITE -.-> ENV_READER
+    N_READ -.-> ENV_READER
+    I_OUTPUT -.-> SNIPPET_GEN
+    N_OUTPUT -.-> SNIPPET_GEN
+    
+    style I_VALIDATE fill:#f9f9f9
+    style N_SKIP fill:#f9f9f9
+    style ENV_READER fill:#f9f9f9
+    style SNIPPET_GEN fill:#f9f9f9

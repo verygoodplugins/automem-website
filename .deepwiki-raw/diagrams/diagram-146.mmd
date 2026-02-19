@@ -1,0 +1,16 @@
+flowchart LR
+    Input["POST /memory<br/>with content"]
+    Check["should_summarize_content()"]
+    OK["len <= SOFT_LIMIT<br/>Store as-is"]
+    Summarize["len > SOFT_LIMIT<br/>len <= HARD_LIMIT<br/>Auto-summarize"]
+    Reject["len > HARD_LIMIT<br/>Reject with 400"]
+    LLM["summarize_content()"]
+    Store["Write to FalkorDB"]
+    
+    Input --> Check
+    Check -->|"'ok'"| OK
+    Check -->|"'summarize'"| Summarize
+    Check -->|"'reject'"| Reject
+    Summarize --> LLM
+    LLM --> Store
+    OK --> Store

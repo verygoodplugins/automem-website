@@ -1,0 +1,33 @@
+graph TB
+    API["Flask API<br/>(app.py)"]
+    
+    subgraph "Background Workers"
+        EnrichQ["Enrichment Queue<br/>Per-memory processing"]
+        EmbedQ["Embedding Queue<br/>Batch generation"]
+        Sched["ConsolidationScheduler<br/>(consolidation.py)"]
+    end
+    
+    subgraph "Consolidation Tasks"
+        Decay["Decay Task<br/>calculate_relevance_score()"]
+        Creative["Creative Task<br/>discover_creative_associations()"]
+        Cluster["Cluster Task<br/>cluster_similar_memories()"]
+        Forget["Forget Task<br/>apply_controlled_forgetting()"]
+    end
+    
+    Falkor[("FalkorDB<br/>memories graph")]
+    Qdrant[("Qdrant<br/>vectors")]
+    
+    API -->|"POST /memory"| EnrichQ
+    API -->|"POST /memory"| EmbedQ
+    API -->|"Starts on init"| Sched
+    
+    Sched -->|"Hourly"| Decay
+    Sched -->|"Hourly"| Creative
+    Sched -->|"6 hours"| Cluster
+    Sched -->|"Daily"| Forget
+    
+    Decay -->|"Update scores"| Falkor
+    Creative -->|"Create DISCOVERED edges"| Falkor
+    Cluster -->|"Create MetaMemory nodes"| Falkor
+    Forget -->|"Archive/delete"| Falkor
+    Forget -->|"Delete vectors"| Qdrant

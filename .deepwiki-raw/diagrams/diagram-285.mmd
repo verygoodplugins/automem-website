@@ -1,0 +1,22 @@
+graph TB
+    Start[FalkorDB data loss detected] --> Qdrant{Qdrant<br/>intact?}
+    Qdrant -->|Yes| Connect[Connect to Qdrant API]
+    Qdrant -->|No| Backup{Have<br/>backups?}
+    
+    Connect --> Scan[Scan all points in collection]
+    Scan --> Extract[Extract payload metadata]
+    Extract --> Validate[Validate required fields]
+    
+    Validate -->|Valid| Reconstruct[Reconstruct Memory node]
+    Validate -->|Missing fields| Skip[Skip memory<br/>log warning]
+    
+    Reconstruct --> Write[MERGE to FalkorDB]
+    Skip --> Count[Increment skip counter]
+    Write --> Next{More<br/>memories?}
+    Count --> Next
+    
+    Next -->|Yes| Scan
+    Next -->|No| Report[Generate recovery report]
+    
+    Backup -->|Yes| RestoreBackup[Restore from backup<br/>See Backup Strategies]
+    Backup -->|No| DataLoss[Data loss unrecoverable<br/>Start fresh]

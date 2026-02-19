@@ -1,0 +1,21 @@
+graph TB
+    Start["Configuration Needed"]
+    
+    EnvVars["1. Check Environment Variables<br/>(AUTOMEM_ENDPOINT, AUTOMEM_API_KEY)"]
+    EnvFound{"Env vars<br/>found?"}
+    
+    ClaudeJson["2. Check ~/.claude.json<br/>mcpServers.*.env"]
+    ClaudeFound{"Config<br/>found?"}
+    
+    Default["3. Use Defaults<br/>endpoint: http://127.0.0.1:8001<br/>apiKey: undefined"]
+    
+    CreateClient["Create AutoMemClient<br/>with resolved config"]
+    
+    Start --> EnvVars
+    EnvVars --> EnvFound
+    EnvFound -->|Yes| CreateClient
+    EnvFound -->|No| ClaudeJson
+    ClaudeJson --> ClaudeFound
+    ClaudeFound -->|Yes| CreateClient
+    ClaudeFound -->|No| Default
+    Default --> CreateClient

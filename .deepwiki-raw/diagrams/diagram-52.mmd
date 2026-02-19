@@ -1,0 +1,20 @@
+graph TB
+    Store["POST /memory<br/>Store new memory"]
+    Queue["Enrichment Queue<br/>EnrichmentJob"]
+    Worker["Enrichment Worker<br/>Background thread"]
+    
+    subgraph "Automatic Relationships"
+        Temporal["PRECEDED_BY<br/>Temporal linking"]
+        Semantic["SIMILAR_TO<br/>Semantic neighbors"]
+        Pattern["EXEMPLIFIES<br/>Pattern detection"]
+    end
+    
+    Store-->Queue
+    Queue-->Worker
+    Worker-->Temporal
+    Worker-->Semantic
+    Worker-->Pattern
+    
+    Temporal-->Graph[(FalkorDB)]
+    Semantic-->Graph
+    Pattern-->Graph

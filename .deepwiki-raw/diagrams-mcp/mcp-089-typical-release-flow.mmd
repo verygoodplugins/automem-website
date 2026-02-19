@@ -1,0 +1,16 @@
+gantt
+    title Release Timeline Example
+    dateFormat YYYY-MM-DD
+    section Development
+    Feature commits (feat:)           :2024-01-01, 7d
+    Bug fixes (fix:)                  :2024-01-05, 3d
+    section Release Please
+    Release PR created                :milestone, 2024-01-02, 0d
+    Release PR updated                :milestone, 2024-01-06, 0d
+    section Merge & Publish
+    Release PR merged                 :milestone, 2024-01-08, 0d
+    npm publish                       :crit, 2024-01-08, 5m
+    Extension build                   :crit, 2024-01-08, 5m
+    section Distribution
+    Available on npm                  :milestone, 2024-01-08, 0d
+    Available on GitHub Releases      :milestone, 2024-01-08, 0d

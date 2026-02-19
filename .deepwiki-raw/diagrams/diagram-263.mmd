@@ -1,0 +1,19 @@
+graph LR
+    subgraph "consolidation.py Exports"
+        MC["MemoryConsolidator<br/>(Core Engine)"]
+        CS["ConsolidationScheduler<br/>(Task Manager)"]
+        
+        subgraph "Protocols"
+            GL["GraphLike<br/>(FalkorDB Protocol)"]
+            VS["VectorStoreProtocol<br/>(Qdrant Protocol)"]
+        end
+        
+        subgraph "Data Classes"
+            MR["MemoryRow<br/>(Normalized Memory)"]
+        end
+    end
+    
+    MC -->|"uses"| GL
+    MC -->|"uses"| VS
+    MC -->|"returns"| MR
+    CS -->|"schedules"| MC

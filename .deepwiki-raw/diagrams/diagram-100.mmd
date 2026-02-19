@@ -1,0 +1,26 @@
+stateDiagram-v2
+    [*] --> Attempt1: memory created
+    Attempt1 --> Success: enrichment succeeds
+    Attempt1 --> Attempt2: error (wait 5s)
+    Attempt2 --> Success: enrichment succeeds
+    Attempt2 --> Attempt3: error (wait 25s)
+    Attempt3 --> Success: enrichment succeeds
+    Attempt3 --> Failed: error (max attempts)
+    Success --> [*]
+    Failed --> [*]: log error, stop retrying
+    
+    note right of Attempt1
+        attempt=0
+        backoff=5s
+    end note
+    
+    note right of Attempt2
+        attempt=1
+        backoff=5s * 5^1 = 25s
+    end note
+    
+    note right of Attempt3
+        attempt=2
+        backoff=5s * 5^2 = 125s
+        (max attempts reached)
+    end note

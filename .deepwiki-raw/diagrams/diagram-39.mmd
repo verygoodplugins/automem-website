@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Client
+    participant API as "/recall endpoint"
+    participant Qdrant as "Qdrant Vector DB"
+    participant Falkor as "FalkorDB Graph"
+    participant Scorer as "_compute_metadata_score()"
+    
+    Client->>API: "GET /recall?query=X&tags=Y"
+    
+    par Vector Search
+        API->>Qdrant: "search(embedding, limit)"
+        Qdrant-->>API: "Similar vectors with scores"
+    and Keyword Search
+        API->>Falkor: "MATCH WHERE content CONTAINS X"
+        Falkor-->>API: "Keyword matches with scores"
+    end
+    
+    API->>API: "Merge and deduplicate results"
+    
+    loop For each result
+        API->>Scorer: "compute score with all factors"
+        Scorer-->>API: "Weighted final score"
+    end
+    
+    API->>API: "Sort by final score DESC"
+    API->>Falkor: "Fetch relationships for top results"
+    Falkor-->>API: "Related memory edges"
+    
+    API-->>Client: "Ranked results with context"

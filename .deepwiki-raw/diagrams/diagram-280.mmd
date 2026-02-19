@@ -1,0 +1,12 @@
+graph LR
+    subgraph "Before 0.8.x"
+        Client1[Client] -->|"POST /memory<br/>{id: 'my-custom-id'}"| API1[API]
+        API1 -->|Accept| DB1[(FalkorDB)]
+    end
+    
+    subgraph "After 0.8.x"
+        Client2[Client] -->|"POST /memory<br/>(no id field)"| API2[API]
+        API2 -->|Generate UUID| UUID[uuid.uuid4]
+        UUID -->|Store| DB2[(FalkorDB)]
+        API2 -.->|Reject if id provided| Error[400 Error]
+    end

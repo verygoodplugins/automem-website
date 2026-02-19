@@ -1,0 +1,9 @@
+flowchart LR
+    Health["GET /health"] --> Status["enrichment_stats.status"]
+    Status --> Queue["Queue Metrics"]
+    Queue --> QD["queue_depth<br/>(jobs in queue)"]
+    Queue --> Pending["pending<br/>(unprocessed)"]
+    Queue --> Inflight["inflight<br/>(processing now)"]
+    Status --> History["Historical Metrics"]
+    History --> Proc["processed<br/>(successful)"]
+    History --> Fail["failed<br/>(errors)"]

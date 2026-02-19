@@ -1,0 +1,40 @@
+graph TB
+    subgraph "Template Files (templates/)"
+        CURSOR_MDC["cursor/automem.mdc.template<br/>Lines 1-389<br/>Variables: PROJECT_NAME,<br/>MCP_TOOL_PREFIX,<br/>CURRENT_MONTH"]
+        CODEX_MD["codex/memory-rules.md<br/>Lines 1-133<br/>Variables: PROJECT_NAME,<br/>CURRENT_MONTH"]
+        CLAUDE_MD["CLAUDE_MD_MEMORY_RULES.md<br/>Lines 1-221<br/>No variables (append-only)"]
+        CLAUDE_DESKTOP["CLAUDE_DESKTOP_INSTRUCTIONS.md<br/>Lines 1-233<br/>No variables (reference doc)"]
+    end
+    
+    subgraph "CLI Installers (src/cli/)"
+        CURSOR_CLI["cursor.ts<br/>runCursorSetup()<br/>Lines 15-200+"]
+        CODEX_CLI["codex.ts<br/>runCodexSetup()<br/>Lines 15-200+"]
+        CLAUDE_CLI["claude-code.ts<br/>runClaudeCodeSetup()<br/>Lines 15-300+"]
+    end
+    
+    subgraph "Generated Output"
+        CURSOR_OUT[".cursor/rules/automem.mdc<br/>Project-specific rules"]
+        CODEX_OUT["AGENTS.md<br/>Appended memory rules"]
+        CLAUDE_OUT["~/.claude/CLAUDE.md<br/>Appended memory rules"]
+    end
+    
+    subgraph "Variable Substitution"
+        DETECT["detectProjectName()<br/>From package.json or git"]
+        MONTH["getCurrentMonth()<br/>YYYY-MM format"]
+        PREFIX["determineMCPPrefix()<br/>Based on platform"]
+    end
+    
+    CURSOR_MDC --> CURSOR_CLI
+    CODEX_MD --> CODEX_CLI
+    CLAUDE_MD --> CLAUDE_CLI
+    
+    CURSOR_CLI --> DETECT
+    CURSOR_CLI --> MONTH
+    CURSOR_CLI --> PREFIX
+    
+    DETECT --> CURSOR_OUT
+    MONTH --> CURSOR_OUT
+    PREFIX --> CURSOR_OUT
+    
+    CODEX_CLI --> CODEX_OUT
+    CLAUDE_CLI --> CLAUDE_OUT

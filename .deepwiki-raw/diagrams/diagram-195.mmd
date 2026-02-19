@@ -1,0 +1,33 @@
+graph LR
+    Request["GET /recall<br/>?query=X&tags=Y"]
+    
+    subgraph "Search Strategies"
+        Vector["_vector_search<br/>app.py:924"]
+        Keyword["_graph_keyword_search<br/>app.py:721"]
+        Trending["_graph_trending_results<br/>app.py:669"]
+    end
+    
+    subgraph "Scoring"
+        Compute["_compute_metadata_score<br/>app.py:476"]
+        Combine["Weighted combination<br/>vector+keyword+tag+<br/>importance+recency"]
+    end
+    
+    subgraph "Filtering"
+        Time["Time window filter<br/>_parse_time_expression"]
+        Tags["Tag filter<br/>_build_graph_tag_predicate"]
+        ResultFilter["_result_passes_filters"]
+    end
+    
+    Request --> Vector
+    Request --> Keyword
+    Request --> Trending
+    
+    Vector --> Combine
+    Keyword --> Combine
+    Trending --> Combine
+    
+    Combine --> Time
+    Time --> Tags
+    Tags --> ResultFilter
+    
+    ResultFilter --> Response["Ranked results<br/>with relations"]

@@ -1,0 +1,12 @@
+graph LR
+    Calc["calculate_relevance_score()"]
+    Wrapper["_get_relationship_count()"]
+    Cached["_get_relationship_count_cached_impl()<br/>@lru_cache(maxsize=10000)"]
+    Query["Graph Query:<br/>MATCH (m)-[r]-(other)<br/>RETURN COUNT(r)"]
+    
+    Calc --> Wrapper
+    Wrapper -->|"hour_key = time.time() / 3600"| Cached
+    Cached -->|"Cache miss"| Query
+    Cached -->|"Cache hit (80%)"| Wrapper
+    Query --> Cached
+    Wrapper --> Calc

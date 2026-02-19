@@ -1,0 +1,18 @@
+graph TB
+    Worker["Sync Worker Thread<br/>_sync_worker()"]
+    
+    Worker -->|"every SYNC_CHECK_INTERVAL"| CountGraph["MATCH (m:Memory)<br/>RETURN count(m)"]
+    Worker -->|"every SYNC_CHECK_INTERVAL"| CountQdrant["qdrant.count()<br/>collection=COLLECTION_NAME"]
+    
+    CountGraph --> Compare["Calculate drift %<br/>abs(graph - qdrant) / graph"]
+    CountQdrant --> Compare
+    
+    Compare -->|"drift < 5%"| LogOK["Log sync healthy<br/>state.sync_last_result"]
+    Compare -->|"drift >= 5%"| CheckAutoRepair{"SYNC_AUTO_REPAIR<br/>enabled?"}
+    
+    CheckAutoRepair -->|Yes| FindMissing["MATCH (m:Memory)<br/>WHERE NOT EXISTS(qdrant[m.id])"]
+    CheckAutoRepair -->|No| LogDrift["Log drift detected<br/>Manual repair needed"]
+    
+    FindMissing --> QueueEmbedding["embedding_queue.put()<br/>Queue missing memories"]
+    
+    QueueEmbedding --> LogRepair["Log repair initiated<br/>Count queued"]

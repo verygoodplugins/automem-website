@@ -1,0 +1,33 @@
+graph TB
+    subgraph "Test Commands"
+        UNIT["npm test<br/>vitest run"]
+        WATCH["npm run test:watch<br/>vitest"]
+        COVERAGE["npm run test:coverage<br/>vitest run --coverage"]
+        INTEGRATION["npm run test:integration<br/>vitest integration config"]
+        ALL["npm run test:all<br/>unit + integration"]
+    end
+    
+    subgraph "Test Types"
+        UT["Unit Tests<br/>Default config"]
+        IT["Integration Tests<br/>vitest.integration.config.ts"]
+    end
+    
+    subgraph "Outputs"
+        PASS["Test Results"]
+        COV["Coverage Report<br/>@vitest/coverage-v8"]
+        FAIL["Error Report"]
+    end
+    
+    UNIT --> UT
+    WATCH --> UT
+    COVERAGE --> UT
+    INTEGRATION --> IT
+    ALL --> UT
+    ALL --> IT
+    
+    UT --> PASS
+    UT --> FAIL
+    IT --> PASS
+    IT --> FAIL
+    
+    COVERAGE --> COV

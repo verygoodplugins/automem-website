@@ -1,0 +1,50 @@
+graph TB
+    subgraph clients["External Clients"]
+        AITools["AI Tools<br/>Claude Desktop, Cursor"]
+        CloudAI["Cloud AI Platforms<br/>ChatGPT, Claude.ai"]
+        DirectAPI["Direct API Clients<br/>HTTP/REST"]
+    end
+
+    subgraph core["AutoMem Core Services"]
+        direction TB
+        
+        subgraph bridge["MCP Bridge Layer"]
+            MCPBridge["mcp-sse-server<br/>Node.js :8080<br/>Protocol Translation"]
+        end
+        
+        subgraph app_layer["Application Layer"]
+            FlaskAPI["Flask API<br/>app.py<br/>Gunicorn :8001"]
+            
+            subgraph workers["Background Workers"]
+                EnrichWorker["EnrichmentWorker<br/>Entity extraction<br/>Pattern detection"]
+                EmbedWorker["EmbeddingWorker<br/>Batch generation"]
+                ConsolWorker["ConsolidationScheduler<br/>Decay/Creative/Cluster/Forget"]
+                SyncWorker["SyncWorker<br/>Drift repair"]
+            end
+        end
+        
+        subgraph storage["Storage Layer"]
+            FalkorDB[("FalkorDB<br/>Graph Database :6379<br/>Canonical Memory Records")]
+            Qdrant[("Qdrant<br/>Vector Database :6333<br/>Semantic Search<br/>Optional")]
+        end
+    end
+
+    AITools -->|"MCP Protocol"| FlaskAPI
+    CloudAI -->|"SSE/HTTP"| MCPBridge
+    DirectAPI -->|"HTTP REST"| FlaskAPI
+    
+    MCPBridge -->|"Internal HTTP"| FlaskAPI
+    
+    FlaskAPI -->|"Graph Queries"| FalkorDB
+    FlaskAPI -.->|"Vector Search"| Qdrant
+    
+    EnrichWorker --> FalkorDB
+    EnrichWorker -.-> Qdrant
+    EmbedWorker --> Qdrant
+    ConsolWorker --> FalkorDB
+    ConsolWorker -.-> Qdrant
+    SyncWorker --> FalkorDB
+    SyncWorker --> Qdrant
+    
+    style FalkorDB fill:#f9f9f9,stroke:#333
+    style Qdrant fill:#f9f9f9,stroke:#333,stroke-dasharray: 5 5

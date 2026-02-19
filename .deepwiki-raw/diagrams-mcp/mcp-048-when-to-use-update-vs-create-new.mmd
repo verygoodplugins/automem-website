@@ -1,0 +1,23 @@
+flowchart TD
+    Start["Need to modify memory?"]
+    Start --> HasID{"Have memory_id<br/>from recall?"}
+    HasID -->|No| Recall["Use recall_memory<br/>to find memory"]
+    Recall --> HasID
+    HasID -->|Yes| CheckType{"What needs<br/>changing?"}
+    
+    CheckType -->|"Content<br/>correction"| Update["Use update_memory<br/>preserve memory_id"]
+    CheckType -->|"Add tags"| Update
+    CheckType -->|"Adjust importance"| Update
+    CheckType -->|"Add metadata"| Update
+    
+    CheckType -->|"Fundamental<br/>change in meaning"| NewMem["Create new memory<br/>with store_memory"]
+    CheckType -->|"Contradicts<br/>original"| NewMem
+    
+    Update --> Associate["Optional: associate_memories<br/>EVOLVED_INTO"]
+    NewMem --> Invalidate["Optional: associate_memories<br/>INVALIDATED_BY"]
+    
+    Associate --> End["Updated memory<br/>retains relationships"]
+    Invalidate --> End2["New memory supersedes old<br/>both preserved"]
+    
+    End --> Done["✓ Complete"]
+    End2 --> Done

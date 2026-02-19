@@ -1,0 +1,23 @@
+graph TB
+    PUSH["Push to main"]
+    RP_JOB["release-please Job<br/>googleapis/release-please-action@v4"]
+    CHECK{{"Release<br/>Created?"}}
+    UPDATE["Update Release PR"]
+    CREATE["Create Release"]
+    
+    NPM["npm-publish Job<br/>npm publish --provenance"]
+    MCPB["build-extension Job<br/>@anthropic-ai/mcpb pack"]
+    
+    NPM_REG["npm Registry<br/>@verygoodplugins/mcp-automem"]
+    GH_REL["GitHub Release<br/>+ .mcpb Upload"]
+    
+    PUSH --> RP_JOB
+    RP_JOB --> CHECK
+    CHECK -->|No| UPDATE
+    CHECK -->|Yes| CREATE
+    
+    CREATE -->|release_created=true| NPM
+    CREATE -->|release_created=true| MCPB
+    
+    NPM --> NPM_REG
+    MCPB --> GH_REL

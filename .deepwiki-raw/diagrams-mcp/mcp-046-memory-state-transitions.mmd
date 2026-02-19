@@ -1,0 +1,29 @@
+stateDiagram-v2
+    [*] --> Created: store_memory
+    Created --> Retrieved: recall_memory
+    Retrieved --> Updated: update_memory
+    Updated --> Retrieved: recall_memory
+    Retrieved --> Associated: associate_memories
+    Associated --> Retrieved: recall_memory
+    Updated --> Associated: associate_memories
+    Retrieved --> Deleted: delete_memory
+    Updated --> Deleted: delete_memory
+    Associated --> Deleted: delete_memory
+    Deleted --> [*]
+    
+    note right of Created
+        Initial state after storage
+        Has memory_id, content, tags
+    end note
+    
+    note right of Updated
+        Modified fields preserved
+        memory_id unchanged
+        updated_at timestamp set
+    end note
+    
+    note right of Deleted
+        Permanent removal
+        Embedding deleted from Qdrant
+        Node removed from FalkorDB
+    end note

@@ -1,0 +1,39 @@
+graph TB
+    subgraph Internet["Public Internet"]
+        Client["AI Client<br/>(Claude, Cursor, API)"]
+    end
+    
+    subgraph Railway["Railway Project<br/>(your-project.railway.app)"]
+        subgraph MemSvc["memory-service<br/>(Flask Container)"]
+            Flask["app.py<br/>Port: 8001<br/>Bind: :: (IPv6)"]
+            Workers["Background Workers<br/>- EnrichmentWorker<br/>- EmbeddingWorker<br/>- ConsolidationScheduler"]
+        end
+        
+        subgraph FalkorSvc["FalkorDB<br/>(Docker Image)"]
+            Falkor["falkordb/falkordb:latest<br/>Port: 6379"]
+            Vol["Persistent Volume<br/>/var/lib/falkordb/data"]
+        end
+        
+        subgraph MCPSvc["automem-mcp-sse<br/>(Optional Node.js)"]
+            SSE["mcp-sse-server/server.js<br/>Port: 8080"]
+        end
+        
+        DNS["RAILWAY_PRIVATE_DOMAIN<br/>memory-service.railway.internal"]
+        PubDomain["Generated Public Domain<br/>automem-prod-xyz.up.railway.app"]
+    end
+    
+    subgraph External["External Services"]
+        QCloud["Qdrant Cloud<br/>(Optional)"]
+        OpenAI["OpenAI API<br/>Embeddings"]
+    end
+    
+    Client -->|HTTPS| PubDomain
+    PubDomain --> Flask
+    SSE -->|HTTP :8001| DNS
+    DNS --> Flask
+    
+    Flask -->|Redis Protocol :6379| Falkor
+    Falkor --> Vol
+    Flask -.->|Vector Search| QCloud
+    Flask -->|Embeddings| OpenAI
+    Workers -->|Graph Updates| Falkor

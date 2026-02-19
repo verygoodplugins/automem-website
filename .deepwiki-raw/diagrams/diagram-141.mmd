@@ -1,0 +1,43 @@
+classDiagram
+    class SessionsMap {
+        Map~string, SessionData~
+        +set(sessionId, data)
+        +get(sessionId)
+        +has(sessionId)
+        +delete(sessionId)
+    }
+    
+    class SessionData {
+        +transport: Transport
+        +server: MCPServer
+        +type: "streamable-http" | "sse"
+        +lastAccess: number
+        +eventStore?: InMemoryEventStore
+        +res?: Response
+        +heartbeat?: Interval
+    }
+    
+    class InMemoryEventStore {
+        -events: Map~streamId, StreamData~
+        -ttlMs: number
+        -cleanupTimer: Interval
+        +storeEvent(streamId, message)
+        +replayEventsAfter(streamId, lastEventId)
+        +removeStream(streamId)
+        +stopCleanup()
+    }
+    
+    class StreamData {
+        +lastAccess: number
+        +events: EventEntry[]
+    }
+    
+    class EventEntry {
+        +eventId: string
+        +message: any
+    }
+    
+    SessionsMap --> SessionData
+    SessionData --> InMemoryEventStore
+    InMemoryEventStore --> StreamData
+    StreamData --> EventEntry

@@ -1,0 +1,8 @@
+graph LR
+    Old["Memory: Old Approach<br/>Use REST API v1"]
+    New["Memory: New Approach<br/>Use GraphQL API"]
+    Fix["Memory: Security Fix<br/>v1 deprecated"]
+    
+    Old-->|"EVOLVED_INTO<br/>reason: better-DX"|New
+    Old-->|"INVALIDATED_BY<br/>reason: security"|Fix
+    New-->|"CONTRADICTS<br/>resolution: use-new"|Old

@@ -1,0 +1,22 @@
+graph TB
+    START["1. Fork & Clone"]
+    BRANCH["2. Create Feature Branch<br/>(git checkout -b feat/my-feature)"]
+    DEV["3. Develop & Test Locally<br/>(npm run dev, npm test)"]
+    COMMIT["4. Commit with Conventional Format<br/>(feat:, fix:, etc.)"]
+    PUSH["5. Push to Fork<br/>(git push origin feat/my-feature)"]
+    PR["6. Open Pull Request to main"]
+    CI["7. CI Checks Run<br/>(lint, build, test, security)"]
+    REVIEW["8. Code Review & Approval"]
+    MERGE["9. Squash & Merge<br/>(PR title becomes commit message)"]
+    
+    START --> BRANCH
+    BRANCH --> DEV
+    DEV --> COMMIT
+    COMMIT --> PUSH
+    PUSH --> PR
+    PR --> CI
+    CI --> REVIEW
+    REVIEW --> MERGE
+    
+    COMMIT -.->|"Husky hook validates"| COMMIT
+    PR -.->|"semantic-pr-title validates"| PR

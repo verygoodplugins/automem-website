@@ -1,0 +1,38 @@
+flowchart TD
+    Input["Input Value"]
+    TypeCheck{"Type?"}
+    
+    Numeric["int or float<br/>(not bool)"]
+    UnixParse["datetime.fromtimestamp()<br/>with UTC timezone"]
+    
+    String["str"]
+    Strip["Strip whitespace"]
+    Empty{"Empty?"}
+    ConvertZ["Replace 'Z' suffix<br/>with '+00:00'"]
+    ParseISO["datetime.fromisoformat()"]
+    Aware{"Has tzinfo?"}
+    AddUTC["Assume UTC timezone"]
+    
+    Invalid["Return None"]
+    Success["Return datetime<br/>(timezone-aware)"]
+    
+    Input --> TypeCheck
+    TypeCheck -->|bool| Invalid
+    TypeCheck -->|None| Invalid
+    TypeCheck -->|Numeric| Numeric
+    TypeCheck -->|String| String
+    
+    Numeric --> UnixParse
+    UnixParse -->|ValueError,<br/>OSError,<br/>OverflowError| Invalid
+    UnixParse -->|Success| Success
+    
+    String --> Strip
+    Strip --> Empty
+    Empty -->|Yes| Invalid
+    Empty -->|No| ConvertZ
+    ConvertZ --> ParseISO
+    ParseISO -->|ValueError| Invalid
+    ParseISO -->|Success| Aware
+    Aware -->|No| AddUTC
+    Aware -->|Yes| Success
+    AddUTC --> Success

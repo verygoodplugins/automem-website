@@ -1,0 +1,41 @@
+graph TB
+    subgraph "MCP Tool Interface"
+        T1["store_memory"]
+        T2["recall_memory"]
+        T3["associate_memories"]
+        T4["update_memory"]
+        T5["delete_memory"]
+        T6["check_database_health"]
+    end
+    
+    subgraph "AutoMemClient Methods"
+        M1["storeMemory()"]
+        M2["recallMemory()"]
+        M3["associateMemories()"]
+        M4["updateMemory()"]
+        M5["deleteMemory()"]
+        M6["checkHealth()"]
+    end
+    
+    subgraph "HTTP Endpoints"
+        E1["POST /memory"]
+        E2["GET /recall"]
+        E3["POST /associate"]
+        E4["PATCH /memory/:id"]
+        E5["DELETE /memory/:id"]
+        E6["GET /health"]
+    end
+    
+    T1 --> M1
+    T2 --> M2
+    T3 --> M3
+    T4 --> M4
+    T5 --> M5
+    T6 --> M6
+    
+    M1 --> E1
+    M2 --> E2
+    M3 --> E3
+    M4 --> E4
+    M5 --> E5
+    M6 --> E6

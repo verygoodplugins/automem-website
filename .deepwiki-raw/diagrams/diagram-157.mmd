@@ -1,0 +1,36 @@
+graph TB
+    Recall["GET /recall"]
+    
+    ParseQuery["Parse query parameters:<br/>query, embedding, tags,<br/>time_query, limit"]
+    
+    TimeParser["_parse_time_expression()<br/>Convert 'last week' to<br/>start/end ISO timestamps"]
+    
+    VectorSearch["_vector_search()<br/>Qdrant.search()<br/>cosine similarity"]
+    
+    KeywordSearch["_graph_keyword_search()<br/>FalkorDB Cypher query<br/>CONTAINS matching"]
+    
+    TrendingFallback["_graph_trending_results()<br/>High-importance memories<br/>when no query"]
+    
+    FilterResults["_result_passes_filters()<br/>Timestamp & tag filtering"]
+    
+    ScoreResults["_compute_metadata_score()<br/>Weighted scoring:<br/>vector + keyword + tag +<br/>importance + recency"]
+    
+    FetchRelations["_fetch_relations()<br/>Load connected memories<br/>(RECALL_RELATION_LIMIT)"]
+    
+    SortReturn["Sort by final_score DESC<br/>Return top N results"]
+    
+    Recall --> ParseQuery
+    ParseQuery --> TimeParser
+    
+    TimeParser --> VectorSearch
+    TimeParser --> KeywordSearch
+    
+    KeywordSearch -->|No query| TrendingFallback
+    
+    VectorSearch --> FilterResults
+    KeywordSearch --> FilterResults
+    TrendingFallback --> FilterResults
+    
+    FilterResults --> ScoreResults
+    ScoreResults --> FetchRelations
+    FetchRelations --> SortReturn

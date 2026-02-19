@@ -1,0 +1,23 @@
+graph LR
+    Btn["Deploy Button Click"]
+    
+    subgraph Template["railway-template.json"]
+        MS["memory-service<br/>DOCKERFILE builder"]
+        FK["FalkorDB<br/>falkordb/falkordb:latest"]
+        SE["automem-mcp-sse<br/>NIXPACKS builder"]
+    end
+    
+    subgraph AutoGen["Auto-Generated"]
+        API["AUTOMEM_API_TOKEN<br/>(secret generator)"]
+        Admin["ADMIN_API_TOKEN<br/>(secret generator)"]
+        Pass["FALKOR_PASSWORD<br/>(secret generator)"]
+    end
+    
+    subgraph Manual["User Provides"]
+        OAI["OPENAI_API_KEY"]
+        QD["QDRANT_URL<br/>QDRANT_API_KEY"]
+    end
+    
+    Btn --> Template
+    Template --> AutoGen
+    Template --> Manual

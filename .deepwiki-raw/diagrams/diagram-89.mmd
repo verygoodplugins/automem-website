@@ -1,0 +1,42 @@
+graph TB
+    Entry["Route handler function<br/>@app.route decorator"]
+    
+    subgraph "1. Service Availability Check"
+        CheckGraph{"state.memory_graph?"}
+        CheckQdrant{"Qdrant required?"}
+        Return503["Return 503<br/>Service unavailable"]
+    end
+    
+    subgraph "2. Request Validation"
+        ParseJSON["Parse JSON body<br/>request.get_json()"]
+        ValidateSchema["Validate required fields<br/>Check types, ranges"]
+        Return400["Return 400<br/>Bad request"]
+    end
+    
+    subgraph "3. Business Logic"
+        GraphQuery["FalkorDB queries<br/>MATCH, MERGE, SET"]
+        VectorQuery["Qdrant operations<br/>upsert, search, delete"]
+        QueueJob["Enqueue background work<br/>enrichment_queue.put()"]
+    end
+    
+    subgraph "4. Response"
+        Success["Return 200/201<br/>{status: 'success', ...}"]
+        Error["Return 4xx/5xx<br/>{status: 'error', message: '...'}"]
+    end
+    
+    Entry --> CheckGraph
+    CheckGraph -->|"None"| Return503
+    CheckGraph -->|"Available"| CheckQdrant
+    CheckQdrant -->|"Required but None"| Return503
+    CheckQdrant -->|"Available or optional"| ParseJSON
+    
+    ParseJSON --> ValidateSchema
+    ValidateSchema -->|"Invalid"| Return400
+    ValidateSchema -->|"Valid"| GraphQuery
+    
+    GraphQuery --> VectorQuery
+    VectorQuery --> QueueJob
+    QueueJob --> Success
+    
+    GraphQuery -.->|"Exception"| Error
+    VectorQuery -.->|"Exception"| Error

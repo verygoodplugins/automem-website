@@ -1,0 +1,16 @@
+graph TB
+    MCP_SERVER["MCP Server<br/>(src/index.ts)"]
+    CLIENT["AutoMemClient<br/>(src/automem-client.ts)"]
+    API["AutoMem HTTP API<br/>:8001"]
+    
+    MCP_SERVER -->|"storeMemory()<br/>recallMemory()<br/>associateMemories()<br/>updateMemory()<br/>deleteMemory()<br/>checkHealth()"| CLIENT
+    
+    CLIENT -->|"POST /memory<br/>GET /recall<br/>POST /associate<br/>PATCH /memory/:id<br/>DELETE /memory/:id<br/>GET /health<br/>GET /memory/by-tag"| API
+    
+    subgraph "Configuration"
+        CONFIG["AutoMemConfig<br/>{endpoint, apiKey}"]
+    end
+    
+    CONFIG -.->|"constructor()"| CLIENT
+    
+    style CLIENT fill:#FFD700

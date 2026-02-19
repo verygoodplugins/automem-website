@@ -1,0 +1,15 @@
+graph LR
+    AppInit["app.py initialization"]
+    Scheduler["ConsolidationScheduler<br/>(Background thread)"]
+    TickLoop["Tick loop<br/>(every 60s)"]
+    CheckTask["Check task intervals"]
+    Execute["Execute due tasks"]
+    Sleep["Sleep until next tick"]
+    
+    AppInit -->|"Start thread"| Scheduler
+    Scheduler --> TickLoop
+    TickLoop --> CheckTask
+    CheckTask -->|"Interval elapsed"| Execute
+    Execute --> Sleep
+    CheckTask -->|"Not due"| Sleep
+    Sleep --> TickLoop

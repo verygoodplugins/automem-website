@@ -1,0 +1,38 @@
+graph TB
+    subgraph "Messaging Platforms"
+        WA["WhatsApp"]
+        TG["Telegram"]
+        SL["Slack"]
+        DC["Discord"]
+        SG["Signal"]
+        IM["iMessage"]
+        OT["Teams, Matrix, Zalo, etc."]
+    end
+    
+    subgraph "OpenClaw Gateway"
+        OC["OpenClaw Process"]
+        SK["~/.openclaw/skills/<br/>automem/SKILL.md"]
+    end
+    
+    subgraph "Memory Storage"
+        LOCAL["Local: memory/YYYY-MM-DD.md"]
+        CURATED["Local: MEMORY.md"]
+        AUTOMEM["AutoMem:<br/>FalkorDB + Qdrant"]
+    end
+    
+    WA --> OC
+    TG --> OC
+    SL --> OC
+    DC --> OC
+    SG --> OC
+    IM --> OC
+    OT --> OC
+    
+    OC --> SK
+    SK -->|"curl $AUTOMEM_ENDPOINT"| AUTOMEM
+    
+    OC --> LOCAL
+    OC --> CURATED
+    
+    style SK fill:#f9f9f9
+    style AUTOMEM fill:#f9f9f9

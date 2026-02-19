@@ -1,0 +1,38 @@
+sequenceDiagram
+    participant Platform as "Cloud Platform<br/>(ChatGPT/Claude/ElevenLabs)"
+    participant Sidecar as "MCP Sidecar<br/>POST /mcp"
+    participant AutoMem as "AutoMem API<br/>:8001"
+    participant FalkorDB as "FalkorDB"
+    participant Qdrant as "Qdrant"
+    
+    Note over Platform,Qdrant: Store Memory via Remote MCP
+    
+    Platform->>Sidecar: POST /mcp<br/>Authorization: Bearer token<br/>{"method": "tools/call",<br/>"params": {"name": "store_memory"}}
+    
+    Sidecar->>Sidecar: Validate token<br/>Parse MCP JSON-RPC
+    
+    Sidecar->>AutoMem: POST /memory<br/>Authorization: Bearer token<br/>{"content": "...", "tags": [...]}
+    
+    par Write to both databases
+        AutoMem->>Qdrant: Store vector embedding
+        AutoMem->>FalkorDB: Create memory node
+    end
+    
+    AutoMem-->>Sidecar: {"memory_id": "abc123"}
+    
+    Sidecar-->>Platform: MCP JSON-RPC response<br/>{"result": {"memory_id": "abc123"}}
+    
+    Note over Platform,Qdrant: Recall Memory via Remote MCP
+    
+    Platform->>Sidecar: POST /mcp<br/>{"method": "tools/call",<br/>"params": {"name": "recall_memory"}}
+    
+    Sidecar->>AutoMem: GET /recall<br/>?query=...&tags=...
+    
+    par Parallel queries
+        AutoMem->>Qdrant: Vector similarity search
+        AutoMem->>FalkorDB: Keyword + tag filtering
+    end
+    
+    AutoMem-->>Sidecar: [{"id": "...", "content": "..."}]
+    
+    Sidecar-->>Platform: MCP JSON-RPC response<br/>{"result": {"memories": [...]}}

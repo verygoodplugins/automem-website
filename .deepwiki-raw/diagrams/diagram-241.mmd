@@ -1,0 +1,19 @@
+graph TB
+    Failure[Data Loss Event]
+    
+    Failure --> Check{What was lost?}
+    
+    Check -->|FalkorDB only| Method1[Method 1: Qdrant Recovery<br/>recover_from_qdrant.py]
+    Check -->|Qdrant only| Method2[Method 2: FalkorDB Rebuild<br/>Background enrichment]
+    Check -->|Both databases| Method3[Method 3: Backup Restoration<br/>restore_from_backup.py]
+    Check -->|Volume corruption| Method4[Method 4: Railway Restore<br/>One-click dashboard]
+    
+    Method1 --> RTO1[RTO: 2-5 minutes<br/>Loss: None]
+    Method2 --> RTO2[RTO: 30-60 minutes<br/>Loss: Recent embeddings]
+    Method3 --> RTO3[RTO: 10-20 minutes<br/>Loss: Data since last backup]
+    Method4 --> RTO4[RTO: 5-10 minutes<br/>Loss: Data since last snapshot]
+    
+    RTO1 --> Validate[Validation Steps]
+    RTO2 --> Validate
+    RTO3 --> Validate
+    RTO4 --> Validate

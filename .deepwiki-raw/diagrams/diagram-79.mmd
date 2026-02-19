@@ -1,0 +1,15 @@
+graph TB
+    subgraph "Qdrant Collection: 'memories'"
+        Point1["Point<br/>id: uuid<br/>vector: [768 floats]"]
+        Payload1["Payload<br/>content: str<br/>tags: [str]<br/>tag_prefixes: [str]<br/>importance: float<br/>timestamp: ISO8601<br/>type: str"]
+        
+        Point1 --> Payload1
+    end
+    
+    subgraph "Search Operations"
+        Query["Query Vector<br/>[768 floats]"]
+        Filter["Optional Filter<br/>tags, timestamp range"]
+    end
+    
+    Query -->|"cosine similarity"| Point1
+    Filter -->|"filter payloads"| Payload1

@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant Main as "app.py main"
+    participant Flask as "Flask(__name__)"
+    participant Init as "Initialization Functions"
+    participant State as "ServiceState (state)"
+    participant Workers as "Background Threads"
+    
+    Main->>Flask: "Create Flask app"
+    Note over Flask: "Register blueprints<br/>Set up middleware"
+    
+    Main->>Init: "init_db_connections()"
+    Init->>State: "state.falkordb = FalkorDB()"
+    Init->>State: "state.memory_graph = falkordb.select_graph()"
+    Init->>State: "state.qdrant = QdrantClient() [optional]"
+    Init-->>State: "state.effective_vector_size = detect_or_default"
+    
+    Main->>Init: "init_openai()"
+    Init->>State: "state.openai_client = OpenAI() [optional]"
+    Note over Init: "Used for memory classification<br/>not embeddings"
+    
+    Main->>Init: "init_embedding_provider()"
+    Init->>Init: "Select provider: Voyage → OpenAI → FastEmbed → Placeholder"
+    Init->>State: "state.embedding_provider = Provider()"
+    
+    Main->>Init: "start_enrichment_worker()"
+    Init->>State: "state.enrichment_queue = Queue()"
+    Init->>Workers: "Thread(target=enrichment_worker_loop)"
+    Workers-->>State: "state.enrichment_thread"
+    
+    Main->>Init: "start_embedding_worker()"
+    Init->>State: "state.embedding_queue = Queue()"
+    Init->>Workers: "Thread(target=embedding_worker_loop)"
+    Workers-->>State: "state.embedding_thread"
+    
+    Main->>Init: "start_consolidation_worker()"
+    Init->>State: "state.consolidation_stop_event = Event()"
+    Init->>Workers: "ConsolidationScheduler.start()"
+    Workers-->>State: "state.consolidation_thread"
+    
+    Main->>Init: "start_sync_worker()"
+    Init->>State: "state.sync_stop_event = Event()"
+    Init->>Workers: "Thread(target=sync_worker_loop)"
+    Workers-->>State: "state.sync_thread"
+    
+    Note over Main,Workers: "All workers run as daemon threads<br/>Share ServiceState for coordination"

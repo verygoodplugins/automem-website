@@ -1,0 +1,34 @@
+graph TB
+    SeedResults["Seed Results<br/>from Hybrid Search"]
+    
+    CheckExpand{"expand_relations<br/>enabled?"}
+    
+    FetchRelations["_fetch_relations()<br/>app.py:2200-2300"]
+    
+    FilterStrength{"Relation strength >=<br/>expand_min_strength?"}
+    
+    FilterImportance{"Memory importance >=<br/>expand_min_importance?"}
+    
+    TraverseEdge["Traverse edge<br/>Load related memory"]
+    
+    CheckLimit{"Total expanded <br/>expansion_limit?"}
+    
+    AddToResults["Add to expanded results"]
+    
+    FinalResults["Merged Results<br/>Seed + Expanded"]
+    
+    SeedResults --> CheckExpand
+    CheckExpand -->|No| FinalResults
+    CheckExpand -->|Yes| FetchRelations
+    
+    FetchRelations --> FilterStrength
+    FilterStrength -->|Fail| FinalResults
+    FilterStrength -->|Pass| TraverseEdge
+    
+    TraverseEdge --> FilterImportance
+    FilterImportance -->|Fail| FinalResults
+    FilterImportance -->|Pass| CheckLimit
+    
+    CheckLimit -->|Exceeded| FinalResults
+    CheckLimit -->|Within limit| AddToResults
+    AddToResults --> FinalResults

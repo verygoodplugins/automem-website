@@ -1,0 +1,24 @@
+graph TB
+    subgraph "Environment Variable Sources"
+        EnvFile[".env file<br/>(root directory)"]
+        DockerCompose["docker-compose.yml<br/>environment section"]
+        ProcessEnv["Process environment<br/>(shell export)"]
+    end
+    
+    subgraph "Variable Categories"
+        Core["Core Settings<br/>PORT, FLASK_ENV"]
+        Auth["Authentication<br/>AUTOMEM_API_TOKEN<br/>ADMIN_API_TOKEN"]
+        FalkorConfig["FalkorDB Connection<br/>FALKORDB_HOST<br/>FALKORDB_PORT<br/>FALKORDB_PASSWORD"]
+        QdrantConfig["Qdrant Connection<br/>QDRANT_URL<br/>QDRANT_API_KEY"]
+        EmbedConfig["Embedding Provider<br/>EMBEDDING_PROVIDER<br/>OPENAI_API_KEY<br/>VOYAGE_API_KEY"]
+        WorkerConfig["Background Workers<br/>ENRICHMENT_*, CONSOLIDATION_*"]
+    end
+    
+    EnvFile -.->|merged| ProcessEnv
+    DockerCompose -.->|overrides| ProcessEnv
+    ProcessEnv -->|read by app.py| Core
+    ProcessEnv -->|read by app.py| Auth
+    ProcessEnv -->|read by app.py| FalkorConfig
+    ProcessEnv -->|read by app.py| QdrantConfig
+    ProcessEnv -->|read by app.py| EmbedConfig
+    ProcessEnv -->|read by app.py| WorkerConfig

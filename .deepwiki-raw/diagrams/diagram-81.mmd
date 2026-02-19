@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant API as "POST /memory"
+    participant Queue as "ServiceState.embedding_queue"
+    participant Worker as "EmbeddingWorker Thread"
+    participant Provider as "EmbeddingProvider"
+    participant Qdrant
+    
+    API->>Queue: "enqueue(memory_id, content)"
+    Queue->>Worker: "Poll (2s timeout)"
+    Worker->>Worker: "Accumulate 20 items<br/>or 2s elapsed"
+    Worker->>Provider: "generate_embeddings_batch(texts)"
+    Provider-->>Worker: "[vectors]"
+    Worker->>Qdrant: "qdrant_client.upsert<br/>batch operation"
+    Worker->>Queue: "Mark complete"

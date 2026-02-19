@@ -1,0 +1,33 @@
+graph TB
+    subgraph "Test Layer"
+        TestFunctions["Test Functions<br/>test_calculate_relevance_score_*<br/>test_discover_creative_*<br/>test_cluster_similar_*<br/>test_apply_controlled_*"]
+        Fixtures["pytest Fixtures<br/>freeze_time<br/>monkeypatch"]
+    end
+    
+    subgraph "Mock Objects"
+        FakeGraph["FakeGraph<br/>implements GraphLike protocol"]
+        FakeVectorStore["FakeVectorStore<br/>implements VectorStoreProtocol"]
+        FakeResult["FakeResult<br/>mimics FalkorDB result"]
+    end
+    
+    subgraph "Code Under Test"
+        MemoryConsolidator["MemoryConsolidator<br/>consolidation.py:111-770"]
+        calculate_relevance["calculate_relevance_score()<br/>consolidation.py:178-230"]
+        discover_creative["discover_creative_associations()<br/>consolidation.py:232-330"]
+        cluster_similar["cluster_similar_memories()<br/>consolidation.py:332-431"]
+        apply_forgetting["apply_controlled_forgetting()<br/>consolidation.py:433-545"]
+    end
+    
+    TestFunctions --> Fixtures
+    TestFunctions --> FakeGraph
+    TestFunctions --> FakeVectorStore
+    
+    FakeGraph --> MemoryConsolidator
+    FakeVectorStore --> MemoryConsolidator
+    
+    MemoryConsolidator --> calculate_relevance
+    MemoryConsolidator --> discover_creative
+    MemoryConsolidator --> cluster_similar
+    MemoryConsolidator --> apply_forgetting
+    
+    FakeGraph --> FakeResult

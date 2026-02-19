@@ -1,0 +1,16 @@
+flowchart TD
+    Monitor["Health Monitor<br/>health_monitor.py"]
+    
+    Monitor --> Count["Count memories:<br/>FalkorDB vs Qdrant"]
+    
+    Count --> Calc["Calculate drift %:<br/>(|falkor - qdrant| / qdrant) * 100"]
+    
+    Calc --> Check{"Drift level?"}
+    
+    Check -->|"< 1%"| Normal["Normal<br/>In-flight writes<br/>No action needed"]
+    Check -->|"1-5%"| Warning["Warning<br/>HEALTH_MONITOR_DRIFT_THRESHOLD<br/>Monitor but OK"]
+    Check -->|"5-50%"| Alert["Alert<br/>Investigation needed<br/>Webhook notification"]
+    Check -->|"> 50%"| Critical["Critical<br/>HEALTH_MONITOR_CRITICAL_THRESHOLD<br/>Data loss event<br/>Trigger recovery"]
+    
+    Alert --> Manual["Manual review:<br/>Check logs<br/>Verify writes"]
+    Critical --> Auto["Auto-recovery (if enabled):<br/>recover_from_qdrant.py"]

@@ -1,0 +1,24 @@
+graph LR
+    subgraph "What Vectors Cannot Represent"
+        V1["Decision A"]
+        V2["Decision B"]
+        V3["Pattern P"]
+        
+        V1 -.->|"Cosine: 0.87"| V2
+        V1 -.->|"Cosine: 0.45"| V3
+        V2 -.->|"Cosine: 0.62"| V3
+    end
+    
+    subgraph "What Graphs Enable"
+        G1["Decision A:<br/>Chose PostgreSQL"]
+        G2["Decision B:<br/>Evaluated MongoDB"]
+        G3["Pattern P:<br/>Prefers boring tech"]
+        
+        G1 -->|"PREFERS_OVER<br/>strength: 0.9"| G2
+        G1 -->|"EXEMPLIFIES<br/>confidence: 0.85"| G3
+        G2 -->|"CONTRADICTS<br/>reason: complexity"| G3
+    end
+    
+    style V1 stroke-dasharray: 5 5
+    style V2 stroke-dasharray: 5 5
+    style V3 stroke-dasharray: 5 5

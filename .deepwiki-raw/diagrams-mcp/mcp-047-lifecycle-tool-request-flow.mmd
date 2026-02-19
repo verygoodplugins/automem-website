@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant AI as "AI Platform"
+    participant MCP as "MCP Server<br/>(index.ts)"
+    participant Client as "AutoMemClient<br/>(automem-client.ts)"
+    participant API as "AutoMem API"
+    participant FDB as "FalkorDB"
+    participant QDR as "Qdrant"
+    
+    Note over AI,QDR: Update Memory Flow
+    AI->>MCP: CallToolRequest<br/>"update_memory"
+    MCP->>MCP: Validate memory_id required
+    MCP->>Client: updateMemory(args)
+    Client->>API: PATCH /memory/{id}
+    par Update both databases
+        API->>FDB: Update node properties
+        API->>QDR: Update vector metadata
+    end
+    API-->>Client: {memory_id, message}
+    Client-->>MCP: Response object
+    MCP-->>AI: Success confirmation
+    
+    Note over AI,QDR: Delete Memory Flow
+    AI->>MCP: CallToolRequest<br/>"delete_memory"
+    MCP->>MCP: Validate memory_id required
+    MCP->>Client: deleteMemory(args)
+    Client->>API: DELETE /memory/{id}
+    par Remove from both databases
+        API->>FDB: Delete node + edges
+        API->>QDR: Delete vector
+    end
+    API-->>Client: {memory_id, message}
+    Client-->>MCP: Response object
+    MCP-->>AI: Deletion confirmation
+    
+    Note over AI,QDR: Health Check Flow
+    AI->>MCP: CallToolRequest<br/>"check_database_health"
+    MCP->>Client: checkHealth()
+    Client->>API: GET /health
+    par Query both databases
+        API->>FDB: Check connection + node count
+        API->>QDR: Check connection + vector count
+    end
+    API-->>Client: {status, statistics}
+    Client-->>MCP: HealthStatus object
+    MCP-->>AI: Health report

@@ -1,0 +1,22 @@
+graph TD
+    Input["Memory content"]
+    
+    RegexMatch{"Regex pattern<br/>match?"}
+    
+    LLMEnabled{"use_llm=True?"}
+    
+    LLMClassify["_classify_with_llm()<br/>OpenAI API call"]
+    
+    TypeReturn["Return: (type, confidence)"]
+    
+    Input --> RegexMatch
+    
+    RegexMatch -->|"Match found<br/>(e.g., 'decided to')"| TypeReturn
+    
+    RegexMatch -->|"No match"| LLMEnabled
+    
+    LLMEnabled -->|"Yes"| LLMClassify
+    LLMEnabled -->|"No"| DefaultType["'Memory', 0.3"]
+    
+    LLMClassify --> TypeReturn
+    DefaultType --> TypeReturn

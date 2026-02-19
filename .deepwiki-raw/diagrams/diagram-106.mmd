@@ -1,0 +1,26 @@
+flowchart TB
+    Entity["Candidate Entity"]
+    
+    Check1{"Length >= 3<br/>characters?"}
+    Check2{"In stopwords<br/>or blocklist?"}
+    Check3{"Contains<br/>letters?"}
+    Check4{"Proper case<br/>or allow_lower?"}
+    Check5{"No code<br/>artifacts?"}
+    Check6{"Within<br/>max_words?"}
+    
+    Reject["Reject"]
+    Accept["Accept"]
+    
+    Entity --> Check1
+    Check1 -->|No| Reject
+    Check1 -->|Yes| Check2
+    Check2 -->|Yes| Reject
+    Check2 -->|No| Check3
+    Check3 -->|No| Reject
+    Check3 -->|Yes| Check4
+    Check4 -->|No| Reject
+    Check4 -->|Yes| Check5
+    Check5 -->|Yes| Reject
+    Check5 -->|No| Check6
+    Check6 -->|No| Reject
+    Check6 -->|Yes| Accept

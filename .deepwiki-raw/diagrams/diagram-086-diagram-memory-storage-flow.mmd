@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Client
+    participant Flask["@app.route('/memory')<br/>POST"]
+    participant Validate["_validate_memory_payload"]
+    participant Classify["memory_classifier.classify"]
+    participant Falkor["FalkorDB"]
+    participant Qdrant["Qdrant (optional)"]
+    participant Queue["enrichment_queue"]
+    
+    Client->>Flask: POST /memory<br/>{content, tags, importance}
+    Flask->>Validate: validate payload
+    Validate-->>Flask: validated data
+    
+    alt type not provided
+        Flask->>Classify: classify(content)
+        Classify-->>Flask: type, confidence
+    end
+    
+    Flask->>Falkor: MERGE Memory node
+    Falkor-->>Flask: memory_id
+    
+    alt embedding provided
+        Flask->>Qdrant: upsert point
+    else no embedding
+        Flask->>Queue: enqueue for generation
+    end
+    
+    Flask->>Queue: enqueue for enrichment
+    Flask-->>Client: 201 Created<br/>{memory_id, status}

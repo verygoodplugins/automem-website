@@ -1,0 +1,12 @@
+graph TB
+    Generate["Generate Secure Tokens<br/>(32+ bytes, cryptographically random)"]
+    Store["Store in Environment Variables<br/>(Never commit to version control)"]
+    Rotate["Rotate Tokens Periodically<br/>(Every 90 days recommended)"]
+    Separate["Use Different Tokens Per Environment<br/>(dev, staging, production)"]
+    Monitor["Monitor for Unauthorized Access<br/>(Check logs for 401 errors)"]
+    
+    Generate --> Store
+    Store --> Rotate
+    Rotate --> Separate
+    Separate --> Monitor
+    Monitor --> Rotate

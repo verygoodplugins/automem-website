@@ -1,0 +1,16 @@
+flowchart TD
+    Input["Raw Query String"]
+    Tokenize["Tokenize with regex:<br/>r'[A-Za-z0-9_\\-]+'<br/>Convert to lowercase"]
+    Filter1{"Length >= 3?"}
+    Filter2{"In SEARCH_STOPWORDS?"}
+    Filter3{"Already seen?"}
+    Output["Normalized Keywords List"]
+    
+    Input --> Tokenize
+    Tokenize --> Filter1
+    Filter1 -->|No| Skip1["Skip token"]
+    Filter1 -->|Yes| Filter2
+    Filter2 -->|Yes| Skip2["Skip token"]
+    Filter2 -->|No| Filter3
+    Filter3 -->|Yes| Skip3["Skip token"]
+    Filter3 -->|No| Output

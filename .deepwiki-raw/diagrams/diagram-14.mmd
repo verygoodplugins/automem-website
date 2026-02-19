@@ -1,0 +1,21 @@
+graph TB
+    subgraph Host["Local Machine<br/>Docker Engine"]
+        subgraph Compose["docker-compose.yml<br/>automem network"]
+            API["memory-service<br/>Build: .<br/>Dockerfile<br/>Port: 8001"]
+            FDB["falkordb<br/>Image: falkordb/falkordb:latest<br/>Port: 6379<br/>Volume: falkordb_data"]
+            QDR["qdrant<br/>Image: qdrant/qdrant:latest<br/>Port: 6333<br/>Volume: qdrant_data"]
+        end
+        
+        subgraph Volumes["Docker Volumes"]
+            FVol["falkordb_data<br/>(persistent)"]
+            QVol["qdrant_data<br/>(persistent)"]
+        end
+    end
+    
+    CLI["Development Client<br/>(curl, Postman, MCP)"]
+    
+    CLI -->|http://localhost:8001| API
+    API -->|Redis :6379| FDB
+    API -->|HTTP :6333| QDR
+    FDB --> FVol
+    QDR --> QVol
