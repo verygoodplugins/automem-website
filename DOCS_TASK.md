@@ -29,16 +29,43 @@ The sidebar in `astro.config.mjs` defines every page — each `slug` starts with
 
 ## Raw Source Material
 
-Scraped DeepWiki content is in `.deepwiki-raw/` (JSON format, each file has page content in `"content"` fields):
+Scraped DeepWiki content is in `.deepwiki-raw/` as JSON files. Each is a JSON array of objects: `[{status: "fulfilled", value: {url: "...", content: "..."}}]`. The `content` field has the markdown text.
 
-- `batch1-core-concepts.txt` — Memory Model, Relationship Types, Hybrid Search, Enrichment Pipeline, Consolidation Engine
-- `batch2-api-reference.txt` — Memory Operations, Recall Operations, Relationship Operations, Consolidation Operations, Admin Operations
-- `batch3-health-auth-deploy-config.txt` — Health/Analytics, Authentication, Railway Deploy, Docker Deploy, Configuration Reference
-- `batch4-mcp-platforms.txt` — Claude Desktop, Cursor IDE, Claude Code, OpenAI Codex, OpenClaw platform guides
-- `batch5-mcp-advanced.txt` — Warp Terminal, Remote MCP (ChatGPT/Claude.ai), Tool Definitions, Memory Rules/Patterns, Configuration
-- `batch6-architecture-research.txt` — Data Stores, Embedding Generation, MCP Bridge Architecture, Health Monitoring, Research & Motivation
+### automem wiki (server — Flask API, databases, workers)
 
-The data is in Bright Data scrape format — each batch file is JSON with a `results` array, each result has a `"content"` field with the markdown. Extract the actual content, remove DeepWiki chrome (sidebar navigation, "Relevant source files" sections, "Loading..." placeholders, "Dismiss / Refresh this wiki" footers, "On this page" ToC).
+- `batch1-core-concepts.txt` — 3.1 Memory Model, 3.2 Relationship Types, 3.3 Hybrid Search, 4.3.1 Enrichment Pipeline, 4.3.3 Consolidation Engine
+- `batch2-api-reference.txt` — 5.1 Memory Operations, 5.2 Recall Operations, 5.3 Relationship Operations, 5.4 Consolidation Operations, 5.5 Admin Operations
+- `batch3-health-auth-deploy-config.txt` — 5.6 Health/Analytics, 6.3 Authentication, 7.1 Railway Deploy, 7.2 Docker Deploy, 2.2 Configuration Reference
+- `batch6-architecture-research.txt` — 4.1 Data Stores, 4.3.2 Embedding Generation, 4.4 MCP Bridge Architecture, 8.1 Health Monitoring, 11 Research & Motivation
+- `batch7-automem-overview-getting-started.txt` — 1 Overview, 2 Getting Started, 2.1 Installation Options, 3 Core Concepts (index), 4 System Architecture (index)
+- `batch8-automem-flask-bg-utils-api-client.txt` — 4.2 Flask API Service, 4.3 Background Processing, 4.5 Utility Modules, 5 API Reference (index), 6 Client Integration (index)
+- `batch9-automem-mcp-directapi-alexa-deploy-envconfig.txt` — 6.1 MCP Integration, 6.2 Direct API Usage, 6.4 Alexa Integration, 7 Deployment (index), 7.3 Environment Configuration
+- `batch10-automem-operations.txt` — 8 Operations (index), 8.2 Backup Strategies, 8.3 Disaster Recovery, 8.4 Performance Optimization, 8.5 Troubleshooting
+- `batch11-automem-development.txt` — 9 Development Guide (index), 9.1 Project Structure, 9.2 Local Development Setup, 9.3 Testing
+
+### mcp-automem wiki (MCP client — CLI, platform integrations, tool system)
+
+- `batch4-mcp-platforms.txt` — 3.1 Claude Desktop, 3.2 Cursor IDE, 3.3 Claude Code, 3.4 OpenAI Codex, 3.5 OpenClaw
+- `batch5-mcp-advanced.txt` — 3.6 Warp Terminal, 3.7 Remote MCP (ChatGPT/Claude.ai), 6.2 Tool Definitions, 8.1 Memory Rules/Patterns, 2.3 Configuration
+- `batch12-mcp-overview-getting-started-platforms.txt` — 1 Overview, 2 Getting Started, 2.1 Installation, 2.2 Platform-Specific Setup, 3 Platform Integration Guides (index)
+- `batch13-mcp-memory-operations.txt` — 4 Memory Operations (index), 4.1 Storing Memories, 4.2 Recalling Memories, 4.3 Associating Memories, 4.4 Memory Lifecycle Management
+- `batch14-mcp-server-arch-tools.txt` — 5 Server Architecture, 5.1 MCP Server Implementation, 5.2 Sidecar Architecture, 6 Tool System (index), 6.1 Core MCP Tools
+- `batch15-mcp-development.txt` — 7 Development (index), 7.1 Project Structure, 7.2 Testing Framework, 7.3 CI/CD Pipeline, 7.4 Release Process
+- `batch16-mcp-best-practices.txt` — 8 Best Practices (index), 8.2 Context Engineering, 8.3 Progressive Disclosure
+
+### How to read the batch files
+
+```python
+import json
+with open('.deepwiki-raw/batch7-automem-overview-getting-started.txt') as f:
+    data = json.load(f)
+for item in data:
+    url = item['value']['url']
+    content = item['value']['content']
+    # content is the DeepWiki markdown for that page
+```
+
+Remove DeepWiki chrome from the content: sidebar navigation, "Relevant source files" sections at the top of each page, "Loading..." placeholders, "Dismiss / Refresh this wiki" footers, "On this page" ToC.
 
 ## CRITICAL: Merge Strategy for Two Wikis
 
