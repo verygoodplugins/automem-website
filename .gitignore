@@ -37,3 +37,7 @@ img/*.jpeg
 
 # TypeScript
 *.tsbuildinfo
+
+# DeepWiki scraped content (temp)
+.deepwiki-raw/
+DOCS_TASK.md

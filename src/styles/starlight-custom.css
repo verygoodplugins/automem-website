@@ -1,0 +1,94 @@
+:root {
+  --sl-font: 'JetBrains Mono', monospace;
+  --sl-font-mono: 'JetBrains Mono', monospace;
+
+  --sl-color-accent-low: #1a1a3a;
+  --sl-color-accent: #f9d857;
+  --sl-color-accent-high: #fff8dc;
+
+  --sl-color-white: #e0e0e0;
+  --sl-color-gray-1: #c0c0c0;
+  --sl-color-gray-2: #888888;
+  --sl-color-gray-3: #555555;
+  --sl-color-gray-4: #333333;
+  --sl-color-gray-5: #1a1a1a;
+  --sl-color-gray-6: #0f0f0f;
+  --sl-color-black: #0a0a0a;
+
+  --sl-color-bg-nav: #111111;
+  --sl-color-bg-sidebar: #0f0f0f;
+  --sl-color-hairline-light: #333333;
+  --sl-color-hairline-shade: #1a1a1a;
+
+  --sl-color-text-accent: #f9d857;
+}
+
+/* Give sidebar links the gold accent on hover */
+starlight-menu-button + nav a:hover,
+.sidebar-content a:hover {
+  color: var(--sl-color-accent);
+}
+
+/* Style inline code */
+:not(pre) > code {
+  background: rgba(249, 216, 87, 0.1);
+  color: #f9d857;
+  border: 1px solid rgba(249, 216, 87, 0.2);
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+  font-size: 0.9em;
+}
+
+/* Code blocks */
+pre {
+  border: 1px solid #333333 !important;
+  background: #111111 !important;
+}
+
+/* Accent links */
+a {
+  text-decoration-color: rgba(249, 216, 87, 0.3);
+}
+
+a:hover {
+  text-decoration-color: #f9d857;
+}
+
+/* Badge/label styles for relationship types, etc. */
+.sl-badge {
+  font-family: var(--sl-font-mono);
+}
+
+/* Hero header override */
+.hero {
+  border-bottom: 1px solid #333333;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  background: rgba(249, 216, 87, 0.08);
+  border-bottom: 2px solid rgba(249, 216, 87, 0.3);
+  font-weight: 600;
+}
+
+td, th {
+  border: 1px solid #333333;
+  padding: 0.5rem 0.75rem;
+}
+
+tr:hover {
+  background: rgba(249, 216, 87, 0.03);
+}
+
+/* Mermaid diagram container */
+.mermaid {
+  background: #111111;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
