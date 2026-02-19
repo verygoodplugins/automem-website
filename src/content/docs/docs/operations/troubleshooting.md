@@ -1,8 +1,8 @@
 ---
-title: "Troubleshooting"
-description: "Solutions to common AutoMem issues."
+title: Troubleshooting
+description: Solutions to common AutoMem issues.
 sidebar:
   order: 4
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

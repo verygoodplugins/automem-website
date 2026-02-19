@@ -1,8 +1,8 @@
 ---
-title: "Configuration Tools"
-description: "CLI utilities for managing configuration."
+title: Configuration Tools
+description: CLI utilities for managing AutoMem configuration.
 sidebar:
   order: 4
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

@@ -1,8 +1,8 @@
 ---
-title: "Context Engineering"
-description: "Design prompts that leverage persistent memory."
+title: Context Engineering
+description: Design prompts that leverage persistent memory effectively.
 sidebar:
   order: 2
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

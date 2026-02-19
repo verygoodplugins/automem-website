@@ -76,7 +76,7 @@ Stop reading. Start deploying:
 
 That's it! 🎉
 
-Full deployment guide with screenshots: [Quick Start](/docs/quickstart)
+Full deployment guide with screenshots: [Quick Start](/docs/getting-started/quick-start/)
 
 Want to hack on it? [GitHub repo is here](https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
 

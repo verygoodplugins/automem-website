@@ -1,8 +1,8 @@
 ---
-title: "Cursor IDE"
-description: "Integrate AutoMem memory into Cursor IDE."
+title: Cursor IDE
+description: Integrate AutoMem memory into Cursor IDE for persistent context across sessions.
 sidebar:
   order: 4
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

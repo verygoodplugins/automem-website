@@ -1,8 +1,8 @@
 ---
-title: "ChatGPT"
-description: "Add persistent memory to ChatGPT using Remote MCP."
+title: ChatGPT
+description: Add persistent memory to ChatGPT using Remote MCP integration.
 sidebar:
   order: 5
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

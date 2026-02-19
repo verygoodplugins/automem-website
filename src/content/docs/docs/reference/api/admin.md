@@ -1,8 +1,8 @@
 ---
-title: "Admin Operations"
-description: "Administrative endpoints for system management."
+title: Admin Operations
+description: Administrative endpoints for re-embedding and system management.
 sidebar:
   order: 5
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

@@ -1,8 +1,8 @@
 ---
-title: "Docker & Local Dev"
-description: "Run AutoMem locally with Docker Compose or bare Flask."
+title: Docker & Local Dev
+description: Run AutoMem locally with Docker Compose or bare Flask for development.
 sidebar:
   order: 3
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

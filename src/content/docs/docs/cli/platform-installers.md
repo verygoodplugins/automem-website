@@ -1,8 +1,8 @@
 ---
-title: "Platform Installers"
-description: "One-command platform installers."
+title: Platform Installers
+description: One-command platform installers for AutoMem.
 sidebar:
   order: 2
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

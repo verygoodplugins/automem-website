@@ -1,8 +1,8 @@
 ---
-title: "ElevenLabs Agents"
-description: "Give ElevenLabs AI agents persistent memory."
+title: ElevenLabs Agents
+description: Give ElevenLabs AI agents persistent memory with AutoMem.
 sidebar:
   order: 9
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

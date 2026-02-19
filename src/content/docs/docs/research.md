@@ -1,6 +1,6 @@
 ---
-title: "Research & Motivation"
-description: "The research behind AutoMem's architecture."
+title: Research & Motivation
+description: The research behind AutoMem's architecture decisions.
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

@@ -1,8 +1,8 @@
 ---
-title: "GitHub Copilot"
-description: "Add persistent memory to GitHub Copilot."
+title: GitHub Copilot
+description: Add persistent memory to GitHub Copilot via repository MCP configuration.
 sidebar:
   order: 8
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

@@ -1,8 +1,8 @@
 ---
-title: "OpenClaw"
-description: "Use AutoMem with OpenClaw via direct API."
+title: OpenClaw
+description: Use AutoMem with OpenClaw via direct API integration.
 sidebar:
   order: 11
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

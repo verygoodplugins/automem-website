@@ -1,8 +1,8 @@
 ---
-title: "System Overview"
-description: "AutoMem's three-tier architecture."
+title: System Overview
+description: "AutoMem's three-tier architecture: AI platforms, MCP bridge, and memory service."
 sidebar:
   order: 1
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

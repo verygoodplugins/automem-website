@@ -124,7 +124,7 @@ It's the difference between an AI assistant and an AI that actually assists.
 
 Want to stop being an AI tour guide?
 
-1️⃣ **Deploy AutoMem:** Takes 5 minutes → [Quick Start](/docs/quickstart)
+1️⃣ **Deploy AutoMem:** Takes 5 minutes → [Quick Start](/docs/getting-started/quick-start/)
 
 2️⃣ **Connect your tools:** Any MCP-compatible AI
 
@@ -132,7 +132,7 @@ Want to stop being an AI tour guide?
 
 That's it! Your AI finally has a memory. 🎉
 
-Check the [screenshots](/docs/screenshots) to see this working across Claude, Cursor, and ChatGPT simultaneously.
+Check the [platform guides](/docs/platforms/claude-desktop/) to see this working across Claude, Cursor, and ChatGPT simultaneously.
 
 Or dive into the code: [GitHub](https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=blog&utm_campaign=rag-post)
 

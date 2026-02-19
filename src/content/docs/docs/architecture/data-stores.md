@@ -1,8 +1,8 @@
 ---
-title: "Data Stores"
-description: "FalkorDB and Qdrant dual-storage architecture."
+title: Data Stores
+description: "FalkorDB and Qdrant: AutoMem's dual-storage architecture."
 sidebar:
   order: 3
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

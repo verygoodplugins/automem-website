@@ -1,8 +1,8 @@
 ---
-title: "Embedding Generation"
-description: "AutoMem's pluggable embedding providers."
+title: Embedding Generation
+description: "AutoMem's pluggable embedding providers and batching system."
 sidebar:
   order: 5
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

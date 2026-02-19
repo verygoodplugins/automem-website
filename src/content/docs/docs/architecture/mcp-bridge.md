@@ -1,8 +1,8 @@
 ---
-title: "MCP Bridge"
-description: "How the MCP bridge translates AI platform requests into API calls."
+title: MCP Bridge
+description: How the MCP bridge translates AI platform requests into AutoMem API calls.
 sidebar:
   order: 2
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.

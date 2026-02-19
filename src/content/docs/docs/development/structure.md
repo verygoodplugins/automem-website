@@ -1,8 +1,8 @@
 ---
-title: "Project Structure"
-description: "Code organization for AutoMem repositories."
+title: Project Structure
+description: Code organization for AutoMem repositories.
 sidebar:
   order: 1
 ---
 
-Content coming soon. See [DOCS_TASK.md](/DOCS_TASK.md) for content requirements.
+Content to be generated from DeepWiki source. See DOCS_TASK.md.
