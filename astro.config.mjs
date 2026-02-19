@@ -39,6 +39,10 @@ export default defineConfig({
       ],
       sidebar: [
         {
+          label: 'Overview',
+          slug: 'docs/overview',
+        },
+        {
           label: 'Getting Started',
           items: [
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },

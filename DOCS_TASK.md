@@ -130,6 +130,19 @@ There are NO line limits. If the source material is 400 lines, the output should
 
 ## Files to Create
 
+### Overview (top-level)
+
+#### `src/content/docs/docs/overview.md`
+
+```yaml
+---
+title: Overview
+description: "What AutoMem is, how it works at a high level, and why it exists."
+---
+```
+
+Content: This is the landing page for the docs. Source: DeepWiki automem wiki "1-overview" page (batch6 or the overview content in the scraped HTML). Include the high-level component diagram, storage layer architecture diagram, and memory lifecycle sequence diagram from `.deepwiki-raw/diagrams/`. Cover: what AutoMem is, dual-storage architecture (FalkorDB + Qdrant), graceful degradation, the 3-tier stack (AI clients → MCP bridge → API → databases), background processing overview, and links to deeper pages.
+
 ### Getting Started (2 remaining)
 
 #### `src/content/docs/docs/getting-started/docker.md`
