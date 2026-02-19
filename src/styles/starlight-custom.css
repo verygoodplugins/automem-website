@@ -1,7 +1,11 @@
+/* Shared */
 :root {
   --sl-font: 'JetBrains Mono', monospace;
   --sl-font-mono: 'JetBrains Mono', monospace;
+}
 
+/* Dark mode (default) */
+:root[data-theme='dark'] {
   --sl-color-accent-low: #1a1a3a;
   --sl-color-accent: #f9d857;
   --sl-color-accent-high: #fff8dc;
@@ -19,49 +23,60 @@
   --sl-color-bg-sidebar: #0f0f0f;
   --sl-color-hairline-light: #333333;
   --sl-color-hairline-shade: #1a1a1a;
-
   --sl-color-text-accent: #f9d857;
 }
 
-/* Give sidebar links the gold accent on hover */
-starlight-menu-button + nav a:hover,
-.sidebar-content a:hover {
-  color: var(--sl-color-accent);
+/* Light mode */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #fff8dc;
+  --sl-color-accent: #b8860b;
+  --sl-color-accent-high: #1a1a3a;
+
+  --sl-color-white: #1a1a1a;
+  --sl-color-gray-1: #333333;
+  --sl-color-gray-2: #555555;
+  --sl-color-gray-3: #888888;
+  --sl-color-gray-4: #c0c0c0;
+  --sl-color-gray-5: #e8e8e8;
+  --sl-color-gray-6: #f5f5f0;
+  --sl-color-black: #fffbf0;
+
+  --sl-color-bg-nav: #fffbf0;
+  --sl-color-bg-sidebar: #f5f5f0;
+  --sl-color-hairline-light: #e0d8c8;
+  --sl-color-hairline-shade: #d0c8b8;
+  --sl-color-text-accent: #8b6914;
 }
 
-/* Style inline code */
-:not(pre) > code {
+/* Inline code — dark */
+:root[data-theme='dark'] :not(pre) > code {
   background: rgba(249, 216, 87, 0.1);
   color: #f9d857;
   border: 1px solid rgba(249, 216, 87, 0.2);
+}
+
+/* Inline code — light */
+:root[data-theme='light'] :not(pre) > code {
+  background: rgba(184, 134, 11, 0.08);
+  color: #8b6914;
+  border: 1px solid rgba(184, 134, 11, 0.2);
+}
+
+:not(pre) > code {
   border-radius: 4px;
   padding: 0.15em 0.35em;
   font-size: 0.9em;
 }
 
 /* Code blocks */
-pre {
+:root[data-theme='dark'] pre {
   border: 1px solid #333333 !important;
   background: #111111 !important;
 }
 
-/* Accent links */
-a {
-  text-decoration-color: rgba(249, 216, 87, 0.3);
-}
-
-a:hover {
-  text-decoration-color: #f9d857;
-}
-
-/* Badge/label styles for relationship types, etc. */
-.sl-badge {
-  font-family: var(--sl-font-mono);
-}
-
-/* Hero header override */
-.hero {
-  border-bottom: 1px solid #333333;
+:root[data-theme='light'] pre {
+  border: 1px solid #e0d8c8 !important;
+  background: #f8f6f0 !important;
 }
 
 /* Table styling */
@@ -69,25 +84,65 @@ table {
   border-collapse: collapse;
 }
 
-th {
+:root[data-theme='dark'] th {
   background: rgba(249, 216, 87, 0.08);
   border-bottom: 2px solid rgba(249, 216, 87, 0.3);
+}
+
+:root[data-theme='light'] th {
+  background: rgba(184, 134, 11, 0.06);
+  border-bottom: 2px solid rgba(184, 134, 11, 0.25);
+}
+
+th {
   font-weight: 600;
 }
 
-td, th {
+:root[data-theme='dark'] td,
+:root[data-theme='dark'] th {
   border: 1px solid #333333;
+}
+
+:root[data-theme='light'] td,
+:root[data-theme='light'] th {
+  border: 1px solid #e0d8c8;
+}
+
+td, th {
   padding: 0.5rem 0.75rem;
 }
 
-tr:hover {
+:root[data-theme='dark'] tr:hover {
   background: rgba(249, 216, 87, 0.03);
 }
 
+:root[data-theme='light'] tr:hover {
+  background: rgba(184, 134, 11, 0.03);
+}
+
+/* Source reference callouts */
+.source-ref {
+  font-size: 0.8em;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.source-ref a {
+  text-decoration: underline;
+}
+
 /* Mermaid diagram container */
-.mermaid {
+:root[data-theme='dark'] .mermaid {
   background: #111111;
   border: 1px solid #333333;
+}
+
+:root[data-theme='light'] .mermaid {
+  background: #f8f6f0;
+  border: 1px solid #e0d8c8;
+}
+
+.mermaid {
   border-radius: 8px;
   padding: 1rem;
   margin: 1rem 0;

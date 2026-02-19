@@ -26,15 +26,84 @@ Scraped DeepWiki content is in `.deepwiki-raw/` (JSON format, each file has page
 - `batch5-mcp-advanced.txt` — Warp Terminal, Remote MCP (ChatGPT/Claude.ai), Tool Definitions, Memory Rules/Patterns, Configuration
 - `batch6-architecture-research.txt` — Data Stores, Embedding Generation, MCP Bridge Architecture, Health Monitoring, Research & Motivation
 
-The data is in Bright Data scrape format — each batch file is JSON with a `results` array, each result has a `"content"` field with the markdown. Extract the actual content, remove DeepWiki chrome (sidebar navigation, "Relevant source files" sections, "Sources: app.py line X-Y" references, "Loading..." placeholders, "Dismiss / Refresh this wiki" footers, "On this page" ToC).
+The data is in Bright Data scrape format — each batch file is JSON with a `results` array, each result has a `"content"` field with the markdown. Extract the actual content, remove DeepWiki chrome (sidebar navigation, "Relevant source files" sections, "Loading..." placeholders, "Dismiss / Refresh this wiki" footers, "On this page" ToC).
+
+## CRITICAL: Merge Strategy for Two Wikis
+
+The source material comes from TWO separate DeepWiki wikis documenting TWO repos:
+- **automem** wiki — documents the Flask API server, databases, background workers
+- **mcp-automem** wiki — documents the MCP client package, CLI, platform integrations
+
+Users should see ONE unified product called "AutoMem." They should never have to think about which repo does what. Here's how to merge:
+
+### Rule 1: User's perspective, not repo boundaries
+Write from the user's POV. "When you store a memory..." not "The mcp-automem package sends a POST to the automem service which..."
+
+The architecture pages CAN explain the split (that's useful technical context). But getting-started, platform guides, and best-practices pages should feel like one product.
+
+### Rule 2: For overlapping topics, weave don't concatenate
+When both wikis cover the same topic (see merge map below), DON'T just paste both sections one after another. Instead:
+1. Read both sources
+2. Identify what's unique to each (server-side vs client-side perspective)
+3. Write ONE narrative that covers both angles naturally
+4. Example: "Configuration" — the server has env vars (FALKORDB_HOST, PORT), the client has env vars (AUTOMEM_ENDPOINT, AUTOMEM_API_KEY). Combine into one table with a "Component" column.
+
+### Rule 3: Resolve conflicts in favor of the server wiki
+The automem (server) wiki is more recent (Feb 17 vs Feb 11) and more detailed. If the two wikis contradict each other on a technical detail, go with the server wiki.
+
+### Rule 4: Merge map — where both wikis overlap
+| Unified Page | automem wiki source | mcp-automem wiki source | How to merge |
+|---|---|---|---|
+| Quick Start | batch3 (installation) | batch4/5 (installation, config) | Server deploy steps + client install steps in one flow |
+| Configuration | batch3 (config reference) | batch5 (configuration) | One table, grouped by component (Server vs Client) |
+| Memory Operations API | batch2 (memory-operations) | batch4 (storing-memories) | API endpoint details from server, usage examples from client |
+| Recall Operations API | batch2 (recall-operations) | batch4 (recalling-memories) | Same approach |
+| Relationships API | batch2 (relationship-ops) | batch4 (associating-memories) | Same approach |
+| MCP Bridge architecture | batch6 (mcp-bridge-architecture) | batch5 (server-architecture, tool-definitions) | Server's view of the bridge + client's implementation details |
+| Each platform guide | automem wiki 6.x (brief mentions) | mcp-automem wiki 3.x (detailed guides) | Primarily use mcp-automem's detailed guides, supplement with server-side context |
+| Health & Monitoring | batch3 (health-analytics) | N/A (just health tool) | Primarily server wiki, mention the MCP health tool |
+| Development | batch6 (automem dev guide) | batch5 (mcp-automem dev) | Two subsections: "Server Development" and "MCP Client Development" |
+
+## DeepWiki Content Transformation Rules
+
+### Source References
+- DON'T keep the `Sources: app.py line X-Y` format scattered throughout
+- DO convert the most useful ones to inline GitHub links: `[app.py#L1-L113](https://github.com/verygoodplugins/automem/blob/main/app.py#L1-L113)`
+- For key architecture/reference pages, add a source callout at the top:
+  ```
+  :::note[Source files]
+  Key files: [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py), [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/main/consolidation.py)
+  :::
+  ```
+- Drop source refs from getting-started, platform guides, and best-practices pages (users don't care)
+
+### Mermaid Diagrams
+DeepWiki renders diagrams client-side — they won't be in the scraped markdown. Recreate these KEY diagrams as ```mermaid code blocks (Starlight renders them natively):
+
+1. **System Overview** (architecture/overview.md) — Full 3-tier: AI Platforms → MCP Bridge → AutoMem API → FalkorDB + Qdrant
+2. **Memory Lifecycle** (core-concepts/memory-model.md) — Store → Enrich → Embed → Index → Recall → Decay
+3. **Hybrid Search Pipeline** (core-concepts/hybrid-search.md) — Query → 4 strategies → Merge → Score → Return
+4. **Enrichment Pipeline** (architecture/enrichment.md) — Queue → Entity Extract → Summary → Temporal Link → Pattern Detect
+5. **Worker Coordination** (architecture/background-processing.md) — 4 workers with queues and tracking sets
+6. **MCP Bridge Flow** (architecture/mcp-bridge.md) — AI Platform ↔ stdio ↔ MCP Server ↔ HTTP ↔ AutoMem API
+
+Skip diagrams for: platform guides, CLI reference, operations, best practices (text is sufficient).
+
+### Other DeepWiki Artifacts to Remove
+- "Relevant source files" sections at the top of each page
+- "Loading..." diagram placeholders
+- "Dismiss / Refresh this wiki" footer content
+- "On this page" ToC (Starlight generates its own)
+- File path references like `FileRef file-url=...`
 
 ## Writing Style
 
 - Direct, casual but technical. No corporate fluff.
 - Use "you" directly.
 - Include actual code examples, config snippets, and CLI commands.
-- Use Mermaid diagrams for architecture pages (Starlight renders them natively).
+- Use Mermaid diagrams ONLY for the 6 key diagrams listed above.
 - Starlight supports :::note, :::tip, :::caution, :::danger admonitions.
+- Keep pages focused — if a page is getting over 300 lines, it's too long. Split or trim.
 
 ## Files to Create
 
