@@ -3,6 +3,7 @@
 ## Context
 
 The Starlight infrastructure is set up:
+
 - `astro.config.mjs` — configured with full sidebar, theme, Starlight integration
 - `src/styles/starlight-custom.css` — gold/dark theme matching the site
 - `src/assets/logo-dark.svg` and `logo-light.svg` — simple logos
@@ -19,6 +20,7 @@ The sidebar in `astro.config.mjs` defines every page — each `slug` starts with
 ## Raw Source Material
 
 Scraped DeepWiki content is in `.deepwiki-raw/` (JSON format, each file has page content in `"content"` fields):
+
 - `batch1-core-concepts.txt` — Memory Model, Relationship Types, Hybrid Search, Enrichment Pipeline, Consolidation Engine
 - `batch2-api-reference.txt` — Memory Operations, Recall Operations, Relationship Operations, Consolidation Operations, Admin Operations
 - `batch3-health-auth-deploy-config.txt` — Health/Analytics, Authentication, Railway Deploy, Docker Deploy, Configuration Reference
@@ -31,53 +33,63 @@ The data is in Bright Data scrape format — each batch file is JSON with a `res
 ## CRITICAL: Merge Strategy for Two Wikis
 
 The source material comes from TWO separate DeepWiki wikis documenting TWO repos:
+
 - **automem** wiki — documents the Flask API server, databases, background workers
 - **mcp-automem** wiki — documents the MCP client package, CLI, platform integrations
 
 Users should see ONE unified product called "AutoMem." They should never have to think about which repo does what. Here's how to merge:
 
 ### Rule 1: User's perspective, not repo boundaries
+
 Write from the user's POV. "When you store a memory..." not "The mcp-automem package sends a POST to the automem service which..."
 
 The architecture pages CAN explain the split (that's useful technical context). But getting-started, platform guides, and best-practices pages should feel like one product.
 
 ### Rule 2: For overlapping topics, weave don't concatenate
+
 When both wikis cover the same topic (see merge map below), DON'T just paste both sections one after another. Instead:
+
 1. Read both sources
 2. Identify what's unique to each (server-side vs client-side perspective)
 3. Write ONE narrative that covers both angles naturally
 4. Example: "Configuration" — the server has env vars (FALKORDB_HOST, PORT), the client has env vars (AUTOMEM_ENDPOINT, AUTOMEM_API_KEY). Combine into one table with a "Component" column.
 
 ### Rule 3: Resolve conflicts in favor of the server wiki
+
 The automem (server) wiki is more recent (Feb 17 vs Feb 11) and more detailed. If the two wikis contradict each other on a technical detail, go with the server wiki.
 
 ### Rule 4: Merge map — where both wikis overlap
-| Unified Page | automem wiki source | mcp-automem wiki source | How to merge |
-|---|---|---|---|
-| Quick Start | batch3 (installation) | batch4/5 (installation, config) | Server deploy steps + client install steps in one flow |
-| Configuration | batch3 (config reference) | batch5 (configuration) | One table, grouped by component (Server vs Client) |
-| Memory Operations API | batch2 (memory-operations) | batch4 (storing-memories) | API endpoint details from server, usage examples from client |
-| Recall Operations API | batch2 (recall-operations) | batch4 (recalling-memories) | Same approach |
-| Relationships API | batch2 (relationship-ops) | batch4 (associating-memories) | Same approach |
-| MCP Bridge architecture | batch6 (mcp-bridge-architecture) | batch5 (server-architecture, tool-definitions) | Server's view of the bridge + client's implementation details |
-| Each platform guide | automem wiki 6.x (brief mentions) | mcp-automem wiki 3.x (detailed guides) | Primarily use mcp-automem's detailed guides, supplement with server-side context |
-| Health & Monitoring | batch3 (health-analytics) | N/A (just health tool) | Primarily server wiki, mention the MCP health tool |
-| Development | batch6 (automem dev guide) | batch5 (mcp-automem dev) | Two subsections: "Server Development" and "MCP Client Development" |
+
+| Unified Page            | automem wiki source               | mcp-automem wiki source                        | How to merge                                                                     |
+| ----------------------- | --------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| Quick Start             | batch3 (installation)             | batch4/5 (installation, config)                | Server deploy steps + client install steps in one flow                           |
+| Configuration           | batch3 (config reference)         | batch5 (configuration)                         | One table, grouped by component (Server vs Client)                               |
+| Memory Operations API   | batch2 (memory-operations)        | batch4 (storing-memories)                      | API endpoint details from server, usage examples from client                     |
+| Recall Operations API   | batch2 (recall-operations)        | batch4 (recalling-memories)                    | Same approach                                                                    |
+| Relationships API       | batch2 (relationship-ops)         | batch4 (associating-memories)                  | Same approach                                                                    |
+| MCP Bridge architecture | batch6 (mcp-bridge-architecture)  | batch5 (server-architecture, tool-definitions) | Server's view of the bridge + client's implementation details                    |
+| Each platform guide     | automem wiki 6.x (brief mentions) | mcp-automem wiki 3.x (detailed guides)         | Primarily use mcp-automem's detailed guides, supplement with server-side context |
+| Health & Monitoring     | batch3 (health-analytics)         | N/A (just health tool)                         | Primarily server wiki, mention the MCP health tool                               |
+| Development             | batch6 (automem dev guide)        | batch5 (mcp-automem dev)                       | Two subsections: "Server Development" and "MCP Client Development"               |
 
 ## DeepWiki Content Transformation Rules
 
 ### Source References
+
 - DON'T keep the `Sources: app.py line X-Y` format scattered throughout
 - DO convert the most useful ones to inline GitHub links: `[app.py#L1-L113](https://github.com/verygoodplugins/automem/blob/main/app.py#L1-L113)`
 - For key architecture/reference pages, add a source callout at the top:
+
   ```
   :::note[Source files]
   Key files: [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py), [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/main/consolidation.py)
   :::
   ```
+
 - Drop source refs from getting-started, platform guides, and best-practices pages (users don't care)
 
 ### Mermaid Diagrams
+
 DeepWiki renders diagrams client-side — they won't be in the scraped markdown. Recreate these KEY diagrams as ```mermaid code blocks (Starlight renders them natively):
 
 1. **System Overview** (architecture/overview.md) — Full 3-tier: AI Platforms → MCP Bridge → AutoMem API → FalkorDB + Qdrant
@@ -90,6 +102,7 @@ DeepWiki renders diagrams client-side — they won't be in the scraped markdown.
 Skip diagrams for: platform guides, CLI reference, operations, best practices (text is sufficient).
 
 ### Other DeepWiki Artifacts to Remove
+
 - "Relevant source files" sections at the top of each page
 - "Loading..." diagram placeholders
 - "Dismiss / Refresh this wiki" footer content
@@ -103,13 +116,49 @@ Skip diagrams for: platform guides, CLI reference, operations, best practices (t
 - Include actual code examples, config snippets, and CLI commands.
 - Use Mermaid diagrams ONLY for the 6 key diagrams listed above.
 - Starlight supports :::note, :::tip, :::caution, :::danger admonitions.
-- Keep pages focused — if a page is getting over 300 lines, it's too long. Split or trim.
+- Page length depends on the section type (see below).
+
+## Page Depth Guidelines — IMPORTANT
+
+NOT all pages should be the same depth. Different sections serve different purposes:
+
+### Deep reference pages (aim for 200-500 lines, preserve ALL technical detail)
+These pages are where developers go to look things up. Keep every table, every validation rule, every parameter. The DeepWiki content for these pages is already good — clean it up but do NOT summarize or shorten.
+
+- `core-concepts/*` — Memory Model, Relationship Types, Hybrid Search, Consolidation
+- `architecture/*` — System Overview, MCP Bridge, Data Stores, Enrichment, Embeddings, Background Processing
+- `reference/api/*` — All API endpoint pages
+- `reference/configuration.md` — Full env var reference
+- `reference/authentication.md` — Auth flow details
+
+For these pages, KEEP:
+- Full property tables with types, defaults, and descriptions
+- Validation rules (ranges, formats, edge cases)
+- Code examples showing request/response bodies
+- Implementation details (algorithms, thresholds, retry counts)
+- The system prompt text used for LLM classification
+- Storage representation details (indexes, dimensions, payload structure)
+- Cost estimates where relevant ($0.02/month for classification etc)
+- Configuration thresholds (similarity > 0.8, batch size 20, etc)
+
+### Medium-depth guides (aim for 100-200 lines)
+- `getting-started/*` — Focused tutorials, but include all relevant config options
+- `platforms/*` — Complete setup guides with full config snippets
+- `deployment/*` — Deployment-specific details
+- `cli/*` — Command reference with all flags and options
+- `operations/*` — Operational procedures with specific commands
+
+### Concise narrative pages (aim for 80-150 lines)
+- `best-practices/*` — Opinionated advice, examples over exhaustive docs
+- `development/*` — Contributing guides
+- `research.md` — Motivation and benchmarks
 
 ## Files to Create
 
 ### Getting Started (2 remaining)
 
 #### `src/content/docs/docs/getting-started/docker.md`
+
 ```yaml
 ---
 title: Docker & Local Dev
@@ -118,9 +167,11 @@ sidebar:
   order: 3
 ---
 ```
+
 Content: docker-compose.yml (3 services: automem, falkordb, qdrant), env vars, bare Flask setup, data persistence. Source: batch3.
 
 #### `src/content/docs/docs/getting-started/environment-variables.md`
+
 ```yaml
 ---
 title: Environment Variables
@@ -129,6 +180,7 @@ sidebar:
   order: 4
 ---
 ```
+
 Content: Comprehensive env vars table grouped by category (Server, Auth, Database, Embeddings, MCP Client). Merge from both wikis. Source: batch3 (config reference) + batch5 (mcp config).
 
 ### Platform Guides (11 files)
@@ -139,6 +191,7 @@ MCP client package: `@verygoodplugins/mcp-automem`
 MCP client env vars: `AUTOMEM_ENDPOINT`, `AUTOMEM_API_KEY`
 
 #### `src/content/docs/docs/platforms/claude-desktop.md`
+
 ```yaml
 ---
 title: Claude Desktop
@@ -147,9 +200,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Content: JSON config in `claude_desktop_config.json`, .mcpb one-click install, Plugin Marketplace. Source: batch4.
 
 #### `src/content/docs/docs/platforms/claude-web.md`
+
 ```yaml
 ---
 title: "Claude.ai & Mobile"
@@ -158,9 +213,11 @@ sidebar:
   order: 2
 ---
 ```
+
 Content: Remote MCP via HTTP/SSE, mcp-remote sidecar proxy. Source: batch5 (remote-mcp).
 
 #### `src/content/docs/docs/platforms/claude-code.md`
+
 ```yaml
 ---
 title: Claude Code
@@ -169,9 +226,11 @@ sidebar:
   order: 3
 ---
 ```
+
 Content: ~/.claude.json config, Plugin install, hook system, CLI installer. Source: batch4.
 
 #### `src/content/docs/docs/platforms/cursor.md`
+
 ```yaml
 ---
 title: Cursor IDE
@@ -180,9 +239,11 @@ sidebar:
   order: 4
 ---
 ```
+
 Content: ~/.cursor/mcp.json config, .cursor/rules/automem.mdc, CLI installer. Source: batch4.
 
 #### `src/content/docs/docs/platforms/chatgpt.md`
+
 ```yaml
 ---
 title: ChatGPT
@@ -191,9 +252,11 @@ sidebar:
   order: 5
 ---
 ```
+
 Content: ChatGPT Developer Mode, Remote MCP via HTTP/SSE. Source: batch5 (remote-mcp).
 
 #### `src/content/docs/docs/platforms/codex.md`
+
 ```yaml
 ---
 title: OpenAI Codex
@@ -202,9 +265,11 @@ sidebar:
   order: 6
 ---
 ```
+
 Content: ~/.codex/config.toml TOML config, CLI installer. Source: batch4.
 
 #### `src/content/docs/docs/platforms/warp.md`
+
 ```yaml
 ---
 title: Warp Terminal
@@ -213,9 +278,11 @@ sidebar:
   order: 7
 ---
 ```
+
 Content: Warp MCP support, warp-rules.md. Source: batch5.
 
 #### `src/content/docs/docs/platforms/github-copilot.md`
+
 ```yaml
 ---
 title: GitHub Copilot
@@ -224,9 +291,11 @@ sidebar:
   order: 8
 ---
 ```
+
 Content: Repository-level MCP config, .github/copilot/mcp.json. Source: batch5 (remote-mcp section may cover this) or general knowledge.
 
 #### `src/content/docs/docs/platforms/elevenlabs.md`
+
 ```yaml
 ---
 title: ElevenLabs Agents
@@ -235,9 +304,11 @@ sidebar:
   order: 9
 ---
 ```
+
 Content: ElevenLabs Conversational AI, Remote MCP. Source: batch5.
 
 #### `src/content/docs/docs/platforms/alexa.md`
+
 ```yaml
 ---
 title: Alexa
@@ -246,9 +317,11 @@ sidebar:
   order: 10
 ---
 ```
+
 Content: Custom Alexa skill, direct API calls. Source: automem wiki section 6.4 (may need to reference the repo directly).
 
 #### `src/content/docs/docs/platforms/openclaw.md`
+
 ```yaml
 ---
 title: OpenClaw
@@ -257,11 +330,13 @@ sidebar:
   order: 11
 ---
 ```
+
 Content: Bypasses MCP, SKILL.md with curl commands, CLI installer. Source: batch4.
 
 ### Core Concepts (4 files)
 
 #### `src/content/docs/docs/core-concepts/memory-model.md`
+
 ```yaml
 ---
 title: Memory Model
@@ -270,9 +345,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Content: Memory properties (id, content, tags, importance, type, metadata, timestamp, embedding), auto-classification (regex + LLM), memory types (Decision, Bug-Fix, Pattern, Preference, Style, Architecture, Context, Learning, Reference, Meta), lifecycle (Store → Enrich → Embed → Index → Recall → Decay). Source: batch1.
 
 #### `src/content/docs/docs/core-concepts/relationship-types.md`
+
 ```yaml
 ---
 title: Relationship Types
@@ -281,9 +358,11 @@ sidebar:
   order: 2
 ---
 ```
+
 Content: All 11 types with descriptions, strength (0-1), when to use each, Mermaid diagram example. Source: batch1.
 
 #### `src/content/docs/docs/core-concepts/hybrid-search.md`
+
 ```yaml
 ---
 title: Hybrid Search
@@ -292,9 +371,11 @@ sidebar:
   order: 3
 ---
 ```
+
 Content: 4 search strategies, scoring, graceful degradation, advanced features (expand_entities, expand_relations, time_query). Source: batch1.
 
 #### `src/content/docs/docs/core-concepts/consolidation.md`
+
 ```yaml
 ---
 title: Consolidation & Decay
@@ -303,6 +384,7 @@ sidebar:
   order: 4
 ---
 ```
+
 Content: 4 cycles (Decay, Creative Association, Clustering, Forgetting), configurable intervals, control node. Source: batch1.
 
 ### Architecture (6 files)
@@ -310,6 +392,7 @@ Content: 4 cycles (Decay, Creative Association, Clustering, Forgetting), configu
 Use Mermaid diagrams where appropriate.
 
 #### `src/content/docs/docs/architecture/overview.md`
+
 ```yaml
 ---
 title: System Overview
@@ -318,9 +401,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Content: Full 3-tier diagram, design decisions, component summary. Source: overview pages + batch6.
 
 #### `src/content/docs/docs/architecture/mcp-bridge.md`
+
 ```yaml
 ---
 title: MCP Bridge
@@ -329,9 +414,11 @@ sidebar:
   order: 2
 ---
 ```
+
 Content: Bridge pattern, 6 MCP tools, AutoMemClient, stdio transport, response normalization. Source: batch6 + mcp-automem overview.
 
 #### `src/content/docs/docs/architecture/data-stores.md`
+
 ```yaml
 ---
 title: Data Stores
@@ -340,9 +427,11 @@ sidebar:
   order: 3
 ---
 ```
+
 Content: FalkorDB (canonical, graph, Cypher), Qdrant (optional, vectors, payloads), sync worker, graceful degradation. Source: batch6.
 
 #### `src/content/docs/docs/architecture/enrichment.md`
+
 ```yaml
 ---
 title: Enrichment Pipeline
@@ -351,9 +440,11 @@ sidebar:
   order: 4
 ---
 ```
+
 Content: Entity extraction (spaCy + regex), summary generation, temporal linking, pattern detection, retry logic. Source: batch1.
 
 #### `src/content/docs/docs/architecture/embeddings.md`
+
 ```yaml
 ---
 title: Embedding Generation
@@ -362,9 +453,11 @@ sidebar:
   order: 5
 ---
 ```
+
 Content: 4 providers (Voyage, OpenAI, FastEmbed, Placeholder), auto-selection, batching (20 items, 2s timeout), 40-50% cost reduction. Source: batch6.
 
 #### `src/content/docs/docs/architecture/background-processing.md`
+
 ```yaml
 ---
 title: Background Processing
@@ -373,6 +466,7 @@ sidebar:
   order: 6
 ---
 ```
+
 Content: 4 workers (Enrichment, Embedding, Consolidation, Sync), queues, coordination. Source: automem overview.
 
 ### API Reference (7 files)
@@ -382,6 +476,7 @@ Include request/response examples for each endpoint.
 Auth: `Authorization: Bearer <AUTOMEM_API_TOKEN>`. Admin endpoints also need `X-Admin-Token: <ADMIN_API_TOKEN>`.
 
 #### `src/content/docs/docs/reference/api/memory-operations.md`
+
 ```yaml
 ---
 title: Memory Operations
@@ -390,9 +485,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Content: POST /memory, PATCH /memory/:id, DELETE /memory/:id, GET /memory/:id. Source: batch2.
 
 #### `src/content/docs/docs/reference/api/recall-operations.md`
+
 ```yaml
 ---
 title: Recall Operations
@@ -401,9 +498,11 @@ sidebar:
   order: 2
 ---
 ```
+
 Content: GET /recall (query, tags, time_query, limit, expand_entities, expand_relations, etc.), GET /memory/by-tag. Source: batch2.
 
 #### `src/content/docs/docs/reference/api/relationships.md`
+
 ```yaml
 ---
 title: Relationship Operations
@@ -412,9 +511,11 @@ sidebar:
   order: 3
 ---
 ```
+
 Content: POST /associate, 11 relationship types, strength. Source: batch2.
 
 #### `src/content/docs/docs/reference/api/consolidation.md`
+
 ```yaml
 ---
 title: Consolidation Operations
@@ -423,9 +524,11 @@ sidebar:
   order: 4
 ---
 ```
+
 Content: POST /consolidate, GET /consolidation/status. Source: batch2.
 
 #### `src/content/docs/docs/reference/api/admin.md`
+
 ```yaml
 ---
 title: Admin Operations
@@ -434,9 +537,11 @@ sidebar:
   order: 5
 ---
 ```
+
 Content: POST /admin/reembed, POST /enrichment/reprocess, GET /admin/stats. Source: batch2.
 
 #### `src/content/docs/docs/reference/api/health.md`
+
 ```yaml
 ---
 title: Health & Analytics
@@ -445,9 +550,11 @@ sidebar:
   order: 6
 ---
 ```
+
 Content: GET /health (public, no auth). Source: batch3.
 
 #### `src/content/docs/docs/reference/api/direct-vs-mcp.md`
+
 ```yaml
 ---
 title: Direct API vs MCP Tools
@@ -456,11 +563,13 @@ sidebar:
   order: 7
 ---
 ```
+
 Content: Side-by-side table of all 6 MCP tools vs their HTTP API equivalents.
 
 ### CLI Reference (4 files)
 
 #### `src/content/docs/docs/cli/setup.md`
+
 ```yaml
 ---
 title: Setup & Installation
@@ -471,6 +580,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/cli/platform-installers.md`
+
 ```yaml
 ---
 title: Platform Installers
@@ -481,6 +591,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/cli/queue.md`
+
 ```yaml
 ---
 title: Queue Management
@@ -491,6 +602,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/cli/config-tools.md`
+
 ```yaml
 ---
 title: Configuration Tools
@@ -503,6 +615,7 @@ sidebar:
 ### Configuration (2 files)
 
 #### `src/content/docs/docs/reference/configuration.md`
+
 ```yaml
 ---
 title: Configuration Reference
@@ -511,9 +624,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Content: All env vars in comprehensive table. Source: batch3 + batch5.
 
 #### `src/content/docs/docs/reference/authentication.md`
+
 ```yaml
 ---
 title: Authentication
@@ -522,11 +637,13 @@ sidebar:
   order: 2
 ---
 ```
+
 Content: Standard API token + admin token, header examples, endpoint matrix. Source: batch3.
 
 ### Deployment (2 files)
 
 #### `src/content/docs/docs/deployment/railway.md`
+
 ```yaml
 ---
 title: Railway Deployment
@@ -535,9 +652,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Source: batch3.
 
 #### `src/content/docs/docs/deployment/docker.md`
+
 ```yaml
 ---
 title: Docker Deployment
@@ -546,11 +665,13 @@ sidebar:
   order: 2
 ---
 ```
+
 Source: batch3.
 
 ### Operations (4 files)
 
 #### `src/content/docs/docs/operations/health.md`
+
 ```yaml
 ---
 title: Health Monitoring
@@ -559,9 +680,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Source: batch3 + batch6.
 
 #### `src/content/docs/docs/operations/backup.md`
+
 ```yaml
 ---
 title: Backup & Recovery
@@ -572,6 +695,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/operations/performance.md`
+
 ```yaml
 ---
 title: Performance Tuning
@@ -582,6 +706,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/operations/troubleshooting.md`
+
 ```yaml
 ---
 title: Troubleshooting
@@ -594,6 +719,7 @@ sidebar:
 ### Best Practices (3 files)
 
 #### `src/content/docs/docs/best-practices/memory-rules.md`
+
 ```yaml
 ---
 title: Memory Rules & Patterns
@@ -602,9 +728,11 @@ sidebar:
   order: 1
 ---
 ```
+
 Source: batch5.
 
 #### `src/content/docs/docs/best-practices/context-engineering.md`
+
 ```yaml
 ---
 title: Context Engineering
@@ -615,6 +743,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/best-practices/progressive-disclosure.md`
+
 ```yaml
 ---
 title: Progressive Disclosure
@@ -627,6 +756,7 @@ sidebar:
 ### Development (4 files)
 
 #### `src/content/docs/docs/development/structure.md`
+
 ```yaml
 ---
 title: Project Structure
@@ -637,6 +767,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/development/local-setup.md`
+
 ```yaml
 ---
 title: Local Setup
@@ -647,6 +778,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/development/testing.md`
+
 ```yaml
 ---
 title: Testing
@@ -657,6 +789,7 @@ sidebar:
 ```
 
 #### `src/content/docs/docs/development/releases.md`
+
 ```yaml
 ---
 title: Release Process
@@ -669,12 +802,14 @@ sidebar:
 ### Research (1 file)
 
 #### `src/content/docs/docs/research.md`
+
 ```yaml
 ---
 title: Research & Motivation
 description: The research behind AutoMem's architecture decisions.
 ---
 ```
+
 Content: LoCoMo benchmark (90.53% vs CORE 88.24%), neuroscience-inspired consolidation, knowledge graphs vs flat RAG, typed relationships. Source: batch6.
 
 ## Cleanup After Content Generation
