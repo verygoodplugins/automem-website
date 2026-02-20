@@ -13,8 +13,22 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 
 const timelineEntries = [
   {
+    date: '2026-02-16',
+    time: '11:56 UTC',
+    title: '0.11.0 • Embedding Providers & Memory Lookup',
+    description:
+      'Voyage AI embedding provider for high-accuracy recall. OpenAI-compatible providers via OPENAI_BASE_URL (LM Studio, Ollama, xAI, etc.). GET /memory/<id> endpoint for direct memory lookup. Hardened time parser for numeric timestamps.',
+  },
+  {
     date: '2026-02-07',
-    time: '10:00 UTC',
+    time: '07:40 UTC',
+    title: '0.10.1 • Stability Fixes',
+    description:
+      'Temporal query bound to 7-day window with timeout to prevent runaway queries. Skip temperature param for o-series and gpt-5 models.',
+  },
+  {
+    date: '2026-02-06',
+    time: '19:56 UTC',
     title: '0.10.0 • Visualization & Observability',
     description:
       'Interactive graph visualization API. automem-watch real-time observability with SSE streaming and TUI. Ollama embedding provider for fully local deployments. Memory content size governance with auto-summarization. Streamable HTTP transport for MCP connections.',
@@ -31,14 +45,21 @@ const timelineEntries = [
     time: '12:00 UTC',
     title: 'MCP 0.11.0 • Claude Code Plugin',
     description:
-      'Claude Code plugin with automatic memory capture hooks. Session start recall, session end summary. Integration tests and CLI smoke tests.',
+      'Claude Code plugin with automatic memory capture hooks. Session start recall, session end summary. Cursor hooks integration for automatic capture. Integration tests and CLI smoke tests.',
+  },
+  {
+    date: '2026-01-06',
+    time: '23:20 UTC',
+    title: 'MCP 0.10.0 • MCP Registry & SessionStart Hook',
+    description:
+      'Listed on the official MCP Registry. SessionStart hook for automatic memory recall at conversation start. Memory content size guidelines and warnings surfaced in the client.',
   },
   {
     date: '2025-12-10',
     time: '11:00 UTC',
-    title: '0.9.2 • Expansion Filtering',
+    title: '0.9.3 • Expansion Filtering',
     description:
-      'expand_min_strength and expand_min_importance parameters for fine-grained graph traversal control. Vector dimension autodetect for embedding providers.',
+      'expand_min_strength and expand_min_importance parameters for fine-grained graph traversal control. Vector dimension autodetect for embedding providers. CI workflow for automated testing on PRs.',
   },
   {
     date: '2025-12-04',
