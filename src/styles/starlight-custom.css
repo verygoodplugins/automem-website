@@ -1,0 +1,360 @@
+/* Shared */
+:root {
+  /* Typography - Blend of Clarity (Inter) and Tech (JetBrains Mono) */
+  --sl-font: "Inter", system-ui, -apple-system, sans-serif;
+  --sl-font-mono: "JetBrains Mono", monospace;
+
+  /* Layout */
+  --sl-content-width: 50rem; /* Standard width to prevent sidebar overflow on laptops */
+  --sl-sidebar-width: 18rem;
+  --sl-nav-height: 4rem;
+
+  /* AutoMem Brand Colors - Base Definitions */
+  --am-gold: #f9d857;
+  --am-gold-dim: rgba(249, 216, 87, 0.1);
+  --am-violet: #8b5cf6;
+  --am-violet-dim: rgba(139, 92, 246, 0.1);
+}
+
+/* Large Screens - Restore wide content */
+@media (min-width: 1600px) {
+  :root {
+    --sl-content-width: 60rem;
+  }
+}
+
+/* Dark Mode (Default) - "Memory Lab" Theme */
+:root[data-theme="dark"] {
+  /* Core Colors */
+  --sl-color-accent-low: #1a1a3a;
+  --sl-color-accent: #f9d857; /* AutoMem Gold */
+  --sl-color-accent-high: #fff8dc;
+
+  --sl-color-white: #e0e0e0; /* --lab-text */
+  --sl-color-gray-1: #c0c0c0;
+  --sl-color-gray-2: #888888; /* --lab-muted */
+  --sl-color-gray-3: #555555;
+  --sl-color-gray-4: #333333; /* --lab-border */
+  --sl-color-gray-5: #1a1a1a; /* --lab-surface */
+  --sl-color-gray-6: #0a0a0a; /* --lab-bg */
+  --sl-color-black: #050505;
+
+  /* Backgrounds */
+  --sl-color-bg: #0a0a0a;
+  --sl-color-bg-nav: rgba(10, 10, 10, 0.9);
+  --sl-color-bg-sidebar: rgba(10, 10, 10, 0.5);
+  --sl-color-hairline-light: #333333;
+  --sl-color-hairline-shade: #1a1a1a;
+
+  /* Text */
+  --sl-color-text-accent: #f9d857;
+
+  /* Custom Grid Color */
+  --grid-color: #333333;
+}
+
+/* Light Mode - "Warm Archive" Theme */
+:root[data-theme="light"] {
+  /* Core Colors */
+  --sl-color-accent-low: #fff8dc;
+  --sl-color-accent: #b8860b; /* Darker Gold for contrast */
+  --sl-color-accent-high: #1a1a3a;
+
+  --sl-color-white: #262014; /* --lab-text (Dark Brown) */
+  --sl-color-gray-1: #3e3420;
+  --sl-color-gray-2: #5c4d32;
+  --sl-color-gray-3: #80735a; /* --lab-muted */
+  --sl-color-gray-4: #e5d3ab; /* --lab-border */
+  --sl-color-gray-5: #fffbf0; /* --lab-bg */
+  --sl-color-gray-6: #ffffff; /* --lab-surface */
+  --sl-color-black: #fffbf0;
+
+  /* Backgrounds */
+  --sl-color-bg: #fffbf0;
+  --sl-color-bg-nav: rgba(255, 251, 240, 0.9);
+  --sl-color-bg-sidebar: rgba(255, 251, 240, 0.5);
+  --sl-color-hairline-light: #e5d3ab;
+  --sl-color-hairline-shade: #d0c8b8;
+
+  /* Text */
+  --sl-color-text-accent: #8b6914;
+
+  /* Custom Grid Color */
+  --grid-color: #e5d3ab;
+}
+
+/* Global Styles & Overrides */
+
+/* Background Grid Pattern */
+body {
+  background-size: 24px 24px;
+  background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+  background-attachment: fixed;
+}
+
+/* Sidebar Styling */
+.sidebar-content {
+  background: transparent !important; /* Let grid show through or use custom backdrop */
+  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--sl-color-hairline-light);
+}
+
+/* Navbar Styling */
+.site-title {
+  font-family: var(--sl-font-mono);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Content Typography Overrides for "DeepWiki" clarity */
+.content-panel h1,
+.content-panel h2,
+.content-panel h3,
+.content-panel h4 {
+  font-family: var(--sl-font-mono); /* Keep headings technical */
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.content-panel h1 {
+  font-size: 2.5rem;
+  color: var(--sl-color-text-accent);
+  margin-bottom: 1.5rem;
+}
+
+.content-panel p {
+  line-height: 1.7; /* Improved readability */
+  font-size: 0.9rem;
+}
+
+/* Code Blocks - "AutoMem" Tech Style */
+:root[data-theme="dark"] .expressive-code .frame {
+  border: 1px solid var(--sl-color-hairline-light) !important;
+  background: #111111 !important;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.5); /* Hard shadow */
+}
+
+:root[data-theme="light"] .expressive-code .frame {
+  border: 1px solid var(--sl-color-hairline-light) !important;
+  background: #ffffff !important;
+  box-shadow: 4px 4px 0px 0px rgba(38, 32, 20, 0.1); /* Hard shadow */
+}
+
+/* Inline Code */
+:not(pre) > code {
+  font-family: var(--sl-font-mono);
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+:root[data-theme="dark"] :not(pre) > code {
+  background: rgba(249, 216, 87, 0.1);
+  color: #f9d857;
+  border: 1px solid rgba(249, 216, 87, 0.2);
+}
+
+:root[data-theme="light"] :not(pre) > code {
+  background: rgba(184, 134, 11, 0.08);
+  color: #8b6914;
+  border: 1px solid rgba(184, 134, 11, 0.2);
+}
+
+/* Cards & Callouts */
+.card,
+.starlight-aside {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  background: var(--sl-color-gray-6);
+  box-shadow: 2px 2px 0px 0px var(--sl-color-hairline-light); /* Subtle hard shadow */
+}
+
+/* Mermaid Diagrams - High Contrast & Readability */
+.mermaid {
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  overflow-x: auto; /* Allow scrolling */
+  display: block; /* Block display handles overflow better than flex center for scrolling */
+  text-align: center;
+  cursor: zoom-in; /* Hint at interactivity */
+  transition: box-shadow 0.2s ease;
+}
+
+.mermaid:hover {
+  box-shadow: 0 0 0 2px var(--sl-color-accent);
+}
+
+/* SVG Text Fixes */
+.mermaid svg {
+  /* Allow natural sizing */
+  max-width: 100%;
+  height: auto;
+}
+
+:root[data-theme="dark"] .mermaid text.actor,
+:root[data-theme="dark"] .mermaid text.messageText,
+:root[data-theme="dark"] .mermaid text.loopText,
+:root[data-theme="dark"] .mermaid text.labelText,
+:root[data-theme="dark"] .mermaid text {
+  fill: #e0e0e0 !important; /* Force light text */
+  font-family: var(--sl-font-mono) !important;
+  font-size: 14px !important; /* Enforce readable base size */
+}
+
+:root[data-theme="light"] .mermaid text.actor,
+:root[data-theme="light"] .mermaid text.messageText,
+:root[data-theme="light"] .mermaid text.loopText,
+:root[data-theme="light"] .mermaid text.labelText,
+:root[data-theme="light"] .mermaid text {
+  fill: #262014 !important; /* Force dark text */
+  font-family: var(--sl-font-mono) !important;
+  font-size: 14px !important; /* Enforce readable base size */
+}
+
+/* Lines and Strokes */
+:root[data-theme="dark"] .mermaid .actor-line,
+:root[data-theme="dark"] .mermaid .messageLine0,
+:root[data-theme="dark"] .mermaid .messageLine1,
+:root[data-theme="dark"] .mermaid .loopLine,
+:root[data-theme="dark"] .mermaid .note-border,
+:root[data-theme="dark"] .mermaid .label-box,
+:root[data-theme="dark"] .mermaid line,
+:root[data-theme="dark"] .mermaid path {
+  stroke: #888888 !important;
+  stroke-width: 2px !important;
+}
+
+:root[data-theme="light"] .mermaid .actor-line,
+:root[data-theme="light"] .mermaid .messageLine0,
+:root[data-theme="light"] .mermaid .messageLine1,
+:root[data-theme="light"] .mermaid .loopLine,
+:root[data-theme="light"] .mermaid .note-border,
+:root[data-theme="light"] .mermaid .label-box,
+:root[data-theme="light"] .mermaid line,
+:root[data-theme="light"] .mermaid path {
+  stroke: #5c4d32 !important;
+  stroke-width: 2px !important;
+}
+
+/* Nodes/Boxes */
+:root[data-theme="dark"] .mermaid rect,
+:root[data-theme="dark"] .mermaid circle,
+:root[data-theme="dark"] .mermaid polygon {
+  fill: #1a1a1a !important;
+  stroke: #f9d857 !important; /* Gold borders */
+  stroke-width: 2px !important;
+}
+
+:root[data-theme="light"] .mermaid rect,
+:root[data-theme="light"] .mermaid circle,
+:root[data-theme="light"] .mermaid polygon {
+  fill: #fffbf0 !important;
+  stroke: #b8860b !important; /* Dark Gold borders */
+  stroke-width: 2px !important;
+}
+
+/* Specific overrides for sequence diagrams which can be tricky */
+:root[data-theme="dark"] .mermaid .actor {
+  fill: #1a1a1a !important;
+  stroke: #f9d857 !important;
+}
+
+:root[data-theme="light"] .mermaid .actor {
+  fill: #fffbf0 !important;
+  stroke: #b8860b !important;
+}
+
+/* Table Styling - Clean & Professional */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-family: var(--sl-font-mono);
+  border-bottom: 2px solid var(--sl-color-hairline-light);
+  background: var(--sl-color-gray-6);
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+
+tr:hover td {
+  background: var(--sl-color-gray-6);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--sl-color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sl-color-gray-4);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sl-color-gray-3);
+}
+
+/* Links */
+.content-panel a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: all 0.2s ease;
+}
+
+.content-panel a:hover {
+  color: var(--sl-color-accent);
+  text-decoration-thickness: 2px;
+}
+
+/* Film Grain Overlay */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Right Sidebar / Table of Contents Fixes */
+starlight-toc {
+  /* Allow shrinking if needed */
+  min-width: 0;
+  width: 100%;
+}
+
+starlight-toc li a {
+  /* Force wrapping for long items */
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word;
+  line-height: 1.4;
+  padding-block: 0.25rem;
+  display: block;
+}
+
+/* Ensure the right sidebar container itself doesn't overflow */
+.right-sidebar-panel {
+  max-width: 100%;
+  overflow-x: hidden;
+}

@@ -123,7 +123,7 @@ await automem.associate({
 });
 ```
 
-Full API docs: [AutoMem Features](/docs/features)
+Full API docs: [AutoMem API Reference](/docs/reference/api/memory-operations/)
 
 The code is open source. If you want to understand exactly how the graph traversal works, [read the source](https://github.com/verygoodplugins/automem).
 
