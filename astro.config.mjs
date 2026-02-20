@@ -3,10 +3,17 @@ import tailwind from '@astrojs/tailwind';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
+import mermaid from 'astro-mermaid';
 
 export default defineConfig({
   site: 'https://automem.ai',
   integrations: [
+    mermaid({
+      autoTheme: true,
+      mermaidConfig: {
+        securityLevel: 'loose',
+      },
+    }),
     starlight({
       title: 'AutoMem Docs',
       logo: {

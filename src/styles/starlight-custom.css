@@ -68,13 +68,13 @@
   font-size: 0.9em;
 }
 
-/* Code blocks */
-:root[data-theme='dark'] pre {
+/* Code blocks (exclude mermaid containers) */
+:root[data-theme='dark'] pre:not(.mermaid) {
   border: 1px solid #333333 !important;
   background: #111111 !important;
 }
 
-:root[data-theme='light'] pre {
+:root[data-theme='light'] pre:not(.mermaid) {
   border: 1px solid #e0d8c8 !important;
   background: #f8f6f0 !important;
 }
@@ -146,4 +146,15 @@ td, th {
   border-radius: 8px;
   padding: 1rem;
   margin: 1rem 0;
+  overflow-x: auto;
+}
+
+/* Hide raw mermaid text before client-side render (FOUC prevention) */
+pre.mermaid:not([data-processed='true']) {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none !important;
 }
