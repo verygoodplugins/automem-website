@@ -17,8 +17,7 @@ export default defineConfig({
     starlight({
       title: 'AutoMem Docs',
       logo: {
-        light: './src/assets/logo-light.svg',
-        dark: './src/assets/logo-dark.svg',
+        src: './src/assets/robot-icon.svg',
         replacesTitle: false,
       },
       social: [
@@ -39,8 +38,23 @@ export default defineConfig({
         {
           tag: 'link',
           attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.gstatic.com',
+            crossorigin: 'true',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
             rel: 'stylesheet',
-            href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap',
+            href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
+          },
+        },
+        {
+          tag: 'script',
+          attrs: {
+            src: '/mermaid-fix.js',
+            defer: true,
           },
         },
       ],

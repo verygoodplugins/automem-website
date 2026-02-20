@@ -7,7 +7,7 @@ sidebar:
 
 This page covers advanced usage patterns and customization techniques for developers who want to extend mcp-automem or deeply customize its behavior with a focus on context engineering — designing prompts and integration patterns that leverage persistent memory effectively.
 
-For basic setup and configuration, see [Getting Started](/docs/getting-started/). For platform-specific integration guides, see the [Platform Integration Guides](/docs/platforms/). For standard memory operations, see the [Memory Operations](/docs/reference/memory-operations/) reference.
+For basic setup and configuration, see [Getting Started](/docs/getting-started/introduction/). For platform-specific integration guides, see the [Platform Integration Guides](/docs/platforms/claude-desktop/). For standard memory operations, see the [Memory Operations](/docs/reference/api/memory-operations/) reference.
 
 ---
 

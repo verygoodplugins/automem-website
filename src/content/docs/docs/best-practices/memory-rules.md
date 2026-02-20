@@ -7,7 +7,7 @@ sidebar:
 
 This page provides a comprehensive reference for memory-first development patterns used with the AutoMem MCP server. It documents proven strategies for memory recall, storage patterns, importance scoring, tagging conventions, and relationship management that enable AI assistants to maintain persistent context across sessions.
 
-This page focuses on **usage patterns and best practices** for the six MCP tools. For tool schemas and API details, see the [Memory Operations](/docs/reference/memory-operations/) reference. For platform-specific integration setup, see the [Platform Integration Guides](/docs/platforms/).
+This page focuses on **usage patterns and best practices** for the six MCP tools. For tool schemas and API details, see the [Memory Operations](/docs/reference/api/memory-operations/) reference. For platform-specific integration setup, see the [Platform Integration Guides](/docs/platforms/claude-desktop/).
 
 ---
 

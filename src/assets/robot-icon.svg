@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="diskGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFE082"/>
+      <stop offset="50%" style="stop-color:#F9D857"/>
+      <stop offset="100%" style="stop-color:#DAA520"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="52" rx="6" fill="url(#diskGold)" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="19" y="12" width="26" height="16" rx="3" fill="#e5e5e5" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="35" y="16" width="8" height="10" rx="1" fill="#1a1a1a"/>
+  <circle cx="25" cy="40" r="4" fill="#1a1a1a"/>
+  <circle cx="39" cy="40" r="4" fill="#1a1a1a"/>
+  <path d="M27 50 Q32 56 37 50" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>

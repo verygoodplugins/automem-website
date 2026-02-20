@@ -5,7 +5,7 @@ description: The academic research behind AutoMem's graph-vector hybrid architec
 
 AutoMem implements a graph-vector hybrid memory system validated by four major research papers published between 2024-2025. This page maps research findings to code constructs and explains why AutoMem's dual-database architecture outperforms traditional RAG systems.
 
-For practical deployment guidance, see [Getting Started](/docs/getting-started/installation/). For system architecture details, see [System Architecture](/docs/architecture/overview/).
+For practical deployment guidance, see [Getting Started](/docs/getting-started/introduction/). For system architecture details, see [System Architecture](/docs/architecture/overview/).
 
 ## The Problem: Traditional RAG Limitations
 

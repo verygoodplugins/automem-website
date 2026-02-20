@@ -20,7 +20,7 @@ Key implementation files:
 
 The Consolidation Engine maintains and optimizes the memory graph through scheduled background processing inspired by biological memory consolidation. It applies exponential decay, discovers non-obvious associations, clusters similar memories, and implements controlled forgetting to prevent unbounded memory growth.
 
-This page covers the `MemoryConsolidator` and `ConsolidationScheduler` classes and their integration with the Flask API. For the enrichment pipeline that processes new memories, see [Enrichment Pipeline](/docs/architecture/enrichment/). For the overall background processing architecture, see [Background Processing](/docs/architecture/enrichment/).
+This page covers the `MemoryConsolidator` and `ConsolidationScheduler` classes and their integration with the Flask API. For the enrichment pipeline that processes new memories, see [Enrichment Pipeline](/docs/architecture/enrichment/). For the overall background processing architecture, see [Background Processing](/docs/architecture/background-processing/).
 
 ---
 

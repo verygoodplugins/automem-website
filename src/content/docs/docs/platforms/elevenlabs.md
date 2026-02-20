@@ -41,7 +41,7 @@ graph TB
 
 ## Deploy the MCP Sidecar
 
-The sidecar is included in the AutoMem Railway one-click template. See [Claude.ai (Web)](/docs/docs/platforms/claude-web/) for full deployment instructions.
+The sidecar is included in the AutoMem Railway one-click template. See [Claude.ai (Web)](/docs/platforms/claude-web/) for full deployment instructions.
 
 **Required environment variables:**
 
@@ -199,5 +199,5 @@ Verify `AUTOMEM_API_URL` in sidecar environment variables points to the correct 
 ## Related Platforms
 
 Other cloud platforms using the same MCP sidecar:
-- [ChatGPT](/docs/docs/platforms/chatgpt/) — URL auth only
-- [Claude.ai (Web)](/docs/docs/platforms/claude-web/) — header or URL auth
+- [ChatGPT](/docs/platforms/chatgpt/) — URL auth only
+- [Claude.ai (Web)](/docs/platforms/claude-web/) — header or URL auth

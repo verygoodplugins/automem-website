@@ -228,5 +228,5 @@ The sidecar's `InMemoryEventStore` persists events for 1 hour with a maximum of 
 ## Related Platforms
 
 Other cloud platforms using the same remote MCP sidecar:
-- [ChatGPT](/docs/docs/platforms/chatgpt/) — URL auth only, Streamable HTTP or SSE
-- [ElevenLabs](/docs/docs/platforms/elevenlabs/) — SSE with header auth, 30s idle timeout handled by heartbeat
+- [ChatGPT](/docs/platforms/chatgpt/) — URL auth only, Streamable HTTP or SSE
+- [ElevenLabs](/docs/platforms/elevenlabs/) — SSE with header auth, 30s idle timeout handled by heartbeat

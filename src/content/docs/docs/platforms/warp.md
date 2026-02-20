@@ -8,7 +8,7 @@ sidebar:
 :::caution
 Official Warp Terminal integration was **removed in v0.6.0**. No CLI installer or official templates exist. This page documents manual setup for users who specifically need Warp Terminal support.
 
-For terminal-based AI memory workflows, [Claude Code](/docs/docs/platforms/claude-code/) and [OpenAI Codex](/docs/docs/platforms/codex/) are the recommended alternatives.
+For terminal-based AI memory workflows, [Claude Code](/docs/platforms/claude-code/) and [OpenAI Codex](/docs/platforms/codex/) are the recommended alternatives.
 :::
 
 ---
@@ -153,8 +153,8 @@ The v0.4.0 integration included:
 
 | Platform | Integration Type | Best For |
 |----------|-----------------|---------|
-| [Claude Code](/docs/docs/platforms/claude-code/) | MCP + CLAUDE.md rules | Terminal development workflows |
-| [OpenAI Codex](/docs/docs/platforms/codex/) | MCP + AGENTS.md rules | CLI/IDE/cloud integration |
+| [Claude Code](/docs/platforms/claude-code/) | MCP + CLAUDE.md rules | Terminal development workflows |
+| [OpenAI Codex](/docs/platforms/codex/) | MCP + AGENTS.md rules | CLI/IDE/cloud integration |
 
 Both alternatives have active support, CLI installers, and regular updates. Memories stored during Warp usage remain accessible from any MCP-enabled platform — only the client integration changes.
 

@@ -189,5 +189,5 @@ Consider switching to Streamable HTTP (`/mcp`) instead of SSE (`/mcp/sse`) for b
 ## Related Platforms
 
 Other cloud-based platforms using the same remote MCP sidecar:
-- [Claude.ai (Web)](/docs/docs/platforms/claude-web/) — supports header-based auth
-- [ElevenLabs](/docs/docs/platforms/elevenlabs/) — uses SSE transport with header auth
+- [Claude.ai (Web)](/docs/platforms/claude-web/) — supports header-based auth
+- [ElevenLabs](/docs/platforms/elevenlabs/) — uses SSE transport with header auth
