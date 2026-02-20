@@ -366,6 +366,7 @@ graph TB
     PostMem --> EnrichQueue
     PostMem --> EmbedQueue
     PatchMem --> EnrichQueue
+    PatchMem -.->|"if content changed"| EmbedQueue
 
     EnrichQueue --> EnrichPending
     EmbedQueue --> EmbedPending

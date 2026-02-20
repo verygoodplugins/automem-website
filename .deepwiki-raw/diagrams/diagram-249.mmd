@@ -1,6 +1,0 @@
-flowchart LR
-    Start["GET /recall"] --> Track["start_time = perf_counter()"]
-    Track --> Search["Hybrid search<br/>(vector + keyword)"]
-    Search --> Combine["Combine & score results"]
-    Combine --> Log["logger.info('recall_complete')"]
-    Log --> Extra["extra = {<br/>query, results, latency_ms,<br/>vector_enabled, filters, limit}"]

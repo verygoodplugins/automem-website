@@ -72,6 +72,7 @@ graph TB
     PostMem --> EnrichQueue
     PostMem --> EmbedQueue
     PatchMem --> EnrichQueue
+    PatchMem -.->|"if content changed"| EmbedQueue
 
     EnrichQueue --> EnrichPending
     EmbedQueue --> EmbedPending
@@ -117,6 +118,7 @@ graph TB
     PostMemory -->|"queue.put(memory_id)"| EnrichQ
     PostMemory -->|"queue.put(memory_id)"| EmbedQ
     PatchMemory -->|"queue.put(memory_id)"| EnrichQ
+    PatchMemory -.->|"if content changed"| EmbedQ
 
     EnrichQ --> EnrichPending
     EmbedQ --> EmbedPending

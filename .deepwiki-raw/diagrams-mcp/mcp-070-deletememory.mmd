@@ -1,7 +1,0 @@
-graph TB
-    INPUT["DeleteMemoryArgs<br/>{memory_id}"]
-    
-    INPUT --> VALIDATE["Validate memory_id exists"]
-    VALIDATE --> DELETE["DELETE /memory/:id"]
-    DELETE --> RESPONSE["Response<br/>{memory_id or use input id,<br/>message}"]
-    RESPONSE --> OUTPUT["{memory_id, message}"]

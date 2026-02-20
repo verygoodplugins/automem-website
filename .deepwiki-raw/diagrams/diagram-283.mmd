@@ -1,8 +1,0 @@
-graph LR
-    SQLite[(sqlite_vec.db<br/>mcp_memory table)] -->|Read| Script[migrate_mcp_sqlite.py]
-    Script -->|Transform| Batch[Batch memories<br/>100 at a time]
-    Batch -->|"POST /memory"| API[AutoMem API]
-    API -->|Store| FalkorDB[(FalkorDB)]
-    API -->|Embed| Qdrant[(Qdrant)]
-    
-    Script -.->|"--dry-run"| Preview[Preview only<br/>no writes]

@@ -1,8 +1,0 @@
-graph TB
-    INPUT["StoreMemoryArgs<br/>{content, tags, importance,<br/>embedding, metadata, timestamp}"]
-    
-    INPUT --> BUILD["Build MemoryRecord body"]
-    BUILD --> POST["POST /memory"]
-    POST --> RESPONSE["Response<br/>{memory_id or id, message}"]
-    RESPONSE --> NORMALIZE["Normalize:<br/>memory_id = memory_id || id"]
-    NORMALIZE --> OUTPUT["{memory_id, message}"]
