@@ -168,7 +168,7 @@ description: "What AutoMem is, how it works at a high level, and why it exists."
 ---
 ```
 
-Content: This is the landing page for the docs. Source: DeepWiki automem wiki "1-overview" page (batch6 or the overview content in the scraped HTML). Include the high-level component diagram, storage layer architecture diagram, and memory lifecycle sequence diagram from `.deepwiki-raw/diagrams/`. Cover: what AutoMem is, dual-storage architecture (FalkorDB + Qdrant), graceful degradation, the 3-tier stack (AI clients → MCP bridge → API → databases), background processing overview, and links to deeper pages.
+Content: This is the landing page for the docs. Source: DeepWiki automem wiki "1-overview" page in `batch7-automem-overview-getting-started.txt` (first item). Also reference mcp-automem "1-overview" in `batch12-mcp-overview-getting-started-platforms.txt` for client-side perspective. Include diagrams from `.deepwiki-raw/diagrams/`: diagram-001 (High-Level Component Diagram), diagram-002 (Storage Layer Architecture), diagram-003 (Memory Lifecycle Sequence), diagram-004 (Worker Coordination). Cover: what AutoMem is, dual-storage architecture (FalkorDB + Qdrant), graceful degradation, the 3-tier stack (AI clients → MCP bridge → API → databases), background processing overview, and links to deeper pages.
 
 ### Getting Started (2 remaining)
 
