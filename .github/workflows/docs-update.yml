@@ -1,0 +1,77 @@
+name: Auto-Update Docs
+on:
+  repository_dispatch:
+    types: [docs-update]
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: "Source repo (e.g. verygoodplugins/automem)"
+        required: true
+        type: choice
+        options:
+          - verygoodplugins/automem
+          - verygoodplugins/mcp-automem
+      source_sha:
+        description: "Commit SHA to document (optional; defaults to main)"
+        required: false
+      reason:
+        description: "What changed and why docs need updating"
+        required: true
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate and resolve source payload
+        id: resolve
+        run: |
+          SOURCE_REPO="${{ github.event.client_payload.source_repo || inputs.source_repo }}"
+          SOURCE_SHA="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
+
+          if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ]; then
+            echo "::error::Unsupported source repo: $SOURCE_REPO"
+            exit 1
+          fi
+
+          echo "source_repo=$SOURCE_REPO" >> $GITHUB_OUTPUT
+          echo "source_sha=$SOURCE_SHA" >> $GITHUB_OUTPUT
+
+      - name: Checkout source repo
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ steps.resolve.outputs.source_repo }}
+          ref: ${{ steps.resolve.outputs.source_sha }}
+          path: .source-repo
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Read the file .github/prompts/update-docs.md for full instructions.
+
+            Source repo: ${{ steps.resolve.outputs.source_repo }}
+            Changed files: ${{ toJSON(github.event.client_payload.changed_files) || 'See reason below' }}
+            Affected doc pages: ${{ toJSON(github.event.client_payload.affected_docs) || 'Determine from reason' }}
+            Commit: ${{ steps.resolve.outputs.source_sha }}
+            Compare URL: ${{ github.event.client_payload.compare_url || 'N/A' }}
+            Reason: ${{ inputs.reason || 'Automated dispatch from source repo merge' }}
+
+            The source repo is checked out at .source-repo/ for you to read.
+          claude_args: "--model claude-sonnet-4-6 --max-turns 30"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify docs build
+        run: |
+          npm ci
+          npm run build
