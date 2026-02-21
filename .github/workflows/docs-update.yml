@@ -25,7 +25,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Validate and resolve source payload
         id: resolve
@@ -42,7 +42,7 @@ jobs:
           echo "source_sha=$SOURCE_SHA" >> $GITHUB_OUTPUT
 
       - name: Checkout source repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: ${{ steps.resolve.outputs.source_repo }}
           ref: ${{ steps.resolve.outputs.source_sha }}
