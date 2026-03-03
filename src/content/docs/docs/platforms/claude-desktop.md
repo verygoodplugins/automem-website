@@ -291,5 +291,6 @@ Claude Desktop's configuration is similar to other MCP-enabled platforms but use
 - **Cursor IDE** — uses `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc`
 - **Claude Code** — uses `~/.claude.json` + `~/.claude/settings.json`
 - **OpenAI Codex** — uses `~/.codex/config.toml` (TOML format)
+- **Google AntiGravity** — uses `mcp_config.json` via built-in MCP Store
 
 All platforms share the same AutoMem MCP server package but with platform-specific configuration and optional rule files.
