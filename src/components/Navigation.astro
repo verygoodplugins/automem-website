@@ -1,6 +1,7 @@
 ---
 import AutoJack from './AutoJack.astro';
 import ThemeToggle from './ThemeToggle.astro';
+import DiscordIcon from './DiscordIcon.astro';
 
 const { currentPath = '' } = Astro.props;
 
@@ -38,6 +39,17 @@ const links = [
           {link.label}
         </a>
       ))}
+      <a
+        href="https://automem.ai/discord"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Join our Discord community"
+        title="Join our Discord community"
+        class="h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-discord hover:text-lab-on-discord transition-colors whitespace-nowrap text-lab-muted"
+      >
+        <DiscordIcon class="w-4 h-4 mr-1.5" />
+        <span class="sr-only sm:not-sr-only sm:inline">discord</span>
+      </a>
       <a
         href="https://github.com/verygoodplugins/automem"
           target="_blank"
