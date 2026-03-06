@@ -21,6 +21,7 @@ export default {
           'gold-classic': 'rgb(var(--lab-gold-classic) / <alpha-value>)',
           'gold-dark': 'rgb(var(--lab-gold-dark) / <alpha-value>)',
           discord: 'rgb(var(--lab-discord) / <alpha-value>)',
+          'on-discord': 'rgb(var(--lab-on-discord) / <alpha-value>)',
         }
       },
       fontFamily: {
