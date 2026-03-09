@@ -13,8 +13,9 @@ Key implementation files:
 - [consolidation.py#L332-L430](https://github.com/verygoodplugins/automem/blob/main/consolidation.py#L332-L430) — Clustering algorithm
 - [consolidation.py#L433-L545](https://github.com/verygoodplugins/automem/blob/main/consolidation.py#L433-L545) — Forgetting/archiving
 - [consolidation.py#L773-L873](https://github.com/verygoodplugins/automem/blob/main/consolidation.py#L773-L873) — Scheduler
-- [app.py#L80-L102](https://github.com/verygoodplugins/automem/blob/main/app.py#L80-L102) — Scheduler initialization
-- [app.py#L1866-L1900](https://github.com/verygoodplugins/automem/blob/main/app.py#L1866-L1900) — Background thread and manual endpoint
+- `automem/consolidation/runtime_scheduler.py` — Scheduler initialization
+- `automem/consolidation/runtime_bindings.py` — Background thread startup
+- `automem/api/consolidation.py` — Manual trigger endpoint
 - [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py) — Test coverage
 :::
 
@@ -434,7 +435,7 @@ This allows the `/consolidate/status` endpoint to report when each task last ran
 | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | How often creative task runs (1 week) |
 | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | How often cluster task runs (1 month) |
 | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | How often forget task runs (0 = disabled) |
-| `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | None | Optional: Only decay memories with importance >= threshold |
+| `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Optional: Only decay memories with importance >= threshold |
 | `CONSOLIDATION_HISTORY_LIMIT` | 20 | Max consolidation runs to keep in history |
 | `CONSOLIDATION_PROTECTED_TYPES` | `"Decision,Insight"` | Comma-separated memory types never archived or deleted |
 | `CONSOLIDATION_GRACE_PERIOD_DAYS` | 90 | Memories younger than this are never archived or deleted |

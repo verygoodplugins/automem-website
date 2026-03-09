@@ -200,7 +200,7 @@ Do not mix tag-based preference recall with semantic task recall — combining t
 
 If more detail is needed: split into multiple atomic memories, use `metadata` for structured data, create associations between related memories.
 
-### Relationship Types (11 types)
+### Relationship Types (16 types)
 
 | Type | Use Case |
 |------|---------|
@@ -215,6 +215,11 @@ If more detail is needed: split into multiple atomic memories, use `metadata` fo
 | `EXEMPLIFIES` | Pattern examples |
 | `OCCURRED_BEFORE` | Temporal sequence |
 | `PART_OF` | Hierarchical structure |
+| `SIMILAR_TO` | Semantic similarity (auto, enrichment) |
+| `PRECEDED_BY` | Prior in time (auto, enrichment) |
+| `EXPLAINS` | Provides explanation (auto, consolidation) |
+| `SHARES_THEME` | Common theme (auto, consolidation) |
+| `PARALLEL_CONTEXT` | Parallel events (auto, consolidation) |
 
 **Association triggers:**
 

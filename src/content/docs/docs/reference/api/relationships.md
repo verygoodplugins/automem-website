@@ -327,8 +327,8 @@ Relationship strength contributes to the hybrid scoring formula:
 
 ```
 relation_score = Σ (edge.strength × related_memory.importance)
-final_score = vector_score × 0.25
-            + keyword_score × 0.15
+final_score = vector_score × 0.35
+            + keyword_score × 0.35
             + relation_score × 0.25    ← Relationship contribution
             + ... (6 other components)
 ```
@@ -425,9 +425,9 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 11. `PART_OF` — Component of larger effort
 12. `SIMILAR_TO` — Semantically similar
 13. `PRECEDED_BY` — Temporal predecessor
-14. `CAUSED_BY` — Direct cause
-15. `ENABLES` — Prerequisite or enabler
-16. `CONFLICTS_WITH` — Conflicting information
+14. `EXPLAINS` — Provides explanation
+15. `SHARES_THEME` — Common theme
+16. `PARALLEL_CONTEXT` — Parallel events
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.

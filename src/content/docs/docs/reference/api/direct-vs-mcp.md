@@ -315,9 +315,9 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 11. `PART_OF` — Component of a larger effort
 12. `SIMILAR_TO` — Semantically similar
 13. `PRECEDED_BY` — Temporal predecessor
-14. `CAUSED_BY` — Direct cause
-15. `ENABLES` — Prerequisite or enabler
-16. `CONFLICTS_WITH` — Conflicting information
+14. `EXPLAINS` — Provides explanation
+15. `SHARES_THEME` — Common theme
+16. `PARALLEL_CONTEXT` — Parallel events
 
 **MCP Tool Output:**
 

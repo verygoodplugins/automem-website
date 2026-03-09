@@ -54,7 +54,7 @@ Creates a new memory node in FalkorDB and optionally stores its embedding in Qdr
 | `importance` | float | 0.0–1.0, importance score (default: 0.5) |
 | `metadata` | object | Arbitrary JSON metadata |
 | `timestamp` | string | ISO 8601 timestamp (default: current UTC time) |
-| `embedding` | array | 768-dimensional vector (auto-generated if omitted) |
+| `embedding` | array | 1024-dimensional vector (auto-generated if omitted) |
 | `id` | string | Custom UUID (auto-generated if omitted) |
 | `t_valid`, `t_invalid` | string | Temporal validity bounds |
 | `updated_at`, `last_accessed` | string | Tracking timestamps |
@@ -253,7 +253,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 |-----------|------|---------|-------------|
 | `tags` | `string[]` | `[]` | Tags for categorization and filtering |
 | `importance` | `number` (0.0–1.0) | `0.5` | Importance score affecting recall ranking |
-| `embedding` | `number[]` | auto-generated | 768-dimensional vector for semantic search |
+| `embedding` | `number[]` | auto-generated | 1024-dimensional vector for semantic search |
 | `metadata` | `object` | `{}` | Structured metadata (files modified, error signatures, etc.) |
 | `timestamp` | `string` (ISO 8601) | `now()` | When the memory was created |
 

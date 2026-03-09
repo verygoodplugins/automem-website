@@ -7,7 +7,9 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [app.py#L442-L683](https://github.com/verygoodplugins/automem/blob/main/app.py#L442-L683) — Vector and keyword search implementations
+- `automem/search/runtime_recall_helpers.py` — Vector and keyword search implementations
+- `automem/search/runtime_keywords.py` — Keyword matching logic
+- `automem/search/runtime_relations.py` — Relationship expansion
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Recall endpoint orchestration
 - [automem/config.py#L156-L165](https://github.com/verygoodplugins/automem/blob/main/automem/config.py#L156-L165) — Search weight configuration
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/scoring.py) — Score computation

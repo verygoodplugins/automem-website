@@ -62,7 +62,7 @@ flowchart TD
     Try1 -->|Yes| Voyage["VoyageEmbeddingProvider<br/>voyage-4: 1024d"]
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
-    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 768d"]
+    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1024d"]
     Try2 -->|No| Try3{"Ollama<br/>running?"}
 
     Try3 -->|Yes| Ollama["OllamaEmbeddingProvider<br/>Local server"]
@@ -134,7 +134,7 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` b
 
 **Configuration:**
 - `OPENAI_API_KEY` — Required
-- `EMBEDDING_MODEL` — Default: `text-embedding-3-large` (also: `text-embedding-3-small`)
+- `EMBEDDING_MODEL` — Default: `text-embedding-3-small` (also: `text-embedding-3-large`)
 - `OPENAI_BASE_URL` — Optional: Custom endpoint for OpenAI-compatible providers
 
 **OpenAI-compatible providers:**
@@ -363,7 +363,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_PROVIDER` | str | `auto` | Provider selection: `auto`, `voyage`, `openai`, `local`, `ollama`, `placeholder` |
 | `EMBEDDING_BATCH_SIZE` | int | 20 | Maximum memories per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | float | 2.0 | Maximum batch accumulation time (seconds) |
-| `VECTOR_SIZE` | int | 3072 | Embedding dimension (must match Qdrant collection) |
+| `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection) |
 
 ### Provider-Specific Configuration
 

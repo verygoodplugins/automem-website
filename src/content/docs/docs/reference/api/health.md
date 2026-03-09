@@ -79,7 +79,7 @@ sequenceDiagram
   "memory_count": 1247,
   "vector_count": 1247,
   "sync_status": "in_sync",
-  "vector_dimensions": 768,
+  "vector_dimensions": 1024,
   "enrichment": {
     "status": "running",
     "queue_depth": 3,

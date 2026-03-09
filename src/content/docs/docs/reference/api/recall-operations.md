@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Flask API recall endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Recall endpoint
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Graph expansion logic
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/scoring.py) — Scoring algorithm
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Score weight configuration
@@ -102,13 +102,13 @@ graph LR
     Request["GET /recall<br/>?query=X&tags=Y"]
 
     subgraph "Search Strategies"
-        Vector["_vector_search<br/>app.py:924"]
-        Keyword["_graph_keyword_search<br/>app.py:721"]
-        Trending["_graph_trending_results<br/>app.py:669"]
+        Vector["_vector_search<br/>search/runtime_recall_helpers.py"]
+        Keyword["_graph_keyword_search<br/>search/runtime_recall_helpers.py"]
+        Trending["_graph_trending_results<br/>search/runtime_recall_helpers.py"]
     end
 
     subgraph "Scoring"
-        Compute["_compute_metadata_score<br/>app.py:476"]
+        Compute["_compute_metadata_score<br/>search/runtime_recall_helpers.py"]
         Combine["Weighted combination<br/>vector+keyword+tag+<br/>importance+recency"]
     end
 
@@ -256,7 +256,7 @@ graph TB
 
     CheckExpand{"expand_relations<br/>enabled?"}
 
-    FetchRelations["_fetch_relations()<br/>app.py:2200-2300"]
+    FetchRelations["_fetch_relations()<br/>search/runtime_relations.py"]
 
     FilterStrength{"Relation strength >=<br/>expand_min_strength?"}
 

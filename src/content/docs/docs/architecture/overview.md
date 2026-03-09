@@ -80,10 +80,10 @@ graph TB
         Sched["ConsolidationScheduler"]
         Consol["MemoryConsolidator"]
 
-        Decay["decay task<br/>hourly"]
-        Creative["creative task<br/>hourly"]
-        Cluster["cluster task<br/>6 hours"]
-        Forget["forget task<br/>daily"]
+        Decay["decay task<br/>daily"]
+        Creative["creative task<br/>weekly"]
+        Cluster["cluster task<br/>monthly"]
+        Forget["forget task<br/>disabled by default"]
     end
 
     subgraph "Data Stores"
@@ -400,7 +400,7 @@ The type system supports classification and normalization across defined memory 
 
 ### Relationship Type System
 
-The relationship type system defines 11 typed edges with validation.
+The relationship type system defines 16 typed edges with validation.
 
 ---
 

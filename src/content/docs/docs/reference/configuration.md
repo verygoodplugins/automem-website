@@ -31,15 +31,15 @@ graph TB
         RailwaySecrets["Railway Secrets<br/>(Production)"]
     end
 
-    AppPy["app.py"]
+    Config["automem/config.py"]
     ConsPy["consolidation.py"]
     Scripts["scripts/*.py"]
 
-    EnvFile -->|"dotenv.load_dotenv()"| AppPy
-    HomeConfig -->|"dotenv.load_dotenv()"| AppPy
-    RailwaySecrets -->|"os.getenv()"| AppPy
+    EnvFile -->|"dotenv.load_dotenv()"| Config
+    HomeConfig -->|"dotenv.load_dotenv()"| Config
+    RailwaySecrets -->|"os.getenv()"| Config
 
-    AppPy -->|"passes config"| ConsPy
+    Config -->|"passes config"| ConsPy
     EnvFile -->|"directly read"| Scripts
 ```
 

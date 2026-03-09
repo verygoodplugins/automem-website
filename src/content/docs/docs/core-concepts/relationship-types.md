@@ -8,8 +8,9 @@ sidebar:
 :::note[Source files]
 Key implementation files:
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — `ALLOWED_RELATIONS` and `RELATIONSHIP_TYPES` constants
-- [app.py#L125](https://github.com/verygoodplugins/automem/blob/main/app.py#L125) — Relationship type imports and validation
-- [app.py#L1051-L1180](https://github.com/verygoodplugins/automem/blob/main/app.py#L1051-L1180) — Enrichment worker (automatic relationship creation)
+- `automem/config.py` — Relationship type definitions and validation
+- `automem/enrichment/runtime_worker.py` — Automatic relationship creation
+- `automem/utils/entity_extraction.py` — Entity extraction for pattern linking
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — Cypher query construction
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — `_expand_related_memories` function
 - [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/main/tests/test_api_endpoints.py#L939-L1004) — Relationship type tests
@@ -483,8 +484,8 @@ Higher-strength relationships and more diverse relationship types boost memory r
 
 ### Enrichment Pipeline
 
-- **Enrichment Worker:** [app.py#L1051-L1180](https://github.com/verygoodplugins/automem/blob/main/app.py#L1051-L1180) — Background worker that creates automatic relationships
-- **Entity Extraction:** [app.py#L965-L1048](https://github.com/verygoodplugins/automem/blob/main/app.py#L965-L1048) — Extracts entities for pattern linking
+- **Enrichment Worker:** `automem/enrichment/runtime_worker.py` — Background worker that creates automatic relationships
+- **Entity Extraction:** `automem/utils/entity_extraction.py` — Extracts entities for pattern linking
 - **Pattern Detection:** Embedded in enrichment worker loop
 
 ### Testing

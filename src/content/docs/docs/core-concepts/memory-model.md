@@ -7,9 +7,9 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [app.py#L118-L227](https://github.com/verygoodplugins/automem/blob/main/app.py#L118-L227) — Memory schema and validation
-- [app.py#L996-L1117](https://github.com/verygoodplugins/automem/blob/main/app.py#L996-L1117) — Classification system
-- [app.py#L1292-L1900](https://github.com/verygoodplugins/automem/blob/main/app.py#L1292-L1900) — Memory lifecycle and storage
+- `automem/utils/validation.py` — Memory schema and validation
+- `automem/classification/memory_classifier.py` — Classification system
+- `automem/api/memory.py` — Memory lifecycle and storage
 - [consolidation.py#L1-L100](https://github.com/verygoodplugins/automem/blob/main/consolidation.py#L1-L100) — State properties
 :::
 

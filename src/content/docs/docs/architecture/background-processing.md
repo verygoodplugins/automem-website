@@ -44,8 +44,8 @@ AutoMem implements four background processing systems, each with distinct trigge
 ```mermaid
 graph TB
     subgraph write_ops["Write Operations"]
-        PostMem["POST /memory<br/>app.py:~467"]
-        PatchMem["PATCH /memory/:id<br/>app.py:~902"]
+        PostMem["POST /memory<br/>api/memory.py"]
+        PatchMem["PATCH /memory/:id<br/>api/memory.py"]
     end
 
     subgraph queues["Queue Management"]
@@ -61,10 +61,10 @@ graph TB
     subgraph workers["Worker Threads"]
         direction TB
 
-        EnrichWorker["EnrichmentWorker<br/>_run_enrichment_worker()<br/>app.py:~1200-1400"]
-        EmbedWorker["EmbeddingWorker<br/>_run_embedding_worker()<br/>app.py:~1400-1600"]
+        EnrichWorker["EnrichmentWorker<br/>enrichment/runtime_worker.py"]
+        EmbedWorker["EmbeddingWorker<br/>embedding/runtime_pipeline.py"]
         ConsolWorker["ConsolidationScheduler<br/>consolidation.py"]
-        SyncWorker["SyncWorker<br/>_run_sync_worker()<br/>app.py:~1600-1800"]
+        SyncWorker["SyncWorker<br/>sync/runtime_worker.py"]
     end
 
     subgraph config["Configuration"]

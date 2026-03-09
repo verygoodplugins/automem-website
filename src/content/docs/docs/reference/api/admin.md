@@ -308,7 +308,7 @@ For each batch of `batch_size` IDs, queries FalkorDB for content. Missing memori
 **Phase 3: OpenAI Embedding Generation**
 
 Generates embeddings for entire batch in single API call. OpenAI's `text-embedding-3-small` model:
-- Dimension: 768
+- Dimension: 1024
 - Context window: 8191 tokens
 - Cost: $0.00002 per 1K tokens
 

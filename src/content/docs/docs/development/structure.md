@@ -188,7 +188,7 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 ### Configuration Management
 
-#### Environment Variable Load Order ([app.py:43-45](https://github.com/verygoodplugins/automem/blob/main/app.py#L43-L45))
+#### Environment Variable Load Order (`automem/config.py`)
 
 1. Load `.env` from repository root
 2. Load `~/.config/automem/.env` (user-specific overrides)
@@ -198,12 +198,12 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 | Category | Example Variables | Defined In |
 |---|---|---|
-| Database Connections | `FALKORDB_HOST`, `QDRANT_URL` | [app.py:75-78](https://github.com/verygoodplugins/automem/blob/main/app.py#L75-L78) |
-| Authentication | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | [app.py:209-210](https://github.com/verygoodplugins/automem/blob/main/app.py#L209-L210) |
-| Consolidation Intervals | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | [app.py:82-92](https://github.com/verygoodplugins/automem/blob/main/app.py#L82-L92) |
-| Enrichment Tuning | `ENRICHMENT_MAX_ATTEMPTS`, `ENRICHMENT_SIMILARITY_THRESHOLD` | [app.py:104-112](https://github.com/verygoodplugins/automem/blob/main/app.py#L104-L112) |
-| Embedding Batching | `EMBEDDING_BATCH_SIZE`, `EMBEDDING_BATCH_TIMEOUT_SECONDS` | [app.py:115-116](https://github.com/verygoodplugins/automem/blob/main/app.py#L115-L116) |
-| Search Weights | `SEARCH_WEIGHT_VECTOR`, `SEARCH_WEIGHT_KEYWORD` | [app.py:201-207](https://github.com/verygoodplugins/automem/blob/main/app.py#L201-L207) |
+| Database Connections | `FALKORDB_HOST`, `QDRANT_URL` | `automem/config.py` |
+| Authentication | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | `automem/config.py` |
+| Consolidation Intervals | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | `automem/config.py` |
+| Enrichment Tuning | `ENRICHMENT_MAX_ATTEMPTS`, `ENRICHMENT_SIMILARITY_THRESHOLD` | `automem/config.py` |
+| Embedding Batching | `EMBEDDING_BATCH_SIZE`, `EMBEDDING_BATCH_TIMEOUT_SECONDS` | `automem/config.py` |
+| Search Weights | `SEARCH_WEIGHT_VECTOR`, `SEARCH_WEIGHT_KEYWORD` | `automem/config.py` |
 
 #### Containerization Files
 
