@@ -413,7 +413,7 @@ graph TB
         UsePlaceholder["PlaceholderEmbeddingProvider<br/>automem/embedding/placeholder.py"]
 
         Voyage["VoyageEmbeddingProvider<br/>automem/embedding/voyage.py<br/>voyage-4: 1024d<br/>voyage-4-large: 2048d"]
-        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d<br/>text-embedding-3-large: 3072d"]
+        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d native, truncated to VECTOR_SIZE<br/>text-embedding-3-large: 3072d"]
         FastEmbed["FastEmbedProvider<br/>automem/embedding/fastembed.py<br/>BAAI/bge-base-en-v1.5: 768d"]
     end
 
