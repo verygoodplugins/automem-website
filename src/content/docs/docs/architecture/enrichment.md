@@ -7,7 +7,9 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Enrichment worker, entity extraction, relationship creation (lines 858-1122, 1728-1966)
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_worker.py) — Enrichment worker thread, entity extraction, relationship creation
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_queue_bindings.py) — Queue management
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py) — EnrichmentJob dataclass
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — Graph write operations for enrichment
 - [.env.example](https://github.com/verygoodplugins/automem/blob/main/.env.example) — Enrichment configuration variables
 :::
@@ -70,7 +72,7 @@ Fields:
 - `attempt` — Retry counter (0-indexed), incremented on each failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
-([app.py:1086-1090](https://github.com/verygoodplugins/automem/blob/main/app.py#L1086-L1090))
+([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py))
 
 ---
 
@@ -88,13 +90,13 @@ Enrichment jobs are enqueued in three scenarios:
 
 ### Retry Logic
 
-Jobs that fail during processing are retried up to `ENRICHMENT_MAX_ATTEMPTS` times with exponential backoff:
+Jobs that fail during processing are retried up to `ENRICHMENT_MAX_ATTEMPTS` times with flat backoff:
 
 | Attempt | Backoff | Behavior |
 |---|---|---|
 | 1 | 0s | Immediate first attempt |
 | 2 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | Default 5 seconds |
-| 3 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS * 2` | 10 seconds |
+| 3 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | Default 5 seconds |
 | Final | — | Record failure in `enrichment_stats` |
 
 ```mermaid
@@ -311,10 +313,10 @@ When a job is dequeued, the ID is moved from `pending` to `inflight`. When proce
 
 Jobs increment their `attempt` counter on each retry. When `attempt >= ENRICHMENT_MAX_ATTEMPTS`, the job is marked as failed and removed from the queue.
 
-The backoff formula is: `base_backoff * (attempt)` seconds — so with the default 5-second base:
+The backoff is a flat sleep of `ENRICHMENT_FAILURE_BACKOFF_SECONDS` on each failure:
 - Attempt 1 → immediate
-- Attempt 2 → 5 seconds
-- Attempt 3 → 10 seconds
+- Attempt 2 → sleep 5 seconds
+- Attempt 3 → sleep 5 seconds
 - After 3 failures → discard, record in `enrichment_stats`
 
 ---
@@ -347,8 +349,7 @@ The backoff formula is: `base_backoff * (attempt)` seconds — so with the defau
 The `POST /enrichment/reprocess` endpoint (requires `X-Admin-Token`) allows forced re-enrichment of existing memories:
 
 **Parameters:**
-- `memory_ids` — Array of memory UUIDs to reprocess
-- `clear_existing` (optional) — Remove existing entity tags and relationships before re-enrichment
+- `ids` — Array of memory UUIDs to reprocess
 
 ---
 

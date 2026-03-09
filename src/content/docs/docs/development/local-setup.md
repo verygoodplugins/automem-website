@@ -60,11 +60,10 @@ pip install -r requirements-dev.txt
 
 This installs:
 
-- **Production dependencies** via `-r requirements.txt`
+- **Production dependencies** via `-r requirements.txt` (includes `requests`, `python-dotenv`, `nltk`, `rich`, and spaCy)
 - **Testing tools**: `pytest==8.3.4`
-- **HTTP client**: `requests==2.31.0` (for integration tests)
-- **Configuration**: `python-dotenv==1.0.1`
-- **Code quality**: `black==24.8.0`, `flake8==7.1.1`
+- **Code quality**: `black==24.8.0`, `isort==5.13.2`, `flake8==7.1.1`
+- **Pre-commit hooks**: `pre-commit==4.0.1`
 
 #### Production Dependencies Only
 
@@ -74,14 +73,15 @@ pip install -r requirements.txt
 
 Use this for minimal installations without testing/development tools.
 
-#### Optional: spaCy for Enhanced Entity Extraction
+#### spaCy for Enhanced Entity Extraction
+
+spaCy is included in `requirements.txt` and installed automatically. After installing dependencies, download the model:
 
 ```bash
-pip install spacy
 python -m spacy download en_core_web_sm
 ```
 
-The `en_core_web_sm` model enables Named Entity Recognition (NER) in the enrichment pipeline for extracting persons, organizations, locations, and temporal entities from memory content. AutoMem degrades gracefully if spaCy is unavailable — entity extraction simply won't run.
+The `en_core_web_sm` model enables Named Entity Recognition (NER) in the enrichment pipeline for extracting persons, organizations, locations, and temporal entities from memory content. AutoMem degrades gracefully if the model is unavailable — entity extraction simply won't run.
 
 ---
 
@@ -125,10 +125,10 @@ Two primary approaches exist for running the database dependencies.
 #### Option 1: Docker Compose (Recommended)
 
 ```bash
-make dev   # equivalent to: docker-compose up -d
+make dev   # equivalent to: docker compose up --build
 ```
 
-This starts:
+This starts all services in the foreground (attached), rebuilding images if `Dockerfile` or `requirements.txt` changed:
 
 - **FalkorDB** on port `6379` with volume mount at `./data/falkordb`
 - **Qdrant** on port `6333` with volume mount at `./data/qdrant`
@@ -254,7 +254,7 @@ AUTOMEM_API_TOKEN=your-dev-token
 | `QDRANT_URL` | _unset_ | Qdrant endpoint URL |
 | `QDRANT_API_KEY` | _unset_ | Qdrant API key |
 | `QDRANT_COLLECTION` | `memories` | Qdrant collection name |
-| `VECTOR_SIZE` | `768` | Embedding dimension |
+| `VECTOR_SIZE` | `1024` | Embedding dimension |
 | `OPENAI_API_KEY` | _unset_ | OpenAI API key |
 | `ENRICHMENT_MAX_ATTEMPTS` | `3` | Enrichment retry limit |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Semantic neighbors count |
@@ -275,22 +275,23 @@ The `FLASK_ENV=development` setting enables: detailed error pages with stack tra
 
 ### Development Workflow
 
-**Code formatting** with Black:
+**Code formatting** with Black + isort:
 
 ```bash
-black app.py consolidation.py tests/
+make fmt
+# equivalent to: black . && isort .
 ```
 
 **Code linting** with Flake8:
 
 ```bash
-flake8 app.py consolidation.py
+flake8 app.py automem/ tests/
 ```
 
-**Running tests:**
+**Running unit tests:**
 
 ```bash
-pytest tests/ -v
+pytest -m unit tests/
 ```
 
 **Manual API testing:**
@@ -361,7 +362,7 @@ curl http://localhost:6333/health   # Verify Qdrant is accessible
 **Common causes:**
 
 - Worker thread crashed (check logs for exceptions)
-- spaCy model not installed (`pip install spacy && python -m spacy download en_core_web_sm`)
+- spaCy model not downloaded (`python -m spacy download en_core_web_sm`)
 - Memory already enriched (check `metadata.enriched_at` field)
 
 #### Docker Volumes Permission Issues

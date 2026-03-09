@@ -98,10 +98,12 @@ Qdrant configuration enables semantic search but is not required. AutoMem operat
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `QDRANT_URL` | string | No | _unset_ | Qdrant API endpoint (HTTP/HTTPS) |
+| `QDRANT_HOST` | string | No | _unset_ | Qdrant hostname (alternative to `QDRANT_URL`) |
+| `QDRANT_PORT` | int | No | `6333` | Qdrant port (used with `QDRANT_HOST`) |
 | `QDRANT_API_KEY` | string | No | _unset_ | Qdrant authentication key (required for cloud) |
 | `QDRANT_COLLECTION` | string | No | `memories` | Collection name for memory vectors |
 | `COLLECTION_NAME` | string | No | `memories` | Alias for `QDRANT_COLLECTION` |
-| `VECTOR_SIZE` | int | No | `3072` | Embedding dimension (768/1024/2048/3072) |
+| `VECTOR_SIZE` | int | No | `1024` | Embedding dimension (768/1024/2048/3072) |
 
 :::caution[Dimension compatibility]
 AutoMem performs dimension validation before writing to Qdrant. Mismatches raise `ValueError` to prevent corrupting the vector store. When migrating dimensions, keep `VECTOR_SIZE` matching the existing collection until re-embedding completes.
@@ -129,7 +131,7 @@ Controls embedding generation with automatic provider selection:
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `EMBEDDING_PROVIDER` | string | No | `auto` | Provider selection mode (`auto`/`voyage`/`openai`/`local`/`ollama`/`placeholder`) |
-| `EMBEDDING_MODEL` | string | No | `text-embedding-3-large` | OpenAI model name or identifier |
+| `EMBEDDING_MODEL` | string | No | `text-embedding-3-small` | OpenAI model name or identifier |
 | `VOYAGE_API_KEY` | string | No | _unset_ | Voyage AI API key |
 | `VOYAGE_MODEL` | string | No | `voyage-4` | Voyage model (`voyage-4`, `voyage-4-large`) |
 | `OPENAI_API_KEY` | string | No | _unset_ | OpenAI or compatible provider API key |
@@ -177,6 +179,7 @@ Controls automatic background enrichment after memory storage:
 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | int | No | `5` | Delay between retry attempts |
 | `ENRICHMENT_ENABLE_SUMMARIES` | bool | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_SPACY_MODEL` | string | No | `en_core_web_sm` | spaCy model for NER (if installed) |
+| `JIT_ENRICHMENT_ENABLED` | bool | No | `true` | Run enrichment inline on store (just-in-time) |
 
 **Entity tag generation:**
 
@@ -202,11 +205,13 @@ Controls background memory maintenance cycles:
 | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | int | No | `604800` | Creative cycle frequency (1 week) |
 | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | int | No | `2592000` | Cluster cycle frequency (1 month) |
 | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | int | No | `0` | Forget cycle frequency (disabled by default) |
-| `CONSOLIDATION_ARCHIVE_THRESHOLD` | float | No | `0.2` | Relevance threshold for archiving |
-| `CONSOLIDATION_DELETE_THRESHOLD` | float | No | `0.05` | Relevance threshold for deletion |
-| `CONSOLIDATION_GRACE_PERIOD_DAYS` | int | No | `30` | Min age before memory can be forgotten |
+| `CONSOLIDATION_ARCHIVE_THRESHOLD` | float | No | `0.0` | Relevance threshold for archiving (0.0 = disabled) |
+| `CONSOLIDATION_DELETE_THRESHOLD` | float | No | `0.0` | Relevance threshold for deletion (0.0 = disabled) |
+| `CONSOLIDATION_GRACE_PERIOD_DAYS` | int | No | `90` | Min age before memory can be forgotten |
 | `CONSOLIDATION_IMPORTANCE_PROTECTION_THRESHOLD` | float | No | `0.7` | Memories above this importance are protected |
-| `CONSOLIDATION_PROTECTED_TYPES` | string | No | `Decision,Pattern` | Comma-separated types to never forget |
+| `CONSOLIDATION_PROTECTED_TYPES` | string | No | `Decision,Insight` | Comma-separated types to never forget |
+| `CONSOLIDATION_BASE_DECAY_RATE` | float | No | `0.01` | Base rate applied per decay cycle |
+| `CONSOLIDATION_IMPORTANCE_FLOOR_FACTOR` | float | No | `0.3` | Minimum importance fraction after decay |
 
 **Consolidation task details:**
 
@@ -223,15 +228,17 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `SEARCH_WEIGHT_VECTOR` | float | No | `0.25` | Vector similarity component |
-| `SEARCH_WEIGHT_KEYWORD` | float | No | `0.15` | Keyword/TF-IDF matching |
-| `SEARCH_WEIGHT_TAG` | float | No | `0.10` | Tag overlap score |
-| `SEARCH_WEIGHT_IMPORTANCE` | float | No | `0.05` | User-assigned importance |
+| `SEARCH_WEIGHT_VECTOR` | float | No | `0.35` | Vector similarity component |
+| `SEARCH_WEIGHT_KEYWORD` | float | No | `0.35` | Keyword/TF-IDF matching |
+| `SEARCH_WEIGHT_TAG` | float | No | `0.20` | Tag overlap score |
+| `SEARCH_WEIGHT_IMPORTANCE` | float | No | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_RECENCY` | float | No | `0.10` | Freshness boost |
 | `SEARCH_WEIGHT_CONFIDENCE` | float | No | `0.05` | Memory confidence score |
-| `SEARCH_WEIGHT_EXACT` | float | No | `0.25` | Content token overlap |
+| `SEARCH_WEIGHT_EXACT` | float | No | `0.20` | Content token overlap |
+| `SEARCH_WEIGHT_RELATION` | float | No | `0.25` | Graph relation proximity boost |
+| `SEARCH_WEIGHT_RELEVANCE` | float | No | `0.0` | LLM-scored relevance (disabled by default) |
 
-The default weights balance semantic similarity (vector + keyword + exact = 0.65) with metadata signals (tags + importance + recency + confidence = 0.35). Adjust weights to favor specific signals for your use case.
+Adjust weights to favor specific signals for your use case.
 
 ### Recall Behavior
 
@@ -241,7 +248,9 @@ Controls query result expansion and limits:
 |----------|------|----------|---------|-------------|
 | `RECALL_MAX_LIMIT` | int | No | `100` | Maximum results returned by `/recall` |
 | `RECALL_RELATION_LIMIT` | int | No | `5` | Max related memories per result |
-| `RECALL_EXPANSION_LIMIT` | int | No | `20` | Max memories added via `expand_relations=true` |
+| `RECALL_EXPANSION_LIMIT` | int | No | `25` | Max memories added via `expand_relations=true` |
+| `RECALL_MIN_SCORE` | float | No | `0.0` | Minimum score threshold for returned results |
+| `RECALL_ADAPTIVE_FLOOR` | bool | No | `true` | Dynamically adjust score floor based on result set |
 
 ### Sync Worker (Drift Repair)
 
@@ -249,7 +258,7 @@ Controls automatic drift detection between FalkorDB and Qdrant:
 
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `SYNC_CHECK_INTERVAL_SECONDS` | int | No | `300` | Frequency of drift checks (5 minutes) |
+| `SYNC_CHECK_INTERVAL_SECONDS` | int | No | `3600` | Frequency of drift checks (1 hour) |
 | `SYNC_AUTO_REPAIR` | bool | No | `true` | Automatically queue missing embeddings |
 
 The sync worker counts memories in FalkorDB vs Qdrant and queues repair operations when drift exceeds 5%.
@@ -267,14 +276,17 @@ Controls classification and relationship validation:
 **Default memory types:**
 
 ```
-Decision, Pattern, Preference, Style, Habit, Insight, Context, Memory
+Decision, Pattern, Preference, Style, Habit, Insight, Context
 ```
+
+`Memory` is a legacy alias for `Context` and is normalized on write; it is not a canonical type.
 
 **Default relationship types:**
 
 ```
 RELATES_TO, LEADS_TO, OCCURRED_BEFORE, PREFERS_OVER, EXEMPLIFIES,
-CONTRADICTS, REINFORCES, INVALIDATED_BY, EVOLVED_INTO, DERIVED_FROM, PART_OF
+CONTRADICTS, REINFORCES, INVALIDATED_BY, EVOLVED_INTO, DERIVED_FROM, PART_OF,
+SIMILAR_TO, PRECEDED_BY, EXPLAINS, SHARES_THEME, PARALLEL_CONTEXT
 ```
 
 **Type aliases** — The `TYPE_ALIASES` mapping in `automem.config` normalizes variations:
@@ -295,6 +307,17 @@ Controls LLM-based memory classification fallback:
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
 When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py).
+
+### Memory Content Governance
+
+Controls content size limits and automatic summarization:
+
+| Variable | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `MEMORY_CONTENT_SOFT_LIMIT` | int | No | `500` | Character threshold above which a warning is issued and auto-summarize may trigger |
+| `MEMORY_CONTENT_HARD_LIMIT` | int | No | `2000` | Character limit above which the request is rejected immediately |
+| `MEMORY_AUTO_SUMMARIZE` | bool | No | `true` | Automatically summarize content exceeding the soft limit |
+| `MEMORY_SUMMARY_TARGET_LENGTH` | int | No | `300` | Target character length for auto-generated summaries |
 
 ---
 
@@ -328,7 +351,7 @@ graph TB
         ENDPOINT_VALUE["Use env value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. AUTOMEM_TOKEN<br/>4. API_KEY"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
     end
 
     subgraph Client_Config["AutoMemClient Config"]
@@ -532,7 +555,7 @@ ADMIN_API_TOKEN=<generated-by-template>
 OPENAI_API_KEY=sk-...
 QDRANT_URL=https://your-cluster.cloud.qdrant.io
 QDRANT_API_KEY=your-qdrant-key
-VECTOR_SIZE=3072
+VECTOR_SIZE=1024
 ```
 
 ### OpenAI-compatible provider (OpenRouter)
@@ -541,8 +564,8 @@ VECTOR_SIZE=3072
 EMBEDDING_PROVIDER=openai
 OPENAI_API_KEY=sk-or-...
 OPENAI_BASE_URL=https://openrouter.ai/api/v1
-EMBEDDING_MODEL=text-embedding-3-large
-VECTOR_SIZE=3072
+EMBEDDING_MODEL=text-embedding-3-small
+VECTOR_SIZE=1024
 ```
 
 ### Variable resolution troubleshooting (Railway)

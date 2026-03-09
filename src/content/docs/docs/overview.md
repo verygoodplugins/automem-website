@@ -521,7 +521,7 @@ AutoMem's behavior is controlled through environment variables loaded from proce
 | `FALKORDB_HOST` | Graph database hostname | `localhost` | Use `*.railway.internal` on Railway |
 | `FALKORDB_PORT` | Graph database port | `6379` | Standard Redis protocol port |
 | `QDRANT_URL` | Vector database endpoint | _unset_ | Optional; enables semantic search |
-| `VECTOR_SIZE` | Embedding dimension | `3072` | Must match Qdrant collection |
+| `VECTOR_SIZE` | Embedding dimension | `1024` | Must match Qdrant collection |
 | `EMBEDDING_PROVIDER` | Provider selection mode | `auto` | `auto`, `voyage`, `openai`, `local`, `placeholder` |
 | `PORT` | Flask API port | `8001` | **Must be set explicitly on Railway** |
 

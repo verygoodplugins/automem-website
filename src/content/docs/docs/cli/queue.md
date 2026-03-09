@@ -304,9 +304,17 @@ The `queue` CLI command processes pending memories from the local queue. When a 
 # Process all pending queue entries
 npx @verygoodplugins/mcp-automem queue
 
-# Process queue with explicit endpoint
-npx @verygoodplugins/mcp-automem queue --endpoint http://localhost:8001
+# Process a specific queue file
+npx @verygoodplugins/mcp-automem queue --file /path/to/queue.json
+
+# Preview what would be processed without writing
+npx @verygoodplugins/mcp-automem queue --dry-run
+
+# Limit the number of entries to process
+npx @verygoodplugins/mcp-automem queue --limit 10
 ```
+
+The endpoint is resolved automatically via `resolveAutoMemConfig()` using the priority chain: environment variables → `.env` file → `~/.claude.json` → default `http://127.0.0.1:8001`.
 
 ### Queue Processing Architecture
 

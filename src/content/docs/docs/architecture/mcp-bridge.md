@@ -338,9 +338,8 @@ graph TB
 
 1. `AUTOMEM_API_KEY` (primary, current)
 2. `AUTOMEM_API_TOKEN` (fallback)
-3. `MEMORY_API_KEY` (legacy)
 
-The `readAutoMemApiKeyFromEnv()` function in `src/env.js` implements this priority chain.
+The `readAutoMemApiKeyFromEnv()` function in `src/env.ts` implements this priority chain.
 
 ---
 

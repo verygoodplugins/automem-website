@@ -32,7 +32,7 @@ graph LR
     Memory --> confidence["confidence: 0.0-1.0"]
     Memory --> tags["tags: string[]"]
     Memory --> metadata["metadata: JSON"]
-    Memory --> embedding["embedding: float[768]"]
+    Memory --> embedding["embedding: float[1024]"]
 ```
 
 ---
@@ -54,7 +54,7 @@ All memories contain the following properties:
 | `tags` | array[string] | No | Hierarchical categorization tags (e.g., `["project:automem", "decision"]`) |
 | `tag_prefixes` | array[string] | No | Pre-computed lowercase tag prefixes for fast filtering |
 | `metadata` | object | No | Flexible JSON object for custom fields |
-| `embedding` | array[float] | No | 768-dimensional vector for semantic search |
+| `embedding` | array[float] | No | 1024-dimensional vector for semantic search |
 
 ### Temporal Properties
 
@@ -121,7 +121,7 @@ graph TB
 | `Context` | Situational background, circumstances, what was happening | "During database migration sprint in Q3 2024" |
 
 :::caution
-`"Memory"` was used as an internal fallback type prior to v0.5.0 but is no longer a valid classification. All memories must be classified into one of the seven specific types listed above.
+`"Memory"` is the internal fallback type returned by the classifier when LLM is unavailable and no regex pattern matches (confidence: 0.3). It is not a valid canonical type — it is immediately normalized to `"Context"` via `TYPE_ALIASES` during storage. Stored memories will always have one of the seven canonical types listed above.
 :::
 
 ---
@@ -150,7 +150,7 @@ graph TB
     LLMValid{"Valid<br/>type?"}
 
     Decision["Validated Type<br/>+ Confidence"]
-    Fallback["Context<br/>confidence: 0.5"]
+    Fallback["Memory → normalized to Context<br/>confidence: 0.3"]
 
     Start --> Explicit
 
@@ -218,7 +218,7 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}
 **Validation:**
 
 - Returned type must exist in `MEMORY_TYPES`
-- Invalid types fall back to `"Context"` with confidence `0.5`
+- Invalid types fall back to `"Memory"` with confidence `0.3`, which is then normalized to `"Context"` via `TYPE_ALIASES` during storage
 
 :::tip
 Cost is approximately **$0.02/month** at 10 memories/day requiring LLM classification.
@@ -250,7 +250,7 @@ sequenceDiagram
             OpenAI-->>Classifier: "type, confidence"
             Classifier-->>API: "type, confidence"
         else no LLM
-            Classifier-->>API: "Context (default), 0.5"
+            Classifier-->>API: "Memory (default), 0.3 → normalized to Context"
         end
     end
 
@@ -420,8 +420,8 @@ stateDiagram-v2
 
 5. **Decaying**:
    - `relevance_score` decreases exponentially
-   - Decay rate: hourly consolidation task
-   - Formula: `relevance = base_score * exp(-decay_rate * age)`
+   - Decay rate: daily consolidation task (default interval: 86400s)
+   - Formula: `relevance = base_score * exp(-0.01 * age_days)`
 
 6. **Archived**:
    - Marked `archived: true`
@@ -487,7 +487,8 @@ sequenceDiagram
 ### Content Validation
 
 - **Minimum length:** 1 character (empty strings rejected)
-- **Maximum length:** No hard limit (practical limit ~10KB for good embedding quality)
+- **Soft limit:** `MEMORY_CONTENT_SOFT_LIMIT` = 500 characters — content between 500–2000 chars triggers auto-summarization to a ~300 character target (when `MEMORY_AUTO_SUMMARIZE=true`)
+- **Hard limit:** `MEMORY_CONTENT_HARD_LIMIT` = 2000 characters — content exceeding this is rejected with `400 Bad Request`
 - **Encoding:** UTF-8
 
 ### Type Validation
@@ -524,6 +525,6 @@ sequenceDiagram
 
 ### Embedding Validation
 
-- Must be exactly 768 dimensions
+- Must be exactly 1024 dimensions
 - All values must be numeric
 - Auto-generated if omitted (OpenAI `text-embedding-3-small` or deterministic placeholder)

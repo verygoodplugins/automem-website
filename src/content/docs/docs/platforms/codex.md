@@ -379,9 +379,8 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--name <name>` | Project name | Detected from `package.json` or git |
-| `--desc <description>` | Project description | Detected from `package.json` |
 | `--dry-run` | Preview without writing | `false` |
-| `--dir <path>` | Target directory | Current working directory |
+| `--rules <path>` | Target rules file path | Current working directory |
 
 ---
 

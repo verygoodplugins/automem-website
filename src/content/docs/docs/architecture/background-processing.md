@@ -7,8 +7,13 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Enrichment worker, embedding worker, sync worker, queue management (lines 1728-2234, 2566-2610)
-- [consolidation.py](https://github.com/verygoodplugins/automem/blob/main/consolidation.py) — Consolidation scheduler and tasks (lines 111-684, 773-874)
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_queue_bindings.py) — Enrichment queue setup
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_worker.py) — Enrichment worker thread
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_bindings.py) — Embedding queue setup
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing
+- [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/runtime_bindings.py) — Consolidation scheduler
+- [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/sync/runtime_bindings.py) — Sync worker
+- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/main/automem/runtime_wiring.py) — Startup sequence and worker initialization
 - [.env.example](https://github.com/verygoodplugins/automem/blob/main/.env.example) — Background processing configuration variables
 :::
 
@@ -136,7 +141,7 @@ graph TB
 **Key Insights:**
 - `POST /memory` writes immediately to FalkorDB, then enqueues background jobs
 - Enrichment and embedding workers run continuously in separate threads
-- Consolidation scheduler runs periodic checks via Flask-APScheduler
+- Consolidation scheduler runs periodic checks via a custom thread-based scheduler
 - All systems can operate independently; failures are isolated
 
 ---
@@ -147,9 +152,9 @@ All background workers run in daemon threads started during Flask application in
 
 | Component | Started At | Daemon | Lifecycle |
 |---|---|---|---|
-| `enrichment_worker` | [app.py:2566-2568](https://github.com/verygoodplugins/automem/blob/main/app.py#L2566-L2568) | Yes | Runs until app shutdown |
-| `embedding_worker` | [app.py:2570-2572](https://github.com/verygoodplugins/automem/blob/main/app.py#L2570-L2572) | Yes | Runs until app shutdown |
-| Consolidation scheduler | [app.py:2586-2610](https://github.com/verygoodplugins/automem/blob/main/app.py#L2586-L2610) | Via APScheduler | Managed by scheduler |
+| `enrichment_worker` | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_queue_bindings.py) | Yes | Runs until app shutdown |
+| `embedding_worker` | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_bindings.py) | Yes | Runs until app shutdown |
+| Consolidation scheduler | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/runtime_bindings.py) | Yes | Custom thread-based scheduler |
 
 **Thread Safety:**
 - `enrichment_queue` and `embedding_queue` use Python's thread-safe `Queue` class
@@ -162,11 +167,16 @@ All background workers run in daemon threads started during Flask application in
 
 ### Application Startup Sequence
 
-1. Database clients initialized: [app.py:2495-2565](https://github.com/verygoodplugins/automem/blob/main/app.py#L2495-L2565)
-2. Consolidator created: [app.py:2574-2584](https://github.com/verygoodplugins/automem/blob/main/app.py#L2574-L2584)
-3. Enrichment worker started: [app.py:2566-2568](https://github.com/verygoodplugins/automem/blob/main/app.py#L2566-L2568)
-4. Embedding worker started: [app.py:2570-2572](https://github.com/verygoodplugins/automem/blob/main/app.py#L2570-L2572)
-5. Scheduler initialized and started: [app.py:2586-2610](https://github.com/verygoodplugins/automem/blob/main/app.py#L2586-L2610)
+Startup is orchestrated by [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/main/automem/runtime_wiring.py):
+
+1. `init_falkordb()` — Establish FalkorDB connection
+2. `init_qdrant()` — Establish optional Qdrant connection
+3. `init_openai()` — Initialize OpenAI client for classification
+4. `init_embedding_provider()` — Select and initialize embedding provider
+5. `init_enrichment_pipeline()` — Start enrichment worker thread
+6. `init_embedding_pipeline()` — Start embedding worker thread
+7. `init_consolidation_scheduler()` — Start consolidation scheduler
+8. `init_sync_worker()` — Start sync worker thread
 
 ### Graceful Shutdown
 
@@ -206,10 +216,10 @@ All background threads are daemon threads, meaning they terminate automatically 
 | Variable | Default | Purpose |
 |---|---|---|
 | `CONSOLIDATION_TICK_SECONDS` | 60 | Scheduler check interval |
-| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 3600 | Decay task frequency (1 hour) |
-| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 3600 | Creative task frequency (1 hour) |
-| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 21600 | Cluster task frequency (6 hours) |
-| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 86400 | Forget task frequency (1 day) |
+| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 86400 | Decay task frequency (1 day) |
+| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | Creative task frequency (1 week) |
+| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | Cluster task frequency (1 month) |
+| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | Forget task frequency (0 = disabled) |
 | `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Min importance for decay (optional filter) |
 | `CONSOLIDATION_HISTORY_LIMIT` | 20 | Max consolidation run history |
 
@@ -223,12 +233,12 @@ The `/health` endpoint exposes real-time statistics for all background systems:
 
 | Metric | Source | Interpretation |
 |---|---|---|
-| `enrichment.queue_depth` | [app.py:2255](https://github.com/verygoodplugins/automem/blob/main/app.py#L2255) | Items waiting in queue |
-| `enrichment.pending` | [app.py:2252](https://github.com/verygoodplugins/automem/blob/main/app.py#L2252) | Memories not yet enriched in graph |
-| `enrichment.inflight` | [app.py:2253](https://github.com/verygoodplugins/automem/blob/main/app.py#L2253) | Currently processing |
+| `enrichment.queue_depth` | `ServiceState.enrichment_queue` | Items waiting in queue |
+| `enrichment.pending` | `ServiceState.enrichment_pending` | Memories not yet enriched in graph |
+| `enrichment.inflight` | `ServiceState.enrichment_inflight` | Currently processing |
 | `enrichment.processed` | `EnrichmentStats.successes` | Total completed |
 | `enrichment.failed` | `EnrichmentStats.failures` | Total failed |
-| `embedding.queue_depth` | [app.py:2267](https://github.com/verygoodplugins/automem/blob/main/app.py#L2267) | Embeddings queued for generation |
+| `embedding.queue_depth` | `ServiceState.embedding_queue` | Embeddings queued for generation |
 | `consolidation.last_runs` | `ConsolidationScheduler` | Last execution timestamps |
 | `consolidation.next_runs` | `ConsolidationScheduler.get_next_runs()` | Time until next run |
 
@@ -249,11 +259,10 @@ Advanced monitoring available via admin token:
 
 ### Enrichment Retries
 
-Failed enrichment jobs are automatically retried with exponential backoff:
+Failed enrichment jobs are automatically retried with flat backoff:
 
 - Max attempts: `ENRICHMENT_MAX_ATTEMPTS` (default: 3)
-- Base backoff: `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default: 5.0)
-- Backoff formula: `base_backoff * (5 ** attempt)`
+- Backoff: `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default: 5.0) — sleeps this flat duration on each failure
 - Failed jobs logged and removed from queue after max attempts
 
 ### Embedding Retries

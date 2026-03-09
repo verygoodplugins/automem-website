@@ -54,13 +54,13 @@ graph TB
     API -->|"POST /memory"| EmbedQ
     API -->|"Starts on init"| Sched
 
-    Sched -->|"Hourly"| Decay
-    Sched -->|"Hourly"| Creative
-    Sched -->|"6 hours"| Cluster
-    Sched -->|"Daily"| Forget
+    Sched -->|"Daily"| Decay
+    Sched -->|"Weekly"| Creative
+    Sched -->|"Monthly"| Cluster
+    Sched -->|"Disabled"| Forget
 
     Decay -->|"Update scores"| Falkor
-    Creative -->|"Create DISCOVERED edges"| Falkor
+    Creative -->|"Create typed edges"| Falkor
     Cluster -->|"Create MetaMemory nodes"| Falkor
     Forget -->|"Archive/delete"| Falkor
     Forget -->|"Delete vectors"| Qdrant
@@ -78,13 +78,13 @@ The `MemoryConsolidator` class implements the four consolidation tasks. It depen
 
 | Parameter | Default | Purpose |
 |---|---|---|
-| `base_decay_rate` | 0.1 | Daily exponential decay rate |
+| `base_decay_rate` | 0.01 | Daily exponential decay rate |
 | `reinforcement_bonus` | 0.2 | Strength added when memory accessed |
 | `relationship_preservation` | 0.3 | Extra weight for connected memories |
-| `min_cluster_size` | 3 | Minimum memories per cluster |
+| `min_cluster_size` | 5 | Minimum memories per cluster to create MetaMemory |
 | `similarity_threshold` | 0.75 | Cosine similarity for clustering |
-| `archive_threshold` | 0.2 | Archive below this relevance |
-| `delete_threshold` | 0.05 | Delete below this relevance |
+| `archive_threshold` | 0.0 | Archive below this relevance (disabled by default) |
+| `delete_threshold` | 0.0 | Delete below this relevance (disabled by default) |
 
 ### ConsolidationScheduler Class
 
@@ -94,10 +94,10 @@ The `ConsolidationScheduler` manages when each consolidation task runs based on 
 
 | Task | Interval (Environment Variable) | Default Value |
 |---|---|---|
-| `decay` | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 3600 (1 hour) |
-| `creative` | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 3600 (1 hour) |
-| `cluster` | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 21600 (6 hours) |
-| `forget` | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 86400 (24 hours) |
+| `decay` | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 86400 (1 day) |
+| `creative` | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 (1 week) |
+| `cluster` | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 (1 month) |
+| `forget` | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 (disabled) |
 
 ---
 
@@ -112,7 +112,7 @@ graph LR
     Memory["Memory Node<br/>(FalkorDB)"]
 
     subgraph "Factors"
-        Age["Age Factor<br/>exp(-0.1 * days)"]
+        Age["Age Factor<br/>exp(-0.01 * days)"]
         Access["Access Factor<br/>exp(-0.05 * days_since_access)"]
         Rel["Relationship Factor<br/>1 + 0.3 * log(1 + rel_count)"]
         Imp["Importance<br/>0.5 + user_importance"]
@@ -136,7 +136,7 @@ graph LR
 
 **Calculation Steps:**
 
-1. **Age-based decay:** `exp(-0.1 * age_days)` — Exponential decay from creation timestamp
+1. **Age-based decay:** `exp(-0.01 * age_days)` — Exponential decay from creation timestamp
 2. **Access reinforcement:** `1.0` if accessed within 24 hours, else `exp(-0.05 * days_since_access)`
 3. **Relationship preservation:** `1 + 0.3 * log(1 + relationship_count)` — Connected memories decay slower
 4. **Importance scaling:** `0.5 + importance` (scales from 0.5 to 1.5)
@@ -202,7 +202,7 @@ graph TB
     Type --> R3
     Type --> R4
 
-    R1 --> Create["CREATE (m1)-[r:DISCOVERED]->(m2)"]
+    R1 --> Create["CREATE typed edge (m1)-[r]->(m2)"]
     R2 --> Create
     R3 --> Create
     R4 --> Create
@@ -212,18 +212,17 @@ graph TB
 
 | Type | Conditions | Confidence | Example |
 |---|---|---|---|
-| `CONTRASTS_WITH` | Both `Decision`, similarity < 0.3 | 0.6 | Opposing architectural choices |
+| `CONTRADICTS` | Both `Decision`, similarity < 0.3 | 0.6 | Opposing architectural choices |
 | `EXPLAINS` | `Insight` + `Pattern`, similarity > 0.5 | 0.7 | Insight explains pattern |
 | `SHARES_THEME` | Different types, similarity > 0.7 | similarity | Cross-domain patterns |
 | `PARALLEL_CONTEXT` | Same week, similarity < 0.4 | 0.5 | Unrelated concurrent work |
 
 **Edge Properties:**
 
-All discovered edges are labeled with `DISCOVERED` in FalkorDB and carry metadata about the connection type and confidence:
+Each discovered edge is created with its specific typed label (`EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT`, `CONTRADICTS`, `RELATES_TO`) and carries metadata about the connection confidence:
 
 ```json
 {
-  "type": "CONTRASTS_WITH",
   "confidence": 0.6,
   "discovered_at": "2025-01-15T10:00:00Z",
   "algorithm": "creative_association"
@@ -250,7 +249,7 @@ graph TB
 
     DFS["Find Connected Components<br/>DFS traversal to find clusters"]
 
-    Filter["Filter by Size<br/>Keep clusters >= 3 memories"]
+    Filter["Filter by Size<br/>Keep clusters >= 5 memories"]
 
     subgraph "Meta-Memory Creation"
         Theme["Identify Dominant Type<br/>max(set(types), key=count)"]
@@ -271,7 +270,7 @@ graph TB
 **Clustering Parameters:**
 
 - **Similarity threshold:** 0.75 (configurable via `self.similarity_threshold`)
-- **Minimum cluster size:** 3 memories (configurable via `self.min_cluster_size`)
+- **Minimum cluster size:** 5 memories (configurable via `self.min_cluster_size`) — clusters with fewer members do not create MetaMemory nodes
 - **Relevance filter:** Only clusters memories with `relevance_score > 0.3`
 
 **MetaMemory Node Properties:**
@@ -304,9 +303,9 @@ The forget task archives low-relevance memories and permanently deletes very low
 graph LR
     Memory["Memory<br/>relevance_score"]
 
-    High["relevance >= 0.2<br/>PRESERVE<br/>Update score only"]
-    Archive["0.05 <= relevance < 0.2<br/>ARCHIVE<br/>SET archived = true"]
-    Delete["relevance < 0.05<br/>DELETE<br/>DETACH DELETE + vector delete"]
+    High["relevance >= 0.0<br/>PRESERVE<br/>Update score only (archiving disabled by default)"]
+    Archive["archive_threshold > 0.0<br/>ARCHIVE<br/>SET archived = true (if configured)"]
+    Delete["delete_threshold > 0.0<br/>DELETE<br/>DETACH DELETE + vector delete (if configured)"]
 
     Memory -->|"Calculate current relevance"| High
     Memory --> Archive
@@ -319,28 +318,41 @@ graph LR
 
 **Forgetting Lifecycle:**
 
-1. **Fresh memories** (relevance > 0.2): Updated but preserved
-2. **Low-relevance memories** (0.05-0.2): Archived (kept in graph, marked `archived = true`)
-3. **Very low-relevance memories** (< 0.05): Permanently deleted from both stores
+By default both `archive_threshold` and `delete_threshold` are `0.0`, meaning forgetting and archiving are **disabled**. Memory protection is the primary mechanism preventing unbounded growth:
 
-**Archive Query:**
+- **Grace period:** Memories younger than `CONSOLIDATION_GRACE_PERIOD_DAYS` (default: 90) are never archived or deleted
+- **Importance protection:** Memories with `importance >= 0.7` are protected from archiving/deletion
+- **Protected types:** Types in `CONSOLIDATION_PROTECTED_TYPES` (default: `"Decision,Insight"`) are never archived or deleted
+
+When thresholds are configured above `0.0`:
+
+1. **Fresh/protected memories**: Updated but preserved
+2. **Low-relevance memories** (below `archive_threshold`): Archived (kept in graph, marked `archived = true`)
+3. **Very low-relevance memories** (below `delete_threshold`): Permanently deleted from both stores
+
+**Archive Query (when `archive_threshold > 0.0`):**
 
 ```cypher
 MATCH (m:Memory)
 WHERE (m.archived IS NULL OR m.archived = false)
-  AND m.relevance_score < 0.2
-  AND m.relevance_score >= 0.05
+  AND m.relevance_score < $archive_threshold
+  AND m.importance < 0.7
+  AND NOT m.type IN ['Decision', 'Insight']
+  AND m.timestamp < $grace_cutoff
 SET m.archived = true,
     m.archived_at = $now
 ```
 
-**Delete Queries:**
+**Delete Queries (when `delete_threshold > 0.0`):**
 
 ```cypher
 -- FalkorDB deletion
 MATCH (m:Memory)
-WHERE m.relevance_score < 0.05
+WHERE m.relevance_score < $delete_threshold
   AND (m.archived IS NULL OR m.archived = false)
+  AND m.importance < 0.7
+  AND NOT m.type IN ['Decision', 'Insight']
+  AND m.timestamp < $grace_cutoff
 DETACH DELETE m
 
 -- Qdrant deletion (for each deleted memory ID)
@@ -348,7 +360,7 @@ vector_store.delete(memory_id)
 ```
 
 :::caution
-Deletion from both stores is permanent and irreversible. Memories are only deleted after reaching `relevance_score < 0.05`, which requires sustained low access and low importance over a significant period. High-importance memories (`importance = 1.0`) receive a 1.5× importance scaling, making them significantly harder to forget.
+Deletion from both stores is permanent and irreversible. Both `archive_threshold` and `delete_threshold` default to `0.0` (disabled). When enabled, the memory protection system (90-day grace period, importance >= 0.7 threshold, and protected types Decision/Insight) prevents accidental loss of important memories.
 :::
 
 ---
@@ -361,14 +373,7 @@ Consolidation runs in a background thread started at Flask application initializ
 
 ```python
 # app.py — startup code
-scheduler = ConsolidationScheduler(
-    consolidator=consolidator,
-    decay_interval=int(os.getenv("CONSOLIDATION_DECAY_INTERVAL_SECONDS", 3600)),
-    creative_interval=int(os.getenv("CONSOLIDATION_CREATIVE_INTERVAL_SECONDS", 3600)),
-    cluster_interval=int(os.getenv("CONSOLIDATION_CLUSTER_INTERVAL_SECONDS", 21600)),
-    forget_interval=int(os.getenv("CONSOLIDATION_FORGET_INTERVAL_SECONDS", 86400)),
-    tick_seconds=int(os.getenv("CONSOLIDATION_TICK_SECONDS", 60)),
-)
+scheduler = ConsolidationScheduler(consolidator=consolidator)
 thread = threading.Thread(target=scheduler.run, daemon=True)
 thread.start()
 ```
@@ -425,12 +430,16 @@ This allows the `/consolidate/status` endpoint to report when each task last ran
 | Variable | Default | Description |
 |---|---|---|
 | `CONSOLIDATION_TICK_SECONDS` | 60 | How often scheduler checks if tasks are due (seconds) |
-| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 3600 | How often decay task runs (1 hour) |
-| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 3600 | How often creative task runs (1 hour) |
-| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 21600 | How often cluster task runs (6 hours) |
-| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 86400 | How often forget task runs (24 hours) |
+| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 86400 | How often decay task runs (1 day) |
+| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | How often creative task runs (1 week) |
+| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | How often cluster task runs (1 month) |
+| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | How often forget task runs (0 = disabled) |
 | `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | None | Optional: Only decay memories with importance >= threshold |
 | `CONSOLIDATION_HISTORY_LIMIT` | 20 | Max consolidation runs to keep in history |
+| `CONSOLIDATION_PROTECTED_TYPES` | `"Decision,Insight"` | Comma-separated memory types never archived or deleted |
+| `CONSOLIDATION_GRACE_PERIOD_DAYS` | 90 | Memories younger than this are never archived or deleted |
+| `CONSOLIDATION_ARCHIVE_THRESHOLD` | 0.0 | Archive memories below this relevance score (0.0 = disabled) |
+| `CONSOLIDATION_DELETE_THRESHOLD` | 0.0 | Delete memories below this relevance score (0.0 = disabled) |
 
 ### Tuning Recommendations
 

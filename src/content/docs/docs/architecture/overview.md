@@ -7,12 +7,13 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Flask application, all route handlers, background worker startup
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py) — ServiceState dataclass and shared state
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Centralized configuration and constants
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider.py) — Embedding provider abstraction
+- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/main/automem/runtime_wiring.py) — Application startup and worker initialization
+- [automem/api/](https://github.com/verygoodplugins/automem/blob/main/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, admin.py, health.py, enrichment.py, consolidation.py, viewer.py)
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — FalkorDB operations
 - [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py) — Qdrant operations
-- [consolidation.py](https://github.com/verygoodplugins/automem/blob/main/consolidation.py) — Consolidation scheduler
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider.py) — Embedding provider abstraction
 :::
 
 This document provides a comprehensive overview of AutoMem's internal architecture, design decisions, and component interactions. It covers the Flask application structure, service initialization, request processing flow, and the coordination between storage systems and background workers.
@@ -136,7 +137,7 @@ graph TB
 
     subgraph Railway["Railway Project<br/>(your-project.railway.app)"]
         subgraph MemSvc["memory-service<br/>(Flask Container)"]
-            Flask["app.py<br/>Port: 8001<br/>Bind: :: (IPv6)"]
+            Flask["Flask App<br/>Port: 8001<br/>Bind: :: (IPv6)"]
             Workers["Background Workers<br/>- EnrichmentWorker<br/>- EmbeddingWorker<br/>- ConsolidationScheduler"]
         end
 
@@ -176,9 +177,9 @@ graph TB
 
 ### ServiceState Dataclass
 
-The `ServiceState` dataclass ([app.py:1093-1122](https://github.com/verygoodplugins/automem/blob/main/app.py#L1093-L1122)) serves as the central state container for all service components.
+The `ServiceState` dataclass ([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py)) serves as the central state container for all service components.
 
-This single `state` instance ([app.py:1124](https://github.com/verygoodplugins/automem/blob/main/app.py#L1124)) is shared across all Flask request handlers and background threads, requiring careful lock management for queue operations.
+This single `state` instance is shared across all Flask request handlers and background threads, requiring careful lock management for queue operations.
 
 ---
 
@@ -222,13 +223,14 @@ sequenceDiagram
 
 | Function | Purpose | Location |
 |---|---|---|
-| `init_db_connections()` | Establishes FalkorDB and optional Qdrant connections | [app.py:1338-1441](https://github.com/verygoodplugins/automem/blob/main/app.py#L1338-L1441) |
-| `init_openai()` | Initializes OpenAI client for memory classification | [app.py:1179-1200](https://github.com/verygoodplugins/automem/blob/main/app.py#L1179-L1200) |
-| `init_embedding_provider()` | Selects and initializes embedding provider | [app.py:1202-1337](https://github.com/verygoodplugins/automem/blob/main/app.py#L1202-L1337) |
-| `start_enrichment_worker()` | Launches entity extraction and linking pipeline | [app.py:1728-1966](https://github.com/verygoodplugins/automem/blob/main/app.py#L1728-L1966) |
-| `start_embedding_worker()` | Launches batch embedding generation worker | [app.py:1968-2097](https://github.com/verygoodplugins/automem/blob/main/app.py#L1968-L2097) |
-| `start_consolidation_worker()` | Launches scheduled consolidation cycles | [consolidation.py](https://github.com/verygoodplugins/automem/blob/main/consolidation.py) |
-| `start_sync_worker()` | Launches drift detection and repair worker | [app.py:2099-2234](https://github.com/verygoodplugins/automem/blob/main/app.py#L2099-L2234) |
+| `init_falkordb()` | Establishes FalkorDB connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/runtime_clients.py) |
+| `init_qdrant()` | Establishes optional Qdrant connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/runtime_clients.py) |
+| `init_openai()` | Initializes OpenAI client for memory classification | [automem/service_runtime.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_runtime.py) |
+| `init_embedding_provider()` | Selects and initializes embedding provider | [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider_init.py) |
+| `init_enrichment_pipeline()` | Launches entity extraction and linking pipeline | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_queue_bindings.py) |
+| `init_embedding_pipeline()` | Launches batch embedding generation worker | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_bindings.py) |
+| `init_consolidation_scheduler()` | Launches scheduled consolidation cycles | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/runtime_bindings.py) |
+| `init_sync_worker()` | Launches drift detection and repair worker | [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/sync/runtime_bindings.py) |
 
 ---
 
@@ -239,7 +241,7 @@ sequenceDiagram
 The `POST /memory` request flows through synchronous and asynchronous phases:
 
 :::note[Critical Design Point]
-The graph write to FalkorDB ([app.py:2450-2473](https://github.com/verygoodplugins/automem/blob/main/app.py#L2450-L2473)) always succeeds before queuing asynchronous tasks. Qdrant writes are best-effort ([app.py:2474-2481](https://github.com/verygoodplugins/automem/blob/main/app.py#L2474-L2481)) and logged but do not block the response.
+The graph write to FalkorDB always succeeds before queuing asynchronous tasks. Qdrant writes are best-effort and logged but do not block the response.
 :::
 
 ### Memory Recall Request
@@ -252,15 +254,15 @@ The `_compute_metadata_score()` function ([automem/utils/scoring.py](https://git
 
 | Component | Weight | Source | Config Variable |
 |---|---|---|---|
-| Vector similarity | 25% | Qdrant cosine distance | `SEARCH_WEIGHT_VECTOR` |
-| Keyword match | 15% | TF-IDF from graph query | `SEARCH_WEIGHT_KEYWORD` |
-| Relationship strength | 25% | Graph edge properties | (implicit) |
-| Content overlap | 25% | Token intersection | (implicit) |
-| Temporal alignment | 15% | Time expression matching | `SEARCH_WEIGHT_RECENCY` |
-| Tag matching | 10% | Prefix/exact tag filters | `SEARCH_WEIGHT_TAG` |
-| Importance score | 5% | User-assigned priority | `SEARCH_WEIGHT_IMPORTANCE` |
-| Confidence score | 5% | Classification confidence | `SEARCH_WEIGHT_CONFIDENCE` |
+| Vector similarity | 35% | Qdrant cosine distance | `SEARCH_WEIGHT_VECTOR` |
+| Keyword match | 35% | TF-IDF from graph query | `SEARCH_WEIGHT_KEYWORD` |
+| Relationship strength | 25% | Graph edge properties | `SEARCH_WEIGHT_RELATION` |
+| Exact match | 20% | Exact string match | `SEARCH_WEIGHT_EXACT` |
+| Tag matching | 20% | Prefix/exact tag filters | `SEARCH_WEIGHT_TAG` |
+| Importance score | 10% | User-assigned priority | `SEARCH_WEIGHT_IMPORTANCE` |
 | Recency boost | 10% | Freshness decay function | `SEARCH_WEIGHT_RECENCY` |
+| Confidence score | 5% | Classification confidence | `SEARCH_WEIGHT_CONFIDENCE` |
+| Relevance | 0% | Contextual relevance hint | `SEARCH_WEIGHT_RELEVANCE` |
 
 ---
 
@@ -304,7 +306,7 @@ The `automem/stores/vector_store.py` module handles Qdrant operations:
 
 Key functions:
 - `_build_qdrant_tag_filter(tags, mode, match)` — Constructs Qdrant filter objects for tag queries
-- `_ensure_collection_exists()` — Creates collection with appropriate vector parameters if missing
+- `ensure_qdrant_collection()` — Creates collection with appropriate vector parameters if missing ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/runtime_clients.py))
 - Graceful degradation: All Qdrant operations wrapped in try-except with logging but no request failures
 
 ---
@@ -315,7 +317,7 @@ AutoMem implements two-tier authorization with multiple token extraction methods
 
 ### Token Extraction Methods
 
-The `_extract_api_token()` function ([app.py:1127-1144](https://github.com/verygoodplugins/automem/blob/main/app.py#L1127-L1144)) tries three methods in order:
+The `_extract_api_token()` function ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/auth_helpers.py)) tries three methods in order:
 
 1. **Bearer token** (recommended): `Authorization: Bearer {token}`
 2. **Custom header**: `X-API-Key: {token}`
@@ -323,7 +325,7 @@ The `_extract_api_token()` function ([app.py:1127-1144](https://github.com/veryg
 
 ### Admin Endpoints
 
-Admin operations require a separate token checked by `_require_admin_token()` ([app.py:1150-1162](https://github.com/verygoodplugins/automem/blob/main/app.py#L1150-L1162)):
+Admin operations require a separate token checked by `_require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/auth_helpers.py)):
 
 | Endpoint | Purpose | Admin Token Required |
 |---|---|---|

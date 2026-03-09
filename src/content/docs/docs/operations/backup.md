@@ -128,7 +128,7 @@ python scripts/backup_automem.py
 python scripts/backup_automem.py --cleanup --keep 7
 
 # Custom directory
-python scripts/backup_automem.py --output /path/to/backups
+python scripts/backup_automem.py --backup-dir /path/to/backups
 
 # With S3 upload - requires boto3 and AWS credentials set via environment variables
 python scripts/backup_automem.py --s3-bucket automem-backups
@@ -246,14 +246,14 @@ The TCP proxy endpoint is found in Railway Dashboard → FalkorDB service → Se
 
 ### Railway Backup Service
 
-For users who prefer Railway-hosted backups, [`scripts/Dockerfile.backup`](https://github.com/verygoodplugins/automem/blob/main/scripts/Dockerfile.backup) provides a containerized backup service that runs continuously.
+For users who prefer Railway-hosted backups, [`scripts/Dockerfile.health-monitor`](https://github.com/verygoodplugins/automem/blob/main/scripts/Dockerfile.health-monitor) provides a containerized backup service that runs continuously.
 
 The Dockerfile defines a Python 3.11 Alpine container that installs dependencies, copies the backup script, creates the output directory, and runs an infinite loop with backup and sleep cycles.
 
 **Railway deployment configuration:**
 
 - **Builder:** Dockerfile
-- **Dockerfile Path:** `scripts/Dockerfile.backup`
+- **Dockerfile Path:** `scripts/Dockerfile.health-monitor`
 - **Root Directory:** `/` (project root)
 - **Environment Variables:** Same as `memory-service`: `FALKORDB_HOST`, `FALKORDB_PORT`, `FALKORDB_PASSWORD`, `QDRANT_URL`, `QDRANT_API_KEY`, plus optional AWS credentials
 
@@ -374,7 +374,7 @@ The fastest and most reliable recovery method. Uses Qdrant's vector payloads to 
 | Relationship extraction | Parse `metadata.relationships` array | Recovery loop logic |
 
 :::note[Critical Fix (v0.5.0)]
-The script now filters `RESERVED_FIELDS = ['type', 'confidence', 'content', 'embedding']` to prevent metadata pollution that occurred in earlier versions where recovery overwrote memory types.
+The script now filters `RESERVED_FIELDS = {"type", "confidence", "content", "timestamp", "importance", "tags", "id"}` to prevent metadata pollution that occurred in earlier versions where recovery overwrote memory types.
 :::
 
 **Execution steps:**

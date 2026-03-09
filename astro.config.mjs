@@ -86,6 +86,7 @@ export default defineConfig({
             { label: 'ElevenLabs Agents', slug: 'docs/platforms/elevenlabs' },
             { label: 'Alexa', slug: 'docs/platforms/alexa' },
             { label: 'OpenClaw', slug: 'docs/platforms/openclaw' },
+            { label: 'Google AntiGravity', slug: 'docs/platforms/antigravity' },
           ],
         },
         {
@@ -158,6 +159,14 @@ export default defineConfig({
             { label: 'Memory Rules & Patterns', slug: 'docs/best-practices/memory-rules' },
             { label: 'Context Engineering', slug: 'docs/best-practices/context-engineering' },
             { label: 'Progressive Disclosure', slug: 'docs/best-practices/progressive-disclosure' },
+          ],
+        },
+        {
+          label: 'Graph Viewer',
+          items: [
+            { label: 'Overview', slug: 'docs/graph-viewer/overview' },
+            { label: 'Setup & Configuration', slug: 'docs/graph-viewer/setup' },
+            { label: 'Deployment', slug: 'docs/graph-viewer/deployment' },
           ],
         },
         {

@@ -111,9 +111,9 @@ The health endpoint provides real-time service status, database connectivity che
 |---|---|---|
 | `status` | string | Overall health: `"healthy"` or `"degraded"` |
 | `falkordb` | string | FalkorDB status: `"connected"`, `"unknown"`, or `"error: ..."` |
-| `qdrant` | string | Qdrant status: `"connected"`, `"not_configured"`, or `"error: ..."` |
+| `qdrant` | string | Qdrant status: `"connected"`, `"disconnected"`, or `"error: ..."` |
 | `memory_count` | integer\|null | Total memories in FalkorDB (null if query fails) |
-| `qdrant_count` | integer\|null | Total points in Qdrant collection (null if unavailable) |
+| `vector_count` | integer\|null | Total points in Qdrant collection (null if unavailable) |
 | `enrichment` | object | Enrichment queue metrics (see below) |
 | `graph` | string | FalkorDB graph name (`FALKORDB_GRAPH` env variable) |
 | `timestamp` | string | ISO 8601 timestamp of health check |
@@ -140,8 +140,8 @@ The `enrichment` object provides visibility into the background enrichment pipel
 |---|---|---|
 | `status` | `healthy`, `degraded`, `unhealthy` | Overall service status |
 | `falkordb` | `connected`, `disconnected`, `error` | FalkorDB connection state |
-| `qdrant` | `connected`, `disconnected`, `unavailable` | Qdrant connection state (optional service) |
-| `enrichment.status` | `running`, `stopped`, `error` | Background enrichment worker state |
+| `qdrant` | `connected`, `disconnected` | Qdrant connection state (optional service) |
+| `enrichment.status` | `running`, `stopped` | Background enrichment worker state |
 
 #### Health Check Flow
 
@@ -198,7 +198,7 @@ curl -s https://your-project.up.railway.app/health | jq .status
 
 AutoMem continues operating even when components are unavailable:
 
-- **Qdrant unavailable**: `status` remains `"healthy"`, `qdrant` shows `"not_configured"` or error
+- **Qdrant unavailable**: `status` remains `"healthy"`, `qdrant` shows `"disconnected"`
 - **FalkorDB unavailable**: `status` becomes `"degraded"`, HTTP 503 returned
 - **Enrichment worker stopped**: Service remains healthy but enrichment pipeline stops processing
 
@@ -325,15 +325,11 @@ The startup recall endpoint returns a curated set of memories suitable for initi
 
 #### Retrieval Strategy
 
-The startup recall endpoint uses a two-phase retrieval strategy:
+The startup recall endpoint filters memories by critical tags:
 
-1. **Phase 1: Trending Memories** (primary)
-   - Queries: `MATCH (m:Memory) ORDER BY m.importance DESC, m.timestamp DESC LIMIT 10`
-   - Returns high-importance memories regardless of recency
-2. **Phase 2: Recent Memories** (fallback)
-   - Only triggered if Phase 1 returns fewer than 10 memories
-   - Queries: `MATCH (m:Memory) ORDER BY m.timestamp DESC LIMIT (10 - phase1_count)`
-   - Fills remaining slots with most recent memories
+- Queries memories tagged with `critical`, `lesson`, or `ai-assistant`
+- Returns matching memories up to the configured limit
+- Falls back to recent memories if tag-filtered results are insufficient
 
 #### Integration with AI Agents
 
@@ -406,7 +402,7 @@ drift_percent = |falkordb_count - qdrant_count| / max(falkordb_count, qdrant_cou
 ```mermaid
 graph LR
     subgraph "Monitoring Services"
-        SyncWorker["Sync Worker Thread<br/>automem/workers/sync.py<br/>SYNC_CHECK_INTERVAL"]
+        SyncWorker["Sync Worker Thread<br/>automem/sync/runtime_worker.py<br/>SYNC_CHECK_INTERVAL"]
         HealthMonitor["health_monitor.py<br/>scripts/<br/>External monitoring"]
         HealthEndpoint["/health endpoint<br/>automem/api/health.py<br/>Public access"]
     end
@@ -622,7 +618,6 @@ For detailed recovery procedures, see [Backup & Recovery](/docs/operations/backu
 | `HEALTH_MONITOR_WEBHOOK` | `None` | Slack/Discord webhook URL |
 | `HEALTH_MONITOR_AUTO_RECOVER` | `false` | Enable automatic recovery |
 | `HEALTH_MONITOR_CHECK_INTERVAL` | `300` | Seconds between health checks |
-| `HEALTH_MONITOR_LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
 
 ## Monitoring Best Practices
 

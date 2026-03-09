@@ -188,10 +188,10 @@ ReadAgent and A-MEM both emphasize that memories must be reorganized over time. 
 
 | Task | Research Basis | AutoMem Implementation | Interval |
 |---|---|---|---|
-| `decay` | ReadAgent temporal decay | `decay_memory_relevance()` — age, access, relationships, importance | Hourly |
-| `creative` | HippoRAG 2 associative memory | `find_creative_associations()` — non-obvious connections via vectors | Hourly |
-| `cluster` | A-MEM emergent structure | `cluster_memories()` — group similar embeddings, create `MetaMemory` nodes | 6 hours |
-| `forget` | MELODI compression + pruning | `forget_irrelevant_memories()` — archive < 0.2, delete < 0.05 | Daily |
+| `decay` | ReadAgent temporal decay | `decay_memory_relevance()` — age, access, relationships, importance | Daily |
+| `creative` | HippoRAG 2 associative memory | `find_creative_associations()` — non-obvious connections via vectors | Weekly |
+| `cluster` | A-MEM emergent structure | `cluster_memories()` — group similar embeddings, create `MetaMemory` nodes | Monthly |
+| `forget` | MELODI compression + pruning | `forget_irrelevant_memories()` — archive < 0.2, delete < 0.05 | Disabled by default |
 
 **Decay scoring formula** implements ReadAgent's finding that memories fade without reinforcement but are preserved through connections. Factors weighted: recency, access frequency, relationship count, and stored importance score.
 

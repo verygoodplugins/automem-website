@@ -7,7 +7,7 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Connection init, graph/vector operations, dual-write logic
+- [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/runtime_clients.py) — Connection init (init_falkordb, init_qdrant, ensure_qdrant_collection)
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — FalkorDB abstraction
 - [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py) — Qdrant abstraction
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider.py) — Embedding provider abstraction
@@ -95,7 +95,7 @@ FalkorDB is a Redis-compatible graph database that stores memories as nodes with
 | `FALKORDB_PASSWORD` | _(none)_ | Authentication password |
 | `FALKORDB_GRAPH` | `memories` | Graph database name |
 
-**Connection Initialization:** The Flask app establishes the connection at startup via `init_db_connections()` ([app.py:77-78](https://github.com/verygoodplugins/automem/blob/main/app.py#L77-L78)).
+**Connection Initialization:** The Flask app establishes the connection at startup via `init_falkordb()` ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/runtime_clients.py)).
 
 ### Persistence Configuration
 
@@ -110,15 +110,15 @@ FalkorDB uses Redis AOF (Append-Only File) and RDB snapshots for durability. Con
 
 **Memory Node Creation**
 
-Memories are created via `MERGE` to ensure idempotency ([app.py:2155-2185](https://github.com/verygoodplugins/automem/blob/main/app.py#L2155-L2185)).
+Memories are created via `MERGE` to ensure idempotency ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py)).
 
 **Relationship Creation**
 
-The `/associate` endpoint creates typed edges between memory nodes ([app.py:2660-2750](https://github.com/verygoodplugins/automem/blob/main/app.py#L2660-L2750)).
+The `/associate` endpoint creates typed edges between memory nodes ([automem/api/graph.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/graph.py)).
 
 **Keyword Search**
 
-The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([app.py:721-829](https://github.com/verygoodplugins/automem/blob/main/app.py#L721-L829)).
+The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py)).
 
 ---
 
@@ -162,8 +162,8 @@ AutoMem uses a provider-based embedding system with automatic fallback. The defa
 
 1. Voyage AI (if `VOYAGE_API_KEY` set)
 2. OpenAI (if `OPENAI_API_KEY` set)
-3. FastEmbed (local ONNX, if installed)
-4. Ollama (local server, if running)
+3. Ollama (local server, if running)
+4. FastEmbed (local ONNX, if installed)
 5. Placeholder (hash-based, always available)
 
 **Provider Features:**
@@ -198,7 +198,7 @@ Batching reduces API calls by 40-50% compared to individual requests.
 
 ### Vector Search Implementation
 
-The `_vector_search` function performs similarity queries against the Qdrant collection ([app.py:924-994](https://github.com/verygoodplugins/automem/blob/main/app.py#L924-L994)).
+The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py)).
 
 ---
 

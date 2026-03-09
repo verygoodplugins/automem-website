@@ -329,7 +329,7 @@ If migrating from a different MCP memory implementation:
 ### Debugging Techniques
 
 1. **Enable debug logging** — Check stderr output (the server writes all logs there to avoid stdio pollution)
-2. **Test backend directly** — `curl http://localhost:8080/health` to verify service reachability
+2. **Test backend directly** — `curl http://localhost:8001/health` to verify service reachability
 3. **Inspect MCP communication** — Use an MCP client simulator or enable verbose logging in your platform
 4. **Verify template variable substitution** — Print the rendered template before writing it to disk
 

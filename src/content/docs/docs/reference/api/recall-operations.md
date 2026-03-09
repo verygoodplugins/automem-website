@@ -32,7 +32,7 @@ GET /recall
 |-----------|------|---------|-------------|
 | `query` | string | — | Natural language search query or wildcard `*` |
 | `embedding` | array[float] | — | Pre-computed embedding vector for semantic search |
-| `limit` | integer | 10 | Maximum results to return (capped at `RECALL_MAX_LIMIT=100`) |
+| `limit` | integer | 5 | Maximum results to return (capped at `RECALL_MAX_LIMIT=100`) |
 | `sort` / `order_by` | string | `score` | Sort mode: `score`, `time_desc`, `time_asc`, `updated_desc`, `updated_asc` |
 
 The `query` parameter triggers keyword extraction and full-text search. When `query="*"` or is omitted, the system returns trending memories ordered by importance.
@@ -209,13 +209,15 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
 
 | Component | Environment Variable | Default Value |
 |-----------|---------------------|---------------|
-| Vector | `SEARCH_WEIGHT_VECTOR` | 0.25 |
-| Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.15 |
-| Exact | `SEARCH_WEIGHT_EXACT` | 0.25 |
-| Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.05 |
+| Vector | `SEARCH_WEIGHT_VECTOR` | 0.35 |
+| Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.35 |
+| Exact | `SEARCH_WEIGHT_EXACT` | 0.20 |
+| Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 |
 | Confidence | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 |
 | Recency | `SEARCH_WEIGHT_RECENCY` | 0.10 |
-| Tag | `SEARCH_WEIGHT_TAG` | 0.10 |
+| Tag | `SEARCH_WEIGHT_TAG` | 0.20 |
+| Relation | `SEARCH_WEIGHT_RELATION` | 0.25 |
+| Relevance | `SEARCH_WEIGHT_RELEVANCE` | 0.0 |
 
 ### Scoring Component Details
 
@@ -290,8 +292,10 @@ The `_expand_related_memories()` function implements multi-hop graph traversal u
 **Key configuration constants:**
 - `RECALL_RELATION_LIMIT` (default: 5) — Max edges per seed memory
 - `RECALL_EXPANSION_LIMIT` (default: 25) — Total expanded memories cap
+- `RECALL_MIN_SCORE` — Minimum score threshold for results to be returned
+- `RECALL_ADAPTIVE_FLOOR` — Adaptive floor that adjusts minimum score based on result quality
 
-**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all 11 relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
+**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all 16 relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
 
 ### Entity Expansion Flow
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page is based on [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py), [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/main/consolidation.py), and [`docs/OPTIMIZATIONS.md`](https://github.com/verygoodplugins/automem/blob/main/docs/OPTIMIZATIONS.md) in the AutoMem repository.
+This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/main/automem/) module paths, [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/), and [`docs/OPTIMIZATIONS.md`](https://github.com/verygoodplugins/automem/blob/main/docs/OPTIMIZATIONS.md) in the AutoMem repository.
 :::
 
 This page describes AutoMem's performance optimization strategies, including embedding batching, relationship count caching, query time tracking, and structured logging. These optimizations reduce API costs by 40-50%, speed up consolidation by 80%, and improve monitoring capabilities. For operational monitoring strategies, see [Health Monitoring](/docs/operations/health/).
@@ -310,8 +310,8 @@ The `/health` endpoint includes enrichment queue metrics without requiring authe
 | `EMBEDDING_BATCH_SIZE` | 20 | 1-2048 | Max items per embedding batch | Higher = fewer API calls, higher latency |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | 2.0 | 0.1-60.0 | Max wait time for partial batch | Higher = better batching, higher latency |
 | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 3600 | 60-86400 | Seconds between decay runs | Lower = fresher scores, more CPU |
-| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 3600 | 600-604800 | Seconds between creative association discovery | Lower = more associations, more CPU |
-| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 21600 | 3600-2592000 | Seconds between clustering runs | Lower = fresher clusters, more CPU |
+| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | 600-604800 | Seconds between creative association discovery | Lower = more associations, more CPU |
+| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | 3600-2592000 | Seconds between clustering runs | Lower = fresher clusters, more CPU |
 
 ### Tuning Guidelines
 

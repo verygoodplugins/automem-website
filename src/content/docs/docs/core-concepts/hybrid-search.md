@@ -69,11 +69,11 @@ graph TB
     subgraph "Search Strategies"
         Vector["Vector Similarity<br/>Qdrant cosine search<br/>Weight: 0.35"]
         Keyword["Keyword Match<br/>FalkorDB text search<br/>Weight: 0.35"]
-        Tag["Tag Overlap<br/>Prefix/exact matching<br/>Weight: 0.15"]
+        Tag["Tag Overlap<br/>Prefix/exact matching<br/>Weight: 0.20"]
         Importance["Importance Score<br/>User-assigned value<br/>Weight: 0.10"]
         Confidence["Confidence Score<br/>Classification confidence<br/>Weight: 0.05"]
-        Recency["Recency Score<br/>Time-based decay<br/>Weight: 0.10"]
-        Exact["Exact Match<br/>Query in metadata<br/>Weight: 0.15"]
+        Recency["Recency Score<br/>Linear decay 180 days<br/>Weight: 0.10"]
+        Exact["Exact Match<br/>Query in metadata<br/>Weight: 0.20"]
     end
 
     Result["Final Weighted Score"]
@@ -175,7 +175,7 @@ tags=project&tags=decision&tag_mode=all
 
 Three metadata fields contribute to the final score: importance, confidence, and recency.
 
-**Recency calculation:** Recency uses an exponential decay function based on the time since last access (or creation if never accessed). Newer memories receive higher scores.
+**Recency calculation:** Recency uses a linear decay over 180 days: `max(0.0, 1.0 - (age_days / 180.0))`, based on the time since last access (or creation if never accessed). Memories older than 180 days score 0.0.
 
 **Default behavior:**
 
@@ -193,30 +193,30 @@ The final score for each memory result combines nine weighted components. The we
 
 ```
 final_score =
-    vector_similarity    × SEARCH_WEIGHT_VECTOR       (default: 0.25)
-  + keyword_score        × SEARCH_WEIGHT_KEYWORD      (default: 0.15)
-  + relation_strength    × 0.25                       (hardcoded)
-  + content_overlap      × 0.25                       (hardcoded)
-  + temporal_alignment   × SEARCH_WEIGHT_TEMPORAL     (default: 0.15)
-  + tag_match_score      × SEARCH_WEIGHT_TAG          (default: 0.10)
-  + importance           × SEARCH_WEIGHT_IMPORTANCE   (default: 0.05)
+    vector_similarity    × SEARCH_WEIGHT_VECTOR       (default: 0.35)
+  + keyword_score        × SEARCH_WEIGHT_KEYWORD      (default: 0.35)
+  + tag_match_score      × SEARCH_WEIGHT_TAG          (default: 0.20)
+  + importance           × SEARCH_WEIGHT_IMPORTANCE   (default: 0.10)
   + confidence           × SEARCH_WEIGHT_CONFIDENCE   (default: 0.05)
   + recency_score        × SEARCH_WEIGHT_RECENCY      (default: 0.10)
+  + exact_match_score    × SEARCH_WEIGHT_EXACT        (default: 0.20)
+  + relation_strength    × SEARCH_WEIGHT_RELATION     (default: 0.25)
+  + context_bonus        × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
 ```
 
 ### Component Weights
 
 | Component | Default Weight | Configurable | Description |
 |---|---|---|---|
-| Vector | 25% | `SEARCH_WEIGHT_VECTOR` | Semantic similarity from Qdrant |
-| Keyword | 15% | `SEARCH_WEIGHT_KEYWORD` | Lexical matching score |
-| Relation | 25% | No | Graph relationship strength |
-| Content | 25% | No | Direct token overlap |
-| Temporal | 15% | `SEARCH_WEIGHT_TEMPORAL` | Time alignment |
-| Tag | 10% | `SEARCH_WEIGHT_TAG` | Tag filter matching |
-| Importance | 5% | `SEARCH_WEIGHT_IMPORTANCE` | User-assigned priority |
+| Vector | 35% | `SEARCH_WEIGHT_VECTOR` | Semantic similarity from Qdrant |
+| Keyword | 35% | `SEARCH_WEIGHT_KEYWORD` | Lexical matching score |
+| Tag | 20% | `SEARCH_WEIGHT_TAG` | Tag filter matching |
+| Importance | 10% | `SEARCH_WEIGHT_IMPORTANCE` | User-assigned priority |
 | Confidence | 5% | `SEARCH_WEIGHT_CONFIDENCE` | Classification certainty |
-| Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Time-based decay |
+| Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Linear decay over 180 days |
+| Exact | 20% | `SEARCH_WEIGHT_EXACT` | Exact phrase match boost |
+| Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
+| Context | 0% | `SEARCH_WEIGHT_RELEVANCE` | Context profile scoring bonus |
 
 ### Score Combination Flow
 
@@ -229,15 +229,15 @@ flowchart TD
     end
 
     subgraph weights ["Weight Application"]
-        VW["× SEARCH_WEIGHT_VECTOR<br/>0.25"]
-        KW["× SEARCH_WEIGHT_KEYWORD<br/>0.15"]
-        RW["× relation_strength<br/>0.25"]
-        CW["× content_overlap<br/>0.25"]
-        TW["× SEARCH_WEIGHT_TEMPORAL<br/>0.15"]
-        TagW["× SEARCH_WEIGHT_TAG<br/>0.10"]
-        IW["× SEARCH_WEIGHT_IMPORTANCE<br/>0.05"]
+        VW["× SEARCH_WEIGHT_VECTOR<br/>0.35"]
+        KW["× SEARCH_WEIGHT_KEYWORD<br/>0.35"]
+        TagW["× SEARCH_WEIGHT_TAG<br/>0.20"]
+        IW["× SEARCH_WEIGHT_IMPORTANCE<br/>0.10"]
         ConfW["× SEARCH_WEIGHT_CONFIDENCE<br/>0.05"]
         RecW["× SEARCH_WEIGHT_RECENCY<br/>0.10"]
+        ExW["× SEARCH_WEIGHT_EXACT<br/>0.20"]
+        RW["× SEARCH_WEIGHT_RELATION<br/>0.25"]
+        CtxW["× SEARCH_WEIGHT_RELEVANCE<br/>0.0"]
     end
 
     subgraph combination ["Score Combination"]
@@ -255,23 +255,23 @@ flowchart TD
 
     VS --> VW
     KS --> KW
-    GS --> RW
-    VS --> CW
-    VS --> TW
     VS --> TagW
     VS --> IW
     VS --> ConfW
     VS --> RecW
+    VS --> ExW
+    GS --> RW
+    GS --> CtxW
 
     VW --> Sum
     KW --> Sum
-    RW --> Sum
-    CW --> Sum
-    TW --> Sum
     TagW --> Sum
     IW --> Sum
     ConfW --> Sum
     RecW --> Sum
+    ExW --> Sum
+    RW --> Sum
+    CtxW --> Sum
 
     Sum --> Normalize
     Normalize --> Sort
@@ -352,14 +352,15 @@ The recall endpoint orchestrates the entire hybrid search process:
 
 | Variable | Default | Description |
 |---|---|---|
-| `SEARCH_WEIGHT_VECTOR` | 0.25 | Vector similarity contribution |
-| `SEARCH_WEIGHT_KEYWORD` | 0.15 | Keyword match contribution |
-| `SEARCH_WEIGHT_TEMPORAL` | 0.15 | Temporal alignment contribution |
-| `SEARCH_WEIGHT_TAG` | 0.10 | Tag match contribution |
-| `SEARCH_WEIGHT_IMPORTANCE` | 0.05 | Importance field contribution |
+| `SEARCH_WEIGHT_VECTOR` | 0.35 | Vector similarity contribution |
+| `SEARCH_WEIGHT_KEYWORD` | 0.35 | Keyword match contribution |
+| `SEARCH_WEIGHT_TAG` | 0.20 | Tag match contribution |
+| `SEARCH_WEIGHT_IMPORTANCE` | 0.10 | Importance field contribution |
 | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 | Confidence field contribution |
-| `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution |
-| `SEARCH_WEIGHT_EXACT` | 0.10 | Exact phrase match boost |
+| `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution (linear over 180 days) |
+| `SEARCH_WEIGHT_EXACT` | 0.20 | Exact phrase match boost |
+| `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
+| `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Context profile scoring bonus |
 
 ### Expansion and Limit Configuration
 
@@ -367,7 +368,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 |---|---|---|
 | `RECALL_MAX_LIMIT` | 100 | Maximum results per recall request |
 | `RECALL_EXPANSION_LIMIT` | 25 | Maximum expanded results (bridges + entities) |
-| `RECALL_RELATION_LIMIT` | 10 | Maximum relations fetched per memory |
+| `RECALL_RELATION_LIMIT` | 5 | Maximum relations fetched per memory |
 
 ### Query Parameters
 

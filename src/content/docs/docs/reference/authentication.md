@@ -31,10 +31,10 @@ graph TD
     CheckBearer{"Authorization header<br/>starts with 'Bearer'?"}
     ExtractBearer["Extract token<br/>from Bearer string"]
 
-    CheckCustomHeader{"X-API-Key or<br/>X-API-Token header?"}
+    CheckCustomHeader{"X-API-Key header?"}
     ExtractHeader["Extract token<br/>from header"]
 
-    CheckQuery{"Query param<br/>api_key/apiKey/api_token?"}
+    CheckQuery{"Query param<br/>api_key?"}
     ExtractQuery["Extract token<br/>from query string"]
 
     NoToken["Return None<br/>→ 401 Unauthorized"]
@@ -71,7 +71,7 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 
 ### 2. Custom Header
 
-Alternative header-based authentication using `X-API-Key`:
+Alternative header-based authentication using `X-API-Key` (only `X-API-Key` is checked — not `X-API-Token`):
 
 ```bash
 curl -H "X-API-Key: YOUR_API_TOKEN" \
@@ -82,7 +82,7 @@ Use this when client libraries do not support Bearer tokens easily.
 
 ### 3. Query Parameter
 
-Fallback authentication via URL query string:
+Fallback authentication via URL query string using only `api_key` (not `apiKey` or `api_token`):
 
 ```bash
 curl "https://your-service.railway.app/recall?q=query&api_key=YOUR_API_TOKEN"
@@ -155,8 +155,10 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/admin/reembed` | POST | Regenerate embeddings in batches |
+| `/admin/sync` | POST | Non-destructive drift repair |
 | `/enrichment/reprocess` | POST | Re-queue memories for enrichment |
-| `/enrichment/status` | GET | View enrichment pipeline status |
+
+Note: `/enrichment/status` is **unauthenticated** — no token required.
 
 ---
 
@@ -166,6 +168,8 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 graph TB
     subgraph "Public Endpoints"
         Health["/health<br/>GET"]
+        EnrichStatus["/enrichment/status<br/>GET"]
+        ConsolidateStatus["/consolidate/status<br/>GET"]
     end
 
     subgraph "API Token Required"
@@ -173,18 +177,20 @@ graph TB
         Recall["/recall<br/>GET"]
         Associate["/associate<br/>POST"]
         ByTag["/memory/by-tag<br/>GET"]
-        Consolidate["/consolidate<br/>POST, GET"]
+        Consolidate["/consolidate<br/>POST"]
         Analyze["/analyze<br/>GET"]
         StartupRecall["/startup-recall<br/>GET"]
     end
 
     subgraph "Admin Token Required"
         Reembed["/admin/reembed<br/>POST"]
+        Sync["/admin/sync<br/>POST"]
         Reprocess["/enrichment/reprocess<br/>POST"]
-        EnrichStatus["/enrichment/status<br/>GET"]
     end
 
     style Health fill:#90EE90
+    style EnrichStatus fill:#90EE90
+    style ConsolidateStatus fill:#90EE90
     style Memory fill:#FFD700
     style Recall fill:#FFD700
     style Associate fill:#FFD700
@@ -193,15 +199,15 @@ graph TB
     style Analyze fill:#FFD700
     style StartupRecall fill:#FFD700
     style Reembed fill:#FF6B6B
+    style Sync fill:#FF6B6B
     style Reprocess fill:#FF6B6B
-    style EnrichStatus fill:#FF6B6B
 ```
 
 | Category | Endpoints | API Token | Admin Token |
 |----------|-----------|-----------|-------------|
-| **Public** | `/health` | No | No |
+| **Public** | `/health`, `/enrichment/status`, `/consolidate/status` | No | No |
 | **Standard** | `/memory`, `/recall`, `/associate`, `/memory/by-tag`, `/consolidate`, `/analyze`, `/startup-recall` | Yes | No |
-| **Admin** | `/admin/reembed`, `/enrichment/reprocess`, `/enrichment/status` | Yes | Yes |
+| **Admin** | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess` | Yes | Yes |
 
 ---
 

@@ -221,6 +221,10 @@ curl -X POST https://your-automem-instance/memory \
   }'
 ```
 
+:::note[Additional undocumented store parameters]
+The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` parameters that are passed through to the HTTP API but not listed in the published schema.
+:::
+
 **Content Size Governance (MCP layer adds two-tier validation):**
 
 | Limit | Value | Behavior |
@@ -263,6 +267,10 @@ curl -X POST https://your-automem-instance/memory \
 | `results` | array[object] | Yes | Array of memory objects with scores |
 | `dedup_removed` | integer | No | Duplicates removed in multi-query mode |
 
+:::note[Additional undocumented recall parameters]
+The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` parameters that are passed through to the HTTP API but not listed in the published schema.
+:::
+
 **Parallel Query Optimization (MCP layer):**
 
 When `tags` are present, `recall_memory` executes two queries in parallel and merges results:
@@ -289,10 +297,10 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory UUID |
 | `memory2_id` | string | Yes | — | Target memory UUID |
-| `type` | string | Yes | enum: 11 types | Relationship type |
-| `strength` | number | Yes | 0–1 | Relationship strength |
+| `type` | string | Yes | enum: 16 types | Relationship type |
+| `strength` | number | No | 0–1, default 0.5 | Relationship strength |
 
-**Relationship Type Enum (all 11 values):**
+**Relationship Type Enum (all 16 values):**
 
 1. `RELATES_TO` — General relationship
 2. `LEADS_TO` — Causal relationship
@@ -305,6 +313,11 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
+12. `SIMILAR_TO` — Semantically similar
+13. `PRECEDED_BY` — Temporal predecessor
+14. `CAUSED_BY` — Direct cause
+15. `ENABLES` — Prerequisite or enabler
+16. `CONFLICTS_WITH` — Conflicting information
 
 **MCP Tool Output:**
 
