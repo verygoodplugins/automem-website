@@ -25,11 +25,11 @@ All operations except `/health` require authentication via `AUTOMEM_API_TOKEN`. 
 | Endpoint | Method | Purpose | Authentication |
 |----------|--------|---------|----------------|
 | `/memory` | POST | Create new memory | API Token |
-| `/memory` | POST (batch) | Batch ingest up to 500 memories | API Token |
+| `/memory` | POST | Batch ingest up to 500 memories | API Token |
 | `/memory/:id` | GET | Retrieve single memory by ID | API Token |
 | `/recall` | GET | Search/retrieve memories | API Token |
-| `/memory/<id>` | PATCH | Update existing memory | API Token |
-| `/memory/<id>` | DELETE | Remove memory | API Token |
+| `/memory/:id` | PATCH | Update existing memory | API Token |
+| `/memory/:id` | DELETE | Remove memory | API Token |
 | `/memory/by-tag` | GET | Filter by tags | API Token |
 
 ---

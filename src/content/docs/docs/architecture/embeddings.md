@@ -25,7 +25,7 @@ The embedding generation subsystem handles asynchronous vector embedding creatio
 - **Multi-provider support:** Voyage AI, OpenAI, FastEmbed (local), Ollama, or deterministic placeholder vectors
 - **Auto-selection priority chain:** Voyage → OpenAI → Ollama → FastEmbed → Placeholder
 - **Batch processing:** Up to 20 memories per API call with 2-second timeout
-- **Dimension flexibility:** Supports 256d, 512d, 768d, 1024d, 2048d, 3072d embeddings
+- **Dimension flexibility:** Supports common sizes such as 256d, 384d, 512d, 768d, 1024d, 2048d, 3072d — plus Ollama (variable by model) and Placeholder (any configurable size)
 - **Graceful degradation:** Falls back to placeholder vectors if all providers fail
 
 For information about how memories are enriched with entities and relationships after storage, see [Enrichment Pipeline](/docs/architecture/enrichment/). For the overall background processing architecture, see [Background Processing](/docs/architecture/background-processing/).
@@ -56,6 +56,7 @@ flowchart TD
     CheckConfig -->|"voyage"| ForceVoyage["Force Voyage<br/>Require VOYAGE_API_KEY"]
     CheckConfig -->|"openai"| ForceOpenAI["Force OpenAI<br/>Require OPENAI_API_KEY"]
     CheckConfig -->|"local"| ForceLocal["Force FastEmbed<br/>Local ONNX model"]
+    CheckConfig -->|"ollama"| ForceOllama["Force Ollama<br/>Local server"]
     CheckConfig -->|"placeholder"| ForcePlaceholder["Force Placeholder<br/>Hash-based"]
 
     Priority --> Try1{"VOYAGE_API_KEY<br/>set?"}
@@ -80,6 +81,7 @@ flowchart TD
     ForceVoyage --> Validate
     ForceOpenAI --> Validate
     ForceLocal --> Validate
+    ForceOllama --> Validate
     ForcePlaceholder --> Validate
 
     Validate --> Store["Store in Qdrant<br/>or log warning"]
