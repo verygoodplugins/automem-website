@@ -111,7 +111,7 @@ The FalkorDB export captures the entire Redis keyspace including:
 
 The Qdrant export includes:
 
-- Vector embeddings (768-dimensional or 1024-dimensional depending on provider)
+- Vector embeddings (dimensions depend on `VECTOR_SIZE` config: 768, 1024, 2048, or 3072)
 - Payload data (memory content, metadata, tags)
 - Point IDs mapped to memory IDs
 - Collection configuration
@@ -422,7 +422,7 @@ backups/
     └── qdrant_20251020_083000.json.gz
 ```
 
-Each Qdrant backup contains an array of point objects with `id`, `vector` (768-dimensional float array), and `payload` (content, memory_id, tags, importance, type, created_at).
+Each Qdrant backup contains an array of point objects with `id`, `vector` (float array, dimensions match `VECTOR_SIZE` config), and `payload` (content, memory_id, tags, importance, type, created_at).
 
 ### Restoration Flow
 

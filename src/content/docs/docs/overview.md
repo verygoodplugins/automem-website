@@ -13,7 +13,7 @@ AutoMem is a Flask-based HTTP API service that provides persistent, queryable me
 
 - **Store** memories with metadata, importance scores, classification, and semantic embeddings
 - **Recall** via hybrid search combining vector similarity, keyword matching, graph relationships, and temporal signals
-- **Connect** memories through 11 typed relationship edges (e.g., `LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`)
+- **Connect** memories through 16 typed relationship edges (e.g., `LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`)
 - **Learn** through automatic entity extraction, pattern detection, and neuroscience-inspired consolidation cycles
 - **Degrade gracefully** when vector search is unavailable, continuing operations in graph-only mode
 
@@ -142,13 +142,13 @@ AutoMem's architecture separates concerns into distinct modules, each handling s
 
 | Component | File/Module | Purpose | Key Classes/Functions |
 |-----------|-------------|---------|----------------------|
-| **Flask API** | `app.py` | Request validation, orchestration, authentication | `Flask`, `require_api_token`, `ServiceState` |
+| **Flask API** | `automem/api/` | Request validation, orchestration, authentication | `Flask`, `require_api_token`, `ServiceState` |
 | **Graph Store** | `automem/stores/graph_store.py` | FalkorDB operations, relationship management | `_build_graph_tag_predicate` |
 | **Vector Store** | `automem/stores/vector_store.py` | Qdrant operations, semantic search | `_build_qdrant_tag_filter` |
 | **Embedding Providers** | `automem/embedding/` | Pluggable embedding generation | `EmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageEmbeddingProvider`, `FastEmbedProvider`, `PlaceholderEmbeddingProvider` |
-| **Enrichment Pipeline** | `app.py:1051-1200` | Entity extraction, pattern detection, relationship building | `EnrichmentStats`, `extract_entities`, `generate_summary` |
-| **Consolidation Engine** | `consolidation.py` | Memory decay, creative association, clustering, forgetting | `MemoryConsolidator`, `ConsolidationScheduler` |
-| **Memory Classifier** | `app.py:685-851` | Regex + LLM-based memory type classification | `MemoryClassifier`, `classify` |
+| **Enrichment Pipeline** | `automem/enrichment/` | Entity extraction, pattern detection, relationship building | `EnrichmentStats`, `extract_entities`, `generate_summary` |
+| **Consolidation Engine** | `automem/consolidation/` | Memory decay, creative association, clustering, forgetting | `MemoryConsolidator`, `ConsolidationScheduler` |
+| **Memory Classifier** | `automem/classifier/` | Regex + LLM-based memory type classification | `MemoryClassifier`, `classify` |
 | **Health Monitor** | `scripts/health_monitor.py` | Drift detection, webhook alerts | `check_drift`, `repair_drift` |
 
 The MCP bridge exposes six tools to AI platforms:
@@ -188,7 +188,7 @@ graph TB
         end
 
         subgraph edges["Relationship Types"]
-            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF"]
+            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF<br/>SIMILAR_TO<br/>PRECEDED_BY<br/>EXPLAINS<br/>SHARES_THEME<br/>PARALLEL_CONTEXT"]
         end
     end
 
@@ -413,7 +413,7 @@ graph TB
         UsePlaceholder["PlaceholderEmbeddingProvider<br/>automem/embedding/placeholder.py"]
 
         Voyage["VoyageEmbeddingProvider<br/>automem/embedding/voyage.py<br/>voyage-4: 1024d<br/>voyage-4-large: 2048d"]
-        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 768d<br/>text-embedding-3-large: 3072d"]
+        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d<br/>text-embedding-3-large: 3072d"]
         FastEmbed["FastEmbedProvider<br/>automem/embedding/fastembed.py<br/>BAAI/bge-base-en-v1.5: 768d"]
     end
 

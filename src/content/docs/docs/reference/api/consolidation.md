@@ -23,7 +23,7 @@ AutoMem provides two REST endpoints for consolidation operations:
 | Endpoint | Method | Purpose | Auth |
 |----------|--------|---------|------|
 | `/consolidate` | POST | Manually trigger consolidation tasks | API token |
-| `/consolidate/status` | GET | Query scheduler state and last run times | API token |
+| `/consolidate/status` | GET | Query scheduler state and last run times | None required |
 
 The consolidation system runs automatically on scheduled intervals (configurable via environment variables), but these endpoints allow manual triggers for testing, debugging, or forcing immediate execution.
 

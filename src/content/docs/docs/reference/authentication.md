@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` require a valid API token.
+AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health`, `/enrichment/status`, and `/consolidate/status` require a valid API token.
 
 For deployment-specific token generation on Railway, see [Railway Deployment](/docs/deployment/railway/). For complete endpoint documentation with authentication requirements, see [Memory Operations](/docs/reference/api/memory-operations/).
 
@@ -15,7 +15,7 @@ For deployment-specific token generation on Railway, see [Railway Deployment](/d
 
 | Token Type | Environment Variable | Required For | Purpose |
 |------------|---------------------|-------------|---------|
-| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` | Standard memory operations (store, recall, update, delete) |
+| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health`, `/enrichment/status`, and `/consolidate/status` | Standard memory operations (store, recall, update, delete) |
 | **Admin Token** | `ADMIN_API_TOKEN` | Admin and enrichment endpoints | Privileged operations (reprocessing, re-embedding, bulk operations) |
 
 ---

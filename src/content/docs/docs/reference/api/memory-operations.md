@@ -305,6 +305,96 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 
 ---
 
+## POST /memory (Batch) — Batch Ingest
+
+Ingests up to 500 memories in a single request. Each memory in the batch follows the same field schema as the single `POST /memory` endpoint.
+
+### Request Format
+
+```json
+[
+  {
+    "content": "First memory content",
+    "type": "Decision",
+    "tags": ["project-alpha"],
+    "importance": 0.9
+  },
+  {
+    "content": "Second memory content",
+    "type": "Context",
+    "tags": ["project-alpha"],
+    "importance": 0.5
+  }
+]
+```
+
+Send the request body as a JSON array (not an object). The `Content-Type` must be `application/json`.
+
+### Example Request
+
+```bash
+curl -X POST https://your-automem-instance/memory \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
+    {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
+  ]'
+```
+
+### Response Format
+
+```json
+{
+  "status": "stored",
+  "count": 2,
+  "memory_ids": ["abc-123", "def-456"],
+  "query_time_ms": 45.2
+}
+```
+
+Each memory in the batch is written to FalkorDB synchronously and queued for background embedding and enrichment. Embeddings are generated in batches by the background worker (see [Performance Tuning](/docs/operations/performance/)).
+
+---
+
+## GET /memory/:id — Retrieve Single Memory
+
+Retrieves a single memory by its UUID from FalkorDB.
+
+### Request Format
+
+```bash
+curl "https://your-automem-instance/memory/abc-123-def-456" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response Format
+
+```json
+{
+  "id": "abc-123-def-456",
+  "content": "Chose PostgreSQL over MongoDB. Need ACID guarantees for transactions.",
+  "type": "Decision",
+  "tags": ["project-alpha", "database"],
+  "importance": 0.9,
+  "confidence": 0.9,
+  "timestamp": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z",
+  "last_accessed": "2025-01-16T08:00:00Z",
+  "metadata": {},
+  "relations": []
+}
+```
+
+### Status Codes
+
+| Status | Condition |
+|--------|-----------|
+| 404 Not Found | Memory ID does not exist in FalkorDB |
+| 401 Unauthorized | Missing or invalid API token |
+
+---
+
 ## PATCH /memory/:id — Updating Memories
 
 Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. Content changes trigger automatic re-embedding.

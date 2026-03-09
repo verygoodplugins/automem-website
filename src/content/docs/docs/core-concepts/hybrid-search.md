@@ -206,6 +206,8 @@ final_score =
   + context_bonus        × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
 ```
 
+**Note:** Component weights are relative contributions that sum to 1.60. Raw combined scores are normalized to the range [0.0, 1.0] during final ranking.
+
 ### Component Weights
 
 | Component | Default Weight | Configurable | Description |
@@ -220,6 +222,8 @@ final_score =
 | Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
 | Context | 0% | `SEARCH_WEIGHT_RELEVANCE` | Context profile scoring bonus |
 
+> **Note:** Weights are relative contributions (sum = 1.60) normalized to [0.0, 1.0] during score computation.
+
 ### Score Combination Flow
 
 ```mermaid
@@ -228,6 +232,14 @@ flowchart TD
         VS["Vector Search<br/>Qdrant similarity<br/>0.0 - 1.0"]
         KS["Keyword Search<br/>TF-IDF score<br/>Normalized"]
         GS["Graph Score<br/>Importance fallback"]
+    end
+
+    subgraph metadata ["Metadata Sources"]
+        TagSrc["Query tags vs<br/>memory tags"]
+        ImpSrc["memory.importance<br/>field"]
+        ConfSrc["memory.confidence<br/>field"]
+        RecSrc["memory.timestamp /<br/>last_accessed"]
+        ExSrc["Query phrase vs<br/>memory content"]
     end
 
     subgraph weights ["Weight Application"]
@@ -257,11 +269,11 @@ flowchart TD
 
     VS --> VW
     KS --> KW
-    VS --> TagW
-    VS --> IW
-    VS --> ConfW
-    VS --> RecW
-    VS --> ExW
+    TagSrc --> TagW
+    ImpSrc --> IW
+    ConfSrc --> ConfW
+    RecSrc --> RecW
+    ExSrc --> ExW
     GS --> RW
     GS --> CtxW
 
@@ -294,7 +306,7 @@ Bridge discovery identifies memories that connect multiple seed results, reveali
 
 **Configuration:**
 
-- `expand_relations=true` — Enable relation expansion (default: true)
+- `expand_relations=false` — Enable relation expansion (default: false, opt-in)
 - `expand_min_strength` — Minimum relationship strength (0.0-1.0)
 - `expand_min_importance` — Minimum target memory importance (0.0-1.0)
 - `RECALL_EXPANSION_LIMIT` — Maximum expanded results (default: 25)
@@ -364,6 +376,8 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
 | `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Context profile scoring bonus |
 
+**Note on weight configuration:** Default weights are relative contributions that sum to 1.60. Final scores are normalized to [0.0, 1.0] during ranking. To customize, maintain relative proportions.
+
 ### Expansion and Limit Configuration
 
 | Variable | Default | Description |
@@ -383,7 +397,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `tag_match` | enum | "prefix" | Match type: `"prefix"` or `"exact"` |
 | `exclude_tags` | string[] | — | Tags to exclude |
 | `time_query` | string | — | Temporal expression or ISO range |
-| `expand_relations` | boolean | true | Enable bridge discovery |
+| `expand_relations` | boolean | false | Enable bridge discovery |
 | `expand_entities` | boolean | false | Enable entity expansion |
 | `expand_min_strength` | float | — | Minimum relation strength filter |
 | `expand_min_importance` | float | — | Minimum target importance filter |

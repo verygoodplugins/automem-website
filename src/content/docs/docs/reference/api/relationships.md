@@ -149,6 +149,11 @@ graph TB
 | `EVOLVED_INTO` | A → B (Evolution) | Initial → Final form | Draft design → Shipping implementation |
 | `DERIVED_FROM` | B → A (Source) | Implementation → Spec | Feature code → Requirements document |
 | `PART_OF` | B → A (Hierarchical) | Component → Container | User story → Epic |
+| `SIMILAR_TO` | Bidirectional | Semantically similar memories (auto-created) | Two related bug reports |
+| `PRECEDED_BY` | A → B (Temporal) | Temporal predecessor (auto-created) | Current sprint → Previous sprint |
+| `EXPLAINS` | A → B (Clarifying) | Provides explanation or context (auto-created) | Root cause → Observed symptom |
+| `SHARES_THEME` | Bidirectional | Common theme or topic (auto-created) | Two architecture decisions on same system |
+| `PARALLEL_CONTEXT` | Bidirectional | Parallel events or concurrent work (auto-created) | Two features developed simultaneously |
 
 :::tip[Directionality note]
 Although all relationships are stored as directed edges in FalkorDB (`memory1_id` → `memory2_id`), some types have semantic bidirectionality (e.g., `RELATES_TO`, `CONTRADICTS`). Graph traversal during recall expansion follows edges in both directions by default.

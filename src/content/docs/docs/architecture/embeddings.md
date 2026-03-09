@@ -62,7 +62,7 @@ flowchart TD
     Try1 -->|Yes| Voyage["VoyageEmbeddingProvider<br/>voyage-4: 1024d"]
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
-    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1024d"]
+    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1536d"]
     Try2 -->|No| Try3{"Ollama<br/>running?"}
 
     Try3 -->|Yes| Ollama["OllamaEmbeddingProvider<br/>Local server"]

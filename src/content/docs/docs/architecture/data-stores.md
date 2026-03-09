@@ -44,7 +44,7 @@ graph TB
         end
 
         subgraph edges["Relationship Types"]
-            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF"]
+            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF<br/>SIMILAR_TO<br/>PRECEDED_BY<br/>EXPLAINS<br/>SHARES_THEME<br/>PARALLEL_CONTEXT"]
         end
     end
 
@@ -81,7 +81,7 @@ graph TB
 FalkorDB is a Redis-compatible graph database that stores memories as nodes with typed relationships. It serves as the **authoritative data store** and enables:
 
 - **Node storage**: Each memory is a `Memory` node with properties (`content`, `type`, `importance`, `confidence`, `timestamp`, `tags`)
-- **Relationship traversal**: 11 relationship types connect memories semantically (see [Relationship Types](/docs/core-concepts/relationship-types/))
+- **Relationship traversal**: 16 relationship types connect memories semantically (see [Relationship Types](/docs/core-concepts/relationship-types/))
 - **Keyword search**: Cypher queries perform content/tag matching
 - **Temporal queries**: Filter memories by timestamp ranges
 - **Pattern detection**: Store and query recurring patterns via enrichment metadata

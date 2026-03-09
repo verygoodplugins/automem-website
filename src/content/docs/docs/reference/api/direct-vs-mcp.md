@@ -222,7 +222,7 @@ curl -X POST https://your-automem-instance/memory \
 ```
 
 :::note[Additional undocumented store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` parameters that are passed through to the HTTP API but not listed in the published schema.
+The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` parameters that are passed through to the HTTP API but not listed in the published schema. These parameters are documented in [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
 **Content Size Governance (MCP layer adds two-tier validation):**
@@ -268,7 +268,7 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` paramete
 | `dedup_removed` | integer | No | Duplicates removed in multi-query mode |
 
 :::note[Additional undocumented recall parameters]
-The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` parameters that are passed through to the HTTP API but not listed in the published schema.
+The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` parameters that are passed through to the HTTP API but not listed in the published schema. These parameters are documented in [Recall Operations](/docs/reference/api/recall-operations/).
 :::
 
 **Parallel Query Optimization (MCP layer):**
