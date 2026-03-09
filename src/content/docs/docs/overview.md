@@ -453,7 +453,7 @@ graph TB
 **Provider characteristics:**
 
 - **Voyage**: High-quality embeddings, supports 1024d and 2048d, requires API key
-- **OpenAI**: High-quality embeddings, supports 768d and 3072d, configurable via `OPENAI_BASE_URL` for compatible providers
+- **OpenAI**: High-quality embeddings, text-embedding-3-small (1536d native, truncated to `VECTOR_SIZE`) and text-embedding-3-large (3072d), configurable via `OPENAI_BASE_URL` for compatible providers
 - **FastEmbed**: Local ONNX models, no API key required, ~210MB model download on first use
 - **Placeholder**: Hash-based deterministic vectors, no semantic meaning, always available as fallback
 
