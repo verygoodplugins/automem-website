@@ -18,7 +18,7 @@ Each platform installer generates and installs appropriate configuration files f
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
-| `openclaw` | Plugin config, skill, or mcporter.json (mode-dependent) | `~/.openclaw/openclaw.json` (automatic) |
+| `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
 
 ## Claude Desktop
 
@@ -241,7 +241,11 @@ graph TB
         CursorRules[".cursor/rules/automem.mdc"]
         ClaudeMD["~/.claude/CLAUDE.md"]
         AgentsMD["AGENTS.md"]
-        OpenClawSkill["~/.openclaw/skills/automem/SKILL.md"]
+    end
+
+    subgraph "OpenClaw Outputs"
+        OpenClawPlugin["plugins.entries.automem<br/>in ~/.openclaw/openclaw.json"]
+        OpenClawMCPFiles["&lt;workspace&gt;/skills/automem/SKILL.md<br/>+ &lt;workspace&gt;/config/mcporter.json"]
     end
 
     subgraph "MCP Server"
@@ -257,7 +261,8 @@ graph TB
     CursorInstaller["cursor command"] --> CursorRules
     ClaudeCodeInstaller["claude-code command"] --> HookScripts["~/.claude/hooks/ + ~/.claude/scripts/"]
     CodexInstaller["codex command"] --> AgentsMD
-    OpenClawInstaller["openclaw command"] --> OpenClawSkill
+    OpenClawInstaller["openclaw command"] -->|"--mode plugin"| OpenClawPlugin
+    OpenClawInstaller -->|"--mode mcp/skill"| OpenClawMCPFiles
 ```
 
 ## Verification
