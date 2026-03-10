@@ -1,13 +1,13 @@
 ---
 title: Relationship Types
-description: "AutoMem's 16 typed relationship edges for building knowledge graphs."
+description: "AutoMem's 14 typed relationship edges (11 authorable + 3 system-generated) for building knowledge graphs."
 sidebar:
   order: 2
 ---
 
 :::note[Source files]
 Key implementation files:
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — `ALLOWED_RELATIONS` and `RELATIONSHIP_TYPES` constants
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
 - `automem/config.py` — Relationship type definitions and validation
 - `automem/enrichment/runtime_worker.py` — Automatic relationship creation
 - `automem/utils/entity_extraction.py` — Entity extraction for pattern linking
@@ -16,7 +16,7 @@ Key implementation files:
 - [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/main/tests/test_api_endpoints.py#L939-L1004) — Relationship type tests
 :::
 
-This page documents the 16 typed relationship edges that AutoMem uses to connect Memory nodes in the FalkorDB graph database. These relationships enable multi-hop reasoning, knowledge graph traversal, and semantic connections between memories.
+This page documents the 14 typed relationship edges (11 authorable + 3 system-generated) that AutoMem uses to connect Memory nodes in the FalkorDB graph database. These relationships enable multi-hop reasoning, knowledge graph traversal, and semantic connections between memories.
 
 For information about creating relationships via the API, see [Relationship Operations](/docs/reference/api/relationships/). For details on how relationships influence recall scoring, see [Hybrid Search](/docs/core-concepts/hybrid-search/).
 
@@ -24,7 +24,7 @@ For information about creating relationships via the API, see [Relationship Oper
 
 ## Overview
 
-AutoMem implements **16 distinct relationship types** that connect Memory nodes in the graph database. Unlike traditional vector databases that only support similarity-based retrieval, typed relationships enable:
+AutoMem implements **14 distinct relationship types** (11 authorable + 3 system-generated) that connect Memory nodes in the graph database. Unlike traditional vector databases that only support similarity-based retrieval, typed relationships enable:
 
 - **Causal reasoning** — Understanding why decisions were made and what they led to
 - **Temporal sequencing** — Tracking how knowledge evolved over time
@@ -63,9 +63,7 @@ graph LR
     end
 
     subgraph "Consolidation Relationships (auto-created)"
-        EXPLAINS["EXPLAINS<br/>Provides explanation"]
-        SHARES_THEME["SHARES_THEME<br/>Common theme"]
-        PARALLEL_CONTEXT["PARALLEL_CONTEXT<br/>Parallel events"]
+        DISCOVERED["DISCOVERED<br/>Heuristic edge (kind=explains|shares_theme|parallel_context)"]
     end
 ```
 
@@ -109,13 +107,13 @@ Two types are created automatically by the enrichment pipeline during background
 
 ### Consolidation Relationship Types (Auto-Created)
 
-Three types are created automatically by the consolidation engine's creative task:
+One type is created automatically by the consolidation engine, with a `kind` property to distinguish subtypes:
 
 | Type | Semantic Meaning | Direction | Properties | Created By |
 |---|---|---|---|---|
-| `EXPLAINS` | One memory provides explanation for another | Directional | `confidence`, `updated_at` | Consolidation creative task (Insight + Pattern) |
-| `SHARES_THEME` | Two memories share a common theme | Bidirectional | `similarity`, `updated_at` | Consolidation creative task (cross-type similarity) |
-| `PARALLEL_CONTEXT` | Memories represent parallel events or contexts | Bidirectional | `confidence`, `updated_at` | Consolidation creative task (same-week, low similarity) |
+| `DISCOVERED` | Heuristic relationship inferred by consolidation | Varies | `kind`, `confidence`, `similarity`, `updated_at`, `origin` | Consolidation creative task |
+
+The `kind` property distinguishes subtypes: `explains` (Insight + Pattern connections), `shares_theme` (cross-type similarity), and `parallel_context` (same-week, low similarity).
 
 ---
 
@@ -152,9 +150,7 @@ graph TB
     end
 
     subgraph "Consolidation Auto-Created"
-        EXPLAINS["EXPLAINS<br/>Provides explanation"]
-        THEME["SHARES_THEME<br/>Common theme"]
-        PARALLEL["PARALLEL_CONTEXT<br/>Parallel events"]
+        DISCOVERED["DISCOVERED<br/>Heuristic edge (kind=explains|shares_theme|parallel_context)"]
     end
 ```
 
@@ -164,7 +160,7 @@ graph TB
 
 Relationship types are defined in `automem/config.py` and imported throughout the codebase:
 
-The `ALLOWED_RELATIONS` constant contains all 16 valid relationship type strings, including the 11 manually-created types and the 5 auto-created types (`SIMILAR_TO`, `PRECEDED_BY`, `EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT`). The API validates relationship types during association creation and rejects invalid types with a `400` error.
+The `AUTHORABLE_RELATIONS` constant contains the 11 relationship types that users can create via the `associate_memories` tool. Three additional system-generated types (`SIMILAR_TO`, `PRECEDED_BY`, `DISCOVERED`) are created automatically by enrichment and consolidation. The API validates relationship types during association creation and rejects non-authorable types with a `400` error.
 
 **Validation Flow:**
 
@@ -204,9 +200,7 @@ Enhanced relationship types support additional semantic properties:
 | `PART_OF` | `role`, `context` | `{"role": "authentication", "context": "login-feature"}` |
 | `SIMILAR_TO` | `score`, `updated_at` | `{"score": 0.87, "updated_at": "2025-01-15T10:00:00Z"}` |
 | `PRECEDED_BY` | `count`, `updated_at` | `{"count": 3, "updated_at": "2025-01-15T10:00:00Z"}` |
-| `EXPLAINS` | `confidence`, `updated_at` | `{"confidence": 0.7, "updated_at": "2025-01-15T10:00:00Z"}` |
-| `SHARES_THEME` | `similarity`, `updated_at` | `{"similarity": 0.82, "updated_at": "2025-01-15T10:00:00Z"}` |
-| `PARALLEL_CONTEXT` | `confidence`, `updated_at` | `{"confidence": 0.5, "updated_at": "2025-01-15T10:00:00Z"}` |
+| `DISCOVERED` | `kind`, `confidence`, `similarity`, `updated_at`, `origin` | `{"kind": "explains", "confidence": 0.7, "updated_at": "2025-01-15T10:00:00Z"}` |
 
 ---
 
@@ -477,7 +471,7 @@ Higher-strength relationships and more diverse relationship types boost memory r
 
 ### Core Modules
 
-- **Configuration:** [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Defines `ALLOWED_RELATIONS` and `RELATIONSHIP_TYPES` constants
+- **Configuration:** [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Defines `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
 - **API Endpoint:** [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — `POST /associate` handler
 - **Graph Store:** [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — Cypher query construction for relationship creation
 - **Recall Expansion:** [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — `_expand_related_memories` function
@@ -490,5 +484,5 @@ Higher-strength relationships and more diverse relationship types boost memory r
 
 ### Testing
 
-- **Relationship Tests:** [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/main/tests/test_api_endpoints.py#L939-L1004) — Tests all 16 relationship types
+- **Relationship Tests:** [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/main/tests/test_api_endpoints.py#L939-L1004) — Tests all 14 relationship types
 - **Integration Tests:** [tests/test_integration.py](https://github.com/verygoodplugins/automem/blob/main/tests/test_integration.py) — End-to-end relationship creation and querying

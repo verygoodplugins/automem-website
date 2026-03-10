@@ -45,7 +45,7 @@ This is the section I wish existed when I was debugging my own system at 2am.
 
 - **[Hybrid Search](/docs/core-concepts/hybrid-search/)** — why we combine vector similarity + keyword matching + graph traversal instead of picking one. The 90.53% LoCoMo accuracy doesn't happen by accident.
 
-- **[Relationship Types](/docs/core-concepts/relationship-types/)** — all 11 typed edges (`LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`, etc.) with real examples of when to use each one. This is the part that makes AutoMem a knowledge graph instead of a fancy text file.
+- **[Relationship Types](/docs/core-concepts/relationship-types/)** — all 11 authorable typed edges (`LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`, etc.) with real examples of when to use each one. This is the part that makes AutoMem a knowledge graph instead of a fancy text file.
 
 - **[Consolidation Engine](/docs/core-concepts/consolidation/)** — the neuroscience-inspired background process that decays stale memories, clusters related ones, and synthesizes patterns. This is why the system gets smarter instead of just bigger over time.
 

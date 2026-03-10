@@ -295,7 +295,7 @@ The `_expand_related_memories()` function implements multi-hop graph traversal u
 - `RECALL_MIN_SCORE` — Minimum score threshold for results to be returned
 - `RECALL_ADAPTIVE_FLOOR` — Adaptive floor that adjusts minimum score based on result quality
 
-**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all 16 relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
+**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all other relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
 
 ### Entity Expansion Flow
 

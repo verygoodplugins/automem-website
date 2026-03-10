@@ -36,7 +36,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 - Creates directed edges (memory1 → memory2)
 - Requires both memories to exist in FalkorDB
 - Stores relationships as graph edges, not separate nodes
-- Supports 16 semantic relationship types
+- Supports 11 authorable semantic relationship types
 - Optional strength score (0.0–1.0) for weighting connections
 
 ---
@@ -89,7 +89,7 @@ curl -X POST https://your-automem-instance/associate \
 
 ## Relationship Types
 
-AutoMem supports 16 semantic relationship types that enable rich knowledge graph construction.
+AutoMem supports 11 authorable semantic relationship types that enable rich knowledge graph construction.
 
 ```mermaid
 graph TB
@@ -151,9 +151,7 @@ graph TB
 | `PART_OF` | B → A (Hierarchical) | Component → Container | User story → Epic |
 | `SIMILAR_TO` | Bidirectional | Semantically similar memories (auto-created) | Two related bug reports |
 | `PRECEDED_BY` | A → B (Temporal) | Temporal predecessor (auto-created) | Current sprint → Previous sprint |
-| `EXPLAINS` | A → B (Clarifying) | Provides explanation or context (auto-created) | Root cause → Observed symptom |
-| `SHARES_THEME` | Bidirectional | Common theme or topic (auto-created) | Two architecture decisions on same system |
-| `PARALLEL_CONTEXT` | Bidirectional | Parallel events or concurrent work (auto-created) | Two features developed simultaneously |
+| `DISCOVERED` | Varies | Heuristic edge inferred by consolidation (auto-created, `kind=explains\|shares_theme\|parallel_context`) | Root cause → Observed symptom |
 
 :::tip[Directionality note]
 Although all relationships are stored as directed edges in FalkorDB (`memory1_id` → `memory2_id`), some types have semantic bidirectionality (e.g., `RELATES_TO`, `CONTRADICTS`). Graph traversal during recall expansion follows edges in both directions by default.
@@ -413,7 +411,7 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory ID (from `store_memory` or `recall_memory` results) |
 | `memory2_id` | string | Yes | — | Target memory ID to link to |
-| `type` | string (enum) | Yes | 16 predefined types | Relationship type |
+| `type` | string (enum) | Yes | 11 authorable types | Relationship type |
 | `strength` | number | No | 0.0–1.0, default 0.5 | Relationship strength |
 
 **Relationship type enum values:**
@@ -428,11 +426,9 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of decision
 11. `PART_OF` — Component of larger effort
-12. `SIMILAR_TO` — Semantically similar
-13. `PRECEDED_BY` — Temporal predecessor
-14. `EXPLAINS` — Provides explanation
-15. `SHARES_THEME` — Common theme
-16. `PARALLEL_CONTEXT` — Parallel events
+12. `SIMILAR_TO` — Semantically similar (system-generated)
+13. `PRECEDED_BY` — Temporal predecessor (system-generated)
+14. `DISCOVERED` — Heuristic edge with `kind` property (system-generated)
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.

@@ -183,7 +183,7 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 - Context hints: `language`, `active_path`, `context_types`, `priority_ids`
 
 **`associate_memories`** — Create typed relationships between memories
-- 16 relationship types: `RELATES_TO`, `LEADS_TO`, `EVOLVED_INTO`, `DERIVED_FROM`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `OCCURRED_BEFORE`, `PART_OF`, `PREFERS_OVER` (manual); `SIMILAR_TO`, `PRECEDED_BY`, `EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT` (auto-created)
+- 11 authorable types: `RELATES_TO`, `LEADS_TO`, `EVOLVED_INTO`, `DERIVED_FROM`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `OCCURRED_BEFORE`, `PART_OF`, `PREFERS_OVER`; plus system-generated `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`
 - `strength`: 0.0–1.0 association weight
 
 **`update_memory`** — Modify existing memory fields

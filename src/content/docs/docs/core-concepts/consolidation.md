@@ -190,9 +190,9 @@ graph TB
 
     subgraph "Connection Rules"
         R1["Decision + Decision<br/>similarity < 0.3<br/>→ CONTRASTS_WITH"]
-        R2["Insight + Pattern<br/>similarity > 0.5<br/>→ EXPLAINS"]
-        R3["Different types<br/>similarity > 0.7<br/>→ SHARES_THEME"]
-        R4["Same week<br/>similarity < 0.4<br/>→ PARALLEL_CONTEXT"]
+        R2["Insight + Pattern<br/>similarity > 0.5<br/>→ DISCOVERED (kind=explains)"]
+        R3["Different types<br/>similarity > 0.7<br/>→ DISCOVERED (kind=shares_theme)"]
+        R4["Same week<br/>similarity < 0.4<br/>→ DISCOVERED (kind=parallel_context)"]
     end
 
     Sample --> Check
@@ -214,13 +214,13 @@ graph TB
 | Type | Conditions | Confidence | Example |
 |---|---|---|---|
 | `CONTRADICTS` | Both `Decision`, similarity < 0.3 | 0.6 | Opposing architectural choices |
-| `EXPLAINS` | `Insight` + `Pattern`, similarity > 0.5 | 0.7 | Insight explains pattern |
-| `SHARES_THEME` | Different types, similarity > 0.7 | similarity | Cross-domain patterns |
-| `PARALLEL_CONTEXT` | Same week, similarity < 0.4 | 0.5 | Unrelated concurrent work |
+| `DISCOVERED` (kind=explains) | `Insight` + `Pattern`, similarity > 0.5 | 0.7 | Insight explains pattern |
+| `DISCOVERED` (kind=shares_theme) | Different types, similarity > 0.7 | similarity | Cross-domain patterns |
+| `DISCOVERED` (kind=parallel_context) | Same week, similarity < 0.4 | 0.5 | Unrelated concurrent work |
 
 **Edge Properties:**
 
-Each discovered edge is created with its specific typed label (`EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT`, `CONTRADICTS`, `RELATES_TO`) and carries metadata about the connection confidence:
+Each discovered edge is created as a `DISCOVERED` relationship with a `kind` property (`explains`, `shares_theme`, `parallel_context`) and carries metadata about the connection confidence:
 
 ```json
 {

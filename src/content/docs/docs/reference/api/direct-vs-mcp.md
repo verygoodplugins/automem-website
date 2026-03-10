@@ -297,7 +297,7 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory UUID |
 | `memory2_id` | string | Yes | — | Target memory UUID |
-| `type` | string | Yes | enum: 16 types | Relationship type |
+| `type` | string | Yes | enum: 11 authorable types | Relationship type |
 | `strength` | number | No | 0–1, default 0.5 | Relationship strength |
 
 **Relationship Type Enum (all 16 values):**
@@ -313,11 +313,9 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
-12. `SIMILAR_TO` — Semantically similar
-13. `PRECEDED_BY` — Temporal predecessor
-14. `EXPLAINS` — Provides explanation
-15. `SHARES_THEME` — Common theme
-16. `PARALLEL_CONTEXT` — Parallel events
+12. `SIMILAR_TO` — Semantically similar (system-generated)
+13. `PRECEDED_BY` — Temporal predecessor (system-generated)
+14. `DISCOVERED` — Heuristic edge with `kind` property (system-generated)
 
 **MCP Tool Output:**
 

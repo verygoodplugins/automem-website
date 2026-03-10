@@ -217,9 +217,7 @@ If more detail is needed: split into multiple atomic memories, use `metadata` fo
 | `PART_OF` | Hierarchical structure |
 | `SIMILAR_TO` | Semantic similarity (auto, enrichment) |
 | `PRECEDED_BY` | Prior in time (auto, enrichment) |
-| `EXPLAINS` | Provides explanation (auto, consolidation) |
-| `SHARES_THEME` | Common theme (auto, consolidation) |
-| `PARALLEL_CONTEXT` | Parallel events (auto, consolidation) |
+| `DISCOVERED` | Heuristic edge with `kind` property (auto, consolidation) |
 
 **Association triggers:**
 

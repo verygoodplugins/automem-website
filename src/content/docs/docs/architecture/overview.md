@@ -400,7 +400,7 @@ The type system supports classification and normalization across defined memory 
 
 ### Relationship Type System
 
-The relationship type system defines 16 typed edges with validation.
+The relationship type system defines 14 typed edges (11 authorable + 3 system-generated) with validation.
 
 ---
 

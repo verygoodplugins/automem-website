@@ -13,7 +13,7 @@ AutoMem is a Flask-based HTTP API service that provides persistent, queryable me
 
 - **Store** memories with metadata, importance scores, classification, and semantic embeddings
 - **Recall** via hybrid search combining vector similarity, keyword matching, graph relationships, and temporal signals
-- **Connect** memories through 16 typed relationship edges (e.g., `LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`)
+- **Connect** memories through 11 authorable relationship types (e.g., `LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`) plus system-generated semantic and temporal edges
 - **Learn** through automatic entity extraction, pattern detection, and neuroscience-inspired consolidation cycles
 - **Degrade gracefully** when vector search is unavailable, continuing operations in graph-only mode
 
@@ -188,7 +188,7 @@ graph TB
         end
 
         subgraph edges["Relationship Types"]
-            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF<br/>SIMILAR_TO<br/>PRECEDED_BY<br/>EXPLAINS<br/>SHARES_THEME<br/>PARALLEL_CONTEXT"]
+            RelTypes["RELATES_TO<br/>LEADS_TO<br/>OCCURRED_BEFORE<br/>PREFERS_OVER<br/>EXEMPLIFIES<br/>CONTRADICTS<br/>REINFORCES<br/>INVALIDATED_BY<br/>EVOLVED_INTO<br/>DERIVED_FROM<br/>PART_OF<br/>SIMILAR_TO<br/>PRECEDED_BY<br/>DISCOVERED"]
         end
     end
 

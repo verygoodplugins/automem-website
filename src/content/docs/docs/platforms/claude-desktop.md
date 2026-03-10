@@ -198,7 +198,7 @@ The full template is available in the repo at `templates/CLAUDE_DESKTOP_INSTRUCT
 | CONTENT SIZE GUIDELINES | 150–300 char target, 500 soft limit, 2000 hard limit |
 | STORAGE FORMAT | JSON structure for `store_memory` calls |
 | CORRECTIONS ARE GOLD | Capture style signal when you correct Claude |
-| RELATIONSHIP TYPES | 11 association types for `associate_memories` |
+| RELATIONSHIP TYPES | 11 authorable association types for `associate_memories` |
 
 ### Memory Storage Patterns
 
