@@ -16,7 +16,7 @@ Each platform installer generates and installs appropriate configuration files f
 | Command | Generated Files | Configuration Location |
 |---|---|---|
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
-| `claude-code` | `~/.claude/CLAUDE.md` updates | `~/.claude/settings.json` |
+| `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `~/.openclaw/skills/automem/SKILL.md` | `~/.openclaw/openclaw.json` (automatic) |
 
@@ -96,7 +96,7 @@ The `.cursor/rules/automem.mdc` file installed by the `cursor` command contains 
 
 ## Claude Code
 
-The `claude-code` command updates the global `~/.claude/CLAUDE.md` memory rules file and configures permissions in `~/.claude/settings.json`.
+The `claude-code` command installs hook scripts and support scripts into the global `~/.claude/` directory and merges tool permissions into `~/.claude/settings.json`. It does not write `CLAUDE.md` — that file must be appended manually.
 
 ### Installation
 
@@ -105,8 +105,12 @@ npx @verygoodplugins/mcp-automem claude-code
 ```
 
 This command:
-1. Updates `~/.claude/CLAUDE.md` with AutoMem memory operation instructions
-2. Configures `~/.claude/settings.json` with appropriate tool permissions
+
+1. Installs hook scripts (e.g., `automem-session-start.sh`, `capture-build-result.sh`, `capture-test-pattern.sh`, `capture-deployment.sh`, `session-memory.sh`) into `~/.claude/hooks/`
+2. Installs support scripts (e.g., `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`) into `~/.claude/scripts/`
+3. Merges `~/.claude/settings.json` with appropriate tool permissions
+
+After running the installer, follow the printed instructions to append the memory rules to `~/.claude/CLAUDE.md` manually.
 
 ### MCP Configuration
 
@@ -156,10 +160,10 @@ AUTOMEM_API_KEY = "your-api-key"
 
 ### Config Snippet Generation
 
-Generate the TOML snippet for your current configuration:
+Generate the JSON config snippet for your current configuration:
 
 ```bash
-npx @verygoodplugins/mcp-automem config --format toml
+npx @verygoodplugins/mcp-automem config
 ```
 
 ## OpenClaw
@@ -242,7 +246,7 @@ graph TB
     Codex --> NPX
 
     CursorInstaller["cursor command"] --> CursorRules
-    ClaudeCodeInstaller["claude-code command"] --> ClaudeMD
+    ClaudeCodeInstaller["claude-code command"] --> HookScripts["~/.claude/hooks/ + ~/.claude/scripts/"]
     CodexInstaller["codex command"] --> AgentsMD
     OpenClawInstaller["openclaw command"] --> OpenClawSkill
 ```

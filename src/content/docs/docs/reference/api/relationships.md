@@ -36,7 +36,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 - Creates directed edges (memory1 → memory2)
 - Requires both memories to exist in FalkorDB
 - Stores relationships as graph edges, not separate nodes
-- Supports 11 semantic relationship types
+- Supports 11 authorable semantic relationship types
 - Optional strength score (0.0–1.0) for weighting connections
 
 ---
@@ -89,7 +89,7 @@ curl -X POST https://your-automem-instance/associate \
 
 ## Relationship Types
 
-AutoMem supports 11 semantic relationship types that enable rich knowledge graph construction.
+AutoMem supports 11 authorable semantic relationship types that enable rich knowledge graph construction.
 
 ```mermaid
 graph TB
@@ -149,6 +149,9 @@ graph TB
 | `EVOLVED_INTO` | A → B (Evolution) | Initial → Final form | Draft design → Shipping implementation |
 | `DERIVED_FROM` | B → A (Source) | Implementation → Spec | Feature code → Requirements document |
 | `PART_OF` | B → A (Hierarchical) | Component → Container | User story → Epic |
+| `SIMILAR_TO` | Bidirectional | Semantically similar memories (auto-created) | Two related bug reports |
+| `PRECEDED_BY` | A → B (Temporal) | Temporal predecessor (auto-created) | Current sprint → Previous sprint |
+| `DISCOVERED` | Varies | Heuristic edge inferred by consolidation (auto-created, `kind=explains\|shares_theme\|parallel_context`) | Root cause → Observed symptom |
 
 :::tip[Directionality note]
 Although all relationships are stored as directed edges in FalkorDB (`memory1_id` → `memory2_id`), some types have semantic bidirectionality (e.g., `RELATES_TO`, `CONTRADICTS`). Graph traversal during recall expansion follows edges in both directions by default.
@@ -173,34 +176,34 @@ flowchart TD
     Request["POST /associate Request"]
     AuthCheck{"Valid API Token?"}
     FieldCheck{"Required Fields Present?"}
+    SelfCheck{"memory1_id == memory2_id?"}
     TypeCheck{"type in ALLOWED_RELATIONS?"}
     StrengthCheck{"strength in 0.0-1.0?"}
-    Memory1Check{"memory1_id Exists?"}
-    Memory2Check{"memory2_id Exists?"}
+    MemoryCheck{"Both memories exist?"}
     CreateEdge["Create FalkorDB Edge"]
     Success["Return 201 Success"]
 
     Err401["401 Unauthorized"]
     Err400Field["400 Missing Field"]
+    Err400Self["400 Cannot self-associate"]
     Err400Type["400 Invalid Type"]
     Err400Strength["400 Invalid Strength"]
-    Err404Mem1["404 Memory1 Not Found"]
-    Err404Mem2["404 Memory2 Not Found"]
+    Err404["404 One or both memories do not exist"]
     Err503["503 FalkorDB Unavailable"]
 
     Request --> AuthCheck
     AuthCheck -->|No| Err401
     AuthCheck -->|Yes| FieldCheck
     FieldCheck -->|No| Err400Field
-    FieldCheck -->|Yes| TypeCheck
+    FieldCheck -->|Yes| SelfCheck
+    SelfCheck -->|Yes| Err400Self
+    SelfCheck -->|No| TypeCheck
     TypeCheck -->|No| Err400Type
     TypeCheck -->|Yes| StrengthCheck
     StrengthCheck -->|No| Err400Strength
-    StrengthCheck -->|Yes| Memory1Check
-    Memory1Check -->|No| Err404Mem1
-    Memory1Check -->|Yes| Memory2Check
-    Memory2Check -->|No| Err404Mem2
-    Memory2Check -->|Yes| CreateEdge
+    StrengthCheck -->|Yes| MemoryCheck
+    MemoryCheck -->|No| Err404
+    MemoryCheck -->|Yes| CreateEdge
     CreateEdge -->|Success| Success
     CreateEdge -->|DB Down| Err503
 ```
@@ -214,13 +217,9 @@ flowchart TD
 ```json
 {
   "status": "success",
-  "relationship": {
-    "memory1_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "memory2_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    "type": "LEADS_TO",
-    "strength": 0.9,
-    "created_at": "2025-01-15T10:30:00Z"
-  }
+  "message": "Association created successfully",
+  "relation_type": "LEADS_TO",
+  "strength": 0.9
 }
 ```
 
@@ -230,7 +229,15 @@ flowchart TD
 
 ```json
 {
-  "error": "Memory not found: a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": "One or both memories do not exist"
+}
+```
+
+**400 Bad Request** — Self-association attempt:
+
+```json
+{
+  "error": "Cannot associate a memory with itself"
 }
 ```
 
@@ -311,7 +318,7 @@ Relationships created via `/associate` are utilized during recall operations whe
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `expand_relations` | `true` | Enable graph traversal from seed results |
+| `expand_relations` | `false` | Enable graph traversal from seed results |
 | `relation_limit` | `5` | Max edges to follow per seed memory |
 | `expansion_limit` | `25` | Total max expanded memories to return |
 | `expand_min_strength` | `0.0` | Minimum edge strength to traverse |
@@ -323,8 +330,8 @@ Relationship strength contributes to the hybrid scoring formula:
 
 ```
 relation_score = Σ (edge.strength × related_memory.importance)
-final_score = vector_score × 0.25
-            + keyword_score × 0.15
+final_score = vector_score × 0.35
+            + keyword_score × 0.35
             + relation_score × 0.25    ← Relationship contribution
             + ... (6 other components)
 ```
@@ -404,10 +411,10 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory ID (from `store_memory` or `recall_memory` results) |
 | `memory2_id` | string | Yes | — | Target memory ID to link to |
-| `type` | string (enum) | Yes | 11 predefined types | Relationship type |
-| `strength` | number | Yes | 0.0–1.0 | Relationship strength |
+| `type` | string (enum) | Yes | 11 authorable types | Relationship type |
+| `strength` | number | No | 0.0–1.0, default 0.5 | Relationship strength |
 
-**Relationship type enum values:**
+**Relationship type enum values (11 authorable):**
 1. `RELATES_TO` — General relationship
 2. `LEADS_TO` — Causal relationship
 3. `OCCURRED_BEFORE` — Temporal ordering
@@ -419,6 +426,11 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of decision
 11. `PART_OF` — Component of larger effort
+
+The following 3 types are **system-generated** and cannot be created via `associate_memories`. They appear in recall results and can be filtered/expanded but are not valid enum values for this tool:
+- `SIMILAR_TO` — Semantically similar (created by enrichment)
+- `PRECEDED_BY` — Temporal predecessor (created by enrichment)
+- `DISCOVERED` — Heuristic edge with `kind` property (created by consolidation)
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.

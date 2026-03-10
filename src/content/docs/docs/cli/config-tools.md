@@ -258,12 +258,9 @@ The CLI provides tools to generate platform-specific configuration snippets with
 ```bash
 # Generate JSON snippet (Claude Desktop, Cursor, Claude Code)
 npx @verygoodplugins/mcp-automem config
-
-# Generate TOML snippet (Codex)
-npx @verygoodplugins/mcp-automem config --format toml
 ```
 
-Outputs configuration for the current environment in the requested format. Uses the same resolution priority as the runtime system.
+Outputs configuration for the current environment in JSON format. Uses the same resolution priority as the runtime system.
 
 ### Platform Installers
 
@@ -272,7 +269,7 @@ Each platform installer generates and installs appropriate configuration:
 | Command | Generated Files | Configuration Location |
 |---|---|---|
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
-| `claude-code` | `~/.claude/CLAUDE.md` updates | `~/.claude/settings.json` |
+| `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `~/.openclaw/skills/automem/SKILL.md` | `~/.openclaw/openclaw.json` (automatic) |
 

@@ -304,9 +304,17 @@ The `queue` CLI command processes pending memories from the local queue. When a 
 # Process all pending queue entries
 npx @verygoodplugins/mcp-automem queue
 
-# Process queue with explicit endpoint
-npx @verygoodplugins/mcp-automem queue --endpoint http://localhost:8001
+# Process a specific queue file
+npx @verygoodplugins/mcp-automem queue --file /path/to/queue.json
+
+# Preview what would be processed without writing
+npx @verygoodplugins/mcp-automem queue --dry-run
+
+# Limit the number of entries to process
+npx @verygoodplugins/mcp-automem queue --limit 10
 ```
+
+The endpoint is resolved automatically using the priority chain: `AUTOMEM_ENDPOINT` environment variable → `.env` file (via dotenv) → default `http://127.0.0.1:8001`.
 
 ### Queue Processing Architecture
 
@@ -314,7 +322,7 @@ npx @verygoodplugins/mcp-automem queue --endpoint http://localhost:8001
 graph TB
     subgraph "Queue Processing"
         QueueCmd["queue command<br/>src/cli/queue.ts"]
-        ConfigResolve["resolveAutoMemConfig()<br/>src/cli/queue.ts:60-94"]
+        ConfigResolve["Config resolution<br/>AUTOMEM_ENDPOINT → .env → default"]
         HealthCheck["Health check<br/>GET /health"]
         QueueEntries["Read pending entries<br/>local queue file"]
         ProcessEntry["Process each entry<br/>POST /memory or PATCH /memory/{id}"]
@@ -322,17 +330,15 @@ graph TB
     end
 
     subgraph "Configuration Priority"
-        EnvVars["1. Environment variables<br/>AUTOMEM_ENDPOINT, AUTOMEM_API_KEY"]
-        EnvFile["2. .env file<br/>current directory"]
-        ClaudeJSON["3. ~/.claude.json<br/>mcpServers entries"]
-        Default["4. Default<br/>http://127.0.0.1:8001"]
+        EnvVars["1. AUTOMEM_ENDPOINT env var"]
+        EnvFile["2. .env file<br/>current directory (via dotenv)"]
+        Default["3. Default<br/>http://127.0.0.1:8001"]
     end
 
     QueueCmd --> ConfigResolve
     ConfigResolve --> EnvVars
     EnvVars -->|Not found| EnvFile
-    EnvFile -->|Not found| ClaudeJSON
-    ClaudeJSON -->|Not found| Default
+    EnvFile -->|Not found| Default
 
     ConfigResolve --> HealthCheck
     HealthCheck -->|Available| QueueEntries

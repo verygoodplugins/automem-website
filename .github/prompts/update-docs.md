@@ -23,9 +23,17 @@ changes in the source code.
   mermaid code blocks for diagrams, relative links between pages.
 - After making changes, run `npm run build` to verify the site compiles.
 
+## Source repositories
+
+The documentation covers three repositories:
+- **automem** (Python/Flask) — the core memory service
+- **mcp-automem** (TypeScript) — the MCP client and CLI
+- **automem-graph-viewer** (React/Vite) — the 3D graph visualization frontend
+
 ## File mapping reference
 
 See `scripts/file-doc-map.json` for the complete source-file-to-doc-page mapping.
+The map covers all three repos with exact paths and `/**` subtree patterns.
 
 ## Commit message format
 

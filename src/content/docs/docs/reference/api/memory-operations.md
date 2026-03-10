@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Flask API endpoints
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) — Flask API endpoints
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) — MCP tool definitions and handlers
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) — HTTP transport layer
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts) — TypeScript type definitions
@@ -25,9 +25,11 @@ All operations except `/health` require authentication via `AUTOMEM_API_TOKEN`. 
 | Endpoint | Method | Purpose | Authentication |
 |----------|--------|---------|----------------|
 | `/memory` | POST | Create new memory | API Token |
+| `/memory` | POST | Batch ingest up to 500 memories | API Token |
+| `/memory/:id` | GET | Retrieve single memory by ID | API Token |
 | `/recall` | GET | Search/retrieve memories | API Token |
-| `/memory/<id>` | PATCH | Update existing memory | API Token |
-| `/memory/<id>` | DELETE | Remove memory | API Token |
+| `/memory/:id` | PATCH | Update existing memory | API Token |
+| `/memory/:id` | DELETE | Remove memory | API Token |
 | `/memory/by-tag` | GET | Filter by tags | API Token |
 
 ---
@@ -52,7 +54,7 @@ Creates a new memory node in FalkorDB and optionally stores its embedding in Qdr
 | `importance` | float | 0.0–1.0, importance score (default: 0.5) |
 | `metadata` | object | Arbitrary JSON metadata |
 | `timestamp` | string | ISO 8601 timestamp (default: current UTC time) |
-| `embedding` | array | 768-dimensional vector (auto-generated if omitted) |
+| `embedding` | array | Vector matching `VECTOR_SIZE` config (auto-generated if omitted) |
 | `id` | string | Custom UUID (auto-generated if omitted) |
 | `t_valid`, `t_invalid` | string | Temporal validity bounds |
 | `updated_at`, `last_accessed` | string | Tracking timestamps |
@@ -251,7 +253,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 |-----------|------|---------|-------------|
 | `tags` | `string[]` | `[]` | Tags for categorization and filtering |
 | `importance` | `number` (0.0–1.0) | `0.5` | Importance score affecting recall ranking |
-| `embedding` | `number[]` | auto-generated | 768-dimensional vector for semantic search |
+| `embedding` | `number[]` | auto-generated | Vector matching `VECTOR_SIZE` config (default 1024, truncated from provider native dimensions via OpenAI `dimensions` parameter) for semantic search |
 | `metadata` | `object` | `{}` | Structured metadata (files modified, error signatures, etc.) |
 | `timestamp` | `string` (ISO 8601) | `now()` | When the memory was created |
 
@@ -303,6 +305,114 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 
 ---
 
+## POST /memory (Batch) — Batch Ingest
+
+Ingests up to 500 memories in a single request. Each memory in the batch follows the same field schema as the single `POST /memory` endpoint.
+
+### Request Format
+
+```json
+[
+  {
+    "content": "First memory content",
+    "type": "Decision",
+    "tags": ["project-alpha"],
+    "importance": 0.9
+  },
+  {
+    "content": "Second memory content",
+    "type": "Context",
+    "tags": ["project-alpha"],
+    "importance": 0.5
+  }
+]
+```
+
+Send the request body as a JSON array (not an object). The `Content-Type` must be `application/json`.
+
+### Example Request
+
+```bash
+curl -X POST https://your-automem-instance/memory \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
+    {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
+  ]'
+```
+
+### Response Format
+
+```json
+{
+  "status": "stored",
+  "count": 2,
+  "memory_ids": ["abc-123", "def-456"],
+  "query_time_ms": 45.2
+}
+```
+
+Each memory in the batch is written to FalkorDB synchronously and queued for background embedding and enrichment. Embeddings are generated in batches by the background worker (see [Performance Tuning](/docs/operations/performance/)).
+
+### Status Codes
+
+| Status | Condition |
+|--------|-----------|
+| 200 OK | All memories stored successfully |
+| 400 Bad Request | Validation error (invalid field, missing content, etc.) |
+| 401 Unauthorized | Missing or invalid API token |
+| 413 Payload Too Large | Batch exceeds 500 memories |
+
+**Validation Error Example:**
+
+```json
+{
+  "error": "Invalid memory at index 2: content is required",
+  "index": 2
+}
+```
+
+---
+
+## GET /memory/:id — Retrieve Single Memory
+
+Retrieves a single memory by its UUID from FalkorDB.
+
+### Request Format
+
+```bash
+curl "https://your-automem-instance/memory/abc-123-def-456" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response Format
+
+```json
+{
+  "id": "abc-123-def-456",
+  "content": "Chose PostgreSQL over MongoDB. Need ACID guarantees for transactions.",
+  "type": "Decision",
+  "tags": ["project-alpha", "database"],
+  "importance": 0.9,
+  "confidence": 0.9,
+  "timestamp": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z",
+  "last_accessed": "2025-01-16T08:00:00Z",
+  "metadata": {},
+  "relations": []
+}
+```
+
+### Status Codes
+
+| Status | Condition |
+|--------|-----------|
+| 404 Not Found | Memory ID does not exist in FalkorDB |
+| 401 Unauthorized | Missing or invalid API token |
+
+---
+
 ## PATCH /memory/:id — Updating Memories
 
 Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. Content changes trigger automatic re-embedding.
@@ -318,13 +428,13 @@ Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. 
 | `importance`, `confidence`, `type` | Update directly |
 | `metadata` | Merged with existing metadata (not replaced) |
 | `t_valid`, `t_invalid` | Update temporal bounds |
+| `timestamp` | Override original creation time |
 
 **Non-updatable Fields:**
 
 | Field | Reason |
 |-------|--------|
 | `id` | Immutable identifier |
-| `timestamp` | Preserved original creation time |
 | `updated_at` | Auto-set to current UTC time |
 
 ### Update Data Flow
@@ -364,7 +474,7 @@ sequenceDiagram
     PATCH_endpoint->>Graph: MATCH (m:Memory {id: $id})<br/>RETURN m
     Graph-->>PATCH_endpoint: Refreshed node
 
-    PATCH_endpoint-->>Client: 200 OK<br/>{status: "success", memory: {...}}
+    PATCH_endpoint-->>Client: 200 OK<br/>{status: "success", memory_id: "..."}
 ```
 
 **Update process:**
@@ -401,14 +511,7 @@ curl -X PATCH https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef123
 ```json
 {
   "status": "success",
-  "memory": {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "content": "Chose PostgreSQL over MongoDB...",
-    "type": "Decision",
-    "tags": ["project-alpha", "database", "architecture", "reviewed"],
-    "importance": 0.95,
-    "updated_at": "2025-02-01T10:00:00Z"
-  }
+  "memory_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
@@ -471,8 +574,8 @@ sequenceDiagram
 
 The `DETACH DELETE` clause ensures all incoming and outgoing relationships are automatically removed, preventing orphaned edges.
 
-:::caution[Idempotent delete]
-The endpoint returns success even if the memory doesn't exist, following idempotent DELETE semantics. Qdrant deletion failures are logged but don't fail the request, since FalkorDB is the source of truth.
+:::caution[Non-idempotent delete]
+The endpoint returns **404 Not Found** if the memory does not exist. Qdrant deletion failures are logged but don't fail the request, since FalkorDB is the source of truth.
 :::
 
 ### Example Request
@@ -499,7 +602,7 @@ The `delete_memory` MCP tool corresponds to `DELETE /memory/:id`.
 |-----------|------|----------|-------------|
 | `memory_id` | string | Yes | ID of memory to delete |
 
-The tool is annotated `destructiveHint: true` and `idempotentHint: true` — calling it multiple times with the same ID is safe.
+The tool is annotated `destructiveHint: true`. Note that the HTTP API returns 404 if the memory does not exist, but the MCP tool handles this gracefully.
 
 ---
 
@@ -512,7 +615,7 @@ Retrieves memories filtered by tags, ordered by importance and recency. More per
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `tags` | string[] | Tag filters (multiple values supported) | Required |
-| `limit` | integer | Max results (1–100) | `50` |
+| `limit` | integer | Max results (1–200) | `20` |
 
 ### Example Requests
 
@@ -529,13 +632,12 @@ curl "https://your-automem-instance/memory/by-tag?tags=project-alpha&tags=databa
 ### Implementation
 
 **Query Strategy:**
-1. **Vector-First**: If Qdrant available, use `scroll()` with tag filter
-2. **Graph Fallback**: Query FalkorDB if Qdrant unavailable or returns no results
-3. **Ordering**: Sort by `importance DESC, timestamp DESC`
-4. **Relations**: Fetch connected memories for context
-5. **Format**: Return in same format as `/recall` for consistency
+1. **FalkorDB Direct**: Queries FalkorDB graph directly using tag filters — does not use Qdrant vector search
+2. **Ordering**: Sort by `importance DESC, timestamp DESC`
+3. **Relations**: Fetch connected memories for context
+4. **Format**: Return in same format as `/recall` for consistency
 
-When using FalkorDB, the query leverages tag arrays with direct index usage on the `tags` property — no keyword extraction or scoring required, making it more efficient than `/recall` for tag-only filtering.
+The query leverages tag arrays with direct index usage on the `tags` property in FalkorDB — no vector search or keyword extraction required, making it more efficient than `/recall` for tag-only filtering.
 
 The `score` field in the response reflects the memory's `importance` when filtering by tags only.
 

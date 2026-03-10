@@ -19,10 +19,34 @@ Currently, the test suite focuses on consolidation logic. API endpoints and back
 
 ### Test Suite Organization
 
-```
+```text
 tests/
-└── test_consolidation_engine.py   # Consolidation engine unit tests
+├── conftest.py
+├── test_consolidation_engine.py
+├── test_api_endpoints.py
+├── test_app.py
+├── test_enrichment.py
+├── test_embedding_providers.py
+├── test_integration.py
+├── test_content_size.py
+├── test_vector_size_safety.py
+├── test_recall_entity_extraction.py
+├── support/
+├── contracts/
+└── benchmarks/
 ```
+
+### Pytest Markers
+
+Tests are tagged with markers to control which tier runs:
+
+| Marker | Command | Requires | Purpose |
+|---|---|---|---|
+| `unit` | `pytest -m unit tests/` | No external services | Fast, isolated logic tests |
+| `integration` | `pytest -rs -m integration tests/` | Docker stack running | Full API + database flow |
+| `live` | `AUTOMEM_ALLOW_LIVE=1 pytest -m live tests/` | Railway deployment | Production smoke tests |
+
+`make test` runs unit tests only. `make test-integration` starts Docker Compose and runs integration tests.
 
 #### Coverage by Component
 
@@ -33,9 +57,13 @@ tests/
 | Creative Associations | `test_consolidation_engine.py` | Covered |
 | Clustering Logic | `test_consolidation_engine.py` | Covered |
 | Controlled Forgetting | `test_consolidation_engine.py` | Covered |
-| Flask API Endpoints | — | Manual testing only |
-| Enrichment Pipeline | — | Manual testing only |
-| Embedding Worker | — | Manual testing only |
+| Flask API Endpoints | `test_api_endpoints.py`, `test_app.py` | Covered |
+| Enrichment Pipeline | `test_enrichment.py` | Covered |
+| Embedding Providers | `test_embedding_providers.py` | Covered |
+| Integration Flow | `test_integration.py` | Integration marker |
+| Content Size Limits | `test_content_size.py` | Covered |
+| Vector Size Safety | `test_vector_size_safety.py` | Covered |
+| Recall Entity Extraction | `test_recall_entity_extraction.py` | Covered |
 | MCP Bridge | — | Manual testing only |
 
 ### Running Tests
@@ -49,10 +77,11 @@ pip install -r requirements-dev.txt
 **Basic execution:**
 
 ```bash
-pytest tests/                                    # Run all tests
-pytest tests/ -v                                 # Verbose output
+pytest -m unit tests/                            # Run unit tests (no external services)
+pytest -m unit tests/ -v                         # Verbose output
 pytest tests/test_consolidation_engine.py        # Specific file
-pytest tests/ -k "test_relevance_score"          # Specific function
+pytest -m unit tests/ -k "test_relevance_score"  # Specific function
+pytest -rs -m integration tests/                 # Integration tests (requires Docker stack)
 ```
 
 ### Test Architecture
@@ -267,18 +296,6 @@ assert "mem_001" in vector_store.deleted_ids
 | `ConsolidationScheduler` | — | Not tested |
 
 #### Uncovered Components
-
-**Flask API Service** — requires a running Flask app; use `curl` or Postman for manual verification:
-
-- `/memory` (POST) — Memory storage
-- `/recall` (GET) — Hybrid search
-- `/associate` (POST) — Relationship creation
-- `/health` (GET) — Health check endpoint
-
-**Background Workers** — validated by observing log output:
-
-- `enrichment_worker()` — Entity extraction and tagging
-- `embedding_worker()` — Batch embedding generation
 
 **MCP Bridge** — deploy to Railway and test with Claude Desktop.
 

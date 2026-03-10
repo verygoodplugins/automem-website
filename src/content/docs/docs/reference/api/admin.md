@@ -6,7 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Admin endpoints (lines 2069–2256)
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/enrichment.py) — Enrichment endpoints
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -43,15 +44,14 @@ graph TB
         Reembed["/admin/reembed"]
     end
 
-    subgraph "Semi-Protected Operations"
-        Status["/enrichment/status<br/>(API token only)"]
+    subgraph "Public Operations (no auth)"
+        Status["/enrichment/status<br/>(unauthenticated)"]
     end
 
-    subgraph "Public Operations"
+    subgraph "Also Public"
         Health["/health<br/>(no auth)"]
     end
 
-    Layer1-->Status
     Layer1-->Layer2
     Layer2-->Reprocess
     Layer2-->Reembed
@@ -69,27 +69,20 @@ graph TB
 
 ## GET /enrichment/status
 
-**Authentication:** API token only (no admin token required)
+**Authentication:** None required
 
-**Purpose:** Monitor the enrichment pipeline's health and processing statistics. This endpoint provides visibility into background processing without requiring elevated privileges.
+**Purpose:** Monitor the enrichment pipeline's health and processing statistics. This endpoint provides visibility into background processing without requiring authentication.
 
 ### Response Schema
 
 ```json
 {
-  "status": "healthy",
-  "queue_size": 3,
-  "pending_count": 2,
-  "in_flight_count": 1,
-  "stats": {
-    "processed_total": 1247,
-    "successes": 1244,
-    "failures": 3,
-    "last_success_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "last_success_at": "2025-01-15T10:29:45Z",
-    "last_error": "spaCy model not loaded",
-    "last_error_at": "2025-01-14T08:15:22Z"
-  }
+  "status": "running",
+  "queue_depth": 3,
+  "pending": 2,
+  "inflight": 1,
+  "processed": 1247,
+  "failed": 3
 }
 ```
 
@@ -97,33 +90,27 @@ graph TB
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | `"healthy"` if enrichment worker is running, `"unavailable"` if worker thread is dead |
-| `queue_size` | integer | Number of jobs waiting in `state.enrichment_queue` |
-| `pending_count` | integer | Count of memories in `state.enrichment_pending` set |
-| `in_flight_count` | integer | Count of memories currently being processed (`state.enrichment_inflight`) |
-| `stats.processed_total` | integer | Total enrichment attempts (successes + failures) |
-| `stats.successes` | integer | Successfully enriched memories |
-| `stats.failures` | integer | Failed enrichment attempts |
-| `stats.last_success_id` | string \| null | UUID of most recently enriched memory |
-| `stats.last_success_at` | string \| null | ISO timestamp of last successful enrichment |
-| `stats.last_error` | string \| null | Error message from most recent failure |
-| `stats.last_error_at` | string \| null | ISO timestamp of last enrichment failure |
+| `status` | string | `"running"` if enrichment worker is active, `"stopped"` if worker thread is dead |
+| `queue_depth` | integer | Total jobs in queue (pending + inflight) |
+| `pending` | integer | Count of memories waiting to be processed |
+| `inflight` | integer | Count of memories currently being processed |
+| `processed` | integer | Total enrichment attempts completed since service start |
+| `failed` | integer | Total failed enrichment attempts since service start |
 
 ### Example Usage
 
 ```bash
-curl "https://your-automem-instance/enrichment/status" \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
+curl "https://your-automem-instance/enrichment/status"
 ```
 
 ### Troubleshooting with Status
 
 | Observation | Likely Cause | Action |
 |-------------|-------------|--------|
-| `status: "unavailable"` | Worker thread crashed | Check application logs for exceptions, restart service |
-| `queue_size` increasing | Worker processing slower than intake | Monitor `in_flight_count`, check for spaCy or OpenAI issues |
-| High `failures` count | Enrichment logic errors | Review `last_error`, check Qdrant connectivity |
-| `in_flight_count` stuck | Worker deadlocked | Restart enrichment worker or service |
+| `status: "stopped"` | Worker thread crashed | Check application logs for exceptions, restart service |
+| `queue_depth` increasing | Worker processing slower than intake | Monitor `inflight`, check for spaCy or OpenAI issues |
+| High `failed` count | Enrichment logic errors | Review application logs, check Qdrant connectivity |
+| `inflight` stuck | Worker deadlocked | Restart enrichment worker or service |
 
 ---
 
@@ -142,7 +129,8 @@ curl "https://your-automem-instance/enrichment/status" \
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `ids` | array[string] | **Yes** | List of memory UUIDs to reprocess (non-empty) |
-| `force` | boolean | No | If `true`, requeue memories even if already pending/in-flight. Default: `false` |
+
+Reprocessing always forces re-queuing regardless of current pending/in-flight state.
 
 ### Example Request
 
@@ -155,26 +143,26 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
     "ids": [
       "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-    ],
-    "force": false
+    ]
   }'
 ```
 
-### Response Schema
+### Response Schema (HTTP 202 Accepted)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `queued` | integer | Number of memories successfully added to enrichment queue |
-| `already_queued` | integer | Memories skipped because already pending/in-flight (unless `force=true`) |
-| `not_found` | integer | Memory IDs that don't exist in FalkorDB |
-| `not_found_ids` | array[string] | List of non-existent memory UUIDs |
+| `status` | string | Always `"queued"` |
+| `count` | integer | Number of memories successfully added to enrichment queue |
+| `ids` | array[string] | List of memory UUIDs that were queued |
 
 ```json
 {
-  "queued": 2,
-  "already_queued": 0,
-  "not_found": 0,
-  "not_found_ids": []
+  "status": "queued",
+  "count": 2,
+  "ids": [
+    "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+  ]
 }
 ```
 
@@ -182,57 +170,34 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 
 ```mermaid
 graph TB
-    Request["POST /enrichment/reprocess<br/>{ids: [...], force: true}"]
+    Request["POST /enrichment/reprocess<br/>{ids: [...]}"]
     Auth["_require_admin_token()"]
     Validate["Validate Request"]
 
-    subgraph "Memory Validation Loop"
-        CheckExists["Check each memory ID<br/>in FalkorDB"]
-        Query["MATCH (m:Memory {id: $id})<br/>RETURN m"]
-        Exists{Memory<br/>exists?}
-        AddValid["Add to valid_ids set"]
-        AddNotFound["Add to not_found list"]
-    end
-
     subgraph "Queueing Loop"
-        CheckDupe{force=true OR<br/>not in pending/inflight?}
         Enqueue["enqueue_enrichment()<br/>with forced=True"]
-        Skip["Skip (already queued)"]
         IncrQueued["queued_count++"]
-        IncrSkipped["already_queued_count++"]
     end
 
-    Response["Return summary:<br/>queued, already_queued,<br/>not_found"]
+    Response["Return 202:<br/>status, count, ids"]
 
     Request-->Auth
     Auth-->Validate
-    Validate-->CheckExists
-    CheckExists-->Query
-    Query-->Exists
-    Exists-->|Yes|AddValid
-    Exists-->|No|AddNotFound
-    AddValid-->CheckDupe
-    AddNotFound-->Response
-
-    CheckDupe-->|Queue it|Enqueue
-    CheckDupe-->|Skip|Skip
+    Validate-->Enqueue
     Enqueue-->IncrQueued
-    Skip-->IncrSkipped
     IncrQueued-->Response
-    IncrSkipped-->Response
 ```
 
 ### Implementation Details
 
 The reprocessing operation performs these steps:
 
-1. **Validation Phase** — Queries FalkorDB to verify each memory exists via `MATCH (m:Memory {id: $id}) RETURN m`
-2. **Deduplication** — Checks `state.enrichment_pending` and `state.enrichment_inflight` sets to avoid duplicate work (unless `force=true`)
-3. **Queueing** — Calls `enqueue_enrichment(memory_id, forced=True, attempt=0)` which:
+1. **Validation Phase** — Validates that the `ids` array is non-empty
+2. **Queueing** — Calls `enqueue_enrichment(memory_id, forced=True, attempt=0)` which:
    - Acquires `state.enrichment_lock`
    - Adds memory ID to `state.enrichment_pending`
    - Puts `EnrichmentJob(memory_id, attempt=0, forced=True)` in queue
-4. **Background Processing** — The `enrichment_worker()` thread picks up jobs and calls `enrich_memory()` which:
+3. **Background Processing** — The `enrichment_worker()` thread picks up jobs and calls `enrich_memory()` which:
    - Extracts entities via spaCy (if installed)
    - Creates temporal `PRECEDED_BY` edges
    - Finds semantic neighbors via Qdrant
@@ -258,6 +223,7 @@ The reprocessing operation performs these steps:
 |-----------|------|----------|-------------|
 | `batch_size` | integer | No | Embeddings per OpenAI API call. Default: `32`. Max recommended: `100` |
 | `limit` | integer | No | Max memories to process. If omitted, processes all memories in database |
+| `force` | boolean | No | Re-embed memories even if embeddings already exist. Default: `false` |
 
 ### Example Request
 
@@ -285,15 +251,12 @@ graph TB
 
         CallOpenAI["OpenAI API:<br/>embeddings.create()<br/>model=text-embedding-3-small<br/>input=[contents]"]
 
-        subgraph "Update Dual Storage"
-            UpdateQdrant["Qdrant: upsert()<br/>PointStruct<br/>id, vector, payload"]
-            UpdateFalkor["FalkorDB:<br/>MATCH (m:Memory {id: $id})<br/>SET m.embedding = $vector"]
-        end
+        UpdateQdrant["Qdrant: upsert()<br/>PointStruct<br/>id, vector, payload"]
 
         IncrCount["processed_count += batch_size"]
     end
 
-    Response["Return summary:<br/>processed, batch_size,<br/>total_memories"]
+    Response["Return summary:<br/>status, processed, failed,<br/>total, batch_size,<br/>metadata_preserved"]
 
     Request-->Auth
     Auth-->Init
@@ -302,8 +265,6 @@ graph TB
     Slice-->FetchContent
     FetchContent-->CallOpenAI
     CallOpenAI-->UpdateQdrant
-    CallOpenAI-->UpdateFalkor
-    UpdateFalkor-->IncrCount
     UpdateQdrant-->IncrCount
     IncrCount-->|More batches?|Slice
     IncrCount-->|Done|Response
@@ -313,15 +274,21 @@ graph TB
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `status` | string | Result status |
 | `processed` | integer | Number of memories successfully re-embedded |
+| `failed` | integer | Number of memories that failed re-embedding |
+| `total` | integer | Total memory count in database at operation start |
 | `batch_size` | integer | Batch size used (from request or default 32) |
-| `total_memories` | integer | Total memory count in database at operation start |
+| `metadata_preserved` | boolean | Whether existing metadata was preserved during re-embedding |
 
 ```json
 {
+  "status": "success",
   "processed": 1000,
+  "failed": 0,
+  "total": 1000,
   "batch_size": 32,
-  "total_memories": 1000
+  "metadata_preserved": true
 }
 ```
 
@@ -341,13 +308,13 @@ For each batch of `batch_size` IDs, queries FalkorDB for content. Missing memori
 **Phase 3: OpenAI Embedding Generation**
 
 Generates embeddings for entire batch in single API call. OpenAI's `text-embedding-3-small` model:
-- Dimension: 768
+- Dimension: 1024
 - Context window: 8191 tokens
 - Cost: $0.00002 per 1K tokens
 
-**Phase 4: Dual Storage Update**
+**Phase 4: Qdrant Update**
 
-Both Qdrant and FalkorDB are updated. Qdrant failures are logged but don't halt the operation (graceful degradation) — FalkorDB remains the source of truth.
+Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt the operation (graceful degradation). FalkorDB graph data is not modified by this operation.
 
 ### Performance Considerations
 
@@ -378,6 +345,31 @@ The operation continues even if individual batches fail:
 All errors are logged with structured context:
 ```python
 logger.exception("Failed to generate embeddings for batch", extra={"batch_ids": ids})
+```
+
+---
+
+## POST /admin/sync
+
+**Authentication:** API token + Admin token
+
+**Purpose:** Perform non-destructive drift repair between FalkorDB and Qdrant. Detects and reconciles discrepancies without deleting data.
+
+### Request Schema
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `batch_size` | integer | No | Number of memories to process per batch. Default: `32` |
+| `dry_run` | boolean | No | If `true`, report drift without making changes. Default: `false` |
+
+### Example Request
+
+```bash
+curl -X POST https://your-automem-instance/admin/sync \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"batch_size": 32, "dry_run": false}'
 ```
 
 ---

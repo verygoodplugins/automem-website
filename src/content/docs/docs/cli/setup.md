@@ -375,9 +375,9 @@ your-project/
             ├── dist/
             │   └── index.js      # MCP server entry point
             ├── templates/        # Platform-specific rules
-            │   ├── CURSOR_MDC_TEMPLATE.md
-            │   ├── CLAUDE_MD_MEMORY_RULES.md
-            │   ├── CODEX_AGENTS_TEMPLATE.md
+            │   ├── cursor/
+            │   ├── codex/
+            │   ├── claude-code/
             │   └── openclaw/
             └── package.json
 ```

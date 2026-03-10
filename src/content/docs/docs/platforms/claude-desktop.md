@@ -51,16 +51,11 @@ graph TB
 
 ## Installation
 
-### Method 1: One-Click `.mcpb` Install (Recommended)
+### Method 1: One-Click `.mcpb` Install (Planned)
 
-The `.mcpb` (MCP Bundle) format provides a streamlined one-click installation experience.
-
-1. Download the `.mcpb` file from [GitHub Releases](https://github.com/verygoodplugins/mcp-automem/releases)
-2. Double-click the file
-3. Claude Desktop prompts for:
-   - `automem_endpoint`: Your AutoMem service URL (required)
-   - `automem_api_key`: API token (required for cloud deployments, optional for local)
-4. Click **Enable**
+:::note
+The `.mcpb` (MCP Bundle) one-click install format is a planned feature and is not yet implemented. Use Method 2 (manual JSON configuration) for now.
+:::
 
 ### Method 2: Manual JSON Configuration
 
@@ -203,7 +198,7 @@ The full template is available in the repo at `templates/CLAUDE_DESKTOP_INSTRUCT
 | CONTENT SIZE GUIDELINES | 150–300 char target, 500 soft limit, 2000 hard limit |
 | STORAGE FORMAT | JSON structure for `store_memory` calls |
 | CORRECTIONS ARE GOLD | Capture style signal when you correct Claude |
-| RELATIONSHIP TYPES | 11 association types for `associate_memories` |
+| RELATIONSHIP TYPES | 11 authorable association types for `associate_memories` |
 
 ### Memory Storage Patterns
 

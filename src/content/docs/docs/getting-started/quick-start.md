@@ -152,7 +152,7 @@ Services start on:
 
 | Service | Port | Purpose | Volume |
 |---|---|---|---|
-| `memory-service` (Flask API) | `8001` | REST API | None (code mounted) |
+| `flask-api` (Flask API) | `8001` | REST API | None (code mounted) |
 | `falkordb` | `6379` | Graph database | `falkordb_data` |
 | `qdrant` | `6333` | Vector database | `qdrant_data` |
 
@@ -170,9 +170,10 @@ Services start on:
 | `.env` (optional) | Environment overrides | `FALKORDB_HOST`, `QDRANT_URL`, `OPENAI_API_KEY` |
 
 **Environment variable resolution order:**
-1. `docker-compose.yml` environment section
+
+1. Process environment (highest priority)
 2. `.env` file in project root
-3. Process environment
+3. Docker Compose defaults in `docker-compose.yml`
 
 ---
 

@@ -11,6 +11,7 @@ on:
         options:
           - verygoodplugins/automem
           - verygoodplugins/mcp-automem
+          - verygoodplugins/automem-graph-viewer
       source_sha:
         description: "Commit SHA to document (optional; defaults to main)"
         required: false
@@ -33,7 +34,7 @@ jobs:
           SOURCE_REPO="${{ github.event.client_payload.source_repo || inputs.source_repo }}"
           SOURCE_SHA="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
 
-          if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ]; then
+          if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/automem-graph-viewer" ]; then
             echo "::error::Unsupported source repo: $SOURCE_REPO"
             exit 1
           fi

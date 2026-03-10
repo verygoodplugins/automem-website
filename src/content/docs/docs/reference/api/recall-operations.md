@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Flask API recall endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Recall endpoint
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Graph expansion logic
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/scoring.py) — Scoring algorithm
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Score weight configuration
@@ -32,7 +32,7 @@ GET /recall
 |-----------|------|---------|-------------|
 | `query` | string | — | Natural language search query or wildcard `*` |
 | `embedding` | array[float] | — | Pre-computed embedding vector for semantic search |
-| `limit` | integer | 10 | Maximum results to return (capped at `RECALL_MAX_LIMIT=100`) |
+| `limit` | integer | 5 | Maximum results to return (capped at `RECALL_MAX_LIMIT=100`) |
 | `sort` / `order_by` | string | `score` | Sort mode: `score`, `time_desc`, `time_asc`, `updated_desc`, `updated_asc` |
 
 The `query` parameter triggers keyword extraction and full-text search. When `query="*"` or is omitted, the system returns trending memories ordered by importance.
@@ -102,13 +102,13 @@ graph LR
     Request["GET /recall<br/>?query=X&tags=Y"]
 
     subgraph "Search Strategies"
-        Vector["_vector_search<br/>app.py:924"]
-        Keyword["_graph_keyword_search<br/>app.py:721"]
-        Trending["_graph_trending_results<br/>app.py:669"]
+        Vector["_vector_search<br/>search/runtime_recall_helpers.py"]
+        Keyword["_graph_keyword_search<br/>search/runtime_recall_helpers.py"]
+        Trending["_graph_trending_results<br/>search/runtime_recall_helpers.py"]
     end
 
     subgraph "Scoring"
-        Compute["_compute_metadata_score<br/>app.py:476"]
+        Compute["_compute_metadata_score<br/>search/runtime_recall_helpers.py"]
         Combine["Weighted combination<br/>vector+keyword+tag+<br/>importance+recency"]
     end
 
@@ -209,13 +209,15 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
 
 | Component | Environment Variable | Default Value |
 |-----------|---------------------|---------------|
-| Vector | `SEARCH_WEIGHT_VECTOR` | 0.25 |
-| Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.15 |
-| Exact | `SEARCH_WEIGHT_EXACT` | 0.25 |
-| Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.05 |
+| Vector | `SEARCH_WEIGHT_VECTOR` | 0.35 |
+| Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.35 |
+| Exact | `SEARCH_WEIGHT_EXACT` | 0.20 |
+| Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 |
 | Confidence | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 |
 | Recency | `SEARCH_WEIGHT_RECENCY` | 0.10 |
-| Tag | `SEARCH_WEIGHT_TAG` | 0.10 |
+| Tag | `SEARCH_WEIGHT_TAG` | 0.20 |
+| Relation | `SEARCH_WEIGHT_RELATION` | 0.25 |
+| Relevance | `SEARCH_WEIGHT_RELEVANCE` | 0.0 |
 
 ### Scoring Component Details
 
@@ -254,7 +256,7 @@ graph TB
 
     CheckExpand{"expand_relations<br/>enabled?"}
 
-    FetchRelations["_fetch_relations()<br/>app.py:2200-2300"]
+    FetchRelations["_fetch_relations()<br/>search/runtime_relations.py"]
 
     FilterStrength{"Relation strength >=<br/>expand_min_strength?"}
 
@@ -290,8 +292,10 @@ The `_expand_related_memories()` function implements multi-hop graph traversal u
 **Key configuration constants:**
 - `RECALL_RELATION_LIMIT` (default: 5) — Max edges per seed memory
 - `RECALL_EXPANSION_LIMIT` (default: 25) — Total expanded memories cap
+- `RECALL_MIN_SCORE` — Minimum score threshold for results to be returned
+- `RECALL_ADAPTIVE_FLOOR` — Adaptive floor that adjusts minimum score based on result quality
 
-**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all 11 relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
+**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all other relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
 
 ### Entity Expansion Flow
 

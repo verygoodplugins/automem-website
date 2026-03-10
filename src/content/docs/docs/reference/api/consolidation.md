@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Consolidation API endpoints (lines 2646–2825)
+- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/consolidation.py) — Consolidation API endpoints
 - [consolidation.py](https://github.com/verygoodplugins/automem/blob/main/consolidation.py) — Consolidation engine implementation
 :::
 
@@ -23,7 +23,7 @@ AutoMem provides two REST endpoints for consolidation operations:
 | Endpoint | Method | Purpose | Auth |
 |----------|--------|---------|------|
 | `/consolidate` | POST | Manually trigger consolidation tasks | API token |
-| `/consolidate/status` | GET | Query scheduler state and last run times | API token |
+| `/consolidate/status` | GET | Query scheduler state and last run times | None required |
 
 The consolidation system runs automatically on scheduled intervals (configurable via environment variables), but these endpoints allow manual triggers for testing, debugging, or forcing immediate execution.
 
@@ -75,17 +75,17 @@ Manually trigger one or more consolidation tasks.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `task` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, or `full` |
-| `force` | boolean | No | `false` | Bypass interval checks and execute immediately |
+| `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, or `full` |
+| `dry_run` | boolean | No | `false` | If `true`, simulate without making changes |
 
 ### Task Types
 
 | Task | Default Interval | Description | Configuration Variable |
 |------|-----------------|-------------|----------------------|
-| `decay` | 3600s (1 hour) | Apply exponential relevance decay to memories | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` |
-| `creative` | 3600s (1 hour) | Discover hidden associations (REM-like) | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` |
-| `cluster` | 21600s (6 hours) | Group semantically similar memories | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` |
-| `forget` | 86400s (24 hours) | Archive/delete low-relevance memories | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` |
+| `decay` | 86400s (24 hours) | Apply exponential relevance decay to memories | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` |
+| `creative` | 604800s (7 days) | Discover hidden associations (REM-like) | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` |
+| `cluster` | 2592000s (30 days) | Group semantically similar memories | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` |
+| `forget` | 0 (disabled) | Archive/delete low-relevance memories | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` |
 | `full` | N/A | Execute all four tasks in sequence | N/A |
 
 ### Execution Flow
@@ -99,7 +99,7 @@ sequenceDiagram
     participant FalkorDB
     participant Qdrant
 
-    Client->>API: "POST /consolidate<br/>{task: 'decay', force: false}"
+    Client->>API: "POST /consolidate<br/>{mode: 'decay', dry_run: false}"
     API->>API: "Validate API token"
     API->>API: "Normalize task parameter"
 
@@ -115,9 +115,9 @@ sequenceDiagram
     Consolidator->>FalkorDB: "Query ConsolidationControl node"
     FalkorDB-->>Consolidator: "Last run timestamp"
 
-    alt force=false and interval not elapsed
-        Consolidator-->>API: "Skipped (too soon)"
-        API-->>Client: "200 {status: 'skipped'}"
+    alt dry_run=true
+        Consolidator-->>API: "Simulated results"
+        API-->>Client: "200 {status: 'success', consolidation: {...}}"
     else proceed
         Consolidator->>FalkorDB: "Read Memory nodes"
         Consolidator->>Qdrant: "Search vectors (if needed)"
@@ -136,38 +136,24 @@ sequenceDiagram
 ```json
 {
   "status": "success",
-  "task": "decay",
-  "results": {
+  "consolidation": {
     "updates": 42,
     "duration_seconds": 1.23
   }
 }
 ```
 
-For `task="full"`, the `results` object contains combined metrics from all four tasks:
+For `mode="full"`, the `consolidation` object contains combined metrics from all four tasks:
 
 ```json
 {
   "status": "success",
-  "task": "full",
-  "results": {
+  "consolidation": {
     "decay": { "updates": 42, "duration_seconds": 1.23 },
     "creative": { "associations": 8, "duration_seconds": 2.45 },
     "cluster": { "clusters": 3, "duration_seconds": 5.67 },
     "forget": { "forgotten": 2, "duration_seconds": 0.89 }
   }
-}
-```
-
-#### Skipped (200 OK)
-
-When `force=false` and the interval hasn't elapsed:
-
-```json
-{
-  "status": "skipped",
-  "task": "decay",
-  "reason": "Last run was 300 seconds ago. Next run in 3300 seconds."
 }
 ```
 
@@ -181,13 +167,13 @@ When `force=false` and the interval hasn't elapsed:
 
 ### Usage Examples
 
-**Trigger full consolidation (forced):**
+**Trigger full consolidation:**
 
 ```bash
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"task": "full", "force": true}'
+  -d '{"mode": "full"}'
 ```
 
 **Trigger single task (decay):**
@@ -196,12 +182,14 @@ curl -X POST https://your-automem-instance/consolidate \
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"task": "decay", "force": false}'
+  -d '{"mode": "decay"}'
 ```
 
 ---
 
 ## GET /consolidate/status
+
+**Authentication:** None required
 
 Query the current state of the consolidation scheduler and retrieve execution history.
 
@@ -215,27 +203,12 @@ Query the current state of the consolidation scheduler and retrieve execution hi
 
 ```json
 {
-  "scheduler": {
-    "running": true,
-    "tick_seconds": 60
-  },
-  "last_run": {
-    "decay": "2025-01-15T08:00:00Z",
-    "creative": "2025-01-15T08:00:00Z",
-    "cluster": "2025-01-15T06:00:00Z",
-    "forget": "2025-01-15T00:00:00Z"
-  },
-  "next_run": {
-    "decay": "2025-01-15T09:00:00Z",
-    "creative": "2025-01-15T09:00:00Z",
-    "cluster": "2025-01-15T12:00:00Z",
-    "forget": "2025-01-16T00:00:00Z"
-  },
-  "intervals": {
-    "decay": 3600,
-    "creative": 3600,
-    "cluster": 21600,
-    "forget": 86400
+  "status": "success",
+  "next_runs": {
+    "decay": "2025-01-16T08:00:00Z",
+    "creative": "2025-01-22T08:00:00Z",
+    "cluster": "2025-02-15T08:00:00Z",
+    "forget": null
   },
   "history": [
     {
@@ -250,7 +223,9 @@ Query the current state of the consolidation scheduler and retrieve execution hi
       "duration_seconds": 2.45,
       "associations": 8
     }
-  ]
+  ],
+  "thread_alive": true,
+  "tick_seconds": 60
 }
 ```
 
@@ -258,11 +233,8 @@ Query the current state of the consolidation scheduler and retrieve execution hi
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `scheduler.running` | boolean | Whether the background scheduler thread is active |
-| `scheduler.tick_seconds` | integer | Polling interval for the scheduler loop |
-| `last_run.<task>` | string (ISO 8601) | Timestamp of most recent execution |
-| `next_run.<task>` | string (ISO 8601) | Calculated next execution time |
-| `intervals.<task>` | integer | Configured interval in seconds |
+| `status` | string | Always `"success"` |
+| `next_runs.<task>` | string (ISO 8601) \| null | Calculated next execution time (null if task is disabled) |
 | `history[].task` | string | Task type that was executed |
 | `history[].timestamp` | string (ISO 8601) | Execution start time |
 | `history[].duration_seconds` | float | Time taken to complete |
@@ -270,21 +242,21 @@ Query the current state of the consolidation scheduler and retrieve execution hi
 | `history[].associations` | integer | Edges created (creative task) |
 | `history[].clusters` | integer | MetaMemory nodes created (cluster task) |
 | `history[].forgotten` | integer | Memories archived/deleted (forget task) |
+| `thread_alive` | boolean | Whether the background scheduler thread is active |
+| `tick_seconds` | integer | Polling interval for the scheduler loop |
 
 ### Usage Examples
 
 **Check last run times:**
 
 ```bash
-curl "https://your-automem-instance/consolidate/status" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+curl "https://your-automem-instance/consolidate/status"
 ```
 
 **Query recent execution history:**
 
 ```bash
-curl "https://your-automem-instance/consolidate/status?history_limit=50" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+curl "https://your-automem-instance/consolidate/status?history_limit=50"
 ```
 
 ---
@@ -310,11 +282,15 @@ Consolidation behavior is controlled via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CONSOLIDATION_TICK_SECONDS` | 60 | Scheduler loop polling interval |
-| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 3600 | Minimum time between decay runs |
-| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 3600 | Minimum time between creative runs |
-| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 21600 | Minimum time between cluster runs |
-| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 86400 | Minimum time between forget runs |
+| `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | 86400 | Minimum time between decay runs |
+| `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | Minimum time between creative runs |
+| `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | Minimum time between cluster runs |
+| `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | Minimum time between forget runs (0 = disabled) |
 | `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Skip decay for memories above this importance |
+| `CONSOLIDATION_PROTECTED_TYPES` | `"Decision,Insight"` | Memory types exempt from forget task |
+| `CONSOLIDATION_GRACE_PERIOD_DAYS` | 90 | Days before a memory is eligible for forgetting |
+| `CONSOLIDATION_DELETE_THRESHOLD` | 0.0 | Relevance score below which memories are deleted |
+| `CONSOLIDATION_ARCHIVE_THRESHOLD` | 0.0 | Relevance score below which memories are archived |
 | `CONSOLIDATION_HISTORY_LIMIT` | 20 | Default number of history records to return |
 | `CONSOLIDATION_CONTROL_NODE_ID` | `"global"` | ID of the ConsolidationControl node |
 
@@ -333,13 +309,13 @@ CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD=0.4
 
 ## Authentication
 
-Both endpoints require authentication using the `AUTOMEM_API_TOKEN`. Three authentication methods are supported:
+`POST /consolidate` requires authentication using the `AUTOMEM_API_TOKEN`. `GET /consolidate/status` is unauthenticated. Three authentication methods are supported for authenticated endpoints:
 
 1. **Bearer Token** (recommended): `Authorization: Bearer <token>`
 2. **Custom Header**: `X-API-Key: <token>`
 3. **Query Parameter** (discouraged in production): `?api_key=<token>`
 
-Requests without valid authentication receive a `401 Unauthorized` response.
+Requests to authenticated endpoints without valid authentication receive a `401 Unauthorized` response.
 
 ---
 
@@ -349,7 +325,7 @@ Requests without valid authentication receive a `401 Unauthorized` response.
 
 | Status | Condition | Response |
 |--------|-----------|----------|
-| 400 Bad Request | Invalid `task` parameter | `{"error": "Invalid task type: xyz"}` |
+| 400 Bad Request | Invalid `mode` parameter | `{"error": "Invalid task type: xyz"}` |
 | 400 Bad Request | `history_limit` out of range | `{"error": "history_limit must be between 0 and 100"}` |
 | 401 Unauthorized | Missing or invalid token | `{"error": "Unauthorized"}` |
 
@@ -368,11 +344,11 @@ All errors are logged with full stack traces to facilitate debugging.
 
 The `ConsolidationScheduler` runs in a background thread started at application initialization. It periodically checks whether each task's interval has elapsed and executes tasks automatically without manual triggers.
 
-The `/consolidate` endpoint bypasses this automatic scheduling when `force=true` is provided, allowing immediate execution regardless of the last run time.
+The `/consolidate` endpoint triggers immediate execution of consolidation tasks regardless of the scheduler's last run times.
 
-:::tip[When to force consolidation]
-Use `force=true` after:
+:::tip[When to trigger manual consolidation]
+Manually trigger consolidation after:
 - Importing a large batch of memories (run `full` to build initial associations)
 - Changing `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` (run `decay` to reapply)
-- Debugging consolidation behavior (individual task runs with force)
+- Debugging consolidation behavior (individual task runs)
 :::

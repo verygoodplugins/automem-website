@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. The current approach (v0.8.0+) relies on Claude's judgment guided by rules in `CLAUDE.md` rather than automated capture hooks. No background processes, no queue files.
+Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. The `claude-code` CLI installer sets up hook scripts that run at key events (session start, build, test, deployment) to capture context automatically. CLAUDE.md rules guide Claude's judgment for manual memory operations.
 
 **Two installation paths:**
 1. **Plugin installation** (recommended) — native Claude Code plugin via `/plugin install`
@@ -81,15 +81,27 @@ For local development (no API key needed):
 }
 ```
 
-**Step 2: Add tool permissions**
+**Step 2: Install hooks and merge settings**
 
-Run the CLI installer to merge permissions into `~/.claude/settings.json`:
+Run the CLI installer to install hook scripts and merge permissions:
 
 ```bash
 npx @verygoodplugins/mcp-automem claude-code
 ```
 
-This adds the following to `permissions.allow` (assuming server named `"memory"`):
+This installs the following hook scripts into `~/.claude/hooks/`:
+
+- `automem-session-start.sh` — recalls context at session start
+- `capture-build-result.sh` — captures build outcomes
+- `capture-test-pattern.sh` — captures test results
+- `capture-deployment.sh` — captures deployment events
+- `session-memory.sh` — stores session summary on exit
+
+Support scripts installed into `~/.claude/scripts/`:
+
+- `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`
+
+It also merges the following into `permissions.allow` (assuming server named `"memory"`):
 
 ```json
 {
@@ -188,7 +200,7 @@ Do not mix tag-based preference recall with semantic task recall — combining t
 
 If more detail is needed: split into multiple atomic memories, use `metadata` for structured data, create associations between related memories.
 
-### Relationship Types (11 types)
+### Relationship Types (14 types)
 
 | Type | Use Case |
 |------|---------|
@@ -203,6 +215,11 @@ If more detail is needed: split into multiple atomic memories, use `metadata` fo
 | `EXEMPLIFIES` | Pattern examples |
 | `OCCURRED_BEFORE` | Temporal sequence |
 | `PART_OF` | Hierarchical structure |
+| `SIMILAR_TO` | Semantic similarity *(system-generated, enrichment)* |
+| `PRECEDED_BY` | Prior in time *(system-generated, enrichment)* |
+| `DISCOVERED` | Heuristic edge with `kind` property *(system-generated, consolidation)* |
+
+> The last 3 types are **system-generated** — created automatically by enrichment and consolidation. Only the 11 authorable types above them can be used in `associate_memories`.
 
 **Association triggers:**
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Health and analytics endpoints (lines 2790–3069)
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) — Health and analytics endpoints
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -58,11 +58,9 @@ sequenceDiagram
     alt Qdrant available
         Qdrant-->>Flask: points_count
         Note over Flask: status.qdrant = "connected"
-    else Not configured
-        Note over Flask: status.qdrant = "not_configured"
     else Error
         Qdrant-->>Flask: Exception
-        Note over Flask: status.qdrant = "error: ..."
+        Note over Flask: status.qdrant = "disconnected"<br/>status.status = "degraded"
     end
 
     Flask->>EnrichmentQ: _enrichment_queue_status()
@@ -79,17 +77,16 @@ sequenceDiagram
   "falkordb": "connected",
   "qdrant": "connected",
   "memory_count": 1247,
-  "qdrant_count": 1247,
+  "vector_count": 1247,
+  "sync_status": "in_sync",
+  "vector_dimensions": 1024,
   "enrichment": {
     "status": "running",
     "queue_depth": 3,
     "pending": 2,
     "inflight": 1,
     "processed": 5823,
-    "failed": 4,
-    "last_success": "2025-01-15T10:29:45Z",
-    "last_error": null,
-    "worker_active": true
+    "failed": 4
   },
   "graph": "automem",
   "timestamp": "2025-01-15T10:30:00Z"
@@ -100,11 +97,13 @@ sequenceDiagram
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Overall health: `"healthy"` or `"degraded"` |
+| `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when Qdrant unavailable) |
 | `falkordb` | string | FalkorDB status: `"connected"`, `"unknown"`, or `"error: ..."` |
-| `qdrant` | string | Qdrant status: `"connected"`, `"not_configured"`, or `"error: ..."` |
+| `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer \| null | Total memories in FalkorDB (null if query fails) |
-| `qdrant_count` | integer \| null | Total points in Qdrant collection (null if unavailable) |
+| `vector_count` | integer \| null | Total points in Qdrant collection (null if unavailable) |
+| `sync_status` | string \| null | Drift status between FalkorDB and Qdrant (e.g., `"in_sync"`, `"drifted"`) |
+| `vector_dimensions` | integer \| null | Configured embedding vector dimensions |
 | `enrichment` | object | Enrichment queue metrics (see below) |
 | `graph` | string | FalkorDB graph name (`FALKORDB_GRAPH` env variable) |
 | `timestamp` | string | ISO 8601 timestamp of health check |
@@ -115,15 +114,12 @@ The `enrichment` object provides visibility into the background enrichment pipel
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Worker state: `"running"`, `"idle"`, or `"stopped"` |
+| `status` | string | Worker state: `"running"` or `"stopped"` |
 | `queue_depth` | integer | Total jobs in queue (pending + inflight) |
 | `pending` | integer | Jobs waiting to be processed |
 | `inflight` | integer | Jobs currently being processed |
 | `processed` | integer | Total jobs completed since service start |
 | `failed` | integer | Total jobs that failed permanently |
-| `last_success` | string \| null | Timestamp of most recent successful enrichment |
-| `last_error` | string \| null | Most recent error message (if any) |
-| `worker_active` | boolean | Whether enrichment worker thread is alive |
 
 ### Example Request
 
@@ -137,12 +133,12 @@ AutoMem continues operating even when some components are unavailable:
 
 | Component Failure | `status` field | HTTP code | Behavior |
 |-------------------|---------------|-----------|---------|
-| Qdrant unavailable | `"healthy"` | 200 | `qdrant` shows `"not_configured"` or `"error: ..."` |
+| Qdrant unavailable | `"degraded"` | 503 | `qdrant` shows `"disconnected"`, vector search disabled |
 | FalkorDB unavailable | `"degraded"` | 503 | All memory operations fail |
 | Enrichment worker stopped | `"healthy"` | 200 | Service runs but enrichment pipeline stops |
 
 :::tip[Drift detection]
-Compare `memory_count` (FalkorDB) against `qdrant_count` (Qdrant) to detect database drift. A significant difference indicates that some memories are missing their vector embeddings and may need `/admin/reembed`.
+Compare `memory_count` (FalkorDB) against `vector_count` (Qdrant) to detect database drift. A significant difference indicates that some memories are missing their vector embeddings and may need `/admin/reembed`. The `sync_status` field summarizes this automatically.
 :::
 
 ---
@@ -408,7 +404,7 @@ graph LR
     Health-->|"Get collection"|Qdrant
     Health-->|"Queue status"|EnrichQ
     Health-->|"Return metrics"|Monitor
-    Monitor-->|"If drift > 5%"|Alert
+    Monitor-->|"If memory_count vs vector_count drift > 5%"|Alert
     Monitor-->|"If degraded"|Alert
 ```
 
@@ -433,10 +429,10 @@ Log entries include request context (endpoint, duration, result counts) suitable
 
 | Condition | Recommended Alert |
 |-----------|------------------|
-| `status: "degraded"` | Immediate page — FalkorDB unavailable |
-| `qdrant` shows `"error: ..."` | Warning — vector search degraded |
-| `memory_count` vs `qdrant_count` drift > 5% | Warning — run `/admin/reembed` |
-| `enrichment.worker_active: false` | Warning — enrichment stopped, restart service |
-| `enrichment.failed` count growing | Investigation — check `last_error` field |
+| `status: "degraded"` | Immediate page — FalkorDB or Qdrant unavailable |
+| `qdrant` shows `"disconnected"` | Warning — vector search degraded |
+| `memory_count` vs `vector_count` drift > 5% | Warning — run `/admin/reembed` |
+| `enrichment.status: "stopped"` | Warning — enrichment stopped, restart service |
+| `enrichment.failed` count growing | Investigation — check application logs |
 
 See [Operations / Health](/docs/operations/health/) for complete monitoring and recovery procedures.

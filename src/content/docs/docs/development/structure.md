@@ -61,27 +61,92 @@ graph TB
 
 ### Core Service Modules
 
-#### `app.py` — Flask API Service
+#### `app.py` — Flask Orchestration Entry Point
 
-The monolithic Flask application serving all REST API endpoints.
+A ~506-line orchestration file that wires together all components from the `automem/` package. It is no longer a monolithic application — all business logic, routes, workers, and configuration live in the package.
 
-| Component | Lines | Responsibility |
-|---|---|---|
-| Flask Routes | ~100-600 | `/memory`, `/recall`, `/associate`, `/consolidate`, `/health` |
-| Authentication | 209-211 | `API_TOKEN` and `ADMIN_TOKEN` validation |
-| MemoryClassifier | 996-1084 | Pattern-based + LLM memory classification |
-| Enrichment Pipeline | 1200-1800 | Entity extraction, temporal links, semantic neighbors |
-| Embedding Worker | 1900-2100 | Batch embedding generation (OpenAI API) |
-| Graph Operations | Various | FalkorDB query wrappers |
-| Vector Operations | Various | Qdrant search/store wrappers |
-| Scoring Functions | 476-521 | Hybrid recall scoring logic |
+| Responsibility | Implementation |
+|---|---|
+| Service startup and wiring | Imports from `automem/runtime_wiring.py` |
+| Flask app factory | Delegates to `automem/api/` route modules |
+| Background worker launch | Delegates to worker modules in `automem/` |
+| Configuration loading | `automem/config.py` |
 
-**Key classes:**
+#### `automem/` — Core Python Package
 
-- `MemoryClassifier` ([app.py:996-1084](https://github.com/verygoodplugins/automem/blob/main/app.py#L996-L1084)): Classifies memories into types (Decision, Pattern, etc.)
-- Background worker threads start at application initialization
+The main package containing all business logic, organized by domain:
 
-**Configuration constants** defined at [app.py:74-211](https://github.com/verygoodplugins/automem/blob/main/app.py#L74-L211).
+```text
+automem/
+├── __init__.py
+├── config.py                   # All configuration constants
+├── service_state.py            # ServiceState dataclass
+├── service_runtime.py          # Runtime initialization helpers
+├── service_runtime_bindings.py
+├── runtime_wiring.py           # Server startup orchestration
+├── runtime_environment.py
+├── app_helper_bindings.py
+├── api/
+│   ├── memory.py               # POST/GET/PATCH/DELETE /memory routes
+│   ├── recall.py               # GET /recall routes
+│   ├── graph.py                # Graph query routes
+│   ├── admin.py                # Admin operations
+│   ├── health.py               # Health endpoint
+│   ├── enrichment.py           # Enrichment status/reprocess
+│   ├── consolidation.py        # Consolidation trigger/status
+│   ├── viewer.py               # Graph viewer routes
+│   ├── stream.py               # SSE streaming
+│   ├── auth_helpers.py         # Authentication middleware
+│   ├── runtime_bootstrap.py
+│   ├── runtime_memory_routes.py
+│   └── runtime_recall_routes.py
+├── classification/
+│   ├── __init__.py
+│   └── memory_classifier.py
+├── consolidation/
+│   ├── runtime_bindings.py
+│   ├── runtime_helpers.py
+│   ├── runtime_routes.py
+│   └── runtime_scheduler.py
+├── embedding/
+│   ├── provider.py             # Base provider class
+│   ├── provider_init.py        # Auto-selection logic
+│   ├── openai.py
+│   ├── voyage.py
+│   ├── fastembed.py
+│   ├── ollama.py
+│   ├── placeholder.py
+│   ├── runtime_pipeline.py
+│   ├── runtime_bindings.py
+│   └── runtime_helpers.py
+├── enrichment/
+│   ├── runtime_bindings.py
+│   ├── runtime_helpers.py
+│   ├── runtime_orchestration.py
+│   ├── runtime_queue_bindings.py
+│   └── runtime_worker.py
+├── search/
+│   ├── runtime_recall_helpers.py
+│   ├── runtime_relations.py
+│   └── runtime_keywords.py
+├── stores/
+│   ├── graph_store.py
+│   ├── vector_store.py
+│   └── runtime_clients.py
+├── sync/
+│   ├── runtime_bindings.py
+│   └── runtime_worker.py
+├── analytics/
+│   └── runtime_helpers.py
+└── utils/
+    ├── entity_extraction.py
+    ├── scoring.py
+    ├── tags.py
+    ├── time.py
+    ├── text.py
+    ├── graph.py
+    └── validation.py
+```
 
 #### `consolidation.py` — Dream-Inspired Maintenance
 
@@ -123,7 +188,7 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 ### Configuration Management
 
-#### Environment Variable Load Order ([app.py:43-45](https://github.com/verygoodplugins/automem/blob/main/app.py#L43-L45))
+#### Environment Variable Load Order (`automem/config.py`)
 
 1. Load `.env` from repository root
 2. Load `~/.config/automem/.env` (user-specific overrides)
@@ -133,12 +198,12 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 | Category | Example Variables | Defined In |
 |---|---|---|
-| Database Connections | `FALKORDB_HOST`, `QDRANT_URL` | [app.py:75-78](https://github.com/verygoodplugins/automem/blob/main/app.py#L75-L78) |
-| Authentication | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | [app.py:209-210](https://github.com/verygoodplugins/automem/blob/main/app.py#L209-L210) |
-| Consolidation Intervals | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | [app.py:82-92](https://github.com/verygoodplugins/automem/blob/main/app.py#L82-L92) |
-| Enrichment Tuning | `ENRICHMENT_MAX_ATTEMPTS`, `ENRICHMENT_SIMILARITY_THRESHOLD` | [app.py:104-112](https://github.com/verygoodplugins/automem/blob/main/app.py#L104-L112) |
-| Embedding Batching | `EMBEDDING_BATCH_SIZE`, `EMBEDDING_BATCH_TIMEOUT_SECONDS` | [app.py:115-116](https://github.com/verygoodplugins/automem/blob/main/app.py#L115-L116) |
-| Search Weights | `SEARCH_WEIGHT_VECTOR`, `SEARCH_WEIGHT_KEYWORD` | [app.py:201-207](https://github.com/verygoodplugins/automem/blob/main/app.py#L201-L207) |
+| Database Connections | `FALKORDB_HOST`, `QDRANT_URL` | `automem/config.py` |
+| Authentication | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | `automem/config.py` |
+| Consolidation Intervals | `CONSOLIDATION_DECAY_INTERVAL_SECONDS` | `automem/config.py` |
+| Enrichment Tuning | `ENRICHMENT_MAX_ATTEMPTS`, `ENRICHMENT_SIMILARITY_THRESHOLD` | `automem/config.py` |
+| Embedding Batching | `EMBEDDING_BATCH_SIZE`, `EMBEDDING_BATCH_TIMEOUT_SECONDS` | `automem/config.py` |
+| Search Weights | `SEARCH_WEIGHT_VECTOR`, `SEARCH_WEIGHT_KEYWORD` | `automem/config.py` |
 
 #### Containerization Files
 
@@ -158,7 +223,26 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 #### `tests/` — Pytest Test Suites
 
-Test coverage focuses on consolidation engine logic, which has the most complex state management.
+The test suite covers consolidation, API endpoints, enrichment, embedding providers, and integration flows:
+
+```text
+tests/
+├── conftest.py
+├── test_consolidation_engine.py
+├── test_api_endpoints.py
+├── test_app.py
+├── test_enrichment.py
+├── test_embedding_providers.py
+├── test_integration.py
+├── test_content_size.py
+├── test_vector_size_safety.py
+├── test_recall_entity_extraction.py
+├── support/
+├── contracts/
+└── benchmarks/
+```
+
+Tests use pytest markers to separate execution tiers: `unit` (no external services, runs with `make test`), `integration` (requires Docker stack, runs with `make test-integration`), and `live` (runs against a deployed Railway instance).
 
 **Mock objects** ([tests/test_consolidation_engine.py:12-78](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py#L12-L78)):
 
@@ -186,7 +270,7 @@ Test coverage focuses on consolidation engine logic, which has the most complex 
 
 Different deployment scenarios use different subsets of the repository:
 
-1. **Railway (Production)**: Single container running `app.py`, consolidation runs in background thread
+1. **Railway (Production)**: Single container running `app.py` (which imports the `automem/` package), consolidation runs in background thread
 2. **Docker Compose (Local)**: Multi-container with separate database services
 3. **Bare Metal (Development)**: Python process + external databases
 4. **MCP Bridge**: Optional Node.js service for AI platform integration

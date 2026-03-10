@@ -353,7 +353,7 @@ flowchart TD
 
 **2. Failed Writes (5-10% drift)**
 
-Qdrant writes have try/except wrappers in [`automem/stores/qdrant.py`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/qdrant.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail silently, causing drift.
+Qdrant upsert logic is in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail with exception logging, causing drift.
 
 **3. Data Loss Event (>50% drift)**
 
@@ -449,8 +449,8 @@ flowchart TD
 **Step 2: Verify provider is working**
 
 ```bash
-# Check which provider is active
-curl https://your-service.up.railway.app/health | jq '.embedding_provider'
+# Check service health
+curl https://your-service.up.railway.app/health | jq '.status'
 ```
 
 **Step 3: Re-embed existing memories (if needed)**
@@ -485,7 +485,7 @@ Failed to upsert memory to Qdrant
 
 **Option 1: Auto-detect existing dimensions (safe)**
 
-The auto-detection logic in [`automem/stores/qdrant.py:100-150`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/qdrant.py#L100-L150) checks the existing collection schema. Set `EMBEDDING_PROVIDER=auto` and restart the service — it will detect the existing dimensions.
+The auto-detection logic in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) checks the existing collection schema. Set `EMBEDDING_PROVIDER=auto` and restart the service — it will detect the existing dimensions.
 
 **Option 2: Reset Qdrant collection (data loss)**
 
@@ -530,7 +530,7 @@ Memory usage: 1.2GB / 1GB limit
 |---|---|---|---|
 | Flask API | 100-200MB | 300-500MB | - |
 | FalkorDB | 200-400MB | 800MB-2GB | `--maxmemory` |
-| Enrichment Queue | 50-100MB | 200MB | `ENRICHMENT_QUEUE_SIZE` |
+| Enrichment Queue | 50-100MB | 200MB | - |
 | Embedding Queue | 50-100MB | 200MB | `EMBEDDING_BATCH_SIZE` |
 | **Total recommended** | **512MB-1GB** | **1.5-2GB** | Railway service size |
 
@@ -546,9 +546,8 @@ REDIS_ARGS=--maxmemory 512mb --maxmemory-policy allkeys-lru --save 60 1 --append
 **Queue size limits:**
 
 ```bash
-# Reduce queue sizes if experiencing memory pressure
+# Reduce batch size if experiencing memory pressure
 EMBEDDING_BATCH_SIZE=10
-ENRICHMENT_QUEUE_SIZE=100
 ```
 
 **Graceful degradation check:**
@@ -577,20 +576,13 @@ curl https://your-service.up.railway.app/health | jq '.enrichment.queue_depth'
 
 **1. Check relationship cache:**
 
-The LRU cache in [`automem/consolidation.py:200-250`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation.py#L200-L250) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
+The LRU cache in [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
 
 **2. Verify indexes:**
 
-Ensure the Qdrant keyword index is set up correctly. The index setup is in [`automem/stores/qdrant.py:1-100`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/qdrant.py#L1-L100).
+Ensure the Qdrant keyword index is set up correctly. The index setup is in [`automem/stores/vector_store.py`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py).
 
 **3. Limit expansion:**
-
-High `RECALL_LIMIT` values increase graph traversal time:
-
-```bash
-# Reduce if high latency is observed
-RECALL_LIMIT=10  # default is 20
-```
 
 **4. Check batch processing:**
 
@@ -609,8 +601,8 @@ curl https://your-service.up.railway.app/health | jq .
 # Check specific components
 curl https://your-service.up.railway.app/health | jq '{
   status: .status,
-  falkordb: .statistics.falkordb,
-  qdrant: .statistics.qdrant,
+  falkordb: .falkordb,
+  qdrant: .qdrant,
   enrichment: .enrichment.status,
   queue: .enrichment.queue_depth
 }'

@@ -221,6 +221,10 @@ curl -X POST https://your-automem-instance/memory \
   }'
 ```
 
+:::note[Additional pass-through store parameters]
+The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Memory Operations](/docs/reference/api/memory-operations/).
+:::
+
 **Content Size Governance (MCP layer adds two-tier validation):**
 
 | Limit | Value | Behavior |
@@ -263,6 +267,10 @@ curl -X POST https://your-automem-instance/memory \
 | `results` | array[object] | Yes | Array of memory objects with scores |
 | `dedup_removed` | integer | No | Duplicates removed in multi-query mode |
 
+:::note[Additional pass-through recall parameters]
+The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Recall Operations](/docs/reference/api/recall-operations/).
+:::
+
 **Parallel Query Optimization (MCP layer):**
 
 When `tags` are present, `recall_memory` executes two queries in parallel and merges results:
@@ -289,10 +297,10 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory UUID |
 | `memory2_id` | string | Yes | — | Target memory UUID |
-| `type` | string | Yes | enum: 11 types | Relationship type |
-| `strength` | number | Yes | 0–1 | Relationship strength |
+| `type` | string | Yes | enum: 11 authorable types | Relationship type |
+| `strength` | number | No | 0–1, default 0.5 | Relationship strength |
 
-**Relationship Type Enum (all 11 values):**
+**Relationship Type Enum (all 16 values):**
 
 1. `RELATES_TO` — General relationship
 2. `LEADS_TO` — Causal relationship
@@ -305,6 +313,9 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
+12. `SIMILAR_TO` — Semantically similar (system-generated)
+13. `PRECEDED_BY` — Temporal predecessor (system-generated)
+14. `DISCOVERED` — Heuristic edge with `kind` property (system-generated)
 
 **MCP Tool Output:**
 

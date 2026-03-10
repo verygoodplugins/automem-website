@@ -7,7 +7,8 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Embedding worker, batch processing logic (lines 1968-2097, 2220-2392)
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider.py) — Abstract provider base class
 - [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/voyage.py) — Voyage AI provider
 - [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/openai.py) — OpenAI provider
@@ -22,9 +23,9 @@ The embedding generation subsystem handles asynchronous vector embedding creatio
 
 **Key features:**
 - **Multi-provider support:** Voyage AI, OpenAI, FastEmbed (local), Ollama, or deterministic placeholder vectors
-- **Auto-selection priority chain:** Voyage → OpenAI → FastEmbed → Ollama → Placeholder
+- **Auto-selection priority chain:** Voyage → OpenAI → Ollama → FastEmbed → Placeholder
 - **Batch processing:** Up to 20 memories per API call with 2-second timeout
-- **Dimension flexibility:** Supports 256d, 512d, 768d, 1024d, 2048d, 3072d embeddings
+- **Dimension flexibility:** Supports common sizes such as 256d, 384d, 512d, 768d, 1024d, 2048d, 3072d — plus Ollama (variable by model) and Placeholder (any configurable size)
 - **Graceful degradation:** Falls back to placeholder vectors if all providers fail
 
 For information about how memories are enriched with entities and relationships after storage, see [Enrichment Pipeline](/docs/architecture/enrichment/). For the overall background processing architecture, see [Background Processing](/docs/architecture/background-processing/).
@@ -55,26 +56,32 @@ flowchart TD
     CheckConfig -->|"voyage"| ForceVoyage["Force Voyage<br/>Require VOYAGE_API_KEY"]
     CheckConfig -->|"openai"| ForceOpenAI["Force OpenAI<br/>Require OPENAI_API_KEY"]
     CheckConfig -->|"local"| ForceLocal["Force FastEmbed<br/>Local ONNX model"]
+    CheckConfig -->|"ollama"| ForceOllama["Force Ollama<br/>Local server"]
     CheckConfig -->|"placeholder"| ForcePlaceholder["Force Placeholder<br/>Hash-based"]
 
     Priority --> Try1{"VOYAGE_API_KEY<br/>set?"}
     Try1 -->|Yes| Voyage["VoyageEmbeddingProvider<br/>voyage-4: 1024d"]
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
-    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 768d"]
-    Try2 -->|No| Try3{"FastEmbed<br/>available?"}
+    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1536d native<br/>truncated to VECTOR_SIZE via Matryoshka"]
+    Try2 -->|No| Try3{"Ollama<br/>running?"}
 
-    Try3 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
-    Try3 -->|No| Placeholder["PlaceholderEmbeddingProvider<br/>No semantic meaning"]
+    Try3 -->|Yes| Ollama["OllamaEmbeddingProvider<br/>Local server"]
+    Try3 -->|No| Try4{"FastEmbed<br/>available?"}
+
+    Try4 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
+    Try4 -->|No| Placeholder["PlaceholderEmbeddingProvider<br/>No semantic meaning"]
 
     Voyage --> Validate["Validate dimension<br/>matches VECTOR_SIZE"]
     OpenAI --> Validate
+    Ollama --> Validate
     FastEmbed --> Validate
     Placeholder --> Validate
 
     ForceVoyage --> Validate
     ForceOpenAI --> Validate
     ForceLocal --> Validate
+    ForceOllama --> Validate
     ForcePlaceholder --> Validate
 
     Validate --> Store["Store in Qdrant<br/>or log warning"]
@@ -94,8 +101,8 @@ flowchart TD
 
 1. **Voyage first:** Best quality embeddings, generous free tier, shared embedding space across model sizes
 2. **OpenAI second:** High quality, widely available, compatible with OpenRouter/LiteLLM
-3. **FastEmbed third:** Local inference, no API costs, good quality for 768d
-4. **Ollama fourth:** Local inference, flexible models, requires Ollama server running
+3. **Ollama third:** Local inference, flexible models, requires Ollama server running
+4. **FastEmbed fourth:** Local ONNX inference, no API costs, good quality for 768d
 5. **Placeholder last:** Deterministic fallback, no semantic meaning but consistent
 
 ### Dimension Validation and Fail-Fast
@@ -129,7 +136,7 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` b
 
 **Configuration:**
 - `OPENAI_API_KEY` — Required
-- `EMBEDDING_MODEL` — Default: `text-embedding-3-large` (also: `text-embedding-3-small`)
+- `EMBEDDING_MODEL` — Default: `text-embedding-3-small` (also: `text-embedding-3-large`)
 - `OPENAI_BASE_URL` — Optional: Custom endpoint for OpenAI-compatible providers
 
 **OpenAI-compatible providers:**
@@ -358,7 +365,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_PROVIDER` | str | `auto` | Provider selection: `auto`, `voyage`, `openai`, `local`, `ollama`, `placeholder` |
 | `EMBEDDING_BATCH_SIZE` | int | 20 | Maximum memories per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | float | 2.0 | Maximum batch accumulation time (seconds) |
-| `VECTOR_SIZE` | int | 3072 | Embedding dimension (must match Qdrant collection) |
+| `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection). `text-embedding-3-small` natively produces 1536d but the system passes `dimensions=VECTOR_SIZE` to OpenAI's API to truncate via Matryoshka representation learning. |
 
 ### Provider-Specific Configuration
 
@@ -425,7 +432,7 @@ The embedding worker runs in a dedicated thread started during application initi
 
 ### Memory Storage Integration
 
-The `POST /memory` endpoint integrates with the embedding queue at [app.py:2026-2031](https://github.com/verygoodplugins/automem/blob/main/app.py#L2026-L2031).
+The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py).
 
 ### Enrichment Pipeline Coordination
 

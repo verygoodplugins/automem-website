@@ -172,9 +172,8 @@ The Makefile provides commands for common Docker Compose operations. These comma
 |---|---|---|---|
 | `make dev` | `docker compose up --build` | Start all services, rebuild images if Dockerfile changed | None |
 | `make logs` | `docker compose logs -f flask-api` | Follow Flask API logs in real-time | None |
-| `make test-integration` | Start services, run pytest with integration tests, keep running | Run full test suite against local Docker stack | None (uses test tokens) |
+| `make test-integration` | Start services, run `pytest -rs -m integration`, keep running | Run integration test suite against local Docker stack | None (uses test tokens) |
 | `make clean` | `docker compose down -v` | Stop containers, remove volumes | **High** — deletes all memory data |
-| `make stop` | `docker compose down` | Stop containers, preserve volumes | None |
 
 ### Starting Services
 
@@ -205,7 +204,7 @@ The `make test-integration` command orchestrates a full test run:
 
 ```bash
 # Stop containers, preserve data volumes:
-make stop
+docker compose down
 
 # Stop containers AND delete all data volumes:
 make clean
@@ -260,7 +259,7 @@ Data can be migrated using backup/restore scripts:
 
 1. **Export from Docker Compose**:
    ```bash
-   python scripts/backup_automem.py --output ./backups/
+   python scripts/backup_automem.py --backup-dir ./backups/
    ```
 2. **Import to Railway**:
    - Use GitHub Actions backup workflow to populate Railway from exported snapshots

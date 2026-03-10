@@ -68,9 +68,9 @@ The system supports seven memory types with distinct semantic meanings:
 
 ## Relationship Types and Association Patterns
 
-### 11 Relationship Types
+### 11 Authorable Relationship Types
 
-The `associate_memories` tool supports 11 semantic relationship types defined in the AutoMem service:
+The `associate_memories` tool supports 11 authorable relationship types defined in the AutoMem service:
 
 | Type | Semantic Meaning | Strength Range | Use Case |
 |---|---|---|---|

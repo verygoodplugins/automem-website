@@ -187,9 +187,8 @@ Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`
 |---------|-----------------|---------|---------------|
 | `make dev` | `docker compose up --build` | Start all services, rebuild images if Dockerfile changed | None |
 | `make logs` | `docker compose logs -f flask-api` | Follow Flask API logs in real-time | None |
-| `make test-integration` | Start services, run pytest, keep running | Run full test suite against local Docker stack | None (uses test tokens) |
+| `make test-integration` | Start services, run `pytest -rs -m integration`, keep running | Run integration test suite against local Docker stack | None (uses test tokens) |
 | `make clean` | `docker compose down -v` | Stop containers, remove volumes | **High** — deletes all memory data |
-| `make stop` | `docker compose down` | Stop containers, preserve volumes | None |
 
 **Hot-reload during development:**
 
