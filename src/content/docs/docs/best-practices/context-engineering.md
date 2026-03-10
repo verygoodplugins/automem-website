@@ -246,7 +246,7 @@ templates/myplatform/
 
 ---
 
-## Direct API Usage (Non-MCP Integration)
+## Non-MCP and Multi-Mode Integrations
 
 ### OpenClaw Integration Approaches
 

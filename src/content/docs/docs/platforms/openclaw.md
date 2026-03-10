@@ -183,7 +183,8 @@ In MCP and skill modes, the installer writes to `skills.entries.automem` instead
       "automem": {
         "enabled": true,
         "env": {
-          "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+          "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001",
+          "AUTOMEM_API_KEY": "your-token-here"
         }
       }
     }
@@ -208,7 +209,7 @@ In plugin and MCP modes, the skill maps natural language to typed AutoMem tools:
 | "update memory ..." | `automem_update_memory` |
 | "delete memory ..." | `automem_delete_memory` (recalls first if ambiguous) |
 | "link these memories ..." | `automem_associate_memories` |
-| "is memory healthy?" | `automem_check_health` |
+| "is memory healthy?" | `automem_check_database_health` |
 
 Slash commands also work: `/automem remember ...`, `/automem recall ...`, `/automem update ...`, `/automem delete ...`.
 

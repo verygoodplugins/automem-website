@@ -168,19 +168,28 @@ npx @verygoodplugins/mcp-automem config
 
 ## OpenClaw
 
-The `openclaw` command installs AutoMem as a skill in the OpenClaw framework, including automatic registration in `~/.openclaw/openclaw.json`.
+The `openclaw` command supports three installation modes. The `--mode` flag controls which integration is set up.
 
 ### Installation
 
 ```bash
-npx @verygoodplugins/mcp-automem openclaw
+# Plugin mode (recommended) — native OpenClaw plugin with typed tools
+npx @verygoodplugins/mcp-automem openclaw --mode plugin
+
+# MCP mode — mcporter-based setup with typed tools
+npx @verygoodplugins/mcp-automem openclaw --mode mcp --workspace ~/clawd
+
+# Legacy skill mode — curl-based fallback
+npx @verygoodplugins/mcp-automem openclaw --mode skill --workspace ~/clawd
 ```
 
-This command:
-1. Creates `~/.openclaw/skills/automem/SKILL.md` with memory operation instructions
-2. Automatically registers the skill in `~/.openclaw/openclaw.json`
+What each mode installs:
 
-Unlike other platform installers, OpenClaw supports automatic configuration file modification.
+- **Plugin**: Registers the AutoMem plugin in `plugins.entries.automem` within `~/.openclaw/openclaw.json`
+- **MCP**: Creates `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json`
+- **Skill**: Creates `<workspace>/skills/automem/SKILL.md` with curl-based API reference
+
+All modes automatically update `~/.openclaw/openclaw.json`. See the [OpenClaw platform guide](/docs/platforms/openclaw/) for full details on each mode.
 
 ## Warp Terminal
 
