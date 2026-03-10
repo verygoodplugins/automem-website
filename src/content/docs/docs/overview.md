@@ -484,7 +484,7 @@ Cloud platforms connect via HTTP/SSE sidecar:
 
 ### Direct API Integration
 
-- **[OpenClaw](/docs/platforms/openclaw/)**: Bypasses MCP entirely, uses direct HTTP calls via `SKILL.md` and curl commands
+- **[OpenClaw](/docs/platforms/openclaw/)**: Native plugin (recommended) or legacy curl; also supports [MCP via mcporter](/docs/platforms/openclaw/#mcp-mode-architecture)
 - **[Alexa](/docs/platforms/alexa/)**: Custom Alexa skill with direct API calls
 
 ---

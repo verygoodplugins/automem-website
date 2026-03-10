@@ -18,7 +18,7 @@ Each platform installer generates and installs appropriate configuration files f
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
-| `openclaw` | `~/.openclaw/skills/automem/SKILL.md` | `~/.openclaw/openclaw.json` (automatic) |
+| `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
 
 ## Claude Desktop
 
@@ -168,19 +168,28 @@ npx @verygoodplugins/mcp-automem config
 
 ## OpenClaw
 
-The `openclaw` command installs AutoMem as a skill in the OpenClaw framework, including automatic registration in `~/.openclaw/openclaw.json`.
+The `openclaw` command supports three installation modes. The `--mode` flag controls which integration is set up.
 
 ### Installation
 
 ```bash
-npx @verygoodplugins/mcp-automem openclaw
+# Plugin mode (recommended) — native OpenClaw plugin with typed tools
+npx @verygoodplugins/mcp-automem openclaw --mode plugin
+
+# MCP mode — mcporter-based setup with typed tools
+npx @verygoodplugins/mcp-automem openclaw --mode mcp --workspace ~/clawd
+
+# Legacy skill mode — curl-based fallback
+npx @verygoodplugins/mcp-automem openclaw --mode skill --workspace ~/clawd
 ```
 
-This command:
-1. Creates `~/.openclaw/skills/automem/SKILL.md` with memory operation instructions
-2. Automatically registers the skill in `~/.openclaw/openclaw.json`
+What each mode installs:
 
-Unlike other platform installers, OpenClaw supports automatic configuration file modification.
+- **Plugin**: Registers the AutoMem plugin in `plugins.entries.automem` within `~/.openclaw/openclaw.json`
+- **MCP**: Creates `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json`
+- **Skill**: Creates `<workspace>/skills/automem/SKILL.md` with curl-based API reference
+
+All modes automatically update `~/.openclaw/openclaw.json`. See the [OpenClaw platform guide](/docs/platforms/openclaw/) for full details on each mode.
 
 ## Warp Terminal
 
@@ -232,7 +241,11 @@ graph TB
         CursorRules[".cursor/rules/automem.mdc"]
         ClaudeMD["~/.claude/CLAUDE.md"]
         AgentsMD["AGENTS.md"]
-        OpenClawSkill["~/.openclaw/skills/automem/SKILL.md"]
+    end
+
+    subgraph "OpenClaw Outputs"
+        OpenClawPlugin["plugins.entries.automem<br/>in ~/.openclaw/openclaw.json"]
+        OpenClawMCPFiles["&lt;workspace&gt;/skills/automem/SKILL.md<br/>+ &lt;workspace&gt;/config/mcporter.json"]
     end
 
     subgraph "MCP Server"
@@ -248,7 +261,8 @@ graph TB
     CursorInstaller["cursor command"] --> CursorRules
     ClaudeCodeInstaller["claude-code command"] --> HookScripts["~/.claude/hooks/ + ~/.claude/scripts/"]
     CodexInstaller["codex command"] --> AgentsMD
-    OpenClawInstaller["openclaw command"] --> OpenClawSkill
+    OpenClawInstaller["openclaw command"] -->|"--mode plugin"| OpenClawPlugin
+    OpenClawInstaller -->|"--mode mcp/skill"| OpenClawMCPFiles
 ```
 
 ## Verification

@@ -19,7 +19,7 @@ The mcp-automem package provides three distinct integration strategies, each sui
 |---|---|---|---|
 | **Complexity** | Low - reuse existing server | Medium - write CLI installer | Low - just HTTP calls |
 | **AI Integration** | Native tool calling | Instruction-based (rules) | Manual API calls in code |
-| **Examples** | Claude Desktop, Cursor | Cursor installer, Codex installer | OpenClaw skill |
+| **Examples** | Claude Desktop, Cursor | Cursor installer, Codex installer | OpenClaw plugin/skill |
 | **Best For** | MCP-native platforms | Platforms needing setup automation | Bots, scripts, non-MCP tools |
 | **Maintenance** | Automatic via server updates | Template updates needed | Manual client management |
 
