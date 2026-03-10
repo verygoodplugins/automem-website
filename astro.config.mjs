@@ -81,7 +81,7 @@ export default defineConfig({
             { label: 'Cursor IDE', slug: 'docs/platforms/cursor' },
             { label: 'ChatGPT', slug: 'docs/platforms/chatgpt' },
             { label: 'OpenAI Codex', slug: 'docs/platforms/codex' },
-            { label: 'Warp Terminal', slug: 'docs/platforms/warp' },
+
             { label: 'GitHub Copilot', slug: 'docs/platforms/github-copilot' },
             { label: 'ElevenLabs Agents', slug: 'docs/platforms/elevenlabs' },
             { label: 'Alexa', slug: 'docs/platforms/alexa' },
