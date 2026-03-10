@@ -65,10 +65,10 @@ Here's where we actually stand, with a corrected evaluator and honest methodolog
 | Category | Score | Count |
 |---|---|---|
 | **Overall (cats 1-4)** | **89.27%** | 208/233 |
-| Single-hop Recall | 88.37% | 38/43 |
+| Single-hop Recall | 79.07% | 34/43 |
 | Temporal Understanding | 92.06% | 58/63 |
 | Multi-hop Reasoning | 46.15% | 6/13 |
-| Open Domain | 88.60% | 101/114 |
+| Open Domain | 96.49% | 110/114 |
 
 **Full locomo** (10 conversations, 1,986 questions — the complete benchmark with GPT-4o judge for Category 5):
 
@@ -77,7 +77,7 @@ Here's where we actually stand, with a corrected evaluator and honest methodolog
 | **Overall (all cats, w/ judge)** | **87.56%** | 1739/1986 |
 | Complex Reasoning (w/ judge) | 95.74% | 427/446 |
 
-The full run includes all five categories across all 10 conversations. The mini subset gives us fast iteration; the full run is the number of record.
+The full run includes all five categories across all 10 conversations. The mini subset gives us fast iteration; the full run is the official number.
 
 **CORE SOTA: 88.24%.** AutoMem beats it by ~1 percentage point on comparable categories.
 
