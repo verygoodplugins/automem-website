@@ -414,7 +414,7 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 | `type` | string (enum) | Yes | 11 authorable types | Relationship type |
 | `strength` | number | No | 0.0–1.0, default 0.5 | Relationship strength |
 
-**Relationship type enum values:**
+**Relationship type enum values (11 authorable):**
 1. `RELATES_TO` — General relationship
 2. `LEADS_TO` — Causal relationship
 3. `OCCURRED_BEFORE` — Temporal ordering
@@ -426,9 +426,11 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of decision
 11. `PART_OF` — Component of larger effort
-12. `SIMILAR_TO` — Semantically similar (system-generated)
-13. `PRECEDED_BY` — Temporal predecessor (system-generated)
-14. `DISCOVERED` — Heuristic edge with `kind` property (system-generated)
+
+The following 3 types are **system-generated** and cannot be created via `associate_memories`. They appear in recall results and can be filtered/expanded but are not valid enum values for this tool:
+- `SIMILAR_TO` — Semantically similar (created by enrichment)
+- `PRECEDED_BY` — Temporal predecessor (created by enrichment)
+- `DISCOVERED` — Heuristic edge with `kind` property (created by consolidation)
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.
