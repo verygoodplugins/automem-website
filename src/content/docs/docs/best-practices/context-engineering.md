@@ -248,17 +248,17 @@ templates/myplatform/
 
 ## Direct API Usage (Non-MCP Integration)
 
-### OpenClaw Direct curl Approach
+### OpenClaw Integration Approaches
 
-OpenClaw integration bypasses MCP entirely, using direct HTTP calls to the AutoMem API:
+OpenClaw now supports three integration modes: **plugin** (recommended), **MCP** via mcporter, and **legacy skill** using direct curl. The plugin mode uses a native OpenClaw plugin with typed AutoMem tools and a built-in auto-recall hook. MCP mode routes through mcporter for the same typed tools. The legacy skill mode still uses direct HTTP calls via curl.
 
-**Why this works**: OpenClaw's architecture makes native skill files simpler than MCP integration. The SKILL.md file teaches the bot to construct HTTP requests directly.
+**Why multiple modes**: OpenClaw's architecture makes both native plugins and skill files viable. The plugin approach is simplest for new installs, while MCP mode suits users who prefer the mcporter tool layer. Legacy curl mode remains available for backward compatibility.
 
-**Benefits of direct API approach**:
-- No MCP protocol overhead
-- No PATH or binary resolution issues
-- Native to platform's execution model
-- Simpler error handling
+**Benefits of plugin mode over curl**:
+- Typed tool interface instead of raw HTTP construction
+- Built-in auto-recall with configurable exposure (`dm-only`, `all`, `off`)
+- No dependency on bash/curl availability
+- Cleaner error handling through the plugin system
 
 ### AutoMemClient HTTP Implementation
 

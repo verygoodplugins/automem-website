@@ -18,7 +18,7 @@ Each platform installer generates and installs appropriate configuration files f
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
-| `openclaw` | `~/.openclaw/skills/automem/SKILL.md` | `~/.openclaw/openclaw.json` (automatic) |
+| `openclaw` | Plugin config, skill, or mcporter.json (mode-dependent) | `~/.openclaw/openclaw.json` (automatic) |
 
 ## Claude Desktop
 
