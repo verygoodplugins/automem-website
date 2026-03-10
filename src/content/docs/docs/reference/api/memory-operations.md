@@ -253,7 +253,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 |-----------|------|---------|-------------|
 | `tags` | `string[]` | `[]` | Tags for categorization and filtering |
 | `importance` | `number` (0.0–1.0) | `0.5` | Importance score affecting recall ranking |
-| `embedding` | `number[]` | auto-generated | Vector matching `VECTOR_SIZE` config (default 1024) for semantic search |
+| `embedding` | `number[]` | auto-generated | Vector matching `VECTOR_SIZE` config (default 1024, truncated from provider native dimensions via OpenAI `dimensions` parameter) for semantic search |
 | `metadata` | `object` | `{}` | Structured metadata (files modified, error signatures, etc.) |
 | `timestamp` | `string` (ISO 8601) | `now()` | When the memory was created |
 

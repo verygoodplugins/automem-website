@@ -365,7 +365,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_PROVIDER` | str | `auto` | Provider selection: `auto`, `voyage`, `openai`, `local`, `ollama`, `placeholder` |
 | `EMBEDDING_BATCH_SIZE` | int | 20 | Maximum memories per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | float | 2.0 | Maximum batch accumulation time (seconds) |
-| `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection) |
+| `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection). `text-embedding-3-small` natively produces 1536d but the system passes `dimensions=VECTOR_SIZE` to OpenAI's API to truncate via Matryoshka representation learning. |
 
 ### Provider-Specific Configuration
 

@@ -244,21 +244,6 @@ The workflow validates that `FALKORDB_HOST` is not a Railway internal hostname (
 
 The TCP proxy endpoint is found in Railway Dashboard → FalkorDB service → Settings → Networking → TCP Proxy.
 
-### Railway Backup Service
-
-For users who prefer Railway-hosted backups, [`scripts/Dockerfile.health-monitor`](https://github.com/verygoodplugins/automem/blob/main/scripts/Dockerfile.health-monitor) provides a containerized backup service that runs continuously.
-
-The Dockerfile defines a Python 3.11 Alpine container that installs dependencies, copies the backup script, creates the output directory, and runs an infinite loop with backup and sleep cycles.
-
-**Railway deployment configuration:**
-
-- **Builder:** Dockerfile
-- **Dockerfile Path:** `scripts/Dockerfile.health-monitor`
-- **Root Directory:** `/` (project root)
-- **Environment Variables:** Same as `memory-service`: `FALKORDB_HOST`, `FALKORDB_PORT`, `FALKORDB_PASSWORD`, `QDRANT_URL`, `QDRANT_API_KEY`, plus optional AWS credentials
-
-**Resource usage:** Approximately $1-2/month on Railway Pro (minimal CPU/memory during sleep cycles).
-
 ---
 
 ## Backup Configuration Reference

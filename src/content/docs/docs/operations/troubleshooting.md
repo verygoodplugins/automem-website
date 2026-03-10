@@ -353,7 +353,7 @@ flowchart TD
 
 **2. Failed Writes (5-10% drift)**
 
-Qdrant writes have try/except wrappers in [`automem/stores/vector_store.py`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail silently, causing drift.
+Qdrant upsert logic is in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail with exception logging, causing drift.
 
 **3. Data Loss Event (>50% drift)**
 
@@ -485,7 +485,7 @@ Failed to upsert memory to Qdrant
 
 **Option 1: Auto-detect existing dimensions (safe)**
 
-The auto-detection logic in [`automem/stores/vector_store.py:100-150`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py#L100-L150) checks the existing collection schema. Set `EMBEDDING_PROVIDER=auto` and restart the service — it will detect the existing dimensions.
+The auto-detection logic in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) checks the existing collection schema. Set `EMBEDDING_PROVIDER=auto` and restart the service — it will detect the existing dimensions.
 
 **Option 2: Reset Qdrant collection (data loss)**
 

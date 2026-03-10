@@ -259,7 +259,7 @@ Data can be migrated using backup/restore scripts:
 
 1. **Export from Docker Compose**:
    ```bash
-   python scripts/backup_automem.py --output ./backups/
+   python scripts/backup_automem.py --backup-dir ./backups/
    ```
 2. **Import to Railway**:
    - Use GitHub Actions backup workflow to populate Railway from exported snapshots
