@@ -52,7 +52,7 @@ The LoCoMo dataset doesn't include a ground-truth `answer` field for Category 5 
 
 Once we caught this, we added an optional GPT-4o judge for Category 5. When there's no ground truth, you need an LLM to assess whether the response is actually reasonable. With the judge enabled, Category 5 scores **95.74%** — genuinely strong, but now actually measured.
 
-A note on reproducibility: LLM judges aren't deterministic. We pin the model version (GPT-4o), use temperature 0, and enforce a 90-second request timeout to prevent stalled runs. Scores may drift slightly across reruns — that's inherent to LLM-based evaluation. The judge is opt-in (`BENCH_JUDGE_MODEL` env var) precisely because of this tradeoff. Categories 1-4 use deterministic string/date matching and are fully reproducible.
+A note on reproducibility: LLM judges aren't deterministic. We use `gpt-4o` as the default judge model — note that this is a rolling alias, not a dated snapshot, so results may shift as OpenAI updates the underlying model. For exact reproducibility, pin `BENCH_JUDGE_MODEL` to a dated snapshot like `gpt-4o-2024-11-20`. We set temperature 0 and enforce a 90-second request timeout to prevent stalled runs. The judge is opt-in (`BENCH_JUDGE_MODEL` env var) precisely because of this tradeoff. Categories 1-4 use deterministic string/date matching and are fully reproducible.
 
 Without the judge, we skip Category 5 entirely and report N/A. No more fake 100%.
 
