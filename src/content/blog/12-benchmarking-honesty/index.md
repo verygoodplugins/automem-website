@@ -52,11 +52,15 @@ The LoCoMo dataset doesn't include a ground-truth `answer` field for Category 5 
 
 Once we caught this, we added an optional GPT-4o judge for Category 5. When there's no ground truth, you need an LLM to assess whether the response is actually reasonable. With the judge enabled, Category 5 scores **95.74%** — genuinely strong, but now actually measured.
 
+A note on reproducibility: LLM judges aren't deterministic. We pin the model version (GPT-4o), use temperature 0, and enforce a 90-second request timeout to prevent stalled runs. Scores may drift slightly across reruns — that's inherent to LLM-based evaluation. The judge is opt-in (`BENCH_JUDGE_MODEL` env var) precisely because of this tradeoff. Categories 1-4 use deterministic string/date matching and are fully reproducible.
+
 Without the judge, we skip Category 5 entirely and report N/A. No more fake 100%.
 
 ## The Honest Numbers
 
-Here's where we actually stand, with a corrected evaluator and honest methodology:
+Here's where we actually stand, with a corrected evaluator and honest methodology.
+
+**locomo-mini** (2 conversations, 233 questions — our rapid iteration benchmark):
 
 | Category | Score | Count |
 |---|---|---|
@@ -65,8 +69,15 @@ Here's where we actually stand, with a corrected evaluator and honest methodolog
 | Temporal Understanding | 92.06% | 58/63 |
 | Multi-hop Reasoning | 46.15% | 6/13 |
 | Open Domain | 88.60% | 101/114 |
-| Complex Reasoning (w/ judge) | 95.74% | 427/446 |
+
+**Full locomo** (10 conversations, 1,986 questions — the complete benchmark with GPT-4o judge for Category 5):
+
+| Category | Score | Count |
+|---|---|---|
 | **Overall (all cats, w/ judge)** | **87.56%** | 1739/1986 |
+| Complex Reasoning (w/ judge) | 95.74% | 427/446 |
+
+The full run includes all five categories across all 10 conversations. The mini subset gives us fast iteration; the full run is the number of record.
 
 **CORE SOTA: 88.24%.** AutoMem beats it by ~1 percentage point on comparable categories.
 
