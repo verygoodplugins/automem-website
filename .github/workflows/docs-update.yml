@@ -83,4 +83,4 @@ jobs:
 
             The source repo is checked out at .source-repo/ for you to read.
             After making changes, run `npm run build` to verify the site compiles.
-          claude_args: "--model claude-sonnet-4-6 --max-turns 30 --allowedTools 'Read' --allowedTools 'Edit' --allowedTools 'Write' --allowedTools 'Glob' --allowedTools 'Grep' --allowedTools 'Bash(npm run build)'"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 50 --allowedTools 'Read' --allowedTools 'MultiEdit' --allowedTools 'Edit' --allowedTools 'Write' --allowedTools 'Glob' --allowedTools 'Grep' --allowedTools 'Bash(npm run build)'"
