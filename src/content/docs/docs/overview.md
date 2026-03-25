@@ -86,7 +86,7 @@ graph TB
 
 ### MCP Bridge Position
 
-The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, Warp) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients (OpenClaw, Alexa) bypass the bridge entirely.
+The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, GitHub Copilot, AntiGravity) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients such as OpenClaw plugin mode and Alexa can bypass the bridge entirely.
 
 ```mermaid
 graph TB
@@ -95,7 +95,7 @@ graph TB
         CC["Claude Code"]
         CUR["Cursor IDE"]
         COD["OpenAI Codex"]
-        WARP["Warp Terminal"]
+        AG["Google AntiGravity"]
         CGIT["GitHub Copilot"]
         CGP["ChatGPT<br/>(Developer Mode)"]
     end
@@ -127,7 +127,7 @@ graph TB
     CC -->|"MCP Protocol<br/>(stdio)"| SERVER
     CUR -->|"MCP Protocol<br/>(stdio)"| SERVER
     COD -->|"MCP Protocol<br/>(stdio)"| SERVER
-    WARP -->|"MCP Protocol<br/>(stdio)"| SERVER
+    AG -->|"MCP Protocol<br/>(stdio)"| SERVER
     CGIT -->|"MCP Protocol<br/>(stdio)"| SERVER
     CGP -->|"Remote MCP<br/>(HTTP/SSE)"| API
 
@@ -412,8 +412,8 @@ graph TB
         CheckFastEmbed{"FastEmbed<br/>available?"}
         UsePlaceholder["PlaceholderEmbeddingProvider<br/>automem/embedding/placeholder.py"]
 
-        Voyage["VoyageEmbeddingProvider<br/>automem/embedding/voyage.py<br/>voyage-4: 1024d<br/>voyage-4-large: 2048d"]
-        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d native, truncated to VECTOR_SIZE<br/>text-embedding-3-large: 3072d"]
+        Voyage["VoyageEmbeddingProvider<br/>automem/embedding/voyage.py<br/>voyage-4: 256/512/1024/2048 configurable"]
+        OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d native<br/>auto-upgrades to large when VECTOR_SIZE > 1536"]
         FastEmbed["FastEmbedProvider<br/>automem/embedding/fastembed.py<br/>BAAI/bge-base-en-v1.5: 768d"]
     end
 
@@ -452,8 +452,8 @@ graph TB
 
 **Provider characteristics:**
 
-- **Voyage**: High-quality embeddings, supports 1024d and 2048d, requires API key
-- **OpenAI**: High-quality embeddings, text-embedding-3-small (1536d native, truncated to `VECTOR_SIZE`) and text-embedding-3-large (3072d), configurable via `OPENAI_BASE_URL` for compatible providers
+- **Voyage**: High-quality embeddings, supports 256d, 512d, 1024d, and 2048d, requires API key
+- **OpenAI**: High-quality embeddings, uses `text-embedding-3-small` by default, auto-upgrades to `text-embedding-3-large` when `VECTOR_SIZE > 1536`, and supports compatible providers via `OPENAI_BASE_URL`
 - **FastEmbed**: Local ONNX models, no API key required, ~210MB model download on first use
 - **Placeholder**: Hash-based deterministic vectors, no semantic meaning, always available as fallback
 
@@ -471,7 +471,7 @@ Platforms connect via MCP protocol using stdio transport:
 - **[Cursor IDE](/docs/platforms/cursor/)**: `.cursor/rules/automem.mdc` + `~/.cursor/mcp.json`
 - **[Claude Code](/docs/platforms/claude-code/)**: `~/.claude.json` MCP config
 - **[OpenAI Codex](/docs/platforms/codex/)**: `~/.codex/config.toml` MCP config
-- **[Warp Terminal](/docs/platforms/warp/)**: `warp-rules.md` auto-detection
+- **[Google AntiGravity](/docs/platforms/antigravity/)**: MCP Store custom server config
 - **[GitHub Copilot](/docs/platforms/github-copilot/)**: Repository MCP configuration
 
 ### Remote MCP (Cloud Platforms)

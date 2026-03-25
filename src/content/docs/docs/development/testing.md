@@ -301,7 +301,7 @@ assert "mem_001" in vector_store.deleted_ids
 
 ### Performance Testing Procedures
 
-From [`docs/OPTIMIZATIONS.md`](https://github.com/verygoodplugins/automem/blob/main/docs/OPTIMIZATIONS.md):
+Based on the current batching and logging implementation:
 
 **Embedding batching verification** — rapidly create 25 memories and check logs:
 

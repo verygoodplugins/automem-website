@@ -87,12 +87,12 @@ Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem
 ```
 
 :::note
-Cursor reads the `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` from the environment or `.env` file in the project directory, not from the MCP config `env` block. Ensure your `.env` file is present in the project root.
+Cursor can receive `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
 :::
 
 ### Project-Specific Rules
 
-The `.cursor/rules/automem.mdc` file installed by the `cursor` command contains instructions that tell Cursor's AI how to use AutoMem tools — when to store memories, how to structure recalls, and what context to preserve across sessions.
+The `.cursor/rules/automem.mdc` file installed by the `cursor` command contains instructions that tell Cursor's AI how to use AutoMem tools — when to store memories, how to structure recalls, and what context to preserve across sessions. Treat this project file as the source of truth for operational behavior; keep any global Cursor rules thin and cross-project.
 
 ## Claude Code
 
@@ -191,24 +191,6 @@ What each mode installs:
 
 All modes automatically update `~/.openclaw/openclaw.json`. See the [OpenClaw platform guide](/docs/platforms/openclaw/) for full details on each mode.
 
-## Warp Terminal
-
-Warp Terminal has native MCP support. Configure AutoMem in Warp's MCP settings by adding:
-
-```json
-{
-  "name": "automem",
-  "command": "npx",
-  "args": ["@verygoodplugins/mcp-automem"],
-  "env": {
-    "AUTOMEM_ENDPOINT": "http://localhost:8001",
-    "AUTOMEM_API_KEY": "your-api-key"
-  }
-}
-```
-
-Warp's MCP configuration interface is accessible through Settings → AI → MCP Servers.
-
 ## Remote MCP (Cloud Platforms)
 
 For cloud AI platforms that cannot run local processes (ChatGPT, Claude.ai via API, ElevenLabs), AutoMem provides a remote MCP bridge via the `mcp-sse-server` service.
@@ -299,7 +281,7 @@ AutoMem is connected and healthy:
 
 **Solutions**:
 1. Check `~/.cursor/mcp.json` exists and has valid JSON
-2. Ensure `.env` file is present in the project root with `AUTOMEM_ENDPOINT`
+2. Ensure `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` are available either in `~/.cursor/mcp.json` under `env` or via the inherited process environment
 3. Reload the Cursor window (Cmd/Ctrl+Shift+P → "Reload Window")
 
 ### Claude Code: Permission Denied

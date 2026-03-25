@@ -7,7 +7,7 @@ sidebar:
 
 This page covers building custom integrations for platforms not officially supported by mcp-automem. It explains the three integration approaches (MCP server, template system, direct API), provides code-level details for implementing each approach, and documents the extension points available for custom platform support.
 
-For information about officially supported platforms, see [Platform Integrations](/docs/platforms/claude-desktop/). For details about the MCP server implementation itself, see [MCP Server](/docs/api-reference/mcp-server/). For using the CLI installer commands, see [CLI Reference](/docs/api-reference/cli-reference/).
+For information about officially supported platforms, see [Platform Integrations](/docs/platforms/claude-desktop/). For details about the MCP bridge and stdio server, see [MCP Bridge](/docs/architecture/mcp-bridge/). For using the CLI installer commands, see [Platform Installers](/docs/cli/platform-installers/).
 
 ## Integration Approaches
 

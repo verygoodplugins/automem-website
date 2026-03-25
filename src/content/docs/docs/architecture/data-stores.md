@@ -144,7 +144,7 @@ Qdrant is optional. If unavailable, AutoMem falls back to keyword-based search i
 | `QDRANT_URL` | _(none)_ | Full URL (e.g., `https://xyz.cloud.qdrant.io`) |
 | `QDRANT_API_KEY` | _(none)_ | API key for authentication |
 | `QDRANT_COLLECTION` | `memories` | Collection name |
-| `VECTOR_SIZE` | `3072` | Embedding dimensions (must match collection and provider) |
+| `VECTOR_SIZE` | `1024` | Embedding dimensions (must match collection and provider) |
 
 **Dimension Validation**
 
@@ -156,7 +156,7 @@ Existing deployments using 768-dimensional embeddings should keep `VECTOR_SIZE=7
 
 ### Embedding Generation
 
-AutoMem uses a provider-based embedding system with automatic fallback. The default provider is OpenAI's `text-embedding-3-large` model (3072 dimensions).
+AutoMem uses a provider-based embedding system with automatic fallback. The default configuration is `EMBEDDING_PROVIDER=auto` with OpenAI's `text-embedding-3-small` as the default OpenAI model. In auto mode, Voyage is preferred when configured; OpenAI is the next network provider fallback.
 
 **Provider Selection Priority (Auto Mode):**
 
@@ -170,8 +170,8 @@ AutoMem uses a provider-based embedding system with automatic fallback. The defa
 
 | Provider | Dimensions | Requires Network | Cost | Semantic Quality |
 |---|---|---|---|---|
-| Voyage | 1024, 2048 | Yes | Paid API | Excellent |
-| OpenAI | 768, 3072 | Yes | Paid API | Excellent |
+| Voyage | 256, 512, 1024, 2048 | Yes | Paid API | Excellent |
+| OpenAI | 1536 native (`text-embedding-3-small`), 3072 (`text-embedding-3-large`) | Yes | Paid API | Excellent |
 | Ollama | Configurable | Local | Free | Good |
 | FastEmbed | 384, 768, 1024 | No (after download) | Free | Good |
 | Placeholder | Configurable | No | Free | None (hash-based) |
@@ -181,19 +181,19 @@ AutoMem uses a provider-based embedding system with automatic fallback. The defa
 | Environment Variable | Default | Description |
 |---|---|---|
 | `EMBEDDING_PROVIDER` | `auto` | Provider selection: `auto`, `voyage`, `openai`, `ollama`, `local`, `placeholder` |
-| `VECTOR_SIZE` | `3072` | Embedding dimensions (must match Qdrant collection) |
-| `EMBEDDING_MODEL` | `text-embedding-3-large` | Model identifier for provider |
+| `VECTOR_SIZE` | `1024` | Embedding dimensions (must match Qdrant collection) |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Model identifier for provider |
 | `VOYAGE_API_KEY` | _(none)_ | Voyage AI API key |
 | `VOYAGE_MODEL` | `voyage-4` | Voyage model selection |
 | `OPENAI_API_KEY` | _(none)_ | OpenAI or compatible API key |
 | `OPENAI_BASE_URL` | _(none)_ | Custom endpoint for OpenAI-compatible providers |
-| `OLLAMA_BASE_URL` | _(none)_ | Ollama server endpoint |
-| `OLLAMA_MODEL` | _(none)_ | Ollama embedding model |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server endpoint |
+| `OLLAMA_MODEL` | `nomic-embed-text` | Ollama embedding model |
 | `EMBEDDING_BATCH_SIZE` | `20` | Max items per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | `2.0` | Max wait before processing batch |
 
 :::tip
-Batching reduces API calls by 40-50% compared to individual requests.
+Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR_SIZE > 1536` while using OpenAI, AutoMem automatically upgrades from `text-embedding-3-small` to `text-embedding-3-large`. When `OPENAI_BASE_URL` targets an endpoint that doesn't support the `dimensions` parameter, AutoMem omits it and `text-embedding-3-small` may return its native 1536-dimensional output.
 :::
 
 ### Vector Search Implementation
@@ -297,5 +297,5 @@ The Qdrant client maintains HTTP/2 connection pooling automatically via `httpx`.
 | **Port** | 6379 (Redis protocol) | 6333 (HTTP) |
 | **Typical Latency** | 5-20ms (keyword) | 50-100ms (vector) |
 | **Failure Impact** | Service halts | Degrades to keyword search |
-| **Default Dimensions** | N/A | 3072 (configurable: 384, 768, 1024, 2048, 3072) |
+| **Default Dimensions** | N/A | 1024 (common configs: 256, 512, 1024, 1536, 2048, 3072) |
 | **Embedding Providers** | N/A | Voyage, OpenAI, Ollama, FastEmbed, Placeholder |
