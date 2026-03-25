@@ -25,31 +25,22 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
     steps:
       - uses: actions/checkout@v6
 
       - name: Validate and resolve source payload
         id: resolve
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           SOURCE_REPO="${{ github.event.client_payload.source_repo || inputs.source_repo }}"
-          SOURCE_REF="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
+          SOURCE_SHA="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
 
           if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/automem-graph-viewer" ]; then
             echo "::error::Unsupported source repo: $SOURCE_REPO"
             exit 1
           fi
 
-          # Resolve short SHAs, branch names, and tags to full commit SHAs
-          FULL_SHA=$(gh api "repos/$SOURCE_REPO/commits/$SOURCE_REF" -q '.sha') || {
-            echo "::error::Could not resolve ref '$SOURCE_REF' in $SOURCE_REPO"
-            exit 1
-          }
-
           echo "source_repo=$SOURCE_REPO" >> $GITHUB_OUTPUT
-          echo "source_sha=$FULL_SHA" >> $GITHUB_OUTPUT
+          echo "source_sha=$SOURCE_SHA" >> $GITHUB_OUTPUT
 
       - name: Checkout source repo
         uses: actions/checkout@v6
@@ -58,14 +49,6 @@ jobs:
           ref: ${{ steps.resolve.outputs.source_sha }}
           path: .source-repo
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
@@ -82,5 +65,14 @@ jobs:
             Reason: ${{ inputs.reason || 'Automated dispatch from source repo merge' }}
 
             The source repo is checked out at .source-repo/ for you to read.
-            After making changes, run `npm run build` to verify the site compiles.
-          claude_args: "--model claude-sonnet-4-6 --max-turns 50 --allowedTools 'Read' --allowedTools 'MultiEdit' --allowedTools 'Edit' --allowedTools 'Write' --allowedTools 'Glob' --allowedTools 'Grep' --allowedTools 'Bash(npm run build)'"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 30"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify docs build
+        run: |
+          npm ci
+          npm run build
