@@ -9,7 +9,9 @@
     "build": "rm -rf .astro node_modules/.astro && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check-links": "node scripts/check-links.js"
+    "check-links": "node scripts/check-links.js",
+    "docs:report": "node scripts/docs-workflow.mjs report",
+    "test": "node --test scripts/docs-workflow.test.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.7",

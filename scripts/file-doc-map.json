@@ -1,10 +1,47 @@
 {
   "_meta": {
     "description": "Maps source file patterns to doc page slugs. Use exact paths or '/**' suffix for subtrees.",
-    "last_updated": "2026-03-09",
+    "last_updated": "2026-03-25",
     "automem_repo": "verygoodplugins/automem",
     "mcp_repo": "verygoodplugins/mcp-automem",
-    "graph_viewer_repo": "verygoodplugins/automem-graph-viewer"
+    "graph_viewer_repo": "verygoodplugins/automem-graph-viewer",
+    "default_release_ranges": {
+      "automem": {
+        "from_ref": "v0.14.0",
+        "to_ref": "v0.15.1"
+      },
+      "mcp-automem": {
+        "from_ref": "mcp-automem-v0.12.0",
+        "to_ref": "mcp-automem-v0.13.0"
+      }
+    },
+    "local_harness": {
+      "ignored_unmapped_patterns": {
+        "shared": [
+          ".github/**",
+          "CHANGELOG.md",
+          "CLAUDE.md",
+          "AGENTS.md",
+          ".gitignore",
+          "package-lock.json",
+          ".release-please-manifest.json",
+          "tests/**",
+          "**/*.test.ts",
+          "**/*.test.py",
+          "benchmarks/**"
+        ],
+        "automem": [
+          "scripts/bench/**",
+          "test-locomo-benchmark.sh",
+          "scripts/deploy_check.sh"
+        ],
+        "mcp-automem": [
+          ".claude-plugin/**",
+          "manifest.json"
+        ],
+        "automem-graph-viewer": []
+      }
+    }
   },
   "automem": {
     "app.py": ["architecture/overview", "getting-started/introduction"],
@@ -51,6 +88,7 @@
     "automem/enrichment/**": ["architecture/enrichment", "architecture/background-processing"],
 
     "automem/search/**": ["core-concepts/hybrid-search", "reference/api/recall-operations"],
+    "automem/search/runtime_relations.py": ["reference/api/relationships", "reference/api/recall-operations", "core-concepts/relationship-types"],
 
     "automem/stores/graph_store.py": ["architecture/data-stores"],
     "automem/stores/vector_store.py": ["architecture/data-stores", "core-concepts/hybrid-search"],
@@ -67,6 +105,7 @@
     "automem/utils/graph.py": ["architecture/data-stores", "reference/api/relationships"],
 
     "consolidation.py": ["core-concepts/consolidation"],
+    "automem/consolidation/runtime_routes.py": ["reference/api/consolidation"],
 
     "INSTALLATION.md": ["getting-started/quick-start", "getting-started/docker", "deployment/railway", "deployment/docker"],
     ".env.example": ["getting-started/environment-variables", "reference/configuration"],
@@ -104,6 +143,7 @@
   "mcp-automem": {
     "src/index.ts": ["reference/api/direct-vs-mcp", "architecture/mcp-bridge", "reference/api/memory-operations", "reference/api/recall-operations", "reference/api/relationships"],
     "src/automem-client.ts": ["reference/api/memory-operations", "reference/api/recall-operations", "reference/api/direct-vs-mcp"],
+    "src/recall-memory.ts": ["reference/api/recall-operations", "reference/api/direct-vs-mcp"],
     "src/types.ts": ["core-concepts/memory-model", "reference/api/direct-vs-mcp"],
     "src/env.ts": ["reference/configuration"],
     "src/cli/setup.ts": ["cli/setup", "cli/platform-installers"],
@@ -111,6 +151,7 @@
     "src/cli/claude-code.ts": ["platforms/claude-code", "cli/platform-installers"],
     "src/cli/codex.ts": ["platforms/codex", "cli/platform-installers"],
     "src/cli/openclaw.ts": ["platforms/openclaw", "cli/platform-installers"],
+    "src/openclaw-plugin.ts": ["platforms/openclaw", "cli/platform-installers"],
     "src/cli/queue.ts": ["cli/queue"],
     "src/cli/templates.ts": ["cli/config-tools"],
     "src/cli/migrate.ts": ["cli/config-tools"],
@@ -118,6 +159,9 @@
     "README.md": ["overview", "getting-started/introduction"],
     "INSTALLATION.md": ["getting-started/quick-start", "cli/setup"],
     "package.json": ["cli/setup", "getting-started/quick-start"],
+    "server.json": ["reference/api/direct-vs-mcp"],
+    "openclaw.plugin.json": ["platforms/openclaw"],
+    "skills/automem/SKILL.md": ["platforms/openclaw"],
     "env.example": ["reference/configuration", "getting-started/environment-variables"],
     "plugins/**": ["best-practices/memory-rules", "platforms/claude-code"],
     "templates/**": ["cli/config-tools", "platforms/claude-code", "platforms/cursor", "platforms/codex", "platforms/openclaw"]

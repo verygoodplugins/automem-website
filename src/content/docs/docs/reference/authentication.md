@@ -227,7 +227,7 @@ The variables `API_TOKEN` and `ADMIN_TOKEN` are accepted as backward-compatible 
 
 **Railway (Automatic):**
 
-Railway's template automatically generates secure tokens using the `generator: secret` directive in [`railway-template.json`](https://github.com/verygoodplugins/automem/blob/main/railway-template.json). No manual action required.
+For Railway deployments, set `AUTOMEM_API_TOKEN` and `ADMIN_API_TOKEN` as Railway environment variables or generated secrets in the service configuration. The repo no longer ships a standalone `railway-template.json` for this.
 
 **Manual (Local Development):**
 

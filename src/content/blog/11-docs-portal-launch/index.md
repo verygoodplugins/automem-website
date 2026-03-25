@@ -62,7 +62,7 @@ This one took work. Not copy-paste work — actual "run it on the platform, find
 | [Claude.ai](/docs/platforms/claude-web/) | ✅ Remote MCP via SSE bridge |
 | [OpenAI Codex](/docs/platforms/codex/) | ✅ MCP native |
 | [OpenClaw](/docs/platforms/openclaw/) | ✅ CLI installer |
-| [Warp Terminal](/docs/platforms/warp/) | ✅ MCP native |
+| [Google AntiGravity](/docs/platforms/antigravity/) | ✅ MCP native |
 | [ElevenLabs](/docs/platforms/elevenlabs/) | ✅ Direct API |
 | [GitHub Copilot](/docs/platforms/github-copilot/) | ✅ MCP via VS Code |
 | [Alexa](/docs/platforms/alexa/) | ✅ Direct API |

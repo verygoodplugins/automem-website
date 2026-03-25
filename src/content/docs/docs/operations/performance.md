@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/main/automem/) module paths, [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/), and [`docs/OPTIMIZATIONS.md`](https://github.com/verygoodplugins/automem/blob/main/docs/OPTIMIZATIONS.md) in the AutoMem repository.
+This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/main/automem/) module paths, [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/), and the current optimization paths in the AutoMem repository.
 :::
 
 This page describes AutoMem's performance optimization strategies, including embedding batching, relationship count caching, query time tracking, and structured logging. These optimizations reduce API costs by 40-50%, speed up consolidation by 80%, and improve monitoring capabilities. For operational monitoring strategies, see [Health Monitoring](/docs/operations/health/).
@@ -174,7 +174,7 @@ All API endpoints track query execution time using `time.perf_counter()` and inc
 | `GET /recall` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) | `query_time_ms` |
 | `POST /memory` | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) | `query_time_ms` |
 | `GET /health` | [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) | `query_time_ms` |
-| `GET /analyze` | [`automem/api/analyze.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/analyze.py) | `query_time_ms` |
+| `GET /analyze` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) | `query_time_ms` |
 
 ### Response Format
 

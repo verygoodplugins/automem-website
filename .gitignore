@@ -38,6 +38,9 @@ img/*.jpeg
 # TypeScript
 *.tsbuildinfo
 
+# Local docs workflow artifacts
+.docs-reports/
+
 # DeepWiki scraped content (temp)
 .deepwiki-raw/
 DOCS_TASK.md
