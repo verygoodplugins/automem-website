@@ -103,7 +103,7 @@ Qdrant configuration enables semantic search but is not required. AutoMem operat
 | `QDRANT_API_KEY` | string | No | _unset_ | Qdrant authentication key (required for cloud) |
 | `QDRANT_COLLECTION` | string | No | `memories` | Collection name for memory vectors |
 | `COLLECTION_NAME` | string | No | `memories` | Alias for `QDRANT_COLLECTION` |
-| `VECTOR_SIZE` | int | No | `1024` | Embedding dimension (768/1024/2048/3072) |
+| `VECTOR_SIZE` | int | No | `1024` | Embedding dimension (common values: 256/512/1024/1536/2048/3072) |
 
 :::caution[Dimension compatibility]
 AutoMem performs dimension validation before writing to Qdrant. Mismatches raise `ValueError` to prevent corrupting the vector store. When migrating dimensions, keep `VECTOR_SIZE` matching the existing collection until re-embedding completes.
@@ -144,15 +144,15 @@ Controls embedding generation with automatic provider selection:
 | Provider | Quality | Cost | Offline | Dimensions | API Key |
 |----------|---------|------|---------|------------|---------|
 | Voyage | Excellent | $0.00012/1K tokens | No | 256/512/1024/2048 | Required |
-| OpenAI | Excellent | $0.00002–$0.00013/1K tokens | No | 768/3072 | Required |
+| OpenAI | Excellent | $0.00002–$0.00013/1K tokens | No | 1536 native for `text-embedding-3-small`, 3072 for `text-embedding-3-large` | Required |
 | Ollama | Good | Free | Yes | Model-dependent | Not required |
 | FastEmbed | Good | Free | Yes (after download) | 384/768/1024 | Not required |
 | Placeholder | None | Free | Yes | Configurable | Not required |
 
-When `EMBEDDING_PROVIDER=auto`, the provider is selected by checking API key availability in order: Voyage, then OpenAI, then local/Ollama, then placeholder.
+When `EMBEDDING_PROVIDER=auto`, the provider is selected by checking API key availability in order: Voyage, then OpenAI, then local/Ollama, then placeholder. If Voyage is configured but the current `VECTOR_SIZE` is incompatible, AutoMem skips Voyage and continues to the next provider. If OpenAI is selected and `VECTOR_SIZE > 1536`, the default `text-embedding-3-small` model is automatically upgraded to `text-embedding-3-large`.
 
 :::note[OpenAI-compatible providers]
-When `OPENAI_BASE_URL` is set, the OpenAI provider becomes compatible with third-party endpoints. The provider omits the `dimensions` parameter for non-OpenAI URLs to avoid compatibility issues with OpenRouter, LiteLLM, and similar proxies.
+When `OPENAI_BASE_URL` is set, AutoMem uses that base URL for both the embedding provider and the OpenAI-backed classification client. For embedding requests against non-OpenAI URLs, AutoMem omits the `dimensions` parameter to avoid compatibility issues with OpenRouter, LiteLLM, and similar proxies.
 :::
 
 ### Embedding Batching
@@ -289,6 +289,8 @@ CONTRADICTS, REINFORCES, INVALIDATED_BY, EVOLVED_INTO, DERIVED_FROM, PART_OF,
 SIMILAR_TO, PRECEDED_BY, DISCOVERED
 ```
 
+The first 11 relation types are authorable. `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` are system-generated and appear in recall/filtering flows, but they are not valid inputs for `associate` or `associate_memories`.
+
 **Type aliases** — The `TYPE_ALIASES` mapping in `automem.config` normalizes variations:
 
 | Input | Normalized To |
@@ -306,7 +308,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py).
 
 ### Memory Content Governance
 

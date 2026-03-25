@@ -271,14 +271,9 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Recall Operations](/docs/reference/api/recall-operations/).
 :::
 
-**Parallel Query Optimization (MCP layer):**
+**Response shaping and backend-owned recall:**
 
-When `tags` are present, `recall_memory` executes two queries in parallel and merges results:
-
-1. Semantic search with tag filtering (`query + tags`)
-2. Pure tag matching (`tags` only, no semantic query)
-
-This ensures comprehensive recall that neither pure vector search nor pure tag filtering achieves alone.
+The MCP bridge forwards recall arguments to the AutoMem backend and then formats the response for MCP clients. Hybrid scoring, tag filtering, deduplication, entity expansion, and `priority_ids` guarantees all live in AutoMem itself, so HTTP and MCP produce the same recall behavior when you pass the same arguments.
 
 **HTTP API equivalent:**
 
@@ -300,7 +295,7 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 | `type` | string | Yes | enum: 11 authorable types | Relationship type |
 | `strength` | number | No | 0–1, default 0.5 | Relationship strength |
 
-**Relationship Type Enum (all 16 values):**
+**Relationship type enum values (11 authorable):**
 
 1. `RELATES_TO` — General relationship
 2. `LEADS_TO` — Causal relationship
@@ -313,9 +308,8 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 9. `EVOLVED_INTO` — Updated version
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
-12. `SIMILAR_TO` — Semantically similar (system-generated)
-13. `PRECEDED_BY` — Temporal predecessor (system-generated)
-14. `DISCOVERED` — Heuristic edge with `kind` property (system-generated)
+
+System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`.
 
 **MCP Tool Output:**
 
@@ -457,13 +451,13 @@ This dual format ensures:
 | Custom application or script | Preferred — direct control | — |
 | Bulk operations (migration, reprocessing) | Preferred — no overhead | — |
 | Content size validation before storage | — | Built-in two-tier limits |
-| Parallel tag+semantic recall | Manual implementation | Built-in optimization |
+| Structured tool output for chat clients | Manual formatting | Built-in `content` + `structuredContent` |
 | Admin operations (reembed, reprocess) | Preferred — admin endpoints | Not available |
 | Health monitoring dashboards | Preferred — full response | Simplified output only |
 | Process supervision (stable PID) | — | Supported via `PROCESS_TITLE` env var |
 
 :::tip[Prefer MCP for AI agents]
-AI platforms using the MCP protocol get automatic tool discovery, schema validation, and structured output parsing. The MCP layer also adds content governance (rejecting >2000 char memories before they reach the API) and parallel query optimization that would need to be manually implemented when using the HTTP API directly.
+AI platforms using the MCP protocol get automatic tool discovery, schema validation, structured output parsing, and content governance before requests reach the API. Recall ranking, tag handling, deduplication, and graph/entity expansion remain backend behavior, so the main difference is transport and response format, not search semantics.
 :::
 
 ---

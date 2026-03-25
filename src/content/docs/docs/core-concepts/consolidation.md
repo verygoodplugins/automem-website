@@ -184,12 +184,12 @@ graph TB
 
     subgraph "Pairwise Analysis"
         Check["Check Existing Edges<br/>MATCH (m1)-[r]-(m2)"]
-        Similarity["Calculate Cosine Similarity<br/>_cosine_similarity()"]
+        Similarity["Load vectors (prefer Qdrant)<br/>then calculate cosine similarity"]
         Type["Determine Connection Type"]
     end
 
     subgraph "Connection Rules"
-        R1["Decision + Decision<br/>similarity < 0.3<br/>→ CONTRASTS_WITH"]
+        R1["Decision + Decision<br/>similarity < 0.3<br/>→ contrastive candidate<br/>(stored as CONTRADICTS)"]
         R2["Insight + Pattern<br/>similarity > 0.5<br/>→ DISCOVERED (kind=explains)"]
         R3["Different types<br/>similarity > 0.7<br/>→ DISCOVERED (kind=shares_theme)"]
         R4["Same week<br/>similarity < 0.4<br/>→ DISCOVERED (kind=parallel_context)"]
@@ -209,6 +209,8 @@ graph TB
     R4 --> Create
 ```
 
+In `v0.15.1`, the creative pass prefers vectors retrieved from Qdrant and only falls back to legacy graph-stored embeddings when they already exist on memory nodes.
+
 **Connection Types Discovered:**
 
 | Type | Conditions | Confidence | Example |
@@ -220,7 +222,7 @@ graph TB
 
 **Edge Properties:**
 
-Each discovered edge is created as a `DISCOVERED` relationship with a `kind` property (`explains`, `shares_theme`, `parallel_context`) and carries metadata about the connection confidence:
+Contrastive decision pairs are normalized into the public `CONTRADICTS` relation before persistence. Heuristic discovery kinds are stored under `DISCOVERED` with a `kind` property (`explains`, `shares_theme`, `parallel_context`) plus metadata about confidence:
 
 ```json
 {
@@ -244,7 +246,7 @@ The cluster task groups semantically similar memories using a graph-based cluste
 
 ```mermaid
 graph TB
-    Load["Load Memories with Embeddings<br/>WHERE m.embeddings IS NOT NULL<br/>AND m.relevance_score > 0.3"]
+    Load["Load memory metadata from graph<br/>WHERE relevance_score > 0.3<br/>then fetch vectors from Qdrant"]
 
     Build["Build Adjacency Graph<br/>For each pair:<br/>if cosine_similarity >= 0.75:<br/>  connect(i, j)"]
 
@@ -273,6 +275,8 @@ graph TB
 - **Similarity threshold:** 0.75 (configurable via `self.similarity_threshold`)
 - **Minimum cluster size:** 5 memories (configurable via `self.min_cluster_size`) — clusters with fewer members do not create MetaMemory nodes
 - **Relevance filter:** Only clusters memories with `relevance_score > 0.3`
+
+The primary clustering path in `v0.15.1` loads memory metadata from FalkorDB and scrolls vectors from Qdrant. Reading `m.embeddings` from graph nodes remains a legacy/test fallback when no vector store is available.
 
 **MetaMemory Node Properties:**
 

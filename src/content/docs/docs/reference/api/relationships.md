@@ -36,8 +36,9 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 - Creates directed edges (memory1 → memory2)
 - Requires both memories to exist in FalkorDB
 - Stores relationships as graph edges, not separate nodes
-- Supports 11 authorable semantic relationship types
+- Accepts 11 authorable semantic relationship types
 - Optional strength score (0.0–1.0) for weighting connections
+- System-generated relations (`SIMILAR_TO`, `PRECEDED_BY`, `DISCOVERED`) can appear in recall and graph results but are not valid inputs to this endpoint
 
 ---
 
@@ -89,7 +90,7 @@ curl -X POST https://your-automem-instance/associate \
 
 ## Relationship Types
 
-AutoMem supports 11 authorable semantic relationship types that enable rich knowledge graph construction.
+AutoMem lets you create 11 authorable semantic relationship types directly. The graph may also contain 3 system-generated types created by enrichment and consolidation.
 
 ```mermaid
 graph TB
@@ -164,7 +165,7 @@ Although all relationships are stored as directed edges in FalkorDB (`memory1_id
 The `/associate` endpoint enforces the following validation:
 
 1. **Memory Existence**: Both `memory1_id` and `memory2_id` must reference existing Memory nodes in FalkorDB
-2. **Relationship Type**: `type` must be in the `ALLOWED_RELATIONS` configuration set
+2. **Relationship Type**: `type` must be one of the 11 authorable relation types accepted by the association endpoint
 3. **Strength Bounds**: If provided, `strength` must be between 0.0 and 1.0 (inclusive)
 4. **Required Fields**: `memory1_id`, `memory2_id`, and `type` are mandatory
 5. **Authentication**: Valid `AUTOMEM_API_TOKEN` required via Authorization header
@@ -664,7 +665,7 @@ The `relations` field in recall results shows the relationship metadata for expa
 
 **Recall expansion cost (moderate):**
 - Each seed memory can trigger up to `relation_limit` edge traversals
-- Each expanded memory requires a Qdrant lookup for its vector embedding
+- Expanded memories are loaded from FalkorDB traversal results; Qdrant affects the initial semantic seed search, not relation expansion itself
 - Recommendation: Use `expand_min_strength` and `expand_min_importance` to limit expansion
 
 **Bi-directional traversal:**

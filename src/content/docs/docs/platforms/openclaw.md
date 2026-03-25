@@ -209,7 +209,7 @@ In plugin and MCP modes, the skill maps natural language to typed AutoMem tools:
 | "update memory ..." | `automem_update_memory` |
 | "delete memory ..." | `automem_delete_memory` (recalls first if ambiguous) |
 | "link these memories ..." | `automem_associate_memories` |
-| "is memory healthy?" | `automem_check_database_health` |
+| "is memory healthy?" | `automem_check_health` |
 
 Slash commands also work: `/automem remember ...`, `/automem recall ...`, `/automem update ...`, `/automem delete ...`.
 

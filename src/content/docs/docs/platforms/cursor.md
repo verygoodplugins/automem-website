@@ -183,7 +183,8 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 - Context hints: `language`, `active_path`, `context_types`, `priority_ids`
 
 **`associate_memories`** — Create typed relationships between memories
-- 11 authorable types: `RELATES_TO`, `LEADS_TO`, `EVOLVED_INTO`, `DERIVED_FROM`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `OCCURRED_BEFORE`, `PART_OF`, `PREFERS_OVER`; plus system-generated `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`
+- 11 authorable types: `RELATES_TO`, `LEADS_TO`, `EVOLVED_INTO`, `DERIVED_FROM`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `OCCURRED_BEFORE`, `PART_OF`, `PREFERS_OVER`
+- Recall results may also surface system-generated `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` relations, but those are not valid inputs to `associate_memories`
 - `strength`: 0.0–1.0 association weight
 
 **`update_memory`** — Modify existing memory fields
@@ -233,7 +234,7 @@ If more detail is needed:
 For memory-first behavior across **all** Cursor projects, add rules to **Cursor Settings > General > Rules for AI** instead of per-project `.mdc` files.
 
 :::note
-Global rules enable basic recall/storage but not full agent features (priority tool selection, automatic recall triggers), which require project-level installation.
+Keep global rules thin and cross-project. Use them for a short memory policy baseline only; put operational behavior, tagging conventions, and tool usage patterns in the project-level `.cursor/rules/automem.mdc` file installed by `npx @verygoodplugins/mcp-automem cursor`.
 :::
 
 ---
