@@ -174,7 +174,7 @@ All API endpoints track query execution time using `time.perf_counter()` and inc
 | `GET /recall` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) | `query_time_ms` |
 | `POST /memory` | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) | `query_time_ms` |
 | `GET /health` | [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) | `query_time_ms` |
-| `GET /analyze` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) | `query_time_ms` |
+| `GET /analyze` | [`automem/api/analyze.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/analyze.py) | `query_time_ms` |
 
 ### Response Format
 

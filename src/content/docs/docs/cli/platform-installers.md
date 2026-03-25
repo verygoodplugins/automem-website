@@ -87,7 +87,7 @@ Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem
 ```
 
 :::note
-Cursor can receive `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` directly from the MCP config `env` block shown above. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
+Cursor can receive `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
 :::
 
 ### Project-Specific Rules

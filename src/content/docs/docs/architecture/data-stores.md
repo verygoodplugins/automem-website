@@ -193,7 +193,7 @@ AutoMem uses a provider-based embedding system with automatic fallback. The defa
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | `2.0` | Max wait before processing batch |
 
 :::tip
-Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR_SIZE > 1536` while using OpenAI, AutoMem automatically upgrades from `text-embedding-3-small` to `text-embedding-3-large`. When `OPENAI_BASE_URL` targets a non-OpenAI-compatible proxy, AutoMem omits the `dimensions` parameter and the small model may return its native 1536-dimensional output.
+Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR_SIZE > 1536` while using OpenAI, AutoMem automatically upgrades from `text-embedding-3-small` to `text-embedding-3-large`. When `OPENAI_BASE_URL` targets an endpoint that doesn't support the `dimensions` parameter, AutoMem omits it and `text-embedding-3-small` may return its native 1536-dimensional output.
 :::
 
 ### Vector Search Implementation
