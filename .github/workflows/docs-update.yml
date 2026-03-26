@@ -1,4 +1,18 @@
+# Auto-Update Docs
+#
+# Triggered by source repos (automem, mcp-automem, automem-graph-viewer)
+# on release, or manually via workflow_dispatch.
+#
+# Flow:
+# 1. Source repo creates a release via release-please
+# 2. release-please.yml dispatches a docs-update event here
+# 3. This workflow checks out the source at the release tag
+# 4. Claude Code Action reads source changes and updates doc pages
+# 5. If changes are needed, Claude creates a PR with a Cloudflare preview
+# 6. Human reviews the preview and merges
+
 name: Auto-Update Docs
+
 on:
   repository_dispatch:
     types: [docs-update]
@@ -13,7 +27,7 @@ on:
           - verygoodplugins/mcp-automem
           - verygoodplugins/automem-graph-viewer
       source_sha:
-        description: "Commit SHA to document (optional; defaults to main)"
+        description: "Commit SHA or tag to document (defaults to main)"
         required: false
       reason:
         description: "What changed and why docs need updating"
@@ -25,22 +39,35 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
 
       - name: Validate and resolve source payload
         id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           SOURCE_REPO="${{ github.event.client_payload.source_repo || inputs.source_repo }}"
-          SOURCE_SHA="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
+          SOURCE_REF="${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}"
+          REASON="${{ github.event.client_payload.reason || inputs.reason || 'Automated dispatch from source repo release' }}"
 
-          if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ] && [ "$SOURCE_REPO" != "verygoodplugins/automem-graph-viewer" ]; then
+          if [ "$SOURCE_REPO" != "verygoodplugins/automem" ] && \
+             [ "$SOURCE_REPO" != "verygoodplugins/mcp-automem" ] && \
+             [ "$SOURCE_REPO" != "verygoodplugins/automem-graph-viewer" ]; then
             echo "::error::Unsupported source repo: $SOURCE_REPO"
             exit 1
           fi
 
+          # Resolve short SHAs, branch names, and tags to full commit SHAs
+          FULL_SHA=$(gh api "repos/$SOURCE_REPO/commits/$SOURCE_REF" -q '.sha') || {
+            echo "::error::Could not resolve ref '$SOURCE_REF' in $SOURCE_REPO"
+            exit 1
+          }
+
           echo "source_repo=$SOURCE_REPO" >> $GITHUB_OUTPUT
-          echo "source_sha=$SOURCE_SHA" >> $GITHUB_OUTPUT
+          echo "source_sha=$FULL_SHA" >> $GITHUB_OUTPUT
+          echo "reason=$REASON" >> $GITHUB_OUTPUT
 
       - name: Checkout source repo
         uses: actions/checkout@v6
@@ -49,6 +76,14 @@ jobs:
           ref: ${{ steps.resolve.outputs.source_sha }}
           path: .source-repo
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
@@ -59,20 +94,20 @@ jobs:
 
             Source repo: ${{ steps.resolve.outputs.source_repo }}
             Changed files: ${{ toJSON(github.event.client_payload.changed_files) || 'See reason below' }}
-            Affected doc pages: ${{ toJSON(github.event.client_payload.affected_docs) || 'Determine from reason' }}
+            Affected doc pages: ${{ toJSON(github.event.client_payload.affected_docs) || 'Determine from file-doc-map.json and reason' }}
             Commit: ${{ steps.resolve.outputs.source_sha }}
             Compare URL: ${{ github.event.client_payload.compare_url || 'N/A' }}
-            Reason: ${{ inputs.reason || 'Automated dispatch from source repo merge' }}
+            Reason: ${{ steps.resolve.outputs.reason }}
 
             The source repo is checked out at .source-repo/ for you to read.
-          claude_args: "--model claude-sonnet-4-6 --max-turns 30"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Verify docs build
-        run: |
-          npm ci
-          npm run build
+            After making changes, run `npm run build` to verify the site compiles.
+          claude_args: >-
+            --model claude-sonnet-4-6
+            --max-turns 50
+            --allowedTools 'Read'
+            --allowedTools 'MultiEdit'
+            --allowedTools 'Edit'
+            --allowedTools 'Write'
+            --allowedTools 'Glob'
+            --allowedTools 'Grep'
+            --allowedTools 'Bash(npm run build)'
