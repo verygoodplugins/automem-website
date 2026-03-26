@@ -1,143 +1,210 @@
 ---
 ---
 
-<div class="memory-graph-shell relative w-full max-w-6xl mx-auto px-4 py-12 overflow-hidden rounded-3xl border-2 border-lab-text bg-lab-bg shadow-hard">
-  <div class="absolute inset-0 bg-[radial-gradient(#1f1f1f_1px,transparent_1px)] [background-size:18px_18px] opacity-30 pointer-events-none"></div>
-  <div class="graph-glow absolute -inset-x-24 inset-y-6 bg-gradient-to-br from-lab-secondary/10 via-lab-accent/5 to-transparent blur-3xl"></div>
+<div class="memory-graph relative w-full max-w-5xl mx-auto h-[340px] sm:h-[480px]">
+  <!-- Ambient glows -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-lab-secondary/[0.06] blur-[100px] pointer-events-none"></div>
+  <div class="absolute top-[25%] right-[25%] w-40 h-40 rounded-full bg-lab-accent/[0.04] blur-[80px] pointer-events-none"></div>
 
-  <div class="relative z-10 grid md:grid-cols-[1.3fr_1fr] gap-8 items-center">
-    <!-- Graph stage -->
-    <div class="relative h-[420px]">
-      <svg class="graph-lines absolute inset-0 w-full h-full" viewBox="0 0 1000 520" preserveAspectRatio="none">
-        <g stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-lab-border/80">
-          <line data-edge="core:idea" x1="500" y1="291" x2="220" y2="166" class="edge" />
-          <line data-edge="core:research" x1="500" y1="291" x2="780" y2="177" class="edge" />
-          <line data-edge="core:habit" x1="500" y1="291" x2="180" y2="385" class="edge" />
-          <line data-edge="core:code" x1="500" y1="291" x2="820" y2="364" class="edge" />
-          <line data-edge="idea:research" x1="220" y1="166" x2="780" y2="177" class="edge" />
-          <line data-edge="habit:code" x1="180" y1="385" x2="820" y2="364" class="edge" />
-          <line data-edge="research:code" x1="780" y1="177" x2="820" y2="364" class="edge" />
-          <line data-edge="habit:idea" x1="180" y1="385" x2="220" y2="166" class="edge" />
-          <line data-edge="core:retrieval" x1="500" y1="291" x2="500" y2="83" class="edge" />
-          <line data-edge="retrieval:thread" x1="500" y1="83" x2="700" y2="125" class="edge" />
-          <line data-edge="retrieval:session" x1="500" y1="83" x2="300" y2="125" class="edge" />
-        </g>
-      </svg>
+  <!-- SVG Edges -->
+  <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <g class="graph-edges">
+      <!-- Core connections -->
+      <line data-edge="core:retrieval" x1="50" y1="54" x2="50" y2="10" vector-effect="non-scaling-stroke" />
+      <line data-edge="core:idea" x1="50" y1="54" x2="15" y2="46" vector-effect="non-scaling-stroke" />
+      <line data-edge="core:research" x1="50" y1="54" x2="85" y2="46" vector-effect="non-scaling-stroke" />
+      <line data-edge="core:habit" x1="50" y1="54" x2="18" y2="84" vector-effect="non-scaling-stroke" />
+      <line data-edge="core:code" x1="50" y1="54" x2="82" y2="84" vector-effect="non-scaling-stroke" />
+      <!-- Retrieval sub-graph -->
+      <line data-edge="retrieval:session" x1="50" y1="10" x2="28" y2="22" vector-effect="non-scaling-stroke" />
+      <line data-edge="retrieval:thread" x1="50" y1="10" x2="72" y2="22" vector-effect="non-scaling-stroke" />
+      <!-- Side connections -->
+      <line data-edge="habit:idea" x1="18" y1="84" x2="15" y2="46" vector-effect="non-scaling-stroke" />
+      <line data-edge="research:code" x1="85" y1="46" x2="82" y2="84" vector-effect="non-scaling-stroke" />
+      <!-- Cross connections -->
+      <line data-edge="idea:research" x1="15" y1="46" x2="85" y2="46" vector-effect="non-scaling-stroke" />
+      <line data-edge="habit:code" x1="18" y1="84" x2="82" y2="84" vector-effect="non-scaling-stroke" />
+    </g>
+  </svg>
 
-      <!-- Nodes -->
-      <div class="node core" data-node="core" style="left: 50%; top: 56%;">
-        <div class="node-body">
-          <div class="node-label text-xs tracking-wider text-lab-muted">MEMORY CORE</div>
-          <div class="text-lab-text font-bold">AutoMem</div>
-        </div>
-      </div>
-
-      <div class="node" data-node="idea" style="left: 22%; top: 32%;">Ideas</div>
-      <div class="node" data-node="research" style="left: 78%; top: 34%;">Research</div>
-      <div class="node" data-node="habit" style="left: 18%; top: 74%;">Habits</div>
-      <div class="node" data-node="code" style="left: 82%; top: 70%;">Code</div>
-      <div class="node pill" data-node="retrieval" style="left: 50%; top: 16%;">Retrieval Graph</div>
-      <div class="node small" data-node="thread" style="left: 70%; top: 24%;">Thread</div>
-      <div class="node small" data-node="session" style="left: 30%; top: 24%;">Session</div>
+  <!-- Nodes -->
+  <div class="mg-node core" data-node="core" style="left: 50%; top: 54%;">
+    <div class="core-ring"></div>
+    <div class="core-inner">
+      <span class="core-label">MEMORY CORE</span>
+      <span class="core-title">AutoMem</span>
     </div>
+  </div>
 
-    <!-- Copy -->
-    <div class="space-y-4 relative">
-      <div class="comment-header">:: BACKGROUND_PROCESS</div>
-      <h3 class="text-3xl font-bold leading-tight">Dreams while you dream.</h3>
-      <p class="text-lab-muted leading-relaxed">
-        AutoMem runs quietly in the background, stitching every thought into a retrieval graph. It notices patterns,
-        links context, and keeps the right edges warm so your agents answer with your voice—without you ever thinking about it.
-      </p>
-      <div class="bg-lab-surface border border-lab-border rounded-xl p-4 font-mono text-sm shadow-hard">
-        <div class="flex items-center gap-2 mb-2 text-lab-secondary uppercase text-xs tracking-widest">
-          <span class="w-2 h-2 rounded-full bg-lab-success animate-pulse"></span>
-          daemon: recall.service
-        </div>
-        <div class="space-y-1 text-lab-text">
-          <div>&gt; ingest(stream) → normalize → link()</div>
-          <div class="text-lab-muted">paths warmed: 12 · associations refreshed: 48ms</div>
-        </div>
-      </div>
-    </div>
+  <div class="mg-node pill" data-node="retrieval" style="left: 50%; top: 10%;">Retrieval Graph</div>
+  <div class="mg-node sm hidden sm:block" data-node="session" style="left: 28%; top: 22%;">Session</div>
+  <div class="mg-node sm hidden sm:block" data-node="thread" style="left: 72%; top: 22%;">Thread</div>
+  <div class="mg-node" data-node="idea" style="left: 15%; top: 46%;">Ideas</div>
+  <div class="mg-node" data-node="research" style="left: 85%; top: 46%;">Research</div>
+  <div class="mg-node" data-node="habit" style="left: 18%; top: 84%;">Habits</div>
+  <div class="mg-node" data-node="code" style="left: 82%; top: 84%;">Code</div>
+
+  <!-- Floating daemon readout -->
+  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 font-mono text-[11px] px-4 py-2.5 rounded-full bg-lab-surface/80 backdrop-blur-sm border border-lab-border/50 whitespace-nowrap">
+    <span class="flex items-center gap-1.5 text-lab-success uppercase tracking-widest">
+      <span class="w-1.5 h-1.5 rounded-full bg-lab-success animate-pulse"></span>
+      recall.service
+    </span>
+    <span class="text-lab-border">|</span>
+    <span class="text-lab-muted">ingest → normalize → link · 48ms</span>
   </div>
 </div>
 
 <style>
-  .memory-graph-shell .node {
+  /* ── Nodes ── */
+  .memory-graph .mg-node {
     position: absolute;
     transform: translate(-50%, -50%);
-    padding: 10px 14px;
-    background: #0A0A0A;
-    border: 2px solid #1f1f1f;
-    border-radius: 14px;
-    color: #cbd5e1;
+    padding: 9px 16px;
+    background: rgba(10, 10, 16, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    color: rgba(224, 224, 224, 0.5);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.015em;
+    white-space: nowrap;
+    z-index: 2;
+    cursor: default;
+    transition: border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .memory-graph .mg-node.pill {
+    border-color: rgba(52, 211, 153, 0.2);
+    color: rgba(52, 211, 153, 0.7);
+  }
+
+  .memory-graph .mg-node.sm {
+    font-size: 11px;
+    padding: 6px 11px;
+    color: rgba(224, 224, 224, 0.3);
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+
+  /* ── Core node ── */
+  .memory-graph .mg-node.core {
+    padding: 0;
+    background: none;
+    border: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .core-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 18px 28px;
+    background: rgba(10, 10, 16, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(139, 92, 246, 0.25);
+    border-radius: 16px;
+  }
+
+  .core-ring {
+    position: absolute;
+    inset: -10px;
+    border-radius: 26px;
+    border: 1px solid rgba(139, 92, 246, 0.1);
+    animation: ring-breathe 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .core-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: rgba(139, 92, 246, 0.5);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .core-title {
+    font-size: 17px;
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.01em;
-    box-shadow: 6px 6px 0 #000;
-    transition: border-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    color: rgba(139, 92, 246, 0.85);
+    letter-spacing: -0.01em;
   }
 
-  .memory-graph-shell .node.core {
-    padding: 18px 24px;
-    border-radius: 18px;
-    border-color: #6ee7ff;
-    background: linear-gradient(145deg, rgba(110, 231, 255, 0.12), rgba(79, 70, 229, 0.12));
-    box-shadow: 10px 10px 0 #000;
+  /* ── Active states (gold accent) ── */
+  .memory-graph .mg-node.active {
+    border-color: rgba(249, 216, 87, 0.4);
+    color: rgba(249, 216, 87, 0.85);
+    box-shadow: 0 0 24px rgba(249, 216, 87, 0.06);
+    transform: translate(-50%, -50%) scale(1.05);
   }
 
-  .memory-graph-shell .node.pill {
-    border-color: #22c55e;
-    background: rgba(34, 197, 94, 0.08);
+  .memory-graph .mg-node.core.active .core-inner {
+    border-color: rgba(249, 216, 87, 0.35);
+    box-shadow: 0 0 30px rgba(249, 216, 87, 0.08);
   }
 
-  .memory-graph-shell .node.small {
-    font-size: 12px;
-    padding: 8px 10px;
+  .memory-graph .mg-node.core.active .core-title {
+    color: rgba(249, 216, 87, 0.9);
   }
 
-  .memory-graph-shell .node.active {
-    border-color: #f472b6;
-    color: #fdf2f8;
-    background: linear-gradient(135deg, rgba(244, 114, 182, 0.18), rgba(56, 189, 248, 0.12));
-    box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.35), 8px 8px 0 #000;
-    transform: translate(-50%, -50%) scale(1.04);
+  .memory-graph .mg-node.core.active .core-label {
+    color: rgba(249, 216, 87, 0.5);
   }
 
-  .memory-graph-shell .node:hover {
-    border-color: #f472b6;
-    color: #fdf2f8;
+  .memory-graph .mg-node:not(.core):hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(224, 224, 224, 0.7);
   }
 
-  .memory-graph-shell .edge {
-    stroke: currentColor;
-    stroke-dasharray: 6 6;
-    opacity: 0.35;
-    transition: opacity 0.4s ease, stroke 0.4s ease;
+  /* ── Edges ── */
+  .graph-edges line {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    stroke-dasharray: 3 9;
+    transition: stroke 0.5s ease, stroke-width 0.5s ease;
   }
 
-  .memory-graph-shell .edge.active {
-    stroke: #f472b6;
-    opacity: 0.9;
+  .graph-edges line.active {
+    stroke: rgba(249, 216, 87, 0.35);
+    stroke-width: 1.5;
     stroke-dasharray: 2 8;
-    animation: dash-move 1.2s linear infinite;
+    animation: edge-flow 2s linear infinite;
   }
 
-  .graph-lines {
-    filter: drop-shadow(0 0 12px rgba(0,0,0,0.2));
+  /* ── Animations ── */
+  @keyframes ring-breathe {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.06); }
   }
 
-  @keyframes dash-move {
-    to {
-      stroke-dashoffset: -20;
+  @keyframes edge-flow {
+    to { stroke-dashoffset: -20; }
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .memory-graph .mg-node {
+      font-size: 11px;
+      padding: 6px 11px;
+    }
+    .core-inner {
+      padding: 14px 20px;
+    }
+    .core-title {
+      font-size: 14px;
     }
   }
 </style>
 
 <script>
-  const nodes = Array.from(document.querySelectorAll('[data-node]'));
-  const edges = Array.from(document.querySelectorAll('[data-edge]'));
+  const graphNodes = Array.from(document.querySelectorAll('.memory-graph [data-node]'));
+  const graphEdges = Array.from(document.querySelectorAll('.memory-graph [data-edge]'));
 
   const sequences = [
     { nodes: ['idea', 'core', 'research'], edges: ['core:idea', 'core:research', 'idea:research'] },
@@ -147,8 +214,8 @@
   ];
 
   function clearActive() {
-    nodes.forEach((n) => n.classList.remove('active'));
-    edges.forEach((e) => e.classList.remove('active'));
+    graphNodes.forEach(n => n.classList.remove('active'));
+    graphEdges.forEach(e => e.classList.remove('active'));
   }
 
   function runSequence(index = 0) {
@@ -156,13 +223,13 @@
     clearActive();
 
     seq.nodes.forEach((id, i) => {
-      const nodeEl = nodes.find((n) => n.dataset.node === id);
-      if (nodeEl) setTimeout(() => nodeEl.classList.add('active'), 300 * i);
+      const el = graphNodes.find(n => n.dataset.node === id);
+      if (el) setTimeout(() => el.classList.add('active'), 350 * i);
     });
 
     seq.edges.forEach((id, i) => {
-      const edgeEl = edges.find((e) => e.dataset.edge === id);
-      if (edgeEl) setTimeout(() => edgeEl.classList.add('active'), 400 * i);
+      const el = graphEdges.find(e => e.dataset.edge === id);
+      if (el) setTimeout(() => el.classList.add('active'), 450 * i);
     });
 
     setTimeout(() => runSequence(index + 1), 5500);
