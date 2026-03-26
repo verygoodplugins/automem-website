@@ -82,55 +82,6 @@ const timelineEntries = [
     description:
       'Claude Code plugin with automatic memory capture hooks. Session start recall, session end summary. Cursor hooks integration for automatic capture. Integration tests and CLI smoke tests.',
   },
-  {
-    date: '2026-01-06',
-    time: '23:20 UTC',
-    title: 'MCP 0.10.0 • MCP Registry & SessionStart Hook',
-    description:
-      'Listed on the official MCP Registry. SessionStart hook for automatic memory recall at conversation start. Memory content size guidelines and warnings surfaced in the client.',
-  },
-  {
-    date: '2025-12-10',
-    time: '11:00 UTC',
-    title: '0.9.3 • Expansion Filtering',
-    description:
-      'expand_min_strength and expand_min_importance parameters for fine-grained graph traversal control. Vector dimension autodetect for embedding providers. CI workflow for automated testing on PRs.',
-  },
-  {
-    date: '2025-12-04',
-    time: '16:00 UTC',
-    title: 'MCP 0.8.1 • Spec Compliance',
-    description:
-      'All MCP tools now return structuredContent with outputSchema, aligning recall outputs (results, dedup_removed) to spec.',
-  },
-  {
-    date: '2025-12-02',
-    time: '14:00 UTC',
-    title: 'MCP 0.8.0 • Advanced Recall Tools',
-    description:
-      'Exposed expand_entities/relations, auto_decompose, context-aware boosts, and full tool metadata in the MCP client; simplified Claude Code integration.',
-  },
-  {
-    date: '2025-12-02',
-    time: '08:00 UTC',
-    title: '0.9.1 • Entity Expansion + SOTA',
-    description:
-      'Added expand_entities/entity_expansion params for graph hops and hit 90.53% on LoCoMo-10 (multi-hop up to 50%).',
-  },
-  {
-    date: '2025-11-20',
-    time: '09:30 UTC',
-    title: '0.9.0 • Retrieval Engine Upgrade',
-    description:
-      'Multi-hop bridge discovery, temporal alignment scoring, and weighted hybrid scoring (vector, keyword, relation, temporal, importance) boost recall precision.',
-  },
-  {
-    date: '2025-11-08',
-    time: '10:00 UTC',
-    title: '0.8.0 • API Modularization & Security',
-    description:
-      'Refactored monolithic app into modular blueprints, hardened memory IDs to server-generated UUIDs, and fixed Railway secrets/volumes for reliable deploys.',
-  },
 ];
 ---
 
@@ -320,7 +271,7 @@ const timelineEntries = [
         <div class="timeline-line"></div>
         <div class="timeline-line-fill" id="timeline-line-fill"></div>
 
-        <div class="space-y-12 relative">
+        <div class="space-y-12 relative timeline-entries">
           {timelineEntries.map((entry) => (
           <div class={`timeline-item flex gap-6 ${entry.pending ? 'pending' : ''}`} data-timeline-item>
             <div
@@ -350,6 +301,14 @@ const timelineEntries = [
           </div>
           ))}
         </div>
+
+        <div class="timeline-fadeout"></div>
+      </div>
+
+      <div class="text-center mt-8">
+        <a href="/docs/development/changelog/" class="inline-flex items-center gap-2 font-mono text-sm text-lab-muted hover:text-lab-accent transition-colors">
+          View full changelog <span aria-hidden="true">→</span>
+        </a>
       </div>
     </section>
 
@@ -512,6 +471,15 @@ const timelineEntries = [
 
     .timeline-item.pending {
       opacity: 0.9;
+    }
+
+    .timeline-fadeout {
+      position: relative;
+      height: 120px;
+      margin-top: -120px;
+      background: linear-gradient(to bottom, transparent, rgb(var(--lab-bg)));
+      pointer-events: none;
+      z-index: 10;
     }
   </style>
 

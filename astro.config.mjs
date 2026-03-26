@@ -175,6 +175,7 @@ export default defineConfig({
             { label: 'Project Structure', slug: 'docs/development/structure' },
             { label: 'Local Setup', slug: 'docs/development/local-setup' },
             { label: 'Testing', slug: 'docs/development/testing' },
+            { label: 'Changelog', slug: 'docs/development/changelog' },
             { label: 'Release Process', slug: 'docs/development/releases' },
           ],
         },
