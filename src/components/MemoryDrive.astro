@@ -56,17 +56,52 @@
 </div>
 
 <style>
+  /* ── Theme tokens ── */
+  .memory-graph {
+    --mg-surface: rgb(var(--lab-bg) / 0.8);
+    --mg-surface-strong: rgb(var(--lab-bg) / 0.9);
+    --mg-text: rgb(var(--lab-text) / 0.5);
+    --mg-text-dim: rgb(var(--lab-text) / 0.3);
+    --mg-text-hover: rgb(var(--lab-text) / 0.7);
+    --mg-border: rgb(255 255 255 / 0.06);
+    --mg-border-dim: rgb(255 255 255 / 0.03);
+    --mg-border-hover: rgb(255 255 255 / 0.12);
+    --mg-secondary: rgb(var(--lab-secondary) / 0.7);
+    --mg-secondary-border: rgb(var(--lab-secondary) / 0.2);
+    --mg-secondary-dim: rgb(var(--lab-secondary) / 0.5);
+    --mg-secondary-strong: rgb(var(--lab-secondary) / 0.85);
+    --mg-secondary-ring: rgb(var(--lab-secondary) / 0.1);
+    --mg-secondary-core-border: rgb(var(--lab-secondary) / 0.25);
+    --mg-accent: rgb(var(--lab-accent) / 0.85);
+    --mg-accent-border: rgb(var(--lab-accent) / 0.4);
+    --mg-accent-glow: rgb(var(--lab-accent) / 0.06);
+    --mg-accent-glow-strong: rgb(var(--lab-accent) / 0.08);
+    --mg-accent-dim: rgb(var(--lab-accent) / 0.5);
+    --mg-accent-strong: rgb(var(--lab-accent) / 0.9);
+    --mg-accent-edge: rgb(var(--lab-accent) / 0.35);
+    --mg-edge: rgb(255 255 255 / 0.1);
+    --mg-success: rgb(var(--lab-success) / 0.7);
+    --mg-success-border: rgb(var(--lab-success) / 0.2);
+  }
+
+  :global(html.light) .memory-graph {
+    --mg-border: rgb(0 0 0 / 0.08);
+    --mg-border-dim: rgb(0 0 0 / 0.04);
+    --mg-border-hover: rgb(0 0 0 / 0.15);
+    --mg-edge: rgb(0 0 0 / 0.12);
+  }
+
   /* ── Nodes ── */
   .memory-graph .mg-node {
     position: absolute;
     transform: translate(-50%, -50%);
     padding: 9px 16px;
-    background: rgba(10, 10, 16, 0.8);
+    background: var(--mg-surface);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--mg-border);
     border-radius: 12px;
-    color: rgba(224, 224, 224, 0.5);
+    color: var(--mg-text);
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 0.015em;
@@ -77,15 +112,15 @@
   }
 
   .memory-graph .mg-node.pill {
-    border-color: rgba(52, 211, 153, 0.2);
-    color: rgba(52, 211, 153, 0.7);
+    border-color: var(--mg-success-border);
+    color: var(--mg-success);
   }
 
   .memory-graph .mg-node.sm {
     font-size: 11px;
     padding: 6px 11px;
-    color: rgba(224, 224, 224, 0.3);
-    border-color: rgba(255, 255, 255, 0.03);
+    color: var(--mg-text-dim);
+    border-color: var(--mg-border-dim);
   }
 
   /* ── Core node ── */
@@ -105,10 +140,10 @@
     align-items: center;
     gap: 2px;
     padding: 18px 28px;
-    background: rgba(10, 10, 16, 0.9);
+    background: var(--mg-surface-strong);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1.5px solid rgba(139, 92, 246, 0.25);
+    border: 1.5px solid var(--mg-secondary-core-border);
     border-radius: 16px;
   }
 
@@ -116,7 +151,7 @@
     position: absolute;
     inset: -10px;
     border-radius: 26px;
-    border: 1px solid rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--mg-secondary-ring);
     animation: ring-breathe 4s ease-in-out infinite;
     pointer-events: none;
   }
@@ -124,7 +159,7 @@
   .core-label {
     font-size: 9px;
     letter-spacing: 0.14em;
-    color: rgba(139, 92, 246, 0.5);
+    color: var(--mg-secondary-dim);
     font-weight: 500;
     text-transform: uppercase;
   }
@@ -132,46 +167,46 @@
   .core-title {
     font-size: 17px;
     font-weight: 700;
-    color: rgba(139, 92, 246, 0.85);
+    color: var(--mg-secondary-strong);
     letter-spacing: -0.01em;
   }
 
   /* ── Active states (gold accent) ── */
   .memory-graph .mg-node.active {
-    border-color: rgba(249, 216, 87, 0.4);
-    color: rgba(249, 216, 87, 0.85);
-    box-shadow: 0 0 24px rgba(249, 216, 87, 0.06);
+    border-color: var(--mg-accent-border);
+    color: var(--mg-accent);
+    box-shadow: 0 0 24px var(--mg-accent-glow);
     transform: translate(-50%, -50%) scale(1.05);
   }
 
   .memory-graph .mg-node.core.active .core-inner {
-    border-color: rgba(249, 216, 87, 0.35);
-    box-shadow: 0 0 30px rgba(249, 216, 87, 0.08);
+    border-color: var(--mg-accent-edge);
+    box-shadow: 0 0 30px var(--mg-accent-glow-strong);
   }
 
   .memory-graph .mg-node.core.active .core-title {
-    color: rgba(249, 216, 87, 0.9);
+    color: var(--mg-accent-strong);
   }
 
   .memory-graph .mg-node.core.active .core-label {
-    color: rgba(249, 216, 87, 0.5);
+    color: var(--mg-accent-dim);
   }
 
   .memory-graph .mg-node:not(.core):hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    color: rgba(224, 224, 224, 0.7);
+    border-color: var(--mg-border-hover);
+    color: var(--mg-text-hover);
   }
 
   /* ── Edges ── */
   .graph-edges line {
-    stroke: rgba(255, 255, 255, 0.1);
+    stroke: var(--mg-edge);
     stroke-width: 1;
     stroke-dasharray: 3 9;
     transition: stroke 0.5s ease, stroke-width 0.5s ease;
   }
 
   .graph-edges line.active {
-    stroke: rgba(249, 216, 87, 0.35);
+    stroke: var(--mg-accent-edge);
     stroke-width: 1.5;
     stroke-dasharray: 2 8;
     animation: edge-flow 2s linear infinite;
@@ -189,6 +224,11 @@
 
   /* ── Mobile ── */
   @media (max-width: 640px) {
+    .graph-edges [data-edge="retrieval:session"],
+    .graph-edges [data-edge="retrieval:thread"] {
+      display: none;
+    }
+
     .memory-graph .mg-node {
       font-size: 11px;
       padding: 6px 11px;
@@ -206,10 +246,14 @@
   const graphNodes = Array.from(document.querySelectorAll('.memory-graph [data-node]'));
   const graphEdges = Array.from(document.querySelectorAll('.memory-graph [data-edge]'));
 
+  const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
   const sequences = [
     { nodes: ['idea', 'core', 'research'], edges: ['core:idea', 'core:research', 'idea:research'] },
     { nodes: ['habit', 'core', 'code'], edges: ['core:habit', 'core:code', 'habit:code'] },
-    { nodes: ['retrieval', 'thread', 'session', 'core'], edges: ['core:retrieval', 'retrieval:thread', 'retrieval:session'] },
+    isMobile
+      ? { nodes: ['retrieval', 'core'], edges: ['core:retrieval'] }
+      : { nodes: ['retrieval', 'thread', 'session', 'core'], edges: ['core:retrieval', 'retrieval:thread', 'retrieval:session'] },
     { nodes: ['code', 'research'], edges: ['research:code'] },
   ];
 
