@@ -9,6 +9,9 @@ import cloudflare from '@astrojs/cloudflare';
 import emdash, { local } from 'emdash/astro';
 import { libsql } from 'emdash/db';
 import { d1 } from '@emdash-cms/cloudflare';
+import { fileURLToPath } from 'node:url';
+
+const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
@@ -77,6 +80,7 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
+            { label: 'Managed Cloud', slug: 'docs/getting-started/managed-cloud' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
             { label: 'Quick Start (Railway)', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
@@ -205,6 +209,11 @@ export default defineConfig({
         directory: './uploads',
         baseUrl: '/_emdash/api/media/file',
       }),
+      plugins: [{
+        id: 'automem-resend-email',
+        version: '1.0.0',
+        entrypoint: resendEmailPlugin,
+      }],
     }),
     mdx(),
     sitemap(),
