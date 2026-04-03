@@ -43,4 +43,17 @@ if (existsSync(`${serverDir}/virtual_astro_middleware.mjs`)) {
 const entryContent = readFileSync(entry, 'utf-8');
 writeFileSync(`${workerDir}/index.js`, entryContent);
 
+// Add pages_build_output_dir to wrangler.toml post-build.
+// This must happen AFTER astro build to avoid the ASSETS binding conflict
+// during the Cloudflare vite plugin's prerender step.
+const toml = readFileSync('wrangler.toml', 'utf-8');
+if (!toml.includes('pages_build_output_dir')) {
+  const patched = toml.replace(
+    /^(name\s*=\s*"[^"]+"\n)/m,
+    `$1pages_build_output_dir = "dist/client"\n`
+  );
+  writeFileSync('wrangler.toml', patched);
+  console.log('[bundle-worker] Added pages_build_output_dir to wrangler.toml');
+}
+
 console.log(`[bundle-worker] Copied server → ${workerDir}/`);
