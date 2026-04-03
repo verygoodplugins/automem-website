@@ -1,6 +1,27 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  --color-lab-bg: rgb(var(--lab-bg));
+  --color-lab-surface: rgb(var(--lab-surface));
+  --color-lab-border: rgb(var(--lab-border));
+  --color-lab-text: rgb(var(--lab-text));
+  --color-lab-muted: rgb(var(--lab-muted));
+  --color-lab-accent: rgb(var(--lab-accent));
+  --color-lab-accent-text: rgb(var(--lab-accent-text));
+  --color-lab-secondary: rgb(var(--lab-secondary));
+  --color-lab-success: rgb(var(--lab-success));
+  --color-lab-error: rgb(var(--lab-error));
+  --color-lab-gold: rgb(var(--lab-gold));
+  --color-lab-gold-soft: rgb(var(--lab-gold-soft));
+  --color-lab-gold-classic: rgb(var(--lab-gold-classic));
+  --color-lab-gold-dark: rgb(var(--lab-gold-dark));
+  --color-lab-discord: rgb(var(--lab-discord));
+  --color-lab-on-discord: rgb(var(--lab-on-discord));
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "JetBrains Mono", monospace;
+  --shadow-hard: 4px 4px 0px 0px var(--shadow-color);
+}
 
 @layer base {
   :root {
@@ -56,10 +77,10 @@
     @apply antialiased bg-lab-bg text-lab-text font-mono;
     overflow-x: hidden;
     width: 100%;
-    
+
     /* Blueprint Grid */
     background-size: 24px 24px;
-    background-image: 
+    background-image:
       radial-gradient(var(--grid-color) 1px, transparent 1px);
   }
 
@@ -82,20 +103,20 @@
   .comment-header {
     @apply text-lab-secondary font-bold uppercase tracking-widest text-xs mb-8 flex items-center gap-2;
   }
-  
+
   .comment-header::before {
     content: "";
     @apply w-3 h-3 bg-lab-secondary rounded-full;
   }
 
   .btn-lab {
-    @apply bg-lab-surface border-2 border-lab-text text-lab-text px-6 py-3 
+    @apply bg-lab-surface border-2 border-lab-text text-lab-text px-6 py-3
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
            transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
   }
 
   .btn-lab-accent {
-    @apply bg-lab-accent text-[#1a1a1a] px-6 py-3 
+    @apply bg-lab-accent text-[#1a1a1a] px-6 py-3
            hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
            transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg border-2 border-lab-text;
   }

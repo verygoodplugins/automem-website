@@ -2,9 +2,45 @@ import type { MiddlewareHandler } from 'astro';
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const { request, locals, url } = context;
-  const env = (locals as any)?.runtime?.env ?? {};
-  const waitUntil = (locals as any)?.runtime?.waitUntil;
+
+  // Astro v6 + Cloudflare: use cloudflare:workers import instead of locals.runtime.env
+  let env: Record<string, any> = {};
+  let waitUntil: ((p: Promise<any>) => void) | undefined;
+  try {
+    const cf = await import('cloudflare:workers');
+    env = cf.env as any ?? {};
+  } catch {
+    // Not running in Cloudflare runtime (e.g. local dev without bindings)
+  }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
+
+  // Intercept emdash preview-url responses to fix the path using collection url_pattern
+  if (pathname.match(/^\/_emdash\/api\/content\/[^/]+\/[^/]+\/preview-url$/) && request.method === 'POST') {
+    const response = await next();
+    try {
+      const json = await response.clone().json() as any;
+      if (json?.data?.url) {
+        // Replace /posts/{id} or /posts/{slug} with /blog/{slug} pattern
+        const emdash = (locals as any)?.emdash;
+        const match = pathname.match(/^\/_emdash\/api\/content\/([^/]+)\/([^/]+)\/preview-url$/);
+        if (match && emdash?.db) {
+          const [, collection, id] = match;
+          const colRow = await emdash.db.selectFrom('_emdash_collections').select('url_pattern').where('slug', '=', collection).executeTakeFirst();
+          if (colRow?.url_pattern) {
+            const entry = await emdash.db.selectFrom(`ec_${collection}`).select('slug').where('id', '=', id).executeTakeFirst();
+            const slug = entry?.slug || id;
+            const newPath = colRow.url_pattern.replace('{slug}', slug).replace('{id}', id).replace('{collection}', collection);
+            // Preserve the _preview token
+            const oldUrl = new URL(json.data.url, 'http://localhost');
+            const previewToken = oldUrl.searchParams.get('_preview');
+            json.data.url = `${newPath}?_preview=${previewToken}`;
+            return new Response(JSON.stringify(json), { status: 200, headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+      }
+    } catch {}
+    return response;
+  }
 
   try {
     // API: Signup
