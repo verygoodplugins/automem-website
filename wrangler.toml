@@ -1,5 +1,6 @@
 name = "automem-website"
-compatibility_date = "2024-10-14"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
 
 # Build configuration
 [build]
@@ -9,7 +10,13 @@ command = "npm run build"
 [[d1_databases]]
 binding = "D1"
 database_name = "automem-waitlist"
-database_id = "71da6056-2641-488b-a82d-ee44618bfb56" # Replace with actual ID after creating
+database_id = "71da6056-2641-488b-a82d-ee44618bfb56"
+
+# D1 Database binding for emdash CMS
+[[d1_databases]]
+binding = "EMDASH_DB"
+database_name = "automem-emdash"
+database_id = "46f2fc48-79fe-4fbf-a131-0c392bb59b4e"
 
 # Environment variables (example)
 [env.production.vars]

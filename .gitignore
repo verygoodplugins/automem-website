@@ -35,6 +35,10 @@ img/*.jpeg
 .wrangler/
 .dev.vars
 
+# EmDash local data
+data/
+uploads/
+
 # TypeScript
 *.tsbuildinfo
 

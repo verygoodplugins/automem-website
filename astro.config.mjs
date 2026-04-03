@@ -1,12 +1,23 @@
 import { defineConfig } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
+import react from '@astrojs/react';
+import cloudflare from '@astrojs/cloudflare';
+import emdash, { local } from 'emdash/astro';
+import { libsql } from 'emdash/db';
+import { d1 } from '@emdash-cms/cloudflare';
+
+// Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
+const isBuilding = process.argv.includes('build');
 
 export default defineConfig({
   site: 'https://automem.ai',
+  adapter: isBuilding ? cloudflare() : undefined,
+  output: 'server',
+  session: !isBuilding ? { driver: 'fs' } : undefined,
   integrations: [
     mermaid({
       autoTheme: true,
@@ -185,17 +196,26 @@ export default defineConfig({
         },
       ],
     }),
-    tailwind({ applyBaseStyles: false }),
+    react(),
+    emdash({
+      database: isBuilding
+        ? d1({ binding: 'EMDASH_DB' })
+        : libsql({ url: 'file:./data/emdash.db' }),
+      storage: local({
+        directory: './uploads',
+        baseUrl: '/_emdash/api/media/file',
+      }),
+    }),
     mdx(),
     sitemap(),
   ],
-  output: 'static',
   server: {
     host: '0.0.0.0',
     port: 5000,
     allowedHosts: true,
   },
   vite: {
+    plugins: [tailwindcss()],
     build: {
       minify: 'esbuild',
     },

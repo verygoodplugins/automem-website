@@ -1,45 +1,53 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import AuthorBio from '../../components/AuthorBio.astro';
 import BlogPostingSchema from '../../components/schemas/BlogPostingSchema.astro';
 import SEOMeta from '../../components/SEOMeta.astro';
+import { renderPortableText } from '../../lib/portable-text';
 import '../../styles/global.css';
 
-export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map(post => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
+const { slug } = Astro.params;
+const { emdash } = Astro.locals;
+
+// Find post by slug
+let post: any = null;
+if (emdash?.handleContentList) {
+  const result = await emdash.handleContentList('posts', { status: 'published', limit: 100 });
+  if (result.success) {
+    post = result.data.items.find((p: any) => p.slug === slug);
+  }
 }
 
-const { post } = Astro.props;
-const { Content } = await post.render();
+if (!post) {
+  return Astro.redirect('/404');
+}
 
-const formattedDate = post.data.date.toLocaleDateString('en-US', {
+const content = post.data?.content || post.content || [];
+const htmlContent = renderPortableText(content);
+const title = post.data?.title || post.title;
+const excerpt = post.data?.excerpt || post.excerpt || '';
+const publishedAt = post.published_at ? new Date(post.published_at) : new Date();
+const formattedDate = publishedAt.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
   year: 'numeric'
 });
 ---
 
-<Layout title={`${post.data.title} - AutoMem Blog`} description={post.data.description}>
+<Layout title={`${title} - AutoMem Blog`} description={excerpt}>
   <SEOMeta
-    title={`${post.data.title} - AutoMem Blog`}
-    description={post.data.description}
+    title={`${title} - AutoMem Blog`}
+    description={excerpt}
     url={`/blog/${post.slug}`}
     type="article"
-    publishedTime={post.data.date.toISOString()}
-    tags={post.data.tags}
+    publishedTime={publishedAt.toISOString()}
   />
   <BlogPostingSchema
-    title={post.data.title}
-    description={post.data.description}
-    datePublished={post.data.date}
+    title={title}
+    description={excerpt}
+    datePublished={publishedAt}
     slug={post.slug}
-    tags={post.data.tags}
   />
   <Navigation currentPath="/blog" />
 
@@ -57,30 +65,21 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
       <header class="mb-10 sm:mb-12 bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text shadow-hard min-w-0">
         <div class="comment-header mb-4">:: POST_CONTENT</div>
         <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight break-words">
-          {post.data.title}
+          {title}
         </h1>
         <p class="text-base sm:text-xl text-lab-muted mb-6 font-mono border-l-4 border-lab-accent pl-4 break-words">
-          {post.data.description}
+          {excerpt}
         </p>
         <div class="flex flex-wrap items-center gap-4 text-sm">
           <time class="text-lab-muted font-mono bg-lab-bg px-2 py-1 border border-lab-border">
             {formattedDate}
           </time>
-          {post.data.tags && post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2">
-              {post.data.tags.map(tag => (
-                <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </header>
 
       <!-- Post Content -->
       <div class="prose prose-lg max-w-none bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text min-w-0">
-        <Content />
+        <Fragment set:html={htmlContent} />
       </div>
 
       <!-- Author Bio -->
@@ -108,64 +107,46 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
 </Layout>
 
 <style>
-  /* Prose styling for blog content - Memory Lab theme */
+  @reference "../../styles/global.css";
   .prose {
     @apply text-lab-text font-mono text-base leading-relaxed;
   }
-
-
   .prose :global(*) {
     @apply break-words;
   }
-
-  .prose :global(img),
-  .prose :global(video),
-  .prose :global(iframe),
-  .prose :global(table) {
+  .prose :global(img), .prose :global(video), .prose :global(iframe), .prose :global(table) {
     @apply max-w-full h-auto;
   }
-
   .prose :global(h2) {
     @apply text-lab-text text-2xl font-bold mt-10 mb-4 pb-2 border-b-2 border-lab-border;
   }
-
   .prose :global(h3) {
     @apply text-lab-text text-xl font-bold mt-8 mb-3;
   }
-
   .prose :global(p) {
     @apply mb-6 text-lab-text/80;
   }
-
   .prose :global(a) {
     @apply text-lab-accent underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
   }
-
-  .prose :global(ul),
-  .prose :global(ol) {
+  .prose :global(ul), .prose :global(ol) {
     @apply mb-6 pl-6 text-lab-text/80;
   }
-
   .prose :global(li) {
     @apply mb-2;
   }
-
   .prose :global(strong) {
     @apply text-lab-text font-bold;
   }
-
   .prose :global(code) {
     @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent;
   }
-
   .prose :global(pre) {
     @apply bg-lab-text text-lab-bg p-4 rounded-lg overflow-x-auto mb-6 border-2 border-lab-text shadow-hard;
   }
-
   .prose :global(pre code) {
     @apply bg-transparent p-0 border-none text-lab-bg;
   }
-
   .prose :global(blockquote) {
     @apply border-l-4 border-lab-accent pl-4 ml-0 mb-6 italic text-lab-muted bg-lab-bg p-4 rounded-r-lg;
   }
