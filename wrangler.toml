@@ -1,6 +1,4 @@
 name = "automem-website"
-# pages_build_output_dir is added post-build by scripts/bundle-worker.mjs
-# to avoid ASSETS binding conflict during the Cloudflare vite prerender step
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
