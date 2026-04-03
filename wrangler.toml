@@ -1,7 +1,7 @@
 name = "automem-website"
 pages_build_output_dir = "dist/client"
 compatibility_date = "2025-04-01"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 # D1 Database binding for waitlist
 [[d1_databases]]
@@ -14,6 +14,11 @@ database_id = "71da6056-2641-488b-a82d-ee44618bfb56"
 binding = "EMDASH_DB"
 database_name = "automem-emdash"
 database_id = "46f2fc48-79fe-4fbf-a131-0c392bb59b4e"
+
+# KV namespace for Astro sessions (used by emdash auth)
+[[kv_namespaces]]
+binding = "SESSION"
+id = "f02355fe3bbb4a4b8a8429ea1eb53192"
 
 # Environment variables (example)
 [env.production.vars]
