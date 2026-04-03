@@ -8,6 +8,7 @@ import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 import emdash, { local } from 'emdash/astro';
 import { libsql } from 'emdash/db';
+import { d1 } from '@emdash-cms/cloudflare';
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
@@ -197,7 +198,9 @@ export default defineConfig({
     }),
     react(),
     emdash({
-      database: libsql({ url: 'file:./data/emdash.db' }),
+      database: isBuilding
+        ? d1({ binding: 'EMDASH_DB' })
+        : libsql({ url: 'file:./data/emdash.db' }),
       storage: local({
         directory: './uploads',
         baseUrl: '/_emdash/api/media/file',
