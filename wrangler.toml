@@ -1,10 +1,7 @@
 name = "automem-website"
+pages_build_output_dir = "dist/client"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
-
-# Build configuration
-[build]
-command = "npm run build"
 
 # D1 Database binding for waitlist
 [[d1_databases]]
