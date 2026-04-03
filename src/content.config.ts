@@ -1,8 +1,7 @@
-import { defineCollection, defineLiveCollection, z } from 'astro:content';
+import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { docsLoader } from '@astrojs/starlight/loaders';
 import { docsSchema } from '@astrojs/starlight/schema';
-import { emdashLoader } from 'emdash/runtime';
 
 const docs = defineCollection({
   loader: docsLoader(),
@@ -20,8 +19,4 @@ const blog = defineCollection({
   }),
 });
 
-const _emdash = defineLiveCollection({
-  loader: emdashLoader(),
-});
-
-export const collections = { docs, blog, _emdash };
+export const collections = { docs, blog };
