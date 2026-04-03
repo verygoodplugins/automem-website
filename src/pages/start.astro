@@ -1,0 +1,173 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+
+<Layout title="Start Now" description="Start your AutoMem Managed Cloud free trial.">
+  <Navigation currentPath="/start" />
+  <main id="main-content" class="px-4 md:px-12 py-16">
+    <section class="max-w-6xl mx-auto grid gap-10 lg:grid-cols-[1.05fr_0.95fr] items-start">
+      <div class="space-y-6">
+        <p class="comment-header">:: MANAGED_CLOUD_BOOT</p>
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tighter leading-[0.95] text-balance">
+          Start AutoMem Managed Cloud In Minutes
+        </h1>
+        <p class="text-lg text-lab-muted max-w-2xl leading-relaxed">
+          Start free, answer a few onboarding prompts, and let AutoMem build your memory graph while your pod comes online.
+          Docker, Railway, and source installs still exist, but this is the fastest way to get working memory into your tools.
+        </p>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <a href="/docs/getting-started/managed-cloud/" class="btn-lab-accent">Managed Cloud Docs</a>
+          <a href="/docs/deployment/railway/" class="btn-lab">Railway</a>
+          <a href="/docs/deployment/docker/" class="btn-lab">Docker</a>
+        </div>
+      </div>
+
+      <section class="border-2 border-lab-accent rounded-2xl bg-lab-surface shadow-hard p-6 md:p-8">
+        <p class="text-xs uppercase tracking-[0.2em] text-lab-accent">30-Day Free Trial</p>
+        <h2 class="text-3xl font-bold mt-3 text-balance">Create Your Managed Cloud Workspace</h2>
+        <p class="text-sm text-lab-muted mt-3">
+          No credit card required to start. Verify your email before connecting your tools.
+        </p>
+
+        <form id="managed-cloud-signup" class="mt-8 space-y-5" novalidate>
+          <div class="space-y-2">
+            <label for="signup-email" class="block text-sm font-bold">Work Email</label>
+            <input
+              id="signup-email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              spellcheck="false"
+              required
+              placeholder="you@company.com..."
+              class="w-full rounded-xl border border-lab-text bg-lab-bg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-lab-accent"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="signup-name" class="block text-sm font-bold">Name (Optional)</label>
+            <input
+              id="signup-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Maya Chen..."
+              class="w-full rounded-xl border border-lab-text bg-lab-bg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-lab-accent"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <div id="turnstile-container" class="turnstile-slot" data-sitekey={siteKey}></div>
+          </div>
+
+          <button id="signup-submit" type="submit" class="btn-lab-accent w-full">
+            Start Free Trial
+          </button>
+
+          <p id="signup-message" class="text-sm hidden" aria-live="polite"></p>
+        </form>
+
+        <div class="mt-8 rounded-xl border border-lab-border bg-lab-bg/70 p-4">
+          <p class="text-sm font-bold">What happens next</p>
+          <ol class="mt-3 space-y-2 text-sm text-lab-muted">
+            <li>1. AutoMem creates your account and starts provisioning your pod.</li>
+            <li>2. You answer a short onboarding interview while provisioning runs.</li>
+            <li>3. AutoMem verifies your email, pre-seeds your memory, and reveals the install command.</li>
+          </ol>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('managed-cloud-signup');
+    const submitButton = document.getElementById('signup-submit');
+    const message = document.getElementById('signup-message');
+    const turnstileContainer = document.getElementById('turnstile-container');
+    let turnstileToken = '';
+
+    window.__managedCloudTurnstile = function(token) {
+      turnstileToken = token || '';
+    }
+
+    function setMessage(text, isError = false) {
+      if (!message) return;
+      message.classList.remove('hidden', 'text-lab-error', 'text-lab-success');
+      message.classList.add(isError ? 'text-lab-error' : 'text-lab-success');
+      message.textContent = text;
+    }
+
+    async function ensureTurnstile() {
+      const sitekey = turnstileContainer?.getAttribute('data-sitekey');
+      if (!sitekey) return;
+      if (!window.turnstile) {
+        await new Promise((resolve) => {
+          const existing = document.querySelector('script[src*="turnstile"]');
+          if (existing) {
+            existing.addEventListener('load', () => resolve());
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+          script.async = true;
+          script.defer = true;
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+      }
+      if (window.turnstile && turnstileContainer && !turnstileContainer.querySelector('iframe')) {
+        window.turnstile.render(turnstileContainer, {
+          sitekey,
+          callback: window.__managedCloudTurnstile,
+          theme: 'auto',
+        });
+      }
+    }
+
+    ensureTurnstile().catch(() => undefined);
+    fetch('/api/v1/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_name: 'start_page_viewed', page: '/start' }),
+    }).catch(() => undefined);
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('signup-email')?.value?.trim() || '';
+      const name = document.getElementById('signup-name')?.value?.trim() || '';
+
+      submitButton.disabled = true;
+      submitButton.textContent = 'Starting...';
+      setMessage('Creating your managed cloud workspace...');
+
+      try {
+        const response = await fetch('/api/v1/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': `signup:${email.toLowerCase()}`,
+          },
+          body: JSON.stringify({
+            email,
+            name,
+            source: '/start',
+            turnstileToken,
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error || 'Unable to start managed cloud.');
+        }
+        window.location.href = payload.onboarding_url;
+      } catch (error) {
+        setMessage(error.message || 'Unable to start managed cloud right now.', true);
+        submitButton.disabled = false;
+        submitButton.textContent = 'Start Free Trial';
+      }
+    });
+  </script>
+</Layout>

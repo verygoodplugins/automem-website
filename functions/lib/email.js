@@ -152,3 +152,55 @@ export function buildConfirmEmail(opts) {
   </html>`;
   return { subject, html, text };
 }
+
+export function buildManagedCloudVerifyEmail(opts) {
+  const {
+    baseUrl = 'https://automem.ai',
+    confirmUrl = `${baseUrl}/confirm`,
+    unsubscribeUrl = `${baseUrl}/unsubscribe`,
+    name = '',
+  } = opts || {};
+
+  const subject = 'Confirm your AutoMem Managed Cloud setup';
+  const text = [
+    `Confirm your email to finish setting up AutoMem Managed Cloud: ${confirmUrl}`,
+    '',
+    'You can keep onboarding right away, but connecting your tools stays locked until this email is verified.',
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join('\n');
+
+  const html = `
+  <!doctype html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>${escapeHtml(subject)}</title>
+      <style>
+        body { background:#0a0a0a; margin:0; padding:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#e0e0e0; line-height:1.6; }
+        .container { max-width:680px; margin:0 auto; padding:32px; }
+        .card { background:#1a1a1a; border:1px solid #333333; border-radius:20px; padding:32px; }
+        .chip { display:inline-block; padding:4px 10px; border-radius:999px; background:#8b5cf6; color:#0a0a0a; font-size:12px; font-weight:700; }
+        h1 { margin:16px 0 8px 0; font-size:28px; line-height:1.1; }
+        p { margin:14px 0; }
+        .btn { display:inline-block; background:#f9d857; color:#1a1a1a !important; padding:14px 20px; border-radius:12px; font-weight:700; text-decoration:none; margin-top:18px; }
+        a { color:#f9d857; }
+        .muted { color:#9ca3af; font-size:12px; margin-top:24px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <span class="chip">Managed Cloud</span>
+          <h1>Confirm Your Email & Unlock Setup</h1>
+          <p>${name ? `Hi ${escapeHtml(name)},` : 'Hi,'} your memory pod is starting in the background. Confirm this email to unlock the final install step and connect AutoMem to your tools.</p>
+          <p><a class="btn" href="${confirmUrl}">Confirm Email</a></p>
+          <p>You can come back to onboarding any time. Once confirmed, we will drop you right back into the flow.</p>
+          <p class="muted">If this was not you, ignore this message. Unsubscribe: <a href="${unsubscribeUrl}">${unsubscribeUrl}</a></p>
+        </div>
+      </div>
+    </body>
+  </html>`;
+
+  return { subject, html, text };
+}

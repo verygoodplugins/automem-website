@@ -1,12 +1,13 @@
 // Unsubscribe endpoint: /unsubscribe?token=...
-import { verifyToken } from './lib/tokens.js';
+import { verifySignedToken, verifyToken } from './lib/tokens.js';
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token') || '';
   const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
 
-  const email = await verifyToken(token, secret);
+  const payload = await verifySignedToken(token, secret);
+  const email = payload?.email || await verifyToken(token, secret);
   if (!email) {
     return new Response('<h1>Invalid or expired unsubscribe link.</h1>', {
       status: 400,

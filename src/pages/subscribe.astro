@@ -1,0 +1,98 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+
+const token = Astro.url.searchParams.get('token') || '';
+const checkoutState = Astro.url.searchParams.get('checkout') || '';
+---
+
+<Layout title="Subscribe" description="Upgrade AutoMem Managed Cloud with Stripe Checkout.">
+  <Navigation currentPath="/start" />
+  <main id="main-content" class="px-4 md:px-12 py-14">
+    <section class="max-w-6xl mx-auto space-y-8" data-token={token}>
+      <div>
+        <p class="comment-header">:: BILLING_GATE</p>
+        <h1 class="text-5xl font-bold tracking-tighter leading-[0.95]">Upgrade Your Managed Cloud Plan</h1>
+        <p class="text-lab-muted mt-4 max-w-2xl">
+          Stripe Checkout handles billing. Use Pro for a stronger shared pod, or Ultimate when you want a dedicated environment.
+        </p>
+      </div>
+
+      {checkoutState === 'cancelled' ? (
+        <div class="rounded-xl border border-lab-error bg-lab-error/10 px-4 py-3 text-sm">
+          Checkout was cancelled. Your trial is still active.
+        </div>
+      ) : null}
+
+      <div id="subscribe-message" class="hidden text-sm" aria-live="polite"></div>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <article class="border-2 border-lab-text rounded-2xl bg-lab-surface p-8 shadow-hard">
+          <p class="text-xs uppercase tracking-[0.2em] text-lab-secondary">Pro</p>
+          <h2 class="text-4xl font-bold mt-3">$9<span class="text-lg text-lab-muted">/month</span></h2>
+          <p class="text-sm text-lab-muted mt-4">Managed embeddings, graph expansion, and a tighter shared pod ratio.</p>
+          <ul class="mt-6 space-y-3 text-sm text-lab-muted">
+            <li>Managed embeddings</li>
+            <li>Graph expansion enabled</li>
+            <li>automem-watch access</li>
+          </ul>
+          <button type="button" class="btn-lab-accent w-full mt-8" data-plan="pro">Start Pro Checkout</button>
+        </article>
+
+        <article class="border-2 border-lab-accent rounded-2xl bg-lab-surface p-8 shadow-hard">
+          <p class="text-xs uppercase tracking-[0.2em] text-lab-accent">Ultimate</p>
+          <h2 class="text-4xl font-bold mt-3">$29<span class="text-lg text-lab-muted">/month</span></h2>
+          <p class="text-sm text-lab-muted mt-4">Dedicated pod resources, premium embeddings, and room for deeper memory expansion.</p>
+          <ul class="mt-6 space-y-3 text-sm text-lab-muted">
+            <li>Dedicated pod class</li>
+            <li>Premium embeddings</li>
+            <li>Highest connection budget</li>
+          </ul>
+          <button type="button" class="btn-lab-accent w-full mt-8" data-plan="ultimate">Start Ultimate Checkout</button>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.querySelector('[data-token]');
+    const token = root?.getAttribute('data-token') || '';
+    const message = document.getElementById('subscribe-message');
+
+    function setMessage(text, isError = false) {
+      if (!message) return;
+      message.classList.remove('hidden', 'text-lab-error', 'text-lab-success');
+      message.classList.add(isError ? 'text-lab-error' : 'text-lab-success');
+      message.textContent = text;
+    }
+
+    document.querySelectorAll('[data-plan]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const plan = button.getAttribute('data-plan');
+        button.disabled = true;
+        setMessage(`Starting ${plan} checkout...`);
+        try {
+          const response = await fetch(`/api/v1/subscribe/${encodeURIComponent(token)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan }),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || 'Unable to start checkout.');
+          }
+          window.location.href = payload.url;
+        } catch (error) {
+          setMessage(error.message || 'Unable to start checkout.', true);
+          button.disabled = false;
+        }
+      });
+    });
+
+    fetch('/api/v1/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_name: 'subscribe_viewed', page: '/subscribe', token }),
+    }).catch(() => undefined);
+  </script>
+</Layout>

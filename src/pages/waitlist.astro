@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import EmailSignup from '../components/EmailSignup.astro';
+---
+
+<Layout title="Waitlist" description="Legacy waitlist for AutoMem updates.">
+  <Navigation currentPath="/waitlist" />
+  <main id="main-content" class="px-4 md:px-12 py-16">
+    <section class="max-w-3xl mx-auto border-2 border-lab-text rounded-2xl bg-lab-surface p-8 shadow-hard">
+      <p class="comment-header">:: LEGACY_WAITLIST</p>
+      <h1 class="text-4xl font-bold tracking-tighter leading-[0.95]">Stay In The Loop</h1>
+      <p class="text-lab-muted mt-4">
+        Managed Cloud is live. This waitlist stays here as a lighter way to follow product updates without creating an account.
+      </p>
+      <div class="mt-8">
+        <EmailSignup />
+      </div>
+    </section>
+  </main>
+</Layout>

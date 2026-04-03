@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-This guide takes you from zero to a working AutoMem installation connected to Claude Desktop. The two-phase process deploys the backend server first, then configures the MCP client.
+This guide takes you from zero to a working AutoMem installation connected to Claude Desktop. If you want the fastest path, start with [Managed Cloud](/docs/getting-started/managed-cloud/) and let automem.ai provision the infrastructure for you. The rest of this guide covers the self-hosted path: deploy the backend server first, then configure the MCP client.
 
 ## Phase 1: Deploy the AutoMem Server
 

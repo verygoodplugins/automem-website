@@ -9,6 +9,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   try {
     const cf = await import('cloudflare:workers');
     env = cf.env as any ?? {};
+    waitUntil = (cf as any).executionCtx?.waitUntil?.bind((cf as any).executionCtx);
   } catch {
     // Not running in Cloudflare runtime (e.g. local dev without bindings)
   }
@@ -43,6 +44,74 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
 
   try {
+    const statusMatch = pathname.match(/^\/api\/v1\/status\/([^/]+)$/);
+    if (statusMatch && request.method === 'GET') {
+      const { onRequestGet } = await import('../functions/api/v1/status.js');
+      return onRequestGet({ request, env, params: { token: decodeURIComponent(statusMatch[1]) } });
+    }
+
+    const subscribeMatch = pathname.match(/^\/api\/v1\/subscribe\/([^/]+)$/);
+    if (subscribeMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/subscribe.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(subscribeMatch[1]) } });
+    }
+
+    const portalMatch = pathname.match(/^\/api\/v1\/customer-portal\/([^/]+)$/);
+    if (portalMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/customer-portal.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(portalMatch[1]) } });
+    }
+
+    const onboardingChatMatch = pathname.match(/^\/api\/v1\/onboarding\/([^/]+)\/chat$/);
+    if (onboardingChatMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/onboarding.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(onboardingChatMatch[1]) } });
+    }
+
+    const onboardingStateMatch = pathname.match(/^\/api\/v1\/onboarding\/([^/]+)$/);
+    if (onboardingStateMatch && request.method === 'GET') {
+      const { onRequestGet } = await import('../functions/api/v1/onboarding.js');
+      return onRequestGet({ request, env, params: { token: decodeURIComponent(onboardingStateMatch[1]) } });
+    }
+
+    const enrichMatch = pathname.match(/^\/api\/v1\/enrich\/([^/]+)$/);
+    if (enrichMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/enrich.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(enrichMatch[1]) } });
+    }
+
+    const preseedMatch = pathname.match(/^\/api\/v1\/preseed\/([^/]+)$/);
+    if (preseedMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/preseed.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(preseedMatch[1]) } });
+    }
+
+    const resendVerificationMatch = pathname.match(/^\/api\/v1\/verification\/([^/]+)\/resend$/);
+    if (resendVerificationMatch && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/verification-resend.js');
+      return onRequestPost({ request, env, params: { token: decodeURIComponent(resendVerificationMatch[1]) } });
+    }
+
+    if (pathname === '/api/v1/signup' && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/signup.js');
+      return onRequestPost({ request, env, waitUntil });
+    }
+
+    if (pathname === '/api/v1/track' && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/track.js');
+      return onRequestPost({ request, env });
+    }
+
+    if (pathname === '/api/v1/webhook/stripe' && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/webhook-stripe.js');
+      return onRequestPost({ request, env });
+    }
+
+    if (pathname === '/api/v1/webhook/instapods' && request.method === 'POST') {
+      const { onRequestPost } = await import('../functions/api/v1/webhook-instapods.js');
+      return onRequestPost({ request, env });
+    }
+
     // API: Signup
     if (pathname === '/api/signup' && request.method === 'POST') {
       const { onRequestPost } = await import('../functions/api/signup.js');
