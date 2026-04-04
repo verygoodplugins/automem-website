@@ -7,6 +7,7 @@
     "dev": "astro dev --host 0.0.0.0 --port 5000",
     "start": "astro dev",
     "build": "rm -rf .astro node_modules/.astro .wrangler/deploy && node scripts/build-pages.mjs",
+    "postinstall": "patch-package",
     "preview": "astro preview",
     "astro": "astro",
     "check-links": "node scripts/check-links.js"
@@ -36,6 +37,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "baseline-browser-mapping": "^2.10.13",
     "linkinator": "^7.6.1",
+    "patch-package": "^8.0.1",
     "wrangler": "^4.79.0"
   }
 }

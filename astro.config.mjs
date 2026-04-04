@@ -6,12 +6,12 @@ import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
-// TODO: re-enable emdash CMS once cold-start redirect issue on CF Pages is resolved
-// import emdash, { local } from 'emdash/astro';
-// import { libsql } from 'emdash/db';
-// import { d1 } from '@emdash-cms/cloudflare';
-// import { fileURLToPath } from 'node:url';
-// const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
+import emdash, { local } from 'emdash/astro';
+import { libsql } from 'emdash/db';
+import { d1 } from '@emdash-cms/cloudflare';
+import { fileURLToPath } from 'node:url';
+
+const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
@@ -30,6 +30,7 @@ export default defineConfig({
     }),
     starlight({
       title: 'AutoMem Docs',
+      disable404Route: true,
       logo: {
         src: './src/assets/robot-icon.svg',
         replacesTitle: false,
@@ -80,7 +81,6 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
-            { label: 'Managed Cloud', slug: 'docs/getting-started/managed-cloud' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
             { label: 'Quick Start (Railway)', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
@@ -201,7 +201,20 @@ export default defineConfig({
       ],
     }),
     react(),
-    // emdash disabled temporarily — see TODO above
+    emdash({
+      database: isBuilding
+        ? d1({ binding: 'EMDASH_DB' })
+        : libsql({ url: 'file:./data/emdash.db' }),
+      storage: local({
+        directory: './uploads',
+        baseUrl: '/_emdash/api/media/file',
+      }),
+      plugins: [{
+        id: 'automem-resend-email',
+        version: '1.0.0',
+        entrypoint: resendEmailPlugin,
+      }],
+    }),
     mdx(),
     sitemap(),
   ],
