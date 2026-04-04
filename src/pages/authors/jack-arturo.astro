@@ -1,17 +1,12 @@
 ---
-import { getEmDashCollection } from 'emdash';
+// import { getEmDashCollection } from 'emdash'; // emdash disabled temporarily
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import PersonSchema from '../../components/schemas/PersonSchema.astro';
 import '../../styles/global.css';
 
-// Get all blog posts by this author
-const result = await getEmDashCollection('posts', { status: 'published', limit: 100 });
-const posts = (result.entries ?? []).sort((a: any, b: any) => {
-  const dateA = a.data.published_at ? new Date(a.data.published_at).valueOf() : 0;
-  const dateB = b.data.published_at ? new Date(b.data.published_at).valueOf() : 0;
-  return dateB - dateA;
-});
+// emdash disabled — return empty posts for now
+const posts: any[] = [];
 ---
 
 <Layout

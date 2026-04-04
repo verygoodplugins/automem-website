@@ -14,42 +14,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
-  // For public routes (not /_emdash, not /api, not /admin), intercept emdash's
-  // cold-start setup redirect. The emdash middleware calls getDb() on every public
-  // page and redirects to /_emdash/admin/setup when it fails on Cloudflare Pages.
-  // We catch this and serve the pre-rendered static HTML via the ASSETS binding.
-  if (!pathname.startsWith('/_emdash') && !pathname.startsWith('/api') &&
-      !pathname.startsWith('/admin') && pathname !== '/confirm' &&
-      pathname !== '/unsubscribe') {
-    const response = await next();
-    // Detect emdash setup redirect (302 or Astro meta-refresh with 200)
-    const location = response.headers.get('location');
-    const isSetupRedirect = location?.includes('/_emdash/admin/setup');
-    let isMetaRefreshRedirect = false;
-    let bodyText: string | undefined;
-    if (!isSetupRedirect) {
-      const ct = response.headers.get('content-type') || '';
-      if (ct.includes('text/html')) {
-        bodyText = await response.text();
-        isMetaRefreshRedirect = bodyText.includes('/_emdash/admin/setup') && bodyText.includes('Redirecting');
-      }
-    }
-    if ((isSetupRedirect || isMetaRefreshRedirect) && env.ASSETS) {
-      // Use the Cloudflare Pages ASSETS binding to fetch the static file directly
-      // (regular fetch() loops back through the worker)
-      const assetPath = pathname === '/' ? '/index.html' : `${pathname}/index.html`;
-      try {
-        const asset = await env.ASSETS.fetch(new Request(new URL(assetPath, url.origin)));
-        if (asset.ok) return asset;
-      } catch { /* fall through */ }
-    }
-    // Return original response (reconstruct if we consumed the body)
-    if (bodyText !== undefined) {
-      return new Response(bodyText, { status: response.status, statusText: response.statusText, headers: response.headers });
-    }
-    return response;
-  }
-
   // Intercept emdash preview-url responses to fix the path using collection url_pattern
   if (pathname.match(/^\/_emdash\/api\/content\/[^/]+\/[^/]+\/preview-url$/) && request.method === 'POST') {
     const response = await next();
