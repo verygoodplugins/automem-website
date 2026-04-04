@@ -1,6 +1,7 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
+import { getBlogSlug } from '../lib/blog';
 
 export async function GET(context: APIContext) {
   const blog = await getCollection('blog');
@@ -18,7 +19,7 @@ export async function GET(context: APIContext) {
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.date,
-      link: `/blog/${post.slug}/`,
+      link: `/blog/${getBlogSlug(post)}/`,
       categories: post.data.tags || [],
       author: 'Jack Arturo',
     })),

@@ -1,5 +1,6 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
+import { getBlogSlug } from '../../lib/blog';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import AuthorBio from '../../components/AuthorBio.astro';
@@ -7,18 +8,17 @@ import BlogPostingSchema from '../../components/schemas/BlogPostingSchema.astro'
 import SEOMeta from '../../components/SEOMeta.astro';
 import '../../styles/global.css';
 
-export const prerender = true;
+const { slug } = Astro.params;
+const allPosts = await getCollection('blog');
+const post = typeof slug === 'string'
+  ? allPosts.find((entry) => getBlogSlug(entry) === slug)
+  : undefined;
 
-export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map(post => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
+if (!post) {
+  throw new Error(`Blog post not found for slug: ${slug}`);
 }
 
-const { post } = Astro.props;
-const { Content } = await post.render();
+const { Content } = await render(post);
 
 const formattedDate = post.data.date.toLocaleDateString('en-US', {
   month: 'long',
@@ -31,7 +31,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   <SEOMeta
     title={`${post.data.title} - AutoMem Blog`}
     description={post.data.description}
-    url={`/blog/${post.slug}`}
+    url={`/blog/${getBlogSlug(post)}`}
     type="article"
     publishedTime={post.data.date.toISOString()}
     tags={post.data.tags}
@@ -40,7 +40,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
     title={post.data.title}
     description={post.data.description}
     datePublished={post.data.date}
-    slug={post.slug}
+    slug={getBlogSlug(post)}
     tags={post.data.tags}
   />
   <Navigation currentPath="/blog" />
