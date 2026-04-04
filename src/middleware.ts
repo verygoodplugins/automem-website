@@ -20,7 +20,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     try {
       const json = await response.clone().json() as any;
       if (json?.data?.url) {
-        // Replace /posts/{id} or /posts/{slug} with /blog/{slug} pattern
         const emdash = (locals as any)?.emdash;
         const match = pathname.match(/^\/_emdash\/api\/content\/([^/]+)\/([^/]+)\/preview-url$/);
         if (match && emdash?.db) {
@@ -30,7 +29,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
             const entry = await emdash.db.selectFrom(`ec_${collection}`).select('slug').where('id', '=', id).executeTakeFirst();
             const slug = entry?.slug || id;
             const newPath = colRow.url_pattern.replace('{slug}', slug).replace('{id}', id).replace('{collection}', collection);
-            // Preserve the _preview token
             const oldUrl = new URL(json.data.url, 'http://localhost');
             const previewToken = oldUrl.searchParams.get('_preview');
             json.data.url = `${newPath}?_preview=${previewToken}`;

@@ -80,7 +80,6 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
-            { label: 'Managed Cloud', slug: 'docs/getting-started/managed-cloud' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
             { label: 'Quick Start (Railway)', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },

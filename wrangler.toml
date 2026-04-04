@@ -1,7 +1,7 @@
 name = "automem-website"
 pages_build_output_dir = "dist/client"
-compatibility_date = "2025-04-01"
-compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
+compatibility_date = "2026-04-04"
+compatibility_flags = ["nodejs_compat"]
 
 # D1 Database binding for waitlist
 [[d1_databases]]
@@ -21,6 +21,10 @@ binding = "SESSION"
 id = "f02355fe3bbb4a4b8a8429ea1eb53192"
 
 # Environment variables (example)
+[env.production]
+compatibility_date = "2026-04-04"
+compatibility_flags = ["nodejs_compat"]
+
 [env.production.vars]
 PUBLIC_API_URL = "https://api.automem.ai"
 PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"
@@ -33,6 +37,10 @@ PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"
 # FROM_NAME = "AutoMem"
 # BASE_URL = "https://automem.ai"
 # ADMIN_TOKEN = "" # Set in Pages env
+
+[env.preview]
+compatibility_date = "2026-04-04"
+compatibility_flags = ["nodejs_compat"]
 
 [env.preview.vars]
 PUBLIC_API_URL = "https://staging-api.automem.ai"
