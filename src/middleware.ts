@@ -14,6 +14,41 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
+  // For public routes (not /_emdash, not /api, not /admin), bypass the emdash
+  // middleware chain entirely. The emdash middleware's cold-start setup check
+  // calls getDb() which can fail on Cloudflare Pages, redirecting pre-rendered
+  // pages to /_emdash/admin/setup. By calling next() and checking for the
+  // setup redirect, we can catch and prevent it.
+  if (!pathname.startsWith('/_emdash') && !pathname.startsWith('/api') &&
+      !pathname.startsWith('/admin') && pathname !== '/confirm' &&
+      pathname !== '/unsubscribe') {
+    const response = await next();
+    // If emdash redirected to setup, it returns a 302 or a meta-refresh page.
+    // Detect this and fetch the static pre-rendered HTML instead.
+    const location = response.headers.get('location');
+    if (location?.includes('/_emdash/admin/setup')) {
+      // 302 redirect to setup — fetch the static HTML file
+      const htmlUrl = new URL(pathname === '/' ? '/index.html' : `${pathname}/index.html`, url.origin);
+      return fetch(htmlUrl);
+    }
+    // Also check for Astro's meta-refresh redirect (returns 200 with small HTML body)
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      const body = await response.text();
+      if (body.includes('/_emdash/admin/setup') && body.includes('Redirecting')) {
+        const htmlUrl = new URL(pathname === '/' ? '/index.html' : `${pathname}/index.html`, url.origin);
+        return fetch(htmlUrl);
+      }
+      // Not a redirect — return the original response with body reconstructed
+      return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    }
+    return response;
+  }
+
   // Intercept emdash preview-url responses to fix the path using collection url_pattern
   if (pathname.match(/^\/_emdash\/api\/content\/[^/]+\/[^/]+\/preview-url$/) && request.method === 'POST') {
     const response = await next();
