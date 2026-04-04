@@ -1,15 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
+// import { getEmDashCollection } from 'emdash'; // emdash disabled temporarily
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import PersonSchema from '../../components/schemas/PersonSchema.astro';
 import '../../styles/global.css';
 
-// Get all blog posts by this author
-const allPosts = await getCollection('blog');
-const posts = allPosts
-  .filter(post => !post.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+// emdash disabled — return empty posts for now
+const posts: any[] = [];
 ---
 
 <Layout

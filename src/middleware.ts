@@ -14,6 +14,32 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
+  // Intercept emdash preview-url responses to fix the path using collection url_pattern
+  if (pathname.match(/^\/_emdash\/api\/content\/[^/]+\/[^/]+\/preview-url$/) && request.method === 'POST') {
+    const response = await next();
+    try {
+      const json = await response.clone().json() as any;
+      if (json?.data?.url) {
+        const emdash = (locals as any)?.emdash;
+        const match = pathname.match(/^\/_emdash\/api\/content\/([^/]+)\/([^/]+)\/preview-url$/);
+        if (match && emdash?.db) {
+          const [, collection, id] = match;
+          const colRow = await emdash.db.selectFrom('_emdash_collections').select('url_pattern').where('slug', '=', collection).executeTakeFirst();
+          if (colRow?.url_pattern) {
+            const entry = await emdash.db.selectFrom(`ec_${collection}`).select('slug').where('id', '=', id).executeTakeFirst();
+            const slug = entry?.slug || id;
+            const newPath = colRow.url_pattern.replace('{slug}', slug).replace('{id}', id).replace('{collection}', collection);
+            const oldUrl = new URL(json.data.url, 'http://localhost');
+            const previewToken = oldUrl.searchParams.get('_preview');
+            json.data.url = `${newPath}?_preview=${previewToken}`;
+            return new Response(JSON.stringify(json), { status: 200, headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+      }
+    } catch {}
+    return response;
+  }
+
   try {
     // API: Signup
     if (pathname === '/api/signup' && request.method === 'POST') {
