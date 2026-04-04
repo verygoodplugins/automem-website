@@ -8,7 +8,7 @@
 // Pages supports _worker.js as a directory with index.js as the entry point,
 // preserving the modular structure the adapter generates (no_bundle: true).
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
 
 const serverDir = 'dist/server';
 const workerDir = 'dist/client/_worker.js';
@@ -46,27 +46,40 @@ writeFileSync(`${workerDir}/index.js`, entryContent);
 
 console.log(`[bundle-worker] Copied server → ${workerDir}/`);
 
-// Generate _routes.json so Cloudflare Pages routes dynamic requests to the SSR worker.
-// Without this, pages_build_output_dir mode can fall back to static asset handling
-// and miss SSR routes like /_emdash/*.
+// Generate _routes.json so Cloudflare Pages serves pre-rendered pages as static
+// files without invoking the worker. Without this, the _worker.js directory mode
+// routes ALL requests through the worker, and the emdash middleware's setup check
+// can redirect pre-rendered pages to /_emdash/admin/setup on cold starts.
+function findHtmlFiles(dir, base = '') {
+  const excludes = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${entry.name}` : entry.name;
+    if (entry.name === '_worker.js' || entry.name === '_astro') continue;
+    if (entry.isDirectory()) {
+      excludes.push(...findHtmlFiles(`${dir}/${entry.name}`, rel));
+    } else if (entry.name === 'index.html') {
+      excludes.push(base ? `/${base}` : '/');
+    }
+  }
+  return excludes;
+}
+
+const prerendered = findHtmlFiles('dist/client');
 const routesJson = JSON.stringify({
   version: 1,
   include: ['/*'],
   exclude: [
+    ...prerendered,
     '/_astro/*',
     '/pagefind/*',
     '/favicon.svg',
     '/robots.txt',
     '/sitemap-*.xml',
-    '/*.png',
-    '/*.jpg',
-    '/*.jpeg',
-    '/*.svg',
-    '/*.ico',
+    '/*.png', '/*.jpg', '/*.jpeg', '/*.svg', '/*.ico',
   ],
 }, null, 2);
 writeFileSync('dist/client/_routes.json', routesJson);
-console.log('[bundle-worker] Generated _routes.json for Cloudflare Pages SSR routing');
+console.log(`[bundle-worker] Generated _routes.json (${prerendered.length} pre-rendered pages excluded)`);
 
 // Pages deploys should use the adapter-generated Worker config so compatibility
 // flags like nodejs_compat are preserved when publishing the Functions bundle.
