@@ -1,36 +1,31 @@
 ---
+import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import '../../styles/global.css';
 
-// Query published posts from emdash via locals (set by middleware)
-const { emdash } = Astro.locals;
-let posts: any[] = [];
+// Get all blog posts
+const allPosts = await getCollection('blog');
 
-if (emdash?.handleContentList) {
-  const result = await emdash.handleContentList('posts', { status: 'published', limit: 100 });
-  if (result.success) {
-    posts = result.data.items;
-  }
-}
-
-// Sort by published date (newest first)
-posts.sort((a, b) => {
-  const dateA = a.published_at ? new Date(a.published_at).valueOf() : 0;
-  const dateB = b.published_at ? new Date(b.published_at).valueOf() : 0;
-  return dateB - dateA;
-});
+// Filter out drafts and sort by date (newest first)
+const posts = allPosts
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 // Group posts by year
 const postsByYear: Record<number, typeof posts> = {};
 posts.forEach(post => {
-  const date = post.published_at ? new Date(post.published_at) : new Date();
-  const year = date.getFullYear();
-  if (!postsByYear[year]) postsByYear[year] = [];
+  const year = post.data.date.getFullYear();
+  if (!postsByYear[year]) {
+    postsByYear[year] = [];
+  }
   postsByYear[year].push(post);
 });
 
-const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a);
+// Get sorted years (newest first)
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
 ---
 
 <Layout title="Blog - AutoMem" description="Articles about AI, memory systems, and open source development">
@@ -54,40 +49,46 @@ const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a);
         <section class="mb-16">
           <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-lab-text font-mono">{year}</h2>
           <div class="space-y-6">
-            {postsByYear[year].map(post => {
-              const date = post.published_at ? new Date(post.published_at) : new Date();
-              return (
-                <article class="group">
-                  <a
-                    href={`/blog/${post.slug}`}
-                    class="block bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none"
-                  >
-                    <div class="flex items-start justify-between gap-3 sm:gap-4 min-w-0">
-                      <div class="flex-1 min-w-0">
-                        <h3 class="text-xl sm:text-2xl font-bold mb-2 text-lab-text group-hover:text-lab-accent transition break-words">
-                          {post.data?.title || post.title}
-                        </h3>
-                        <p class="text-lab-muted mb-3 font-mono text-sm break-words">
-                          {post.data?.excerpt || post.excerpt}
-                        </p>
-                        <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
-                          <time class="text-lab-muted font-mono text-xs">
-                            {date.toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </time>
-                        </div>
-                      </div>
-                      <div class="text-lab-muted group-hover:text-lab-accent group-hover:translate-x-1 transition-all flex-shrink-0 font-mono mt-1">
-                        →
+            {postsByYear[year].map(post => (
+              <article class="group">
+                <a
+                  href={`/blog/${post.slug}`}
+                  class="block bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none"
+                >
+                  <div class="flex items-start justify-between gap-3 sm:gap-4 min-w-0">
+                    <div class="flex-1 min-w-0">
+                      <h3 class="text-xl sm:text-2xl font-bold mb-2 text-lab-text group-hover:text-lab-accent transition break-words">
+                        {post.data.title}
+                      </h3>
+                      <p class="text-lab-muted mb-3 font-mono text-sm break-words">
+                        {post.data.description}
+                      </p>
+                      <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
+                        <time class="text-lab-muted font-mono text-xs">
+                          {post.data.date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </time>
+                        {post.data.tags && post.data.tags.length > 0 && (
+                          <div class="flex flex-wrap gap-2">
+                            {post.data.tags.map(tag => (
+                              <span class="px-2 py-0.5 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </a>
-                </article>
-              );
-            })}
+                    <div class="text-lab-muted group-hover:text-lab-accent group-hover:translate-x-1 transition-all flex-shrink-0 font-mono mt-1">
+                      →
+                    </div>
+                  </div>
+                </a>
+              </article>
+            ))}
           </div>
         </section>
       ))}

@@ -6,12 +6,6 @@ import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
-import emdash, { local } from 'emdash/astro';
-import { libsql } from 'emdash/db';
-import { d1 } from '@emdash-cms/cloudflare';
-import { fileURLToPath } from 'node:url';
-
-const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
@@ -201,20 +195,6 @@ export default defineConfig({
       ],
     }),
     react(),
-    emdash({
-      database: isBuilding
-        ? d1({ binding: 'EMDASH_DB' })
-        : libsql({ url: 'file:./data/emdash.db' }),
-      storage: local({
-        directory: './uploads',
-        baseUrl: '/_emdash/api/media/file',
-      }),
-      plugins: [{
-        id: 'automem-resend-email',
-        version: '1.0.0',
-        entrypoint: resendEmailPlugin,
-      }],
-    }),
     mdx(),
     sitemap(),
   ],
