@@ -57,3 +57,40 @@ if (!toml.includes('pages_build_output_dir')) {
 }
 
 console.log(`[bundle-worker] Copied server → ${workerDir}/`);
+
+// Generate _routes.json so Cloudflare Pages serves pre-rendered pages as static
+// files without invoking the worker. Without this, the _worker.js directory mode
+// routes ALL requests through the worker, and the emdash middleware's setup check
+// can redirect pre-rendered pages to /_emdash/admin/setup on cold starts.
+import { readdirSync } from 'fs';
+
+function findHtmlFiles(dir, base = '') {
+  const excludes = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${entry.name}` : entry.name;
+    if (entry.name === '_worker.js' || entry.name === '_astro') continue;
+    if (entry.isDirectory()) {
+      excludes.push(...findHtmlFiles(`${dir}/${entry.name}`, rel));
+    } else if (entry.name === 'index.html') {
+      excludes.push(base ? `/${base}` : '/');
+    }
+  }
+  return excludes;
+}
+
+const prerendered = findHtmlFiles('dist/client');
+const routesJson = JSON.stringify({
+  version: 1,
+  include: ['/*'],
+  exclude: [
+    ...prerendered,
+    '/_astro/*',
+    '/pagefind/*',
+    '/favicon.svg',
+    '/robots.txt',
+    '/sitemap-*.xml',
+    '/*.png', '/*.jpg', '/*.jpeg', '/*.svg', '/*.ico',
+  ],
+}, null, 2);
+writeFileSync('dist/client/_routes.json', routesJson);
+console.log(`[bundle-worker] Generated _routes.json (${prerendered.length} pre-rendered pages excluded)`);
