@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 5000",
     "start": "astro dev",
-    "build": "rm -rf .astro node_modules/.astro .wrangler/deploy && node scripts/build-pages.mjs",
+    "build": "rm -rf dist .astro node_modules/.astro .wrangler/deploy && node scripts/build-pages.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check-links": "node scripts/check-links.js"
