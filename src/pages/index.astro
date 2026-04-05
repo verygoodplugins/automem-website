@@ -3,7 +3,6 @@ export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
 import ChatDemo from '../components/ChatDemo.astro';
-import EmailSignup from '../components/EmailSignup.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
 import Typewriter from '../components/Typewriter.astro';
 import MemoryDrive from '../components/MemoryDrive.astro';
@@ -90,7 +89,7 @@ const timelineEntries = [
   <OrganizationSchema />
   <Navigation currentPath="/" />
 
-  <main class="w-full pt-12 pb-24">
+  <main id="main-content" class="w-full pt-12 pb-24">
     <!-- Hero Section: Memory Lab -->
     <section
       class="px-4 md:px-12 pt-12 pb-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
@@ -114,13 +113,10 @@ const timelineEntries = [
             class="space-y-6 text-lg md:text-xl leading-relaxed border-l-4 border-lab-secondary pl-6 py-2"
           >
             <p>
-              <Typewriter
-                text="Deploy once. Remember everywhere."
-                delay="{200}"
-              />
+              <Typewriter text="Start now. Remember everywhere." delay="{200}" />
               <br />
               <Typewriter
-                text="The universal memory layer for your AI agents."
+                text="Managed cloud first, self-hosting still available."
                 delay="{1500}"
                 class="text-lab-muted"
               />
@@ -128,17 +124,14 @@ const timelineEntries = [
           </div>
 
           <div class="mt-12 flex flex-wrap gap-4">
-            <a href="/docs/overview" class="btn-lab-accent shadow-hard">
-              INIT_SYSTEM.sh
+            <a href="/start" class="btn-lab-accent shadow-hard">
+              START_NOW
             </a>
-            <a
-              href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist"
-              class="btn-lab group gap-2"
-            >
-              <span>SOURCE_CODE</span>
-              <span class="text-xs bg-lab-text text-lab-bg px-1.5 rounded"
-                >GITHUB</span
-              >
+            <a href="/docs/getting-started/managed-cloud/" class="btn-lab">
+              MANAGED_CLOUD_DOCS
+            </a>
+            <a href="/docs/deployment/railway/" class="btn-lab">
+              SELF_HOST_OPTIONS
             </a>
           </div>
         </div>
@@ -319,69 +312,81 @@ const timelineEntries = [
       <div class="max-w-6xl mx-auto">
         <div class="text-center max-w-2xl mx-auto mb-16">
           <h2 class="text-4xl font-bold mb-6 tracking-tighter">
-            Open Source & Portable
+            Managed Cloud First
           </h2>
           <p class="text-xl text-lab-muted">
-            Your memory infrastructure should be as portable as your code. Run
-            it on your laptop, your private cloud, or our managed service.
+            Start with AutoMem Managed Cloud, then drop to Railway, Docker, or source when you want full manual control.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
-          <!-- Option 1: Docker -->
+        <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-8">
+          <!-- Option 1: Managed Cloud -->
+          <div
+            class="bg-lab-bg border-2 border-lab-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform scale-[1.02] z-10"
+          >
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-accent text-[#1a1a1a] px-3 py-1 text-xs font-bold uppercase tracking-widest"
+            >
+              Start Here
+            </div>
+            <div class="text-4xl mb-4">AI</div>
+            <h3 class="text-2xl font-bold mb-2">Managed Cloud</h3>
+            <p class="text-lab-muted mb-6 text-sm min-h-[56px]">
+              Free trial, onboarding wizard, public-profile enrichment, and a ready-to-copy install command.
+            </p>
+            <div
+              class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent"
+            >
+              > create account<br />> provision pod<br />> connect tools
+            </div>
+            <a href="/start" class="btn-lab-accent w-full">Start Now</a>
+          </div>
+
+          <!-- Option 2: Railway -->
           <div
             class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
           >
             <div
               class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
             >
-              Standard
+              Self-Host
             </div>
-            <div class="text-4xl mb-4">🐳</div>
+            <div class="text-4xl mb-4">RC</div>
+            <h3 class="text-2xl font-bold mb-2">Railway</h3>
+            <p class="text-lab-muted mb-6 text-sm min-h-[56px]">
+              One-click production deployment for teams that still want to manage the infrastructure.
+            </p>
+            <div
+              class="bg-lab-bg border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
+            >
+              > deploy template<br />> wire env vars
+            </div>
+            <a href="/docs/deployment/railway/" class="btn-lab w-full">View Railway Guide</a>
+          </div>
+
+          <!-- Option 3: Docker -->
+          <div
+            class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
+          >
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
+            >
+              Self-Host
+            </div>
+            <div class="text-4xl mb-4">DK</div>
             <h3 class="text-2xl font-bold mb-2">Docker</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              The standard container. Run it locally or on any VPS.
+            <p class="text-lab-muted mb-6 text-sm min-h-[56px]">
+              Full local stack for development, sandboxes, and portable infrastructure experiments.
             </p>
             <div
               class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
             >
-              docker run -p 3000:3000<br />automem/server:latest
+              docker compose up --build
             </div>
-            <a
-              href="https://github.com/verygoodplugins/automem"
-              class="btn-lab w-full"
-              >View Image</a
-            >
+            <a href="/docs/deployment/docker/" class="btn-lab w-full">View Docker Guide</a>
           </div>
 
-          <!-- Option 2: Railway -->
-          <div
-            class="bg-lab-bg border-2 border-lab-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform scale-105 z-10"
-          >
-            <div
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-accent text-[#1a1a1a] px-3 py-1 text-xs font-bold uppercase tracking-widest"
-            >
-              Fastest
-            </div>
-            <div class="text-4xl mb-4">🚂</div>
-            <h3 class="text-2xl font-bold mb-2">Railway</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              One-click production deployment. Handles DBs & updates
-              automatically.
-            </p>
-            <div
-              class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent"
-            >
-              > Deploying to prod...<br />> Success (24s)
-            </div>
-            <a
-              href="https://railway.com/deploy/automem-ai-memory-service"
-              class="btn-lab-accent w-full"
-              >One-Click Deploy</a
-            >
-          </div>
-
-          <!-- Option 3: Source -->
+          <!-- Option 4: Source -->
           <div
             class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
           >
@@ -390,10 +395,10 @@ const timelineEntries = [
             >
               Hacker
             </div>
-            <div class="text-4xl mb-4">💻</div>
+            <div class="text-4xl mb-4">GH</div>
             <h3 class="text-2xl font-bold mb-2">Source</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              Fork the repo. Hack the graph logic. It's your code.
+            <p class="text-lab-muted mb-6 text-sm min-h-[56px]">
+              Fork the repos, change the graph logic, and own the entire memory stack yourself.
             </p>
             <div
               class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"

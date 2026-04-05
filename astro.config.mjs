@@ -30,6 +30,7 @@ export default defineConfig({
     }),
     starlight({
       title: 'AutoMem Docs',
+      disable404Route: true,
       logo: {
         src: './src/assets/robot-icon.svg',
         replacesTitle: false,

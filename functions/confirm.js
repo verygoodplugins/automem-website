@@ -1,12 +1,14 @@
 // Confirm email endpoint: /confirm?token=...
-import { verifyToken } from './lib/tokens.js';
+import { verifySignedToken, verifyToken } from './lib/tokens.js';
+import { findAccountByToken, updateAccount } from './lib/managed-cloud/store.js';
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token') || '';
   const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
 
-  const email = await verifyToken(token, secret);
+  const payload = await verifySignedToken(token, secret);
+  const email = payload?.email || await verifyToken(token, secret);
   if (!email) {
     return new Response('<h1>Invalid or expired confirmation link.</h1>', {
       status: 400,
@@ -16,17 +18,30 @@ export async function onRequestGet({ request, env }) {
 
   try {
     const db = env.D1 || env.DB;
-    if (!db) {
+    if (!db && payload?.purpose !== 'managed-cloud-verification') {
       return new Response('<h1>Database binding missing</h1>', { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
-    await db.prepare(
-      'UPDATE waitlist SET confirmed = 1 WHERE email = ?'
-    ).bind(email.toLowerCase()).run();
+    if (payload?.purpose === 'managed-cloud-verification' && payload?.token) {
+      const account = await findAccountByToken(env, payload.token);
+      if (!account) {
+        return new Response('<h1>Account not found.</h1>', {
+          status: 404,
+          headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+        });
+      }
+      await updateAccount(env, payload.token, {
+        email_verified_at: new Date().toISOString(),
+      });
+    } else {
+      await db.prepare(
+        'UPDATE waitlist SET confirmed = 1 WHERE email = ?'
+      ).bind(email.toLowerCase()).run();
+    }
 
     // Optional: Send welcome email after confirmation
     try {
       const shouldSend = String(env.SEND_WELCOME_EMAIL || 'true').toLowerCase() !== 'false';
-      if (shouldSend && env.RESEND_API_KEY) {
+      if (shouldSend && env.RESEND_API_KEY && payload?.purpose !== 'managed-cloud-verification') {
         const { createToken } = await import('./lib/tokens.js');
         const { buildWelcomeEmail } = await import('./lib/email.js');
         const secret = env.CONFIRM_SECRET || env.ADMIN_TOKEN || '';
@@ -52,7 +67,9 @@ export async function onRequestGet({ request, env }) {
 
     // Optionally redirect to homepage with a toast param
     const base = env.BASE_URL || `${url.protocol}//${url.host}`;
-    const redirect = new URL(base);
+    const redirect = payload?.redirect_path
+      ? new URL(payload.redirect_path, base)
+      : new URL(base);
     redirect.searchParams.set('confirmed', '1');
     return Response.redirect(redirect.toString(), 302);
   } catch (e) {

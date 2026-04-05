@@ -8,11 +8,12 @@
 // Pages supports _worker.js as a directory with index.js as the entry point,
 // preserving the modular structure the adapter generates (no_bundle: true).
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
 
 const serverDir = 'dist/server';
 const workerDir = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
+const serverWranglerConfig = `${serverDir}/wrangler.json`;
 
 if (!existsSync(entry)) {
   console.error(`[bundle-worker] ${entry} not found — skipping`);
@@ -43,27 +44,12 @@ if (existsSync(`${serverDir}/virtual_astro_middleware.mjs`)) {
 const entryContent = readFileSync(entry, 'utf-8');
 writeFileSync(`${workerDir}/index.js`, entryContent);
 
-// Add pages_build_output_dir to wrangler.toml post-build.
-// This must happen AFTER astro build to avoid the ASSETS binding conflict
-// during the Cloudflare vite plugin's prerender step.
-const toml = readFileSync('wrangler.toml', 'utf-8');
-if (!toml.includes('pages_build_output_dir')) {
-  const patched = toml.replace(
-    /^(name\s*=\s*"[^"]+"\n)/m,
-    `$1pages_build_output_dir = "dist/client"\n`
-  );
-  writeFileSync('wrangler.toml', patched);
-  console.log('[bundle-worker] Added pages_build_output_dir to wrangler.toml');
-}
-
 console.log(`[bundle-worker] Copied server → ${workerDir}/`);
 
 // Generate _routes.json so Cloudflare Pages serves pre-rendered pages as static
 // files without invoking the worker. Without this, the _worker.js directory mode
 // routes ALL requests through the worker, and the emdash middleware's setup check
 // can redirect pre-rendered pages to /_emdash/admin/setup on cold starts.
-import { readdirSync } from 'fs';
-
 function findHtmlFiles(dir, base = '') {
   const excludes = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -94,3 +80,13 @@ const routesJson = JSON.stringify({
 }, null, 2);
 writeFileSync('dist/client/_routes.json', routesJson);
 console.log(`[bundle-worker] Generated _routes.json (${prerendered.length} pre-rendered pages excluded)`);
+
+// Pages deploys should use the adapter-generated Worker config so compatibility
+// flags like nodejs_compat are preserved when publishing the Functions bundle.
+if (existsSync(serverWranglerConfig)) {
+  const config = JSON.parse(readFileSync(serverWranglerConfig, 'utf-8'));
+  delete config.assets;
+  config.pages_build_output_dir = '../client';
+  writeFileSync(serverWranglerConfig, JSON.stringify(config));
+  console.log('[bundle-worker] Prepared dist/server/wrangler.json for Pages deploy');
+}

@@ -42,6 +42,12 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
     <meta name="twitter:image" content={ogImage} />
   </head>
   <body class="bg-lab-bg text-lab-text min-h-screen flex font-mono selection:bg-lab-accent/20 relative">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[1100] focus:bg-lab-accent focus:text-[#1a1a1a] focus:px-4 focus:py-2 focus:rounded-md"
+    >
+      Skip to content
+    </a>
     
     <!-- Line Numbers (Scrolls with content) -->
     <div class="hidden md:block w-20 border-r border-lab-border bg-lab-bg flex-shrink-0 text-right pr-4 py-6 select-none text-lab-muted/30 text-xs font-mono leading-7 min-h-screen">

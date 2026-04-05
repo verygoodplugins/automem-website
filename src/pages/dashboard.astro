@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+
+const token = Astro.url.searchParams.get('token') || '';
+---
+
+<Layout title="Dashboard" description="Check provisioning, billing, and install details for AutoMem Managed Cloud.">
+  <Navigation currentPath="/start" />
+  <main id="main-content" class="px-4 md:px-12 py-14">
+    <section class="max-w-6xl mx-auto space-y-8" data-token={token}>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="comment-header">:: CONTROL_PLANE</p>
+          <h1 class="text-5xl font-bold tracking-tighter leading-[0.95]">Managed Cloud Dashboard</h1>
+          <p class="text-lab-muted mt-4 max-w-2xl">
+            Monitor provisioning, copy the install command, and manage billing without leaving the website.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <a id="upgrade-link" href={token ? `/subscribe?token=${encodeURIComponent(token)}` : '/start'} class="btn-lab-accent">Upgrade Plan</a>
+          <button id="portal-button" type="button" class="btn-lab">Manage Subscription</button>
+        </div>
+      </div>
+
+      <div id="dashboard-message" class="hidden text-sm" aria-live="polite"></div>
+
+      <div class="grid gap-6 lg:grid-cols-3">
+        <section class="border-2 border-lab-accent rounded-2xl bg-lab-surface p-6 shadow-hard">
+          <p class="text-xs uppercase tracking-[0.2em] text-lab-accent">Status</p>
+          <h2 class="text-2xl font-bold mt-2" id="status-title">Loading...</h2>
+          <p class="text-sm text-lab-muted mt-3" id="trial-copy"></p>
+          <dl class="mt-6 space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-4"><dt>Email verified</dt><dd id="email-verified">-</dd></div>
+            <div class="flex items-center justify-between gap-4"><dt>Memories stored</dt><dd id="memory-count">-</dd></div>
+            <div class="flex items-center justify-between gap-4"><dt>Associations</dt><dd id="association-count">-</dd></div>
+            <div class="flex items-center justify-between gap-4"><dt>Connected agents</dt><dd id="agent-count">-</dd></div>
+          </dl>
+        </section>
+
+        <section class="border-2 border-lab-text rounded-2xl bg-lab-surface p-6 shadow-hard lg:col-span-2">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-lab-secondary">Install</p>
+              <h2 class="text-2xl font-bold mt-2">Connect AutoMem To Your Tools</h2>
+            </div>
+            <button id="copy-command" type="button" class="btn-lab-accent">Copy Command</button>
+          </div>
+          <div class="mt-5 rounded-xl border border-lab-border bg-lab-bg p-4">
+            <code id="install-command" class="block whitespace-pre-wrap break-all text-sm">Loading install command...</code>
+          </div>
+          <div class="flex items-start justify-between gap-4 mt-6">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-lab-secondary">Manual MCP Config</p>
+              <p class="text-sm text-lab-muted mt-2">Use this if you want to wire AutoMem in by hand.</p>
+            </div>
+            <button id="copy-config" type="button" class="btn-lab">Copy Config</button>
+          </div>
+          <pre id="manual-config" class="mt-4 rounded-xl border border-lab-border bg-lab-bg p-4 overflow-x-auto text-xs">Loading config...</pre>
+        </section>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <section class="border-2 border-lab-text rounded-2xl bg-lab-surface p-6 shadow-hard">
+          <p class="text-xs uppercase tracking-[0.2em] text-lab-secondary">Connections</p>
+          <h2 class="text-2xl font-bold mt-2">Connected Agents</h2>
+          <ul id="connected-agents" class="mt-4 space-y-2 text-sm text-lab-muted">
+            <li>Loading connected agents...</li>
+          </ul>
+        </section>
+
+        <section class="border-2 border-lab-text rounded-2xl bg-lab-surface p-6 shadow-hard">
+          <p class="text-xs uppercase tracking-[0.2em] text-lab-secondary">Observability</p>
+          <h2 class="text-2xl font-bold mt-2">automem-watch</h2>
+          <p class="text-sm text-lab-muted mt-4">
+            The live graph dashboard is next. This placeholder will become the launchpad for activity streams, memory topology, and health monitoring.
+          </p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.querySelector('[data-token]');
+    const token = root?.getAttribute('data-token') || '';
+    const message = document.getElementById('dashboard-message');
+    const portalButton = document.getElementById('portal-button');
+    const copyCommand = document.getElementById('copy-command');
+    const copyConfig = document.getElementById('copy-config');
+
+    function setMessage(text, isError = false) {
+      if (!message) return;
+      message.classList.remove('hidden', 'text-lab-error', 'text-lab-success');
+      message.classList.add(isError ? 'text-lab-error' : 'text-lab-success');
+      message.textContent = text;
+    }
+
+    async function loadDashboard() {
+      if (!token) return;
+      const response = await fetch(`/api/v1/status/${encodeURIComponent(token)}`);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to load dashboard.');
+      }
+
+      document.getElementById('status-title').textContent = payload.status;
+      document.getElementById('trial-copy').textContent = payload.trial_days_remaining === null
+        ? payload.tier
+        : `${payload.trial_days_remaining} day${payload.trial_days_remaining === 1 ? '' : 's'} left in trial`;
+      document.getElementById('email-verified').textContent = payload.email_verified ? 'Yes' : 'Pending';
+      document.getElementById('memory-count').textContent = String(payload.stats.memories_stored || 0);
+      document.getElementById('association-count').textContent = String(payload.stats.associations || 0);
+      document.getElementById('agent-count').textContent = String((payload.connected_agents || []).length);
+      document.getElementById('install-command').textContent = payload.install_command || 'Install command unavailable.';
+      document.getElementById('manual-config').textContent = payload.manual_config || 'Manual config will appear when the pod is ready.';
+      document.getElementById('connected-agents').innerHTML = (payload.connected_agents || []).length
+        ? payload.connected_agents.map((agent) => `<li>${agent}</li>`).join('')
+        : '<li>No agents connected yet.</li>';
+    }
+
+    copyCommand?.addEventListener('click', async () => {
+      const value = document.getElementById('install-command')?.textContent || '';
+      await navigator.clipboard.writeText(value);
+      setMessage('Install command copied.');
+    });
+
+    copyConfig?.addEventListener('click', async () => {
+      const value = document.getElementById('manual-config')?.textContent || '';
+      await navigator.clipboard.writeText(value);
+      setMessage('Manual config copied.');
+    });
+
+    portalButton?.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`/api/v1/customer-portal/${encodeURIComponent(token)}`, { method: 'POST' });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Unable to open subscription portal.');
+        }
+        window.location.href = payload.url;
+      } catch (error) {
+        setMessage(error.message || 'Unable to open portal.', true);
+      }
+    });
+
+    fetch('/api/v1/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_name: 'dashboard_viewed', page: '/dashboard', token }),
+    }).catch(() => undefined);
+
+    loadDashboard().catch((error) => setMessage(error.message || 'Unable to load dashboard.', true));
+  </script>
+</Layout>

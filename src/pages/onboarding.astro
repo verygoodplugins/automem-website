@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import ManagedCloudOnboarding from '../components/ManagedCloudOnboarding';
+
+const token = Astro.url.searchParams.get('token') || '';
+---
+
+<Layout title="Onboarding" description="Interview, enrich, and provision your AutoMem Managed Cloud workspace.">
+  <Navigation currentPath="/start" />
+  <main id="main-content" class="px-4 md:px-12 py-14">
+    <section class="max-w-7xl mx-auto">
+      {!token ? (
+        <div class="border-2 border-lab-error rounded-2xl bg-lab-surface p-8 shadow-hard">
+          <h1 class="text-3xl font-bold">Missing token</h1>
+          <p class="mt-3 text-lab-muted">Open this page from the managed cloud signup flow so AutoMem knows which workspace to configure.</p>
+          <a href="/start" class="btn-lab-accent mt-6 inline-flex">Go To Start</a>
+        </div>
+      ) : (
+        <ManagedCloudOnboarding token={token} client:load />
+      )}
+    </section>
+  </main>
+</Layout>
