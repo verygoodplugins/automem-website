@@ -9,10 +9,37 @@
 // preserving the modular structure the adapter generates (no_bundle: true).
 
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 
 const serverDir = 'dist/server';
 const workerDir = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
+const pagesOutputDir = resolve('dist/client');
+
+function patchGeneratedWranglerJson(path) {
+  if (!existsSync(path)) return;
+
+  const json = JSON.parse(readFileSync(path, 'utf-8'));
+  let changed = false;
+
+  if (!json.pages_build_output_dir) {
+    json.pages_build_output_dir = pagesOutputDir;
+    changed = true;
+  }
+
+  // Pages reserves the ASSETS binding automatically for the static asset bucket.
+  // Removing it from the generated worker config keeps `wrangler pages deploy`
+  // from rejecting the config while still allowing the runtime to inject ASSETS.
+  if (json.assets?.binding === 'ASSETS') {
+    delete json.assets;
+    changed = true;
+  }
+
+  if (changed) {
+    writeFileSync(path, JSON.stringify(json));
+    console.log(`[bundle-worker] Patched ${path} for Pages deployment`);
+  }
+}
 
 if (!existsSync(entry)) {
   console.error(`[bundle-worker] ${entry} not found — skipping`);
@@ -57,6 +84,7 @@ if (!toml.includes('pages_build_output_dir')) {
 }
 
 console.log(`[bundle-worker] Copied server → ${workerDir}/`);
+patchGeneratedWranglerJson(`${serverDir}/wrangler.json`);
 
 // Generate _routes.json so Cloudflare Pages serves pre-rendered pages as static
 // files without invoking the worker. Without this, the _worker.js directory mode
