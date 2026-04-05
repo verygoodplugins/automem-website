@@ -1,18 +1,13 @@
-// Copy the Astro Cloudflare adapter's server output into dist/client/_worker.js/
-// for Cloudflare Pages advanced mode (directory-based) deployment.
-//
-// The @astrojs/cloudflare v13 adapter outputs dist/server/entry.mjs + chunks/
-// designed for `wrangler deploy`. Cloudflare Pages Git integration needs a
-// _worker.js in the static output directory instead.
-//
-// Pages supports _worker.js as a directory with index.js as the entry point,
-// preserving the modular structure the adapter generates (no_bundle: true).
+// Bundle the Astro Cloudflare adapter's server output into dist/client/_worker.js
+// for Cloudflare Pages advanced mode deployment.
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { builtinModules } from 'module';
 import { resolve } from 'path';
+import { build } from 'esbuild';
 
 const serverDir = 'dist/server';
-const workerDir = 'dist/client/_worker.js';
+const workerPath = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
 const pagesOutputDir = resolve('dist/client');
 
@@ -47,28 +42,20 @@ if (!existsSync(entry)) {
 }
 
 // Clean previous output
-if (existsSync(workerDir)) {
-  rmSync(workerDir, { recursive: true });
-}
-mkdirSync(workerDir, { recursive: true });
-
-// Copy server chunks and entry
-cpSync(`${serverDir}/chunks`, `${workerDir}/chunks`, { recursive: true });
-
-// Copy any _astro directory in server (may contain additional assets)
-if (existsSync(`${serverDir}/_astro`)) {
-  cpSync(`${serverDir}/_astro`, `${workerDir}/_astro`, { recursive: true });
+if (existsSync(workerPath)) {
+  rmSync(workerPath, { recursive: true, force: true });
 }
 
-// Copy middleware
-if (existsSync(`${serverDir}/virtual_astro_middleware.mjs`)) {
-  cpSync(`${serverDir}/virtual_astro_middleware.mjs`, `${workerDir}/virtual_astro_middleware.mjs`);
-}
-
-// Create index.js entry that re-exports from the adapter's entry
-// (Pages looks for index.js in the _worker.js directory)
-const entryContent = readFileSync(entry, 'utf-8');
-writeFileSync(`${workerDir}/index.js`, entryContent);
+await build({
+  entryPoints: [entry],
+  outfile: workerPath,
+  bundle: true,
+  format: 'esm',
+  platform: 'neutral',
+  target: 'es2022',
+  external: ['cloudflare:workers', 'node:*', ...builtinModules],
+  logLevel: 'info',
+});
 
 // Add pages_build_output_dir to wrangler.toml post-build.
 // This must happen AFTER astro build to avoid the ASSETS binding conflict
@@ -83,7 +70,7 @@ if (!toml.includes('pages_build_output_dir')) {
   console.log('[bundle-worker] Added pages_build_output_dir to wrangler.toml');
 }
 
-console.log(`[bundle-worker] Copied server → ${workerDir}/`);
+console.log(`[bundle-worker] Bundled server → ${workerPath}`);
 patchGeneratedWranglerJson(`${serverDir}/wrangler.json`);
 
 // Generate _routes.json so Cloudflare Pages serves pre-rendered pages as static
