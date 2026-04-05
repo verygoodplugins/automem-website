@@ -1,7 +1,7 @@
 name = "automem-website"
 pages_build_output_dir = "dist/client"
 compatibility_date = "2026-04-04"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 # D1 Database binding for waitlist
 [[d1_databases]]
@@ -40,7 +40,7 @@ PUBLIC_GITHUB_URL = "https://github.com/verygoodplugins/automem"
 
 [env.preview]
 compatibility_date = "2026-04-04"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 [env.preview.vars]
 PUBLIC_API_URL = "https://staging-api.automem.ai"

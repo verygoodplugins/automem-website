@@ -6,15 +6,17 @@ import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
-// TODO: re-enable emdash CMS once cold-start redirect issue on CF Pages is resolved
-// import emdash, { local } from 'emdash/astro';
-// import { libsql } from 'emdash/db';
-// import { d1 } from '@emdash-cms/cloudflare';
-// import { fileURLToPath } from 'node:url';
-// const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
+import emdash, { local } from 'emdash/astro';
+import { libsql } from 'emdash/db';
+import { d1 } from '@emdash-cms/cloudflare';
+import { fileURLToPath } from 'node:url';
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
+const enableEmdash =
+  process.env.ENABLE_EMDASH_CMS === '1' ||
+  (!!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main');
+const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
 export default defineConfig({
   site: 'https://automem.ai',
@@ -200,7 +202,22 @@ export default defineConfig({
       ],
     }),
     react(),
-    // emdash disabled temporarily — see TODO above
+    ...(enableEmdash
+      ? [emdash({
+          database: isBuilding
+            ? d1({ binding: 'EMDASH_DB' })
+            : libsql({ url: 'file:./data/emdash.db' }),
+          storage: local({
+            directory: './uploads',
+            baseUrl: '/_emdash/api/media/file',
+          }),
+          plugins: [{
+            id: 'automem-resend-email',
+            version: '1.0.0',
+            entrypoint: resendEmailPlugin,
+          }],
+        })]
+      : []),
     mdx(),
     sitemap(),
   ],
