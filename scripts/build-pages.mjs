@@ -5,9 +5,7 @@ const wranglerPath = 'wrangler.toml';
 const liveConfigPath = 'src/live.config.ts';
 const emdashLiveConfigPath = 'src/live.config.emdash.ts';
 const pagesBuildOutputPattern = /^pages_build_output_dir\s*=\s*".*"\n/m;
-const enableEmdash =
-  process.env.ENABLE_EMDASH_CMS === '1' ||
-  (!!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main');
+const enableEmdash = true;
 
 const originalToml = readFileSync(wranglerPath, 'utf-8');
 const sanitizedToml = originalToml.replace(pagesBuildOutputPattern, '');
