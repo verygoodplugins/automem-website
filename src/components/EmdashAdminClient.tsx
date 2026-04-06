@@ -13,5 +13,3 @@ export default function mountEmdashAdmin() {
   mounted = true;
   createRoot(rootElement).render(<AdminApp pluginAdmins={pluginAdmins} />);
 }
-
-mountEmdashAdmin();
