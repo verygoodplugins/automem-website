@@ -1,5 +1,5 @@
 diff --git a/node_modules/emdash/dist/astro/middleware.mjs b/node_modules/emdash/dist/astro/middleware.mjs
-index af52a74..a14d596 100644
+index af52a74..dd9e305 100644
 --- a/node_modules/emdash/dist/astro/middleware.mjs
 +++ b/node_modules/emdash/dist/astro/middleware.mjs
 @@ -1440,6 +1440,12 @@ let i18nInitialized = false;
@@ -15,23 +15,22 @@ index af52a74..a14d596 100644
  /**
  * Get EmDash configuration from virtual module
  */
-@@ -1521,8 +1527,12 @@ const onRequest = defineMiddleware(async (context, next) => {
+@@ -1521,8 +1527,11 @@ const onRequest = defineMiddleware(async (context, next) => {
  				const { getDb } = await import("../loader-fz8Q_3EO.mjs").then((n) => n.r);
  				await (await getDb()).selectFrom("_emdash_migrations").selectAll().limit(1).execute();
  				setupVerified = true;
 -			} catch {
 -				return context.redirect("/_emdash/admin/setup");
 +			} catch (error) {
-+				if (isMissingTableError(error)) return context.redirect("/_emdash/admin/setup");
 +				if (!setupProbeWarningLogged) {
 +					setupProbeWarningLogged = true;
-+					console.warn("[emdash] Public-route setup probe failed; skipping setup redirect because the database may still be configured:", error);
++					console.warn("[emdash] Public-route setup probe failed; continuing without redirect:", error);
 +				}
  			}
  			const response = await next();
  			setBaselineSecurityHeaders(response);
 diff --git a/node_modules/emdash/src/astro/middleware.ts b/node_modules/emdash/src/astro/middleware.ts
-index 6747522..fb377d5 100644
+index 6747522..fe01263 100644
 --- a/node_modules/emdash/src/astro/middleware.ts
 +++ b/node_modules/emdash/src/astro/middleware.ts
 @@ -63,6 +63,18 @@ let i18nInitialized = false;
@@ -53,7 +52,7 @@ index 6747522..fb377d5 100644
  
  /**
   * Get EmDash configuration from virtual module
-@@ -216,9 +228,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
+@@ -216,9 +228,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
  						.limit(1)
  						.execute();
  					setupVerified = true;
@@ -61,15 +60,12 @@ index 6747522..fb377d5 100644
 -					// Table doesn't exist -> fresh database, redirect to setup
 -					return context.redirect("/_emdash/admin/setup");
 +				} catch (error) {
-+					if (isMissingTableError(error)) {
-+						// Table doesn't exist -> fresh database, redirect to setup
-+						return context.redirect("/_emdash/admin/setup");
-+					}
-+
++					// Never redirect public pages to admin setup — let them render
++					// with empty content instead of hijacking visitors.
 +					if (!setupProbeWarningLogged) {
 +						setupProbeWarningLogged = true;
 +						console.warn(
-+							"[emdash] Public-route setup probe failed; skipping setup redirect because the database may still be configured:",
++							"[emdash] Public-route setup probe failed; continuing without redirect:",
 +							error,
 +						);
 +					}
