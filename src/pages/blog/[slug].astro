@@ -8,15 +8,19 @@ import BlogPostingSchema from '../../components/schemas/BlogPostingSchema.astro'
 import SEOMeta from '../../components/SEOMeta.astro';
 import '../../styles/global.css';
 
-const { slug } = Astro.params;
-const allPosts = await getCollection('blog');
-const post = typeof slug === 'string'
-  ? allPosts.find((entry) => getBlogSlug(entry) === slug)
-  : undefined;
+export const prerender = true;
 
-if (!post) {
-  throw new Error(`Blog post not found for slug: ${slug}`);
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  return allPosts
+    .filter((entry) => !entry.data.draft)
+    .map((entry) => ({
+      params: { slug: getBlogSlug(entry) },
+      props: { post: entry },
+    }));
 }
+
+const { post } = Astro.props;
 
 const { Content } = await render(post);
 
