@@ -24,6 +24,7 @@ jobs:
         run: npm run build
         env:
           ENABLE_EMDASH_CMS: '1'
+          NODE_OPTIONS: '--max-old-space-size=8192'
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
