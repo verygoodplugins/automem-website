@@ -1,6 +1,6 @@
 ---
-import { getCollection, render } from 'astro:content';
-import { getBlogSlug } from '../../lib/blog';
+import { getEmDashEntry } from 'emdash';
+import { PortableText } from 'emdash/ui';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import AuthorBio from '../../components/AuthorBio.astro';
@@ -8,44 +8,45 @@ import BlogPostingSchema from '../../components/schemas/BlogPostingSchema.astro'
 import SEOMeta from '../../components/SEOMeta.astro';
 import '../../styles/global.css';
 
-export const prerender = true;
+const { slug } = Astro.params;
+const { entry: post, isPreview, error } = await getEmDashEntry("posts", slug!);
 
-export async function getStaticPaths() {
-  const allPosts = await getCollection('blog');
-  return allPosts
-    .filter((entry) => !entry.data.draft)
-    .map((entry) => ({
-      params: { slug: getBlogSlug(entry) },
-      props: { post: entry },
-    }));
+if (error) {
+  console.error("Failed to load post:", error);
 }
 
-const { post } = Astro.props;
+if (!post) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
 
-const { Content } = await render(post);
+// CDN caching (preview requests are handled by emdash middleware with no-store)
+if (!isPreview) {
+  Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+}
 
-const formattedDate = post.data.date.toLocaleDateString('en-US', {
+const date = post.data.publishedAt ?? post.data.createdAt;
+const formattedDate = date?.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
   year: 'numeric'
-});
+}) ?? '';
 ---
 
-<Layout title={`${post.data.title} - AutoMem Blog`} description={post.data.description}>
+<Layout title={`${post.data.title} - AutoMem Blog`} description={post.data.description ?? ''}>
   <SEOMeta
     title={`${post.data.title} - AutoMem Blog`}
-    description={post.data.description}
-    url={`/blog/${getBlogSlug(post)}`}
+    description={post.data.description ?? ''}
+    url={`/blog/${slug}`}
     type="article"
-    publishedTime={post.data.date.toISOString()}
-    tags={post.data.tags}
+    publishedTime={date?.toISOString()}
+    tags={[]}
   />
   <BlogPostingSchema
     title={post.data.title}
-    description={post.data.description}
-    datePublished={post.data.date}
-    slug={getBlogSlug(post)}
-    tags={post.data.tags}
+    description={post.data.description ?? ''}
+    datePublished={date ?? new Date()}
+    slug={slug!}
+    tags={[]}
   />
   <Navigation currentPath="/blog" />
 
@@ -86,7 +87,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
 
       <!-- Post Content -->
       <div class="prose prose-lg max-w-none bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text min-w-0">
-        <Content />
+        <PortableText value={post.data.content} />
       </div>
 
       <!-- Author Bio -->

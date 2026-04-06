@@ -1,17 +1,16 @@
-export const prerender = true;
-
 import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
+import { getEmDashCollection } from 'emdash';
 import type { APIContext } from 'astro';
-import { getBlogSlug } from '../lib/blog';
 
 export async function GET(context: APIContext) {
-  const blog = await getCollection('blog');
+  const { entries: posts, error } = await getEmDashCollection("posts", {
+    orderBy: { published_at: "desc" },
+  });
 
-  // Filter out drafts and sort by date
-  const posts = blog
-    .filter(post => !post.data.draft)
-    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  if (error) {
+    console.error('Failed to fetch posts for RSS feed:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 
   return rss({
     title: 'AutoMem Blog',
@@ -19,10 +18,9 @@ export async function GET(context: APIContext) {
     site: context.site || 'https://automem.ai',
     items: posts.map(post => ({
       title: post.data.title,
-      description: post.data.description,
-      pubDate: post.data.date,
-      link: `/blog/${getBlogSlug(post)}/`,
-      categories: post.data.tags || [],
+      description: post.data.description ?? '',
+      pubDate: post.data.publishedAt ?? post.data.createdAt ?? new Date(),
+      link: `/blog/${post.slug ?? post.id}/`,
       author: 'Jack Arturo',
     })),
     customData: `<language>en-us</language>`,
