@@ -3,9 +3,14 @@ import { getEmDashCollection } from 'emdash';
 import type { APIContext } from 'astro';
 
 export async function GET(context: APIContext) {
-  const { entries: posts } = await getEmDashCollection("posts", {
+  const { entries: posts, error } = await getEmDashCollection("posts", {
     orderBy: { published_at: "desc" },
   });
+
+  if (error) {
+    console.error('Failed to fetch posts for RSS feed:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 
   return rss({
     title: 'AutoMem Blog',

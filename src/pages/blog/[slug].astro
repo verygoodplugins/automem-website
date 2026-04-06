@@ -16,7 +16,7 @@ if (error) {
 }
 
 if (!post) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
 // CDN caching (preview requests are handled by emdash middleware with no-store)
