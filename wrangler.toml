@@ -23,7 +23,7 @@ id = "f02355fe3bbb4a4b8a8429ea1eb53192"
 # Environment variables (example)
 [env.production]
 compatibility_date = "2026-04-04"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 [env.production.vars]
 PUBLIC_API_URL = "https://api.automem.ai"
