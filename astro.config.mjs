@@ -13,9 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 // Cloudflare adapter only for production builds — workerd can't load Node.js DB drivers in dev
 const isBuilding = process.argv.includes('build');
-const enableEmdash =
-  process.env.ENABLE_EMDASH_CMS === '1' ||
-  (!!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main');
+const enableEmdash = isBuilding;
 const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
 export default defineConfig({
