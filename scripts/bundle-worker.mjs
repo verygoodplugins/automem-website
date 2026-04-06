@@ -12,8 +12,7 @@ const workerPath = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
 const pagesOutputDir = resolve('dist/client');
 const usePreviewConfig =
-  process.env.ENABLE_EMDASH_CMS === '1' ||
-  (!!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main');
+  !!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main';
 
 function loadWranglerConfig() {
   return parseToml(readFileSync('wrangler.toml', 'utf-8'));
