@@ -9,7 +9,8 @@
     "build": "rm -rf dist .astro node_modules/.astro .wrangler/deploy && node scripts/build-pages.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "check-links": "node scripts/check-links.js"
+    "check-links": "node scripts/check-links.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.7",
@@ -37,6 +38,7 @@
     "baseline-browser-mapping": "^2.10.13",
     "esbuild": "^0.28.0",
     "linkinator": "^7.6.1",
+    "patch-package": "^8.0.1",
     "smol-toml": "^1.6.1",
     "wrangler": "^4.79.0"
   }

@@ -240,16 +240,19 @@ function findHtmlFiles(dir, base = '') {
 const prerendered = findHtmlFiles('dist/client');
 const routesJson = JSON.stringify({
   version: 1,
-  include: ['/*'],
+  // Only invoke the worker for routes that actually need runtime logic.
+  // Everything else should be served directly from the Pages asset bucket.
+  include: [
+    '/_emdash/*',
+    '/api/*',
+    '/admin/*',
+    '/confirm',
+    '/unsubscribe',
+  ],
   exclude: [
-    ...prerendered,
     '/_astro/*',
     '/pagefind/*',
-    '/favicon.svg',
-    '/robots.txt',
-    '/sitemap-*.xml',
-    '/*.png', '/*.jpg', '/*.jpeg', '/*.svg', '/*.ico',
   ],
 }, null, 2);
 writeFileSync('dist/client/_routes.json', routesJson);
-console.log(`[bundle-worker] Generated _routes.json (${prerendered.length} pre-rendered pages excluded)`);
+console.log(`[bundle-worker] Generated _routes.json (${prerendered.length} pre-rendered pages available for static serving)`);
