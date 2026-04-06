@@ -11,6 +11,34 @@ const workerPath = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
 const pagesOutputDir = resolve('dist/client');
 
+function deleteIfEmptyObject(json, key) {
+  if (
+    Object.prototype.hasOwnProperty.call(json, key) &&
+    json[key] &&
+    typeof json[key] === 'object' &&
+    !Array.isArray(json[key]) &&
+    Object.keys(json[key]).length === 0
+  ) {
+    delete json[key];
+    return true;
+  }
+
+  return false;
+}
+
+function deleteIfEmptyArray(json, key) {
+  if (
+    Object.prototype.hasOwnProperty.call(json, key) &&
+    Array.isArray(json[key]) &&
+    json[key].length === 0
+  ) {
+    delete json[key];
+    return true;
+  }
+
+  return false;
+}
+
 function patchGeneratedWranglerJson(path) {
   if (!existsSync(path)) return;
 
@@ -27,6 +55,86 @@ function patchGeneratedWranglerJson(path) {
   // from rejecting the config while still allowing the runtime to inject ASSETS.
   if (json.assets?.binding === 'ASSETS') {
     delete json.assets;
+    changed = true;
+  }
+
+  // Astro's generated worker config includes local-dev metadata and several
+  // empty worker-only fields that Cloudflare Pages rejects when it switches to
+  // the redirected dist/server/wrangler.json during deploy validation.
+  for (const key of [
+    'configPath',
+    'userConfigPath',
+    'topLevelName',
+    'definedEnvironments',
+    'legacy_env',
+    'jsx_factory',
+    'jsx_fragment',
+    'rules',
+    'dev',
+    'main',
+    'images',
+    'no_bundle',
+    'cloudchamber',
+    'python_modules',
+  ]) {
+    if (Object.prototype.hasOwnProperty.call(json, key)) {
+      delete json[key];
+      changed = true;
+    }
+  }
+
+  if (deleteIfEmptyObject(json, 'triggers')) changed = true;
+  if (deleteIfEmptyObject(json, 'vars')) changed = true;
+
+  for (const key of [
+    'workflows',
+    'migrations',
+    'send_email',
+    'r2_buckets',
+    'vectorize',
+    'ai_search_namespaces',
+    'ai_search',
+    'hyperdrive',
+    'services',
+    'analytics_engine_datasets',
+    'dispatch_namespaces',
+    'mtls_certificates',
+    'pipelines',
+    'secrets_store_secrets',
+    'unsafe_hello_world',
+    'worker_loaders',
+    'ratelimits',
+    'vpc_services',
+  ]) {
+    if (deleteIfEmptyArray(json, key)) changed = true;
+  }
+
+  if (
+    json.durable_objects &&
+    Array.isArray(json.durable_objects.bindings) &&
+    json.durable_objects.bindings.length === 0
+  ) {
+    delete json.durable_objects;
+    changed = true;
+  }
+
+  if (
+    json.queues &&
+    Array.isArray(json.queues.producers) &&
+    json.queues.producers.length === 0 &&
+    Array.isArray(json.queues.consumers) &&
+    json.queues.consumers.length === 0
+  ) {
+    delete json.queues;
+    changed = true;
+  }
+
+  if (
+    json.logfwdr &&
+    Array.isArray(json.logfwdr.bindings) &&
+    json.logfwdr.bindings.length === 0
+  ) {
+    delete json.logfwdr;
     changed = true;
   }
 
