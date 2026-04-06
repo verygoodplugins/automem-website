@@ -14,6 +14,31 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
+  // Keep preview CMS auth/setup on one stable hostname so passkeys, sessions,
+  // and setup state are exercised against a single preview surface instead of
+  // Cloudflare's per-deploy hash URLs.
+  const emdashPreviewBaseUrl = typeof env.EMDASH_PREVIEW_BASE_URL === 'string'
+    ? env.EMDASH_PREVIEW_BASE_URL
+    : '';
+  if (pathname.startsWith('/_emdash') && emdashPreviewBaseUrl) {
+    try {
+      const canonicalUrl = new URL(emdashPreviewBaseUrl);
+      if (canonicalUrl.origin !== url.origin) {
+        canonicalUrl.pathname = url.pathname;
+        canonicalUrl.search = url.search;
+        return new Response(null, {
+          status: 307,
+          headers: {
+            Location: canonicalUrl.toString(),
+            'Cache-Control': 'no-store',
+          },
+        });
+      }
+    } catch {
+      // Ignore invalid preview base URL and continue serving the current request.
+    }
+  }
+
   // Intercept emdash preview-url responses to fix the path using collection url_pattern
   if (pathname.match(/^\/_emdash\/api\/content\/[^/]+\/[^/]+\/preview-url$/) && request.method === 'POST') {
     const response = await next();

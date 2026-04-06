@@ -5,11 +5,19 @@ import { existsSync, rmSync, writeFileSync, readFileSync } from 'fs';
 import { builtinModules } from 'module';
 import { resolve } from 'path';
 import { build } from 'esbuild';
+import { parse as parseToml } from 'smol-toml';
 
 const serverDir = 'dist/server';
 const workerPath = 'dist/client/_worker.js';
 const entry = `${serverDir}/entry.mjs`;
 const pagesOutputDir = resolve('dist/client');
+const usePreviewConfig =
+  process.env.ENABLE_EMDASH_CMS === '1' ||
+  (!!process.env.CF_PAGES_BRANCH && process.env.CF_PAGES_BRANCH !== 'main');
+
+function loadWranglerConfig() {
+  return parseToml(readFileSync('wrangler.toml', 'utf-8'));
+}
 
 function deleteIfEmptyObject(json, key) {
   if (
@@ -43,11 +51,40 @@ function patchGeneratedWranglerJson(path) {
   if (!existsSync(path)) return;
 
   const json = JSON.parse(readFileSync(path, 'utf-8'));
+  const wranglerConfig = loadWranglerConfig();
+  const previewConfig = wranglerConfig?.env?.preview;
   let changed = false;
 
   if (!json.pages_build_output_dir) {
     json.pages_build_output_dir = pagesOutputDir;
     changed = true;
+  }
+
+  if (usePreviewConfig && previewConfig) {
+    if (previewConfig.compatibility_date && json.compatibility_date !== previewConfig.compatibility_date) {
+      json.compatibility_date = previewConfig.compatibility_date;
+      changed = true;
+    }
+
+    if (previewConfig.compatibility_flags) {
+      json.compatibility_flags = previewConfig.compatibility_flags;
+      changed = true;
+    }
+
+    if (previewConfig.d1_databases) {
+      json.d1_databases = previewConfig.d1_databases;
+      changed = true;
+    }
+
+    if (previewConfig.kv_namespaces) {
+      json.kv_namespaces = previewConfig.kv_namespaces;
+      changed = true;
+    }
+
+    if (previewConfig.vars) {
+      json.vars = previewConfig.vars;
+      changed = true;
+    }
   }
 
   // Pages reserves the ASSETS binding automatically for the static asset bucket.
