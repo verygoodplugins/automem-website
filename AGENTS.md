@@ -18,16 +18,16 @@ npm run check-links  # Broken link checker (requires build first)
 ## Architecture & Key Directories
 
 ```
-src/pages/           — Routes (.astro). Includes /blog/, /docs/, /about, /mascot-lab, etc.; /blog and /rss.xml are served from EmDash CMS at runtime
-src/content/blog/    — Filesystem blog collection in numbered dirs (e.g., 01-introducing-automem/index.md); not the canonical source for published /blog content
+src/pages/           — Routes (.astro). Includes /blog/, /docs/, /about, /mascot-lab, etc.
+src/content/blog/    — Blog posts as markdown in numbered dirs (e.g., 01-introducing-automem/index.md)
 src/content/docs/    — Starlight documentation (57+ pages)
 src/components/      — Astro components (AutoJack mascot, MemoryHero, EmailSignup, SEO schemas/)
 src/layouts/         — Layout.astro (single base layout with hex line numbers, footer mascot)
 src/styles/          — global.css (Tailwind v4 @theme + CSS vars), starlight-custom.css
-src/lib/             — Utility modules (including blog/CMS helpers and emdash email plugin)
-src/middleware.ts    — Cloudflare Workers env import, API route dispatch, and emdash preview/runtime integration
+src/lib/             — Utility modules (blog helpers, emdash email plugin)
+src/middleware.ts    — Cloudflare Workers env import, API route dispatch, emdash preview redirect
 src/content.config.ts — Content collection definitions (blog + docs)
-src/live.config.ts   — EmDash CMS live configuration
+src/live.config.ts   — EmDash CMS configuration
 functions/           — Cloudflare Pages Functions (api/signup.js, confirm.js, unsubscribe.js, admin/)
 scripts/             — Build tooling (build-pages.mjs, bundle-worker.mjs, check-links.js, file-doc-map.json)
 schema/              — D1 database schemas
@@ -39,9 +39,10 @@ public/              — Static assets (favicon, OG image)
 `npm run build` runs `scripts/build-pages.mjs`, which:
 
 1. Temporarily strips `pages_build_output_dir` from wrangler.toml
-2. Runs `astro build`
-3. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
-4. Restores original wrangler.toml
+2. Swaps in emdash live config (`src/live.config.emdash.ts` → `src/live.config.ts`)
+3. Runs `astro build`
+4. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
+5. Restores original config files
 
 **Never run `astro build` directly** — always use `npm run build`.
 
