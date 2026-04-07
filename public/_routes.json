@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "include": [
+    "/_emdash/*",
+    "/api/*",
+    "/admin/*",
+    "/blog",
+    "/blog/*",
+    "/rss.xml",
+    "/confirm",
+    "/unsubscribe"
+  ],
+  "exclude": [
+    "/_astro/*",
+    "/pagefind/*"
+  ]
+}
