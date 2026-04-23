@@ -17,11 +17,15 @@ Before setting up the development environment, ensure the following tools are in
 
 | Tool | Minimum Version | Purpose |
 |---|---|---|
-| Python | 3.10+ | Core runtime |
+| Python | 3.12 | Core runtime (standardized via `.python-version`) |
 | pip | Latest | Package management |
 | Docker | Latest | Local service dependencies (optional) |
 | Docker Compose | Latest | Multi-container orchestration (optional) |
 | git | Any recent version | Source control |
+
+:::tip[One-shot bootstrap]
+The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/main/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv, installs dev requirements, and downloads the spaCy model in one command. Prefer it over the manual steps below unless you need a custom setup.
+:::
 
 ### Repository Contents
 
@@ -43,7 +47,7 @@ After cloning the repository, the structure relevant to development:
 Create an isolated Python environment to avoid dependency conflicts:
 
 ```bash
-python3 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate   # macOS/Linux
 # or: venv\Scripts\activate  # Windows
 ```

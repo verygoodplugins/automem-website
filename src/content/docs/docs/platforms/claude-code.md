@@ -7,15 +7,19 @@ sidebar:
 
 Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. The `claude-code` CLI installer sets up hook scripts that run at key events (session start, build, test, deployment) to capture context automatically. CLAUDE.md rules guide Claude's judgment for manual memory operations.
 
+:::caution[Claude Code plugin is deprecated]
+The standalone Claude Code **plugin** (Method 1 below) is deprecated and will be removed in an upcoming release. The integration itself is not going away — only the plugin packaging. Use the CLI installer (`npx @verygoodplugins/mcp-automem claude-code`) as the canonical install path. See the upstream [DEPRECATION.md](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md) for migration steps.
+:::
+
 **Two installation paths:**
-1. **Plugin installation** (recommended) — native Claude Code plugin via `/plugin install`
-2. **CLI installation** — manual configuration via `npx`
+1. **CLI installation** (recommended) — `npx @verygoodplugins/mcp-automem claude-code`
+2. **Plugin installation** (deprecated) — native Claude Code plugin via `/plugin install`
 
 ---
 
 ## Installation
 
-### Method 1: Plugin Installation (Recommended)
+### Method 1: Plugin Installation (Deprecated)
 
 ```bash
 /plugin install @verygoodplugins/automem
@@ -44,7 +48,11 @@ This installs the plugin to `~/.claude/plugins/automem@marketplace-name/` with t
 
 The plugin registers three slash commands and configures the MCP server automatically.
 
-### Method 2: CLI Installation
+:::note
+New installs should use the CLI method below instead. Existing plugin users should follow the [migration guide](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md#migration-for-existing-plugin-users): remove the plugin, run `npx @verygoodplugins/mcp-automem claude-code`, then restart Claude Code.
+:::
+
+### Method 2: CLI Installation (Recommended)
 
 **Step 1: Register the MCP server**
 
@@ -372,3 +380,16 @@ curl -H "Authorization: Bearer $KEY" https://your-automem.example.com/health
 - Try broader queries with fewer filters
 - Remove `time_query` for older memories
 - Use `tag_mode: "any"` instead of `"all"`
+
+### Windows: hooks fail to run Python
+
+**Symptom:** session-start or capture hooks log errors like `python: command not found`, or hooks appear to succeed but skip the Python step silently.
+
+Windows systems often ship with `python` pointing at the Microsoft Store app shim, with the real interpreter exposed only as `python3` or under `py -3`. The installer ships a `python-command.sh` wrapper that resolves to the correct interpreter for the current host:
+
+```bash
+# Installed by the CLI installer
+~/.claude/scripts/python-command.sh
+```
+
+The bundled hook scripts invoke `python-command.sh` instead of calling `python` directly, so upgrading to the latest mcp-automem release and re-running `npx @verygoodplugins/mcp-automem claude-code` is typically enough to pick up the fix. If you've customized hooks in place, point them at the wrapper rather than hard-coding `python` or `python3`.

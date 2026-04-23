@@ -30,7 +30,8 @@ All operations except `/health` require authentication via `AUTOMEM_API_TOKEN`. 
 | `/recall` | GET | Search/retrieve memories | API Token |
 | `/memory/:id` | PATCH | Update existing memory | API Token |
 | `/memory/:id` | DELETE | Remove memory | API Token |
-| `/memory/by-tag` | GET | Filter by tags | API Token |
+| `/memory/by-tag` | GET | Filter by tags (paginated) | API Token |
+| `/memory/by-tag` | DELETE | Bulk delete by tag | API Token |
 
 ---
 
@@ -615,7 +616,8 @@ Retrieves memories filtered by tags, ordered by importance and recency. More per
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `tags` | string[] | Tag filters (multiple values supported) | Required |
-| `limit` | integer | Max results (1–200) | `20` |
+| `limit` | integer | Max results per page (1–200) | `20` |
+| `offset` | integer | Number of results to skip for pagination | `0` |
 
 ### Example Requests
 
@@ -627,19 +629,65 @@ curl "https://your-automem-instance/memory/by-tag?tags=project-alpha" \
 # Filter by multiple tags (any match)
 curl "https://your-automem-instance/memory/by-tag?tags=project-alpha&tags=database&limit=20" \
   -H "Authorization: Bearer YOUR_TOKEN"
+
+# Paginate through a large tag (page 2, 50 per page)
+curl "https://your-automem-instance/memory/by-tag?tags=project-alpha&limit=50&offset=50" \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
+
+### Pagination
+
+Results are ordered by `importance DESC, timestamp DESC, id ASC` — deterministic for stable paging. Each response includes a `has_more` boolean indicating whether another page exists. To walk the full result set, increment `offset` by the response `count` until `has_more` is `false`.
 
 ### Implementation
 
 **Query Strategy:**
 1. **FalkorDB Direct**: Queries FalkorDB graph directly using tag filters — does not use Qdrant vector search
-2. **Ordering**: Sort by `importance DESC, timestamp DESC`
+2. **Ordering**: Sort by `importance DESC, timestamp DESC, id ASC` (deterministic for pagination)
 3. **Relations**: Fetch connected memories for context
 4. **Format**: Return in same format as `/recall` for consistency
 
 The query leverages tag arrays with direct index usage on the `tags` property in FalkorDB — no vector search or keyword extraction required, making it more efficient than `/recall` for tag-only filtering.
 
 The `score` field in the response reflects the memory's `importance` when filtering by tags only.
+
+---
+
+## DELETE /memory/by-tag — Bulk Delete by Tag
+
+Deletes every memory matching the given tags in both FalkorDB and Qdrant. Useful for clearing stale project scopes, wiping test data, or removing a noisy tag entirely after a recall audit.
+
+:::caution[Destructive and not reversible]
+This endpoint removes memories in bulk with no confirmation step. Run a `GET /memory/by-tag` with the same tags first to preview what will be deleted. Protect the endpoint behind your API token and avoid exposing it to untrusted clients.
+:::
+
+### Query Parameters
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `tags` | string[] | Tag filters (multiple values; matches any) | Required |
+
+### Example Request
+
+```bash
+# Delete every memory tagged 'scratch' or 'test-run'
+curl -X DELETE "https://your-automem-instance/memory/by-tag?tags=scratch&tags=test-run" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "tags": ["scratch", "test-run"],
+  "deleted_count": 42
+}
+```
+
+### Implementation
+
+The handler pages through matching memories in batches of 200, deletes each batch from both FalkorDB (graph + relations) and Qdrant (vector points), then repeats until no memories remain for the tag set. `deleted_count` reflects the total across all batches.
 
 ---
 

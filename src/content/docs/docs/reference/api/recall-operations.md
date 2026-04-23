@@ -76,9 +76,13 @@ Time queries are parsed by `_parse_time_expression()` from `automem/utils/time.p
 | `active_path` | string | — | File path being edited (auto-detects language) |
 | `context_tags` | array[string] | — | Tags to boost in scoring |
 | `context_types` | array[string] | — | Memory types to prioritize |
-| `priority_ids` | array[string] | — | Specific memory IDs to guarantee inclusion |
+| `priority_ids` | array[string] | — | Memory IDs to boost during scoring |
 
 Context hints influence the 9-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
+
+:::note[`priority_ids` semantics]
+`priority_ids` adds a relevance boost to matching memories during scoring — it does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints, it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
+:::
 
 ### Graph Expansion Parameters
 
@@ -565,7 +569,7 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 | `active_path` | string | No | — | Current file path for language detection |
 | `context_tags` | array[string] | No | — | Priority tags to boost |
 | `context_types` | array[string] | No | — | Priority memory types to boost |
-| `priority_ids` | array[string] | No | — | Specific memory IDs to always include |
+| `priority_ids` | array[string] | No | — | Memory IDs to boost during scoring (does not bypass filters) |
 | `auto_decompose` | boolean | No | — | Auto-extract entities from query for parallel searches |
 
 **Output schema:**

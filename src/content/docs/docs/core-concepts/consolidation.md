@@ -137,12 +137,13 @@ graph LR
 
 **Calculation Steps:**
 
-1. **Age-based decay:** `exp(-0.01 * age_days)` — Exponential decay from creation timestamp
+1. **Age-based decay:** `exp(-0.01 * age_days)` — Exponential decay from creation timestamp (gentler than older rates to preserve mid-life memories)
 2. **Access reinforcement:** `1.0` if accessed within 24 hours, else `exp(-0.05 * days_since_access)`
 3. **Relationship preservation:** `1 + 0.3 * log(1 + relationship_count)` — Connected memories decay slower
 4. **Importance scaling:** `0.5 + importance` (scales from 0.5 to 1.5)
 5. **Confidence bonus:** `0.7 + 0.3 * confidence` (adds up to 30%)
-6. **Combined score:** Product of all factors, capped at 1.0
+6. **Importance floor clamp:** Final score is never allowed below `importance * 0.3` — a high-importance memory cannot decay into oblivion purely because it is old and unread
+7. **Combined score:** Product of all factors, capped at 1.0, floored by the importance clamp
 
 **Cypher Query Pattern:**
 
@@ -152,6 +153,10 @@ WHERE (m.archived IS NULL OR m.archived = false)
   AND m.importance >= $importance_threshold  -- Optional filter
 RETURN m.id, m.timestamp, m.importance, m.last_accessed, m.relevance_score
 ```
+
+:::note[Archived memories are skipped]
+The decay task, recall, and consolidation queries all filter out memories where `archived = true`. The forget task archives rather than deleting, so a consolidator that wakes up mid-way through a long-running pass cannot re-process the same memory twice, and archived memories stop contributing to ranking or appearing in results.
+:::
 
 The consolidator then updates each memory with:
 
