@@ -14,6 +14,20 @@ const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_
 
 const timelineEntries = [
   {
+    date: '2026-04-23',
+    time: '22:00 UTC',
+    title: '0.15.2 • Recall Quality & Tag Ops',
+    description:
+      'Keyword scoring for vector results with a softer adaptive floor. Expansion candidates now bypass the tag filter so graph walks aren\'t cut off at the seed set. Memory-by-tag pagination and bulk delete endpoints. LoCoMo judge runs hardened against flaky rate limits.',
+  },
+  {
+    date: '2026-04-23',
+    time: '20:00 UTC',
+    title: 'MCP 0.14.0 • OpenClaw Plugin-First & Antigravity',
+    description:
+      'Plugin-first memory parity for OpenClaw with shared policy across plugin, MCP, and skill modes. Google Antigravity setup templates shipped. Claude Code plugin deprecated in favor of the CLI installer. Windows Python wrapper for hook scripts.',
+  },
+  {
     date: '2026-03-25',
     time: '18:00 UTC',
     title: '0.15.0 • Relationship Engine & Benchmarks',
@@ -191,9 +205,9 @@ const timelineEntries = [
             </div>
             <h3 class="text-xl font-bold mb-2 mt-2">Universal I/O</h3>
             <p class="text-lab-muted text-sm leading-relaxed">
-              Compatible with Claude Code, Cursor, ChatGPT, OpenClaw, and any
-              MCP client. Local or remote — works everywhere via MCP and
-              Streamable HTTP.
+              Compatible with Claude Code, Cursor, ChatGPT, OpenClaw,
+              Antigravity, and any MCP client. Local or remote — works everywhere
+              via MCP and Streamable HTTP.
             </p>
             <div class="mt-4 flex gap-2">
               <span

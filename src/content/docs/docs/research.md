@@ -250,6 +250,18 @@ The 7% semantic similarity improvement aligns with HippoRAG 2's published findin
 
 ---
 
+## Evaluation Methodology
+
+Benchmarking a memory system is harder than benchmarking retrieval. Temporal reasoning, episodic questions, and adversarial phrasing all break assumptions that single-turn RAG evals get away with. AutoMem's eval infrastructure is deliberately separate from the production code and documented publicly so the numbers above can be reproduced, challenged, and improved on:
+
+- **[automem-evals](https://github.com/verygoodplugins/automem-evals)** — the standalone evaluation lab. Runs LoCoMo and other harnesses against AutoMem branches and produces per-experiment postmortems.
+- **[docs/EVALS_CONTRACT.md](https://github.com/verygoodplugins/automem/blob/main/docs/EVALS_CONTRACT.md)** — the contract the server exposes to eval harnesses. Defines the endpoints, payload shapes, and determinism guarantees that make reproducible runs possible.
+- **Opt-in LoCoMo cat5 judge** — category 5 (adversarial temporal reasoning) questions are scored by an LLM judge behind a feature flag. Off by default to keep free/fast eval runs cheap; opt in when you need the full benchmark.
+
+The [blog post on benchmarking honesty](/blog/12-benchmarking-honesty/) walks through a real postmortem where this infrastructure caught an evaluator bug that had been inflating scores — the kind of failure that is cheap to find when the eval layer is accessible and expensive when it's buried inside the server.
+
+---
+
 ## Summary: Research Principles in Production
 
 | Research Paper | Core Finding | AutoMem Implementation | Code Location |

@@ -107,12 +107,13 @@ flowchart TD
 
 ### Dimension Validation and Fail-Fast
 
-The system validates embedding dimensions against the configured `VECTOR_SIZE` before storing in Qdrant:
+The system validates embedding dimensions against the configured `VECTOR_SIZE` at two checkpoints — provider initialization and every write to Qdrant:
 
-- `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/validation.py) checks dimension consistency
-- Mismatches raise `ValueError` with a clear message
-- Prevents Qdrant collection corruption from mixed dimensions
-- FalkorDB writes always succeed regardless of embedding status
+- **At init:** when the provider chain resolves, the selected provider's declared dimension is compared to the Qdrant collection's actual `VECTOR_SIZE`. A mismatch aborts startup with a clear error instead of silently truncating or padding vectors at query time.
+- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/validation.py) re-checks every embedding before `upsert`.
+- Mismatches raise `ValueError` with the observed and expected dimensions in the message.
+- Prevents Qdrant collection corruption from mixed dimensions when switching providers.
+- FalkorDB writes always succeed regardless of embedding status — the graph never depends on a healthy vector path.
 
 ---
 
