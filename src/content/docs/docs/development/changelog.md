@@ -7,7 +7,26 @@ All notable releases for **AutoMem** (the memory server) and **MCP AutoMem** (th
 
 ---
 
+## April 2026
+
+### 0.15.2 · Recall Quality & Tag Ops
+**2026-04-23**
+
+Keyword scoring for vector results with a softer adaptive floor — recall quality improves on short and keyword-heavy queries without drowning out semantic matches. Expansion candidates now bypass the tag filter so graph walks aren't cut off at the seed set. New paginated `GET /memory/by-tag` with `offset` + `has_more`, plus a bulk `DELETE /memory/by-tag` for clearing stale scopes. LoCoMo judge runs hardened against flaky rate limits so benchmark sweeps complete cleanly.
+
+### MCP 0.14.0 · OpenClaw Plugin-First & Antigravity
+**2026-04-23**
+
+Plugin-first memory parity for OpenClaw with a shared policy module across plugin, MCP, and skill modes — all three installation paths now surface the same typed tools. Google Antigravity setup templates added as a first-class platform. The standalone Claude Code plugin is deprecated in favor of `npx @verygoodplugins/mcp-automem claude-code` (see [DEPRECATION.md](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md)). Windows users get a `python-command.sh` wrapper so hooks resolve the correct interpreter. Hooks hardened with stdin parsing, truncation guards, and dedup checks.
+
+---
+
 ## March 2026
+
+### 0.15.1 · Deploy Freshness & Classifier Endpoints
+**2026-03-25**
+
+`OPENAI_BASE_URL` now honored by the classification client, letting Azure and self-hosted OpenAI-compatible endpoints back the memory type classifier. Embedding provider dimension is validated at init time against the Qdrant collection — config drift fails fast instead of corrupting vectors. Consolidation cluster/creative embeddings now fetch from Qdrant directly. Railway deploy-freshness check guards against stale container rollouts.
 
 ### 0.15.0 · Relationship Engine & Benchmarks
 **2026-03-25**
