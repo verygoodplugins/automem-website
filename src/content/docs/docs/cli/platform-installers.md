@@ -59,6 +59,12 @@ After editing the config file, **restart Claude Desktop** for changes to take ef
 Run `npx @verygoodplugins/mcp-automem setup` and it will print the exact JSON snippet for your current AutoMem configuration.
 :::
 
+### Personal Preferences
+
+Claude Desktop also needs an instruction layer so it knows when to recall and store memories. Add the starter template from [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md) to **Claude Desktop → Settings → Profile → Personal Preferences**.
+
+If your MCP server key is not `memory`, update the pasted tool names to match Claude Desktop's generated prefix.
+
 ## Cursor IDE
 
 The `cursor` command installs memory rules into the project's `.cursor/rules/` directory as a Cursor-compatible `.mdc` file.

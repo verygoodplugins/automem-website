@@ -267,7 +267,7 @@ Memories stored via AntiGravity are accessible from any other AutoMem-connected 
 
 AntiGravity's `mcp_config.json` follows the same `mcpServers` JSON structure as other MCP-enabled platforms:
 
-- **Claude Desktop** — uses `claude_desktop_config.json` + Custom Instructions
+- **Claude Desktop** — uses `claude_desktop_config.json` + Personal Preferences
 - **Cursor IDE** — uses `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc`
 - **Claude Code** — uses `~/.claude.json` + `~/.claude/settings.json`
 - **OpenAI Codex** — uses `~/.codex/config.toml` (TOML format)

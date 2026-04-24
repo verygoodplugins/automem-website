@@ -420,6 +420,16 @@ Quit Claude Desktop completely (not just close the window) and reopen it. The me
 **Verify JSON syntax.** The `claude_desktop_config.json` file must have no trailing commas. A single syntax error will prevent Claude Desktop from loading any MCP servers.
 :::
 
+### Add Personal Preferences
+
+To make Claude use AutoMem without being prompted every time, add the starter memory template to **Claude Desktop → Settings → Profile → Personal Preferences**.
+
+Copy the template from the mcp-automem repo:
+
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
+
+The template assumes your MCP server key is `memory`. If your config uses `mcp-automem` or another key, update tool names in the pasted preferences to match Claude Desktop's prefix.
+
 ---
 
 ## Phase 5: Verify the Full Stack
@@ -455,7 +465,7 @@ sequenceDiagram
     participant API as "AutoMem API"
 
     UI->>MCP: User instructs Claude
-    MCP->>MCP: Custom instructions trigger
+    MCP->>MCP: Personal Preferences guide memory usage
     MCP->>TOOL: Call tool with params
     TOOL->>TOOL: Validate content size<br/>< 2000 chars
     TOOL->>CLIENT: storeMemory()
