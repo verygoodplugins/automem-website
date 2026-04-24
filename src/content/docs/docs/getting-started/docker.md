@@ -106,7 +106,7 @@ docker compose up --build
 - FalkorDB UI (built-in, official): `http://localhost:3000` — use this for local graph inspection
 - Qdrant: `http://localhost:6333`
 
-> **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI.
+> **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI. If you run that standalone viewer locally alongside the Docker stack, note that it may also default to `http://localhost:3000`, so you will need to change one of the ports (for example, set `PORT` for the viewer) to avoid a collision.
 
 ### Volume Configuration
 
