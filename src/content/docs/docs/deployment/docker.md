@@ -11,12 +11,12 @@ For cloud deployment on Railway, see [Railway Deployment](/docs/deployment/railw
 
 ## Service Architecture
 
-Docker Compose orchestrates four services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/main/docker-compose.yml): the Flask API, FalkorDB graph database, Qdrant vector store, and an optional FalkorDB browser for visualization.
+Docker Compose orchestrates three services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/main/docker-compose.yml): the Flask API, FalkorDB graph database (which includes its own browser UI on port 3000 for local graph inspection), and the Qdrant vector store.
 
 ```mermaid
 graph TB
     subgraph host["Host Machine"]
-        Make["make dev<br/>docker-compose up"]
+        Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
             API["memory-service<br/>app.py<br/>localhost:8001"]
@@ -58,7 +58,8 @@ graph TB
 | `flask-api` | Built from Dockerfile | 8001 | AutoMem Flask API with background workers | None (depends on FalkorDB health) |
 | `falkordb` | `falkordb/falkordb:latest` | 6379 (Redis), 3000 (UI) | Graph database (canonical memory storage) | `redis-cli ping` every 10s |
 | `qdrant` | `qdrant/qdrant:v1.11.3` | 6333 | Vector search database (optional) | None (service_started) |
-| `falkordb-browser` | `falkordb/falkordb-browser:latest` | 3001 | Web-based graph visualization | None (profile-gated) |
+
+> **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI. Note that the standalone viewer docs also use port `3000` by default, so if you run it locally alongside this Docker stack you should change its port (for example, `PORT=3001`) to avoid a conflict with FalkorDB's built-in UI.
 
 ## Volume Configuration
 
@@ -151,7 +152,6 @@ Docker Compose creates an isolated network where services communicate using serv
 | 6379 | 6379 | falkordb | TCP (Redis protocol) | FalkorDB graph queries |
 | 3000 | 3000 | falkordb | HTTP | FalkorDB built-in web UI |
 | 6333 | 6333 | qdrant | HTTP | Qdrant vector search API |
-| 3001 | 3001 | falkordb-browser | HTTP | FalkorDB Browser (optional) |
 
 ### Internal DNS Resolution
 
@@ -171,6 +171,7 @@ The Makefile provides commands for common Docker Compose operations. These comma
 | Command | Underlying Action | Purpose | Data Loss Risk |
 |---|---|---|---|
 | `make dev` | `docker compose up --build` | Start all services, rebuild images if Dockerfile changed | None |
+| `make stop` | `docker compose down` | Stop containers, preserve volumes | None |
 | `make logs` | `docker compose logs -f flask-api` | Follow Flask API logs in real-time | None |
 | `make test-integration` | Start services, run `pytest -rs -m integration`, keep running | Run integration test suite against local Docker stack | None (uses test tokens) |
 | `make clean` | `docker compose down -v` | Stop containers, remove volumes | **High** — deletes all memory data |
