@@ -36,7 +36,7 @@ Docker Compose provides a complete, isolated stack with FalkorDB, Qdrant, and th
 ```mermaid
 graph TB
     subgraph host["Host Machine"]
-        Make["make dev<br/>docker-compose up"]
+        Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
             API["memory-service<br/>app.py<br/>localhost:8001"]
@@ -99,14 +99,14 @@ docker compose up --build
 | `flask-api` | Built from Dockerfile | 8001 | AutoMem Flask API with background workers | None (depends on FalkorDB health) |
 | `falkordb` | `falkordb/falkordb:latest` | 6379 (Redis), 3000 (UI) | Graph database (canonical memory storage) | `redis-cli ping` every 10s |
 | `qdrant` | `qdrant/qdrant:v1.11.3` | 6333 | Vector search database (optional) | None (service_started) |
-| `falkordb-browser` | `falkordb/falkordb-browser:latest` | 3001 | Web-based graph visualization | None (profile-gated) |
 
 **Default service URLs:**
 - API: `http://localhost:8001`
 - FalkorDB: `localhost:6379` (Redis protocol)
-- FalkorDB UI: `http://localhost:3000`
+- FalkorDB UI (built-in, official): `http://localhost:3000` — use this for local graph inspection
 - Qdrant: `http://localhost:6333`
-- FalkorDB Browser: `http://localhost:3001`
+
+> **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI.
 
 ### Volume Configuration
 
@@ -175,7 +175,6 @@ Docker Compose manages startup order using `depends_on` conditions:
 | 6379 | 6379 | falkordb | TCP (Redis) | FalkorDB graph queries |
 | 3000 | 3000 | falkordb | HTTP | FalkorDB built-in web UI |
 | 6333 | 6333 | qdrant | HTTP | Qdrant vector search API |
-| 3001 | 3001 | falkordb-browser | HTTP | FalkorDB Browser (optional) |
 
 Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`, `QDRANT_URL=http://qdrant:6333`). Docker Compose automatically creates DNS entries for each service name on the `automem_default` bridge network.
 
@@ -186,6 +185,7 @@ Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`
 | Command | Underlying Action | Purpose | Data Loss Risk |
 |---------|-----------------|---------|---------------|
 | `make dev` | `docker compose up --build` | Start all services, rebuild images if Dockerfile changed | None |
+| `make stop` | `docker compose down` | Stop containers, preserve volumes | None |
 | `make logs` | `docker compose logs -f flask-api` | Follow Flask API logs in real-time | None |
 | `make test-integration` | Start services, run `pytest -rs -m integration`, keep running | Run integration test suite against local Docker stack | None (uses test tokens) |
 | `make clean` | `docker compose down -v` | Stop containers, remove volumes | **High** — deletes all memory data |
