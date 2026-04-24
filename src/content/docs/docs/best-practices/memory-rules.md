@@ -477,9 +477,9 @@ Codex uses `AGENTS.md` in the project root with memory rules appended via CLI.
 
 Pattern: **Simple recall at task start**, store during work
 
-**Claude Desktop: Custom Instructions**
+**Claude Desktop: Personal Preferences**
 
-Claude Desktop uses Custom Instructions (Settings → Custom Instructions) with memory usage patterns.
+Claude Desktop uses Personal Preferences (Settings → Profile → Personal Preferences) with memory usage patterns.
 
 Pattern: **Conversation start protocol**, corrections as gold, before creating content
 
@@ -490,7 +490,7 @@ Pattern: **Conversation start protocol**, corrections as gold, before creating c
 ```
 templates/
 ├── CLAUDE_MD_MEMORY_RULES.md           # Full rules for CLAUDE.md
-├── CLAUDE_DESKTOP_INSTRUCTIONS.md      # Claude Desktop custom instructions
+├── CLAUDE_DESKTOP_INSTRUCTIONS.md      # Claude Desktop Personal Preferences template
 ├── CLAUDE_CODE_INTEGRATION.md          # Integration guide
 ├── cursor/
 │   └── automem.mdc.template            # Cursor rule file

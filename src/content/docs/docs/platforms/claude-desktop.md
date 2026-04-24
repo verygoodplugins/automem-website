@@ -150,25 +150,27 @@ Tools from each server are prefixed with their server name:
 
 ---
 
-## Custom Instructions for Automatic Memory Usage
+## Personal Preferences for Automatic Memory Usage
 
-Claude Desktop's **Custom Instructions** feature enables automatic, context-aware memory usage without manual prompting on every conversation.
+Claude Desktop's **Personal Preferences** field enables automatic, context-aware memory usage without manual prompting on every conversation.
 
-### Adding Custom Instructions
+As of April 2026, Claude Desktop labels this setting **Personal Preferences** under the Profile settings. Older docs may call the same area "Custom Instructions."
+
+### Adding Personal Preferences
 
 ```mermaid
 graph LR
     subgraph "Claude Desktop UI"
-        SETTINGS["Settings Icon (bottom-left)"]
-        MENU["Custom Instructions Menu Option"]
-        EDITOR["Instructions Editor"]
+        SETTINGS["Settings"]
+        MENU["Profile"]
+        EDITOR["Personal Preferences"]
         SAVE["Save Button"]
     end
 
     subgraph "Instruction Triggers"
-        START["Conversation Start"]
-        CONTENT["Before Creating Content"]
-        DECISION["During Decisions"]
+        START["Preference Recall"]
+        CONTEXT["Task Context Recall"]
+        STORE["Store / Update / Associate"]
     end
 
     SETTINGS --> MENU
@@ -176,29 +178,28 @@ graph LR
     EDITOR --> SAVE
 
     SAVE -.->|"Applied to all chats"| START
-    SAVE -.->|"Applied to all chats"| CONTENT
-    SAVE -.->|"Applied to all chats"| DECISION
+    SAVE -.->|"Applied to all chats"| CONTEXT
+    SAVE -.->|"Applied to all chats"| STORE
 ```
 
-Navigate to: **Settings (bottom-left) → Custom Instructions**.
+Navigate to: **Settings → Profile → Personal Preferences**.
 
-Paste in memory rules that define three phases:
+Paste the starter template from the mcp-automem repo:
 
-1. **AT CONVERSATION START** — Recall recent work, decisions, and patterns
-2. **BEFORE CREATING CONTENT** — Check style preferences and past corrections
-3. **CREATE/UPDATE MEMORIES FOR** — Important decisions, insights, corrections
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
 
-The full template is available in the repo at `templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`. Key sections:
+The template assumes your MCP server key is `memory`, so examples use tool names such as `mcp__memory__recall_memory`. If your `claude_desktop_config.json` uses a different server key, update the tool prefix after pasting.
+
+Key sections:
 
 | Section | Purpose |
 |---------|---------|
-| CONVERSATION START PROTOCOL | Initial recall strategy (two-phase: tag-based preferences + semantic recent work) |
-| ADVANCED RECALL TECHNIQUES | Multi-hop, context-aware queries |
-| WHEN TO STORE MEMORIES | Importance thresholds by type |
-| CONTENT SIZE GUIDELINES | 150–300 char target, 500 soft limit, 2000 hard limit |
-| STORAGE FORMAT | JSON structure for `store_memory` calls |
-| CORRECTIONS ARE GOLD | Capture style signal when you correct Claude |
-| RELATIONSHIP TYPES | 11 authorable association types for `associate_memories` |
+| Desktop is semantic-first | Avoids guessing project tags on broad Desktop conversations |
+| Conversation start | Pulls preferences first, then one semantic task-context recall when useful |
+| When to store | Keeps durable preferences, decisions, patterns, and fixes while skipping noise |
+| Storage format | Shows concise `store_memory` calls with type, tags, importance, confidence |
+| Mid-conversation memory ops | Uses recall → store → verify → associate for important updates |
+| Relation types | Lists the 11 authorable association types for `associate_memories` |
 
 ### Memory Storage Patterns
 
@@ -211,7 +212,7 @@ Recommended importance thresholds:
 | Pattern | 0.7 | "Using early returns for validation in all API routes" |
 | Context | 0.5–0.7 | "Added JWT auth with refresh token rotation" |
 
-**Correction storage (critical pattern):** When you correct Claude's output, the custom instructions should store the correction as a high-importance style signal so the same mistake is not repeated.
+**Correction storage (critical pattern):** When you correct Claude's output, the Personal Preferences template tells Claude to store the correction as a high-importance style signal so the same mistake is not repeated.
 
 ---
 
@@ -273,7 +274,7 @@ curl -H "Authorization: Bearer $YOUR_KEY" https://your-automem.up.railway.app/he
 
 ### Memory not persisting between sessions
 
-- Ensure you have Custom Instructions set that tell Claude to recall at conversation start
+- Ensure you have Personal Preferences set that tell Claude when to recall, store, update, and associate memories
 - Check that `store_memory` calls are completing successfully (no error messages)
 - Verify the AutoMem service has write access to its database directories
 
