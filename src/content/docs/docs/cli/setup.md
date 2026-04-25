@@ -43,7 +43,7 @@ The MCP server **cannot function without a running AutoMem service**. You must c
 - **Deployment flexibility**: Run memory backend on different infrastructure than MCP client
 - **Multi-client support**: Multiple MCP servers can share one AutoMem instance
 - **Scaling independence**: Scale memory storage separately from MCP protocol handling
-- **Technology separation**: Backend can use Python/FastAPI while client uses TypeScript
+- **Technology separation**: Backend uses Python/Flask while client uses TypeScript
 
 **Option 1: Local Development**
 
