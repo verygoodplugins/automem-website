@@ -37,7 +37,12 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/verygoodplugins/automem' },
       ],
-      customCss: ['./src/styles/starlight-custom.css'],
+      customCss: ['./src/styles/global.css', './src/styles/starlight-custom.css'],
+      components: {
+        Header: './src/components/starlight/Header.astro',
+        ThemeProvider: './src/components/starlight/ThemeProvider.astro',
+        Footer: './src/components/starlight/Footer.astro',
+      },
       editLink: {
         baseUrl: 'https://github.com/verygoodplugins/automem-website/edit/main/',
       },

@@ -1,0 +1,23 @@
+---
+import AutoJack from './AutoJack.astro';
+import DiscordIcon from './DiscordIcon.astro';
+---
+
+<footer class="py-12 border-t border-lab-border mt-20 text-lab-muted text-sm relative">
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-3">
+      <AutoJack size={24} expression="happy" animate={false} />
+      <span>Made with <span class="text-lab-accent">memory</span> by cool people</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="https://automem.ai/discord" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord community" class="hover:text-lab-discord transition-colors flex items-center gap-1">
+        <DiscordIcon class="w-3.5 h-3.5" />
+        Discord
+      </a>
+      <span class="text-lab-border">|</span>
+      <a href="https://github.com/verygoodplugins/automem" target="_blank" rel="noopener noreferrer" class="hover:text-lab-accent transition-colors">GitHub</a>
+      <span class="text-lab-border">|</span>
+      <span>automem.ai v1.0.0</span>
+    </div>
+  </div>
+</footer>

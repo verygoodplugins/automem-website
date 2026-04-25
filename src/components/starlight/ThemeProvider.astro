@@ -1,0 +1,11 @@
+---
+import ThemeInit from '../ThemeInit.astro';
+---
+
+<ThemeInit />
+{/* Compatibility shim: Starlight's stock components call
+    window.StarlightThemeProvider.updatePickers() when the user changes the
+    theme. The marketing ThemeToggle owns the UI now, so this is a no-op. */}
+<script is:inline>
+  window.StarlightThemeProvider = { updatePickers() {} };
+</script>
