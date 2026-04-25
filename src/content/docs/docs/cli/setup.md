@@ -49,7 +49,7 @@ The MCP server **cannot function without a running AutoMem service**. You must c
 
 Best for: development, testing, single-machine use, privacy-focused setups.
 
-Requirements: Docker and Docker Compose installed, Git, 2GB RAM, ports 8001, 6379, 7474, 6333 available.
+Requirements: Docker and Docker Compose installed, Git, 2GB RAM, ports 8001, 6379, 3000, 6333 available.
 
 ```bash
 git clone https://github.com/verygoodplugins/automem
@@ -57,7 +57,7 @@ cd automem
 make dev
 ```
 
-This launches: FastAPI service on `:8001`, FalkorDB on `:6379`, Qdrant on `:6333`, optional Neo4j browser on `:7474`.
+This launches: Flask service on `:8001`, FalkorDB on `:6379`, Qdrant on `:6333`, FalkorDB graph browser on `:3000`.
 
 Endpoint configuration: `AUTOMEM_ENDPOINT=http://127.0.0.1:8001` (no API key required in development mode)
 
@@ -170,7 +170,7 @@ graph TB
 
     subgraph "Runtime"
         INDEX["src/index.ts"]
-        SETUP["src/cli/setup.js"]
+        SETUP["src/cli/setup.ts"]
         MCP["MCP Server<br/>(stdio transport)"]
     end
 
@@ -247,7 +247,7 @@ The `setup` command provides an interactive wizard that configures your connecti
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as setup command<br/>(src/cli/setup.js)
+    participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
     participant API as AutoMem Service
 

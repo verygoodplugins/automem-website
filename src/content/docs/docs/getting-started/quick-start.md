@@ -318,7 +318,7 @@ The setup wizard performs four operations:
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as setup command<br/>(src/cli/setup.js)
+    participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
     participant API as AutoMem Service
 
