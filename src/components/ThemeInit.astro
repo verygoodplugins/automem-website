@@ -6,16 +6,24 @@
     leftover Starlight reader stays in sync. */}
 <script is:inline>
   (() => {
-    const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-    const stored = ls && (ls.getItem('theme') || ls.getItem('starlight-theme'));
-    const theme = stored
-      || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    let stored = null;
+    try {
+      stored = localStorage.getItem('theme') || localStorage.getItem('starlight-theme');
+    } catch (_) {}
+    let theme = stored;
+    if (!theme) {
+      try {
+        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      } catch (_) {
+        theme = 'dark';
+      }
+    }
     const isLight = theme === 'light';
     document.documentElement.classList.toggle('light', isLight);
     document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
-    if (ls) {
-      ls.setItem('theme', isLight ? 'light' : 'dark');
-      ls.setItem('starlight-theme', isLight ? 'light' : 'dark');
-    }
+    try {
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      localStorage.setItem('starlight-theme', isLight ? 'light' : 'dark');
+    } catch (_) {}
   })();
 </script>
