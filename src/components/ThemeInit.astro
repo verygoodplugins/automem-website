@@ -1,0 +1,21 @@
+{/* Inline FOUC-prevention script. MUST be rendered early in <head> so it
+    runs synchronously before the body paints. Reads localStorage["theme"]
+    (with legacy fallback to "starlight-theme"), then applies BOTH
+    class="light" (consumed by global.css --lab-* swap) and data-theme
+    (consumed by Starlight's --sl-* selectors). Mirrors both keys so any
+    leftover Starlight reader stays in sync. */}
+<script is:inline>
+  (() => {
+    const ls = typeof localStorage !== 'undefined' ? localStorage : null;
+    const stored = ls && (ls.getItem('theme') || ls.getItem('starlight-theme'));
+    const theme = stored
+      || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    const isLight = theme === 'light';
+    document.documentElement.classList.toggle('light', isLight);
+    document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
+    if (ls) {
+      ls.setItem('theme', isLight ? 'light' : 'dark');
+      ls.setItem('starlight-theme', isLight ? 'light' : 'dark');
+    }
+  })();
+</script>

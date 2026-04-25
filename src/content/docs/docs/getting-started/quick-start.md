@@ -53,7 +53,10 @@ Railway is the fastest path to a production-ready AutoMem instance with automati
 
 1. Click the deploy button:
 
-   [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g)
+   <a href="https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g" target="_blank" rel="noopener" class="btn-lab-accent shadow-hard not-content" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #1a1a1a;">
+     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.49 12.69c-.005-.265-.117-.504-.286-.673l-9.224-9.225c-.169-.17-.413-.281-.683-.281-.27 0-.514.111-.683.281l-9.225 9.225c-.169.169-.281.413-.281.683 0 .27.112.514.281.683l9.225 9.225c.169.169.413.281.683.281.27 0 .514-.112.683-.281l9.224-9.225c.171-.171.286-.413.286-.683v-.01zM11.297 19.42L4.578 12.7l6.719-6.72 6.72 6.72-6.72 6.72z"/></svg>
+     Deploy on Railway
+   </a>
 
 2. Sign in with GitHub.
 

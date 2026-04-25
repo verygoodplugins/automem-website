@@ -32,8 +32,10 @@ const links = [
         <a
           href={link.href}
           class={`
-            h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-text hover:text-lab-bg transition-colors whitespace-nowrap
-            ${currentPath === link.href ? 'bg-lab-text text-lab-bg font-bold' : 'text-lab-muted'}
+            h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border transition-colors whitespace-nowrap
+            ${currentPath === link.href
+              ? 'bg-lab-accent text-[#1a1a1a] font-bold'
+              : 'text-lab-muted hover:bg-lab-accent hover:text-[#1a1a1a]'}
           `}
         >
           {link.label}

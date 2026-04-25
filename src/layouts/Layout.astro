@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import AutoJackPeek from '../components/AutoJackPeek.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import ThemeInit from '../components/ThemeInit.astro';
 
 export interface Props {
   title: string;
@@ -17,6 +18,7 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <ThemeInit />
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

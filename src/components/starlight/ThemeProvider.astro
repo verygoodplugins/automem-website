@@ -1,25 +1,11 @@
-{/* Replaces Starlight's default ThemeProvider so the docs share the marketing
-    site's theme state. Owns BOTH `class="light"` (consumed by global.css
-    `--lab-*` swap) and `data-theme` (consumed by Starlight's `--sl-*` selectors).
-    Source-of-truth key is localStorage["theme"]; we mirror to "starlight-theme"
-    so any unconverted Starlight reader stays in sync. Inlined to avoid FOUC. */}
+---
+import ThemeInit from '../ThemeInit.astro';
+---
+
+<ThemeInit />
+{/* Compatibility shim: Starlight's stock components call
+    window.StarlightThemeProvider.updatePickers() when the user changes the
+    theme. The marketing ThemeToggle owns the UI now, so this is a no-op. */}
 <script is:inline>
-  (() => {
-    const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-    const stored = ls && (ls.getItem('theme') || ls.getItem('starlight-theme'));
-    const theme = stored
-      || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-    const isLight = theme === 'light';
-    document.documentElement.classList.toggle('light', isLight);
-    document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
-    if (ls) {
-      ls.setItem('theme', isLight ? 'light' : 'dark');
-      ls.setItem('starlight-theme', isLight ? 'light' : 'dark');
-    }
-    window.StarlightThemeProvider = {
-      updatePickers() {
-        // No-op: the marketing ThemeToggle owns the UI; Starlight's pickers are unused.
-      },
-    };
-  })();
+  window.StarlightThemeProvider = { updatePickers() {} };
 </script>
