@@ -1,0 +1,44 @@
+---
+import Navigation from '../Navigation.astro';
+import Search from '@astrojs/starlight/components/Search.astro';
+
+// Highlight the "docs" nav link for any /docs/* route by passing the
+// canonical docs path that Navigation.astro compares against.
+const currentPath = Astro.url.pathname.startsWith('/docs') ? '/docs/overview' : Astro.url.pathname;
+---
+
+<Navigation currentPath={currentPath}>
+  <div slot="trailing" class="docs-search-slot print:hidden">
+    <Search {...Astro.props} />
+  </div>
+</Navigation>
+
+<style is:global>
+  /* Strip Starlight's PageFrame .header chrome so our Navigation can render
+     edge-to-edge with its own bg/border. Targets the page-frame wrapper, not
+     our component. */
+  .page > header.header {
+    padding: 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+  }
+</style>
+<style>
+  .docs-search-slot {
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    padding-inline: 0.75rem;
+    border-inline-start: 1px solid rgb(var(--lab-border));
+  }
+  .docs-search-slot :global(button[data-open-modal]) {
+    background: transparent;
+    border: none;
+    color: rgb(var(--lab-muted));
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .docs-search-slot :global(button[data-open-modal]:hover) {
+    color: rgb(var(--lab-text));
+  }
+</style>

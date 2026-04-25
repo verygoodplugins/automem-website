@@ -1,86 +1,50 @@
 /* Shared */
 :root {
   /* Typography - Blend of Clarity (Inter) and Tech (JetBrains Mono) */
-  --sl-font: "Inter", system-ui, -apple-system, sans-serif;
+  --sl-font: "JetBrains Mono", system-ui, -apple-system, monospace;
   --sl-font-mono: "JetBrains Mono", monospace;
 
   /* Layout */
-  --sl-content-width: 50rem; /* Standard width to prevent sidebar overflow on laptops */
+  --sl-content-width: 50rem;
   --sl-sidebar-width: 18rem;
-  --sl-nav-height: 4rem;
-
-  /* AutoMem Brand Colors - Base Definitions */
-  --am-gold: #f9d857;
-  --am-gold-dim: rgba(249, 216, 87, 0.1);
-  --am-violet: #8b5cf6;
-  --am-violet-dim: rgba(139, 92, 246, 0.1);
+  --sl-nav-height: 3.5rem; /* Match marketing Navigation h-14 */
 }
 
-/* Large Screens - Restore wide content */
 @media (min-width: 1600px) {
   :root {
     --sl-content-width: 60rem;
   }
 }
 
-/* Dark Mode (Default) - "Memory Lab" Theme */
-:root[data-theme="dark"] {
-  /* Core Colors */
-  --sl-color-accent-low: #1a1a3a;
-  --sl-color-accent: #f9d857; /* AutoMem Gold */
-  --sl-color-accent-high: #fff8dc;
-
-  --sl-color-white: #e0e0e0; /* --lab-text */
-  --sl-color-gray-1: #c0c0c0;
-  --sl-color-gray-2: #888888; /* --lab-muted */
-  --sl-color-gray-3: #555555;
-  --sl-color-gray-4: #333333; /* --lab-border */
-  --sl-color-gray-5: #1a1a1a; /* --lab-surface */
-  --sl-color-gray-6: #0a0a0a; /* --lab-bg */
-  --sl-color-black: #050505;
-
-  /* Backgrounds */
-  --sl-color-bg: #0a0a0a;
-  --sl-color-bg-nav: rgba(10, 10, 10, 0.9);
-  --sl-color-bg-sidebar: rgba(10, 10, 10, 0.5);
-  --sl-color-hairline-light: #333333;
-  --sl-color-hairline-shade: #1a1a1a;
-
-  /* Text */
-  --sl-color-text-accent: #f9d857;
-
-  /* Custom Grid Color */
-  --grid-color: #333333;
-}
-
-/* Light Mode - "Warm Archive" Theme */
+/* Bridge Starlight tokens to the site's --lab-* tokens (defined in global.css).
+   Both .light (marketing) and [data-theme="light"] (Starlight) trigger the
+   light variant via global.css, so the same swap applies to docs automatically. */
+:root,
+:root[data-theme="dark"],
 :root[data-theme="light"] {
-  /* Core Colors */
-  --sl-color-accent-low: #fff8dc;
-  --sl-color-accent: #b8860b; /* Darker Gold for contrast */
-  --sl-color-accent-high: #1a1a3a;
+  --sl-color-bg: rgb(var(--lab-bg));
+  --sl-color-bg-nav: rgb(var(--lab-bg) / 0.9);
+  --sl-color-bg-sidebar: rgb(var(--lab-bg) / 0.5);
 
-  --sl-color-white: #262014; /* --lab-text (Dark Brown) */
-  --sl-color-gray-1: #3e3420;
-  --sl-color-gray-2: #5c4d32;
-  --sl-color-gray-3: #80735a; /* --lab-muted */
-  --sl-color-gray-4: #e5d3ab; /* --lab-border */
-  --sl-color-gray-5: #fffbf0; /* --lab-bg */
-  --sl-color-gray-6: #ffffff; /* --lab-surface */
-  --sl-color-black: #fffbf0;
+  --sl-color-text: rgb(var(--lab-text));
+  --sl-color-text-accent: rgb(var(--lab-accent-text));
+  --sl-color-white: rgb(var(--lab-text));
+  --sl-color-black: rgb(var(--lab-bg));
 
-  /* Backgrounds */
-  --sl-color-bg: #fffbf0;
-  --sl-color-bg-nav: rgba(255, 251, 240, 0.9);
-  --sl-color-bg-sidebar: rgba(255, 251, 240, 0.5);
-  --sl-color-hairline-light: #e5d3ab;
-  --sl-color-hairline-shade: #d0c8b8;
+  --sl-color-accent: rgb(var(--lab-accent-text));
+  --sl-color-accent-high: rgb(var(--lab-accent));
+  --sl-color-accent-low: rgb(var(--lab-accent) / 0.18);
 
-  /* Text */
-  --sl-color-text-accent: #8b6914;
+  --sl-color-gray-1: rgb(var(--lab-text));
+  --sl-color-gray-2: rgb(var(--lab-text) / 0.85);
+  --sl-color-gray-3: rgb(var(--lab-muted));
+  --sl-color-gray-4: rgb(var(--lab-border));
+  --sl-color-gray-5: rgb(var(--lab-surface));
+  --sl-color-gray-6: rgb(var(--lab-bg));
 
-  /* Custom Grid Color */
-  --grid-color: #e5d3ab;
+  --sl-color-hairline-light: rgb(var(--lab-border));
+  --sl-color-hairline-shade: rgb(var(--lab-surface));
+  --sl-color-hairline: rgb(var(--lab-border));
 }
 
 /* Global Styles & Overrides */
@@ -98,6 +62,10 @@ body {
   backdrop-filter: blur(8px);
   border-right: 1px solid var(--sl-color-hairline-light);
 }
+
+/* Suppress Starlight's stock mobile theme picker — our ThemeToggle in the
+   site Navigation owns theme state on every viewport. */
+.sidebar-content .mobile-preferences { display: none !important; }
 
 /* Navbar Styling */
 .site-title {
@@ -128,16 +96,10 @@ body {
 }
 
 /* Code Blocks - "AutoMem" Tech Style */
-:root[data-theme="dark"] .expressive-code .frame {
+.expressive-code .frame {
   border: 1px solid var(--sl-color-hairline-light) !important;
-  background: #111111 !important;
-  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.5); /* Hard shadow */
-}
-
-:root[data-theme="light"] .expressive-code .frame {
-  border: 1px solid var(--sl-color-hairline-light) !important;
-  background: #ffffff !important;
-  box-shadow: 4px 4px 0px 0px rgba(38, 32, 20, 0.1); /* Hard shadow */
+  background: rgb(var(--lab-surface)) !important;
+  box-shadow: 4px 4px 0px 0px var(--shadow-color);
 }
 
 /* Inline Code */
@@ -146,18 +108,9 @@ body {
   font-size: 0.9em;
   padding: 0.2em 0.4em;
   border-radius: 4px;
-}
-
-:root[data-theme="dark"] :not(pre) > code {
-  background: rgba(249, 216, 87, 0.1);
-  color: #f9d857;
-  border: 1px solid rgba(249, 216, 87, 0.2);
-}
-
-:root[data-theme="light"] :not(pre) > code {
-  background: rgba(184, 134, 11, 0.08);
-  color: #8b6914;
-  border: 1px solid rgba(184, 134, 11, 0.2);
+  background: rgb(var(--lab-accent) / 0.1);
+  color: rgb(var(--lab-accent-text));
+  border: 1px solid rgb(var(--lab-accent) / 0.2);
 }
 
 /* Cards & Callouts */
@@ -194,77 +147,37 @@ body {
   height: auto;
 }
 
-:root[data-theme="dark"] .mermaid text.actor,
-:root[data-theme="dark"] .mermaid text.messageText,
-:root[data-theme="dark"] .mermaid text.loopText,
-:root[data-theme="dark"] .mermaid text.labelText,
-:root[data-theme="dark"] .mermaid text {
-  fill: #e0e0e0 !important; /* Force light text */
+.mermaid text.actor,
+.mermaid text.messageText,
+.mermaid text.loopText,
+.mermaid text.labelText,
+.mermaid text {
+  fill: rgb(var(--lab-text)) !important;
   font-family: var(--sl-font-mono) !important;
-  font-size: 14px !important; /* Enforce readable base size */
-}
-
-:root[data-theme="light"] .mermaid text.actor,
-:root[data-theme="light"] .mermaid text.messageText,
-:root[data-theme="light"] .mermaid text.loopText,
-:root[data-theme="light"] .mermaid text.labelText,
-:root[data-theme="light"] .mermaid text {
-  fill: #262014 !important; /* Force dark text */
-  font-family: var(--sl-font-mono) !important;
-  font-size: 14px !important; /* Enforce readable base size */
+  font-size: 14px !important;
 }
 
 /* Lines and Strokes */
-:root[data-theme="dark"] .mermaid .actor-line,
-:root[data-theme="dark"] .mermaid .messageLine0,
-:root[data-theme="dark"] .mermaid .messageLine1,
-:root[data-theme="dark"] .mermaid .loopLine,
-:root[data-theme="dark"] .mermaid .note-border,
-:root[data-theme="dark"] .mermaid .label-box,
-:root[data-theme="dark"] .mermaid line,
-:root[data-theme="dark"] .mermaid path {
-  stroke: #888888 !important;
-  stroke-width: 2px !important;
-}
-
-:root[data-theme="light"] .mermaid .actor-line,
-:root[data-theme="light"] .mermaid .messageLine0,
-:root[data-theme="light"] .mermaid .messageLine1,
-:root[data-theme="light"] .mermaid .loopLine,
-:root[data-theme="light"] .mermaid .note-border,
-:root[data-theme="light"] .mermaid .label-box,
-:root[data-theme="light"] .mermaid line,
-:root[data-theme="light"] .mermaid path {
-  stroke: #5c4d32 !important;
+.mermaid .actor-line,
+.mermaid .messageLine0,
+.mermaid .messageLine1,
+.mermaid .loopLine,
+.mermaid .note-border,
+.mermaid .label-box,
+.mermaid line,
+.mermaid path {
+  stroke: rgb(var(--lab-muted)) !important;
   stroke-width: 2px !important;
 }
 
 /* Nodes/Boxes */
-:root[data-theme="dark"] .mermaid rect,
-:root[data-theme="dark"] .mermaid circle,
-:root[data-theme="dark"] .mermaid polygon {
-  fill: #1a1a1a !important;
-  stroke: #f9d857 !important; /* Gold borders */
+.mermaid rect,
+.mermaid circle,
+.mermaid polygon,
+.mermaid .actor {
+  fill: rgb(var(--lab-surface)) !important;
+  stroke: rgb(var(--lab-accent-text)) !important;
   stroke-width: 2px !important;
-}
-
-:root[data-theme="light"] .mermaid rect,
-:root[data-theme="light"] .mermaid circle,
-:root[data-theme="light"] .mermaid polygon {
-  fill: #fffbf0 !important;
-  stroke: #b8860b !important; /* Dark Gold borders */
-  stroke-width: 2px !important;
-}
-
-/* Specific overrides for sequence diagrams which can be tricky */
-:root[data-theme="dark"] .mermaid .actor {
-  fill: #1a1a1a !important;
-  stroke: #f9d857 !important;
-}
-
-:root[data-theme="light"] .mermaid .actor {
-  fill: #fffbf0 !important;
-  stroke: #b8860b !important;
 }
 
 /* Table Styling - Clean & Professional */

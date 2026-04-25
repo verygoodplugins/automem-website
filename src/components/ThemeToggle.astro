@@ -43,21 +43,19 @@
 <script>
   const themeToggle = document.getElementById('theme-toggle');
 
-  // Check local storage. Default to 'dark' (Neon/Lab) if not set.
+  // Check local storage. Fall back to legacy 'starlight-theme' key (set by docs)
+  // before defaulting to 'dark' (Neon/Lab).
   const getTheme = () => {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-      return localStorage.getItem('theme');
-    }
-    return 'dark';
+    if (typeof localStorage === 'undefined') return 'dark';
+    return localStorage.getItem('theme') || localStorage.getItem('starlight-theme') || 'dark';
   };
 
   const setTheme = (theme) => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    const isLight = theme === 'light';
+    document.documentElement.classList.toggle('light', isLight);
+    document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
     localStorage.setItem('theme', theme);
+    localStorage.setItem('starlight-theme', theme);
     
     // Update icons visibility manually since we're using custom classes
     const sunIcon = document.querySelector('.light\\:hidden');
