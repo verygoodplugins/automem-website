@@ -1,188 +1,157 @@
 # AutoMem.AI Website
 
-The official website for AutoMem.AI - Intelligent Memory Service for AI Agents.
+Marketing site, blog, and product documentation for [AutoMem](https://automem.ai) — an intelligent memory service for AI agents.
+
+**Live**: https://automem.ai
 
 ## Tech Stack
 
-- **Framework**: Astro 4.16
-- **Styling**: Tailwind CSS
-- **Deployment**: Cloudflare Pages
-- **Database**: Cloudflare D1 (for waitlist)
-- **Content**: MDX for documentation
+- **Framework**: Astro 6.1 with React 19 islands
+- **Styling**: Tailwind CSS v4 (Vite plugin, not PostCSS)
+- **Docs**: Starlight at `/docs/*`
+- **Content**: Custom blog collection (`src/content/blog/NN-slug/index.md`) + Starlight docs + EmDash CMS
+- **Hosting**: Cloudflare Pages with Pages Functions, D1 databases, and KV
 
-## Features
+## Architecture
 
-- ✨ Landing page with hero section and feature showcase
-- 📧 Email waitlist signup with D1 database storage
-- 📚 Documentation structure with MDX support
-- ⚡ Edge-optimized with Cloudflare Pages
-- 🎨 Custom AutoMem branding and color scheme
+Three runtimes share this project:
+
+- **Astro SSR pages** render the marketing site, blog, and Starlight docs.
+- **Cloudflare Pages Functions** in `functions/` (plain `.js`) handle the waitlist signup, double-opt-in confirm, unsubscribe, and admin broadcast endpoints. They are dispatched through `src/middleware.ts`.
+- **EmDash CMS** is mounted at `/_emdash/*` for editorial workflows, backed by its own D1 database and KV-stored sessions.
+
+`npm run dev` swaps the Cloudflare adapter out and uses libsql + filesystem sessions locally (workerd cannot load Node DB drivers in dev). `npm run build` swaps the adapter back in and uses D1 + KV.
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
 
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+npm run dev          # Astro dev server on http://localhost:5000 (host 0.0.0.0)
+npm run build        # Production build via scripts/build-pages.mjs
+npm run preview      # Preview production build
+npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
 ```
 
-## Waitlist Setup
+> Always use `npm run build`, never `astro build` directly — the build pipeline does extra work (see below).
 
-The site includes an email waitlist system powered by Cloudflare D1:
+## Build Pipeline
 
-```bash
-# Create D1 database
-npx wrangler d1 create automem-waitlist
+`npm run build` runs `scripts/build-pages.mjs`, which:
 
-# Apply schema
-npx wrangler d1 execute automem-waitlist --file=./schema/d1-schema.sql
-
-# Update wrangler.toml with your database ID
-```
-
-See [WAITLIST_SETUP.md](./WAITLIST_SETUP.md) for detailed instructions.
-
-## Deployment to Cloudflare Pages
-
-### Method 1: Git Integration (Recommended)
-
-1. Push this repository to GitHub
-2. Go to [Cloudflare Pages](https://pages.cloudflare.com)
-3. Connect your GitHub account
-4. Select the repository
-5. Configure build settings:
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Node version**: 18 or higher
-
-### Method 2: Direct Upload
-
-```bash
-# Build the project
-npm run build
-
-# Deploy to Cloudflare Pages
-npx wrangler pages deploy dist --project-name=automem-website
-```
-
-### Method 3: GitHub Actions
-
-Create `.github/workflows/deploy.yml`:
-
-```yaml
-name: Deploy to Cloudflare Pages
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          
-      - run: npm ci
-      - run: npm run build
-      
-      - uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: automem-website
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-```
-
-## Custom Domain Setup
-
-1. In Cloudflare Pages dashboard, go to your project
-2. Navigate to "Custom domains"
-3. Add `automem.ai` as your custom domain
-4. Update DNS records as instructed
-
-## Environment Variables
-
-For production deployments, you may need to set:
-
-- `PUBLIC_API_URL`: AutoMem API endpoint
-- `PUBLIC_GITHUB_URL`: GitHub repository URL
-- `EMAIL_SERVICE_WEBHOOK`: (Optional) Webhook URL for external email service
-
-These can be set in the Cloudflare Pages dashboard under Settings > Environment variables.
+1. Strips `pages_build_output_dir` from `wrangler.toml` (Astro adapter writes it back).
+2. Swaps `src/live.config.emdash.ts` → `src/live.config.ts` so EmDash live preview works in production.
+3. Runs `astro build`.
+4. Runs `scripts/bundle-worker.mjs` (esbuild) to bundle the Pages worker.
+5. Restores the original `wrangler.toml` and live config.
 
 ## Project Structure
 
 ```
 automem-website/
 ├── src/
-│   ├── components/    # Reusable components (EmailSignup.astro)
-│   ├── layouts/       # Page layouts
-│   ├── pages/        # Route pages
-│   └── styles/       # Global styles
-├── public/           # Static assets
-├── functions/        # Cloudflare Pages Functions
-│   └── api/         # API endpoints
-│       └── signup.js # Waitlist signup handler
-├── schema/          # Database schemas
-│   └── d1-schema.sql # D1 waitlist table
-├── astro.config.mjs  # Astro configuration
-├── tailwind.config.mjs # Tailwind configuration
-└── wrangler.toml    # Cloudflare configuration
+│   ├── components/         # Astro + React components (mascot, hero, EmailSignup, SEO schemas)
+│   ├── content/
+│   │   ├── blog/           # Blog posts: NN-slug/index.md
+│   │   └── docs/           # Starlight documentation
+│   ├── content.config.ts   # Content collection definitions (blog + docs)
+│   ├── layouts/            # Layout.astro (single base layout)
+│   ├── lib/                # Shared utilities (blog helpers, emdash email plugin)
+│   ├── live.config.ts      # EmDash live preview config (dev)
+│   ├── live.config.emdash.ts # EmDash live preview config (prod, swapped in at build)
+│   ├── middleware.ts       # Workers env bootstrap, API/admin route dispatch
+│   ├── pages/              # Routes (.astro / .mdx)
+│   └── styles/             # global.css (Tailwind v4 @theme + CSS vars), starlight-custom.css
+├── functions/              # Cloudflare Pages Functions (plain .js)
+│   ├── api/signup.js       # Waitlist signup (Turnstile + D1 + optional double opt-in)
+│   ├── confirm.js          # HMAC-token email confirmation
+│   ├── unsubscribe.js      # HMAC-token unsubscribe
+│   ├── admin/              # Bearer-token-protected admin endpoints
+│   └── lib/                # tokens.js (HMAC), email.js, campaigns.js
+├── scripts/
+│   ├── build-pages.mjs     # Build orchestrator (use via npm run build)
+│   ├── bundle-worker.mjs   # esbuild worker bundling
+│   ├── check-links.js      # Linkinator wrapper
+│   └── file-doc-map.json   # Source-to-doc mapping for /update-docs workflow
+├── schema/                 # D1 schemas (waitlist, etc.)
+├── public/                 # Static assets
+├── patches/                # patch-package patches
+├── astro.config.mjs
+└── wrangler.toml           # Cloudflare bindings (D1, KV) for prod and preview
 ```
 
-## Adding Content
+## Cloudflare Setup
 
-### New Pages
+The waitlist needs a D1 database; EmDash needs a second D1 database and a KV namespace.
 
-Create `.astro` files in `src/pages/`:
+```bash
+# Create the waitlist D1
+npx wrangler d1 create automem-waitlist
+npx wrangler d1 execute automem-waitlist --file=./schema/d1-schema.sql
 
-```astro
----
-import Layout from '../layouts/Layout.astro';
----
+# Create the EmDash D1
+npx wrangler d1 create automem-emdash
 
-<Layout title="Page Title">
-  <!-- Your content here -->
-</Layout>
+# Create the sessions KV
+npx wrangler kv namespace create SESSION
 ```
 
-### Documentation Pages
+Update `wrangler.toml` with your own database and namespace IDs. The IDs in this repo point at the `verygoodplugins/automem-website` deployment and are not credentials — they're resource pointers and won't grant access without the matching Cloudflare account.
 
-Create `.mdx` files in `src/pages/docs/`:
+See [WAITLIST_SETUP.md](./WAITLIST_SETUP.md) for the full waitlist setup, including double-opt-in and Resend wiring.
 
-```mdx
----
-layout: ../layouts/DocsLayout.astro
-title: "Doc Title"
----
+## Environment Variables
 
-# Documentation Content
+Public vars are declared in `wrangler.toml` (`PUBLIC_API_URL`, `PUBLIC_GITHUB_URL`, `PUBLIC_TURNSTILE_SITE_KEY`).
 
-Your markdown content here...
+Secrets are **never** committed — set them in the Cloudflare Pages dashboard under Settings → Environment variables → Encrypted, or via `wrangler pages secret put`. The endpoints expect:
+
+| Variable | Used by | Notes |
+|---|---|---|
+| `ADMIN_TOKEN` | `functions/admin/*` | Long random string; bearer auth for admin endpoints |
+| `RESEND_API_KEY` | confirm, unsubscribe, broadcast, EmDash email | Resend API key |
+| `TURNSTILE_SECRET_KEY` | `functions/api/signup.js` | Cloudflare Turnstile server secret |
+| `CONFIRM_SECRET` | confirm, unsubscribe | HMAC signing secret (falls back to `ADMIN_TOKEN`) |
+| `FROM_EMAIL`, `FROM_NAME`, `BASE_URL` | email senders | Defaults exist; override per environment |
+| `DOUBLE_OPT_IN`, `SEND_WELCOME_EMAIL` | signup | Feature flags |
+
+For local dev, mirror these in `.dev.vars` (gitignored).
+
+## Deployment
+
+Deployed to Cloudflare Pages. The site auto-builds from `main` via the connected Git integration; the build command is `npm run build` and the output directory is `dist/client`. A GitHub Actions workflow at `.github/workflows/deploy.yml` is also configured.
+
+To deploy manually:
+
+```bash
+npm run build
+npx wrangler pages deploy dist/client --project-name=automem-website
 ```
 
-## Performance
+## Related Repositories
 
-The site is optimized for:
+This site documents three sibling projects:
 
-- **Core Web Vitals**: LCP < 2.5s, FID < 100ms, CLS < 0.1
-- **Lighthouse Score**: 95+ on all metrics
-- **Edge Caching**: Cloudflare CDN
-- **Image Optimization**: Automatic via Astro
+- [verygoodplugins/automem](https://github.com/verygoodplugins/automem) — Python/Flask core memory service
+- [verygoodplugins/mcp-automem](https://github.com/verygoodplugins/mcp-automem) — TypeScript MCP client and CLI
+- [verygoodplugins/automem-graph-viewer](https://github.com/verygoodplugins/automem-graph-viewer) — React/Vite 3D graph visualizer
+
+Documentation source-to-doc mapping lives in `scripts/file-doc-map.json`. See [`AGENTS.md`](./AGENTS.md) for the full doc update workflow.
+
+## Conventions
+
+- Conventional Commits (`feat(scope):`, `fix(scope):`, `docs:`, `chore:`, `refactor:`).
+- TypeScript strict mode (`extends astro/tsconfigs/strict`); ESM throughout.
+- Versioning is managed by Release Please — don't bump `package.json` by hand.
+- Don't switch Tailwind to PostCSS; the project uses `@tailwindcss/vite`.
+- Don't commit `.env`, `.dev.vars`, `data/`, `uploads/`, or `.wrangler/`.
+
+See [`AGENTS.md`](./AGENTS.md) for the full contributor guide.
+
+## Security
+
+To report a security issue, please use GitHub Security Advisories on this repository (Security → Report a vulnerability). See [`SECURITY.md`](./SECURITY.md) for scope and disclosure policy.
 
 ## License
 
-MIT
+[MIT](./LICENSE)
