@@ -39,11 +39,12 @@ npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
 
 `npm run build` runs `scripts/build-pages.mjs`, which:
 
-1. Strips `pages_build_output_dir` from `wrangler.toml` (Astro adapter writes it back).
-2. Swaps `src/live.config.emdash.ts` → `src/live.config.ts` so EmDash live preview works in production.
-3. Runs `astro build`.
-4. Runs `scripts/bundle-worker.mjs` (esbuild) to bundle the Pages worker.
-5. Restores the original `wrangler.toml` and live config.
+1. Temporarily strips `pages_build_output_dir` from `wrangler.toml` (Astro's adapter rejects the build if it's present).
+2. Runs `astro build`.
+3. Runs `scripts/bundle-worker.mjs` (esbuild) to bundle the Pages worker.
+4. Restores the original `wrangler.toml` in a `finally` block.
+
+The `src/live.config.ts` and `src/live.config.emdash.ts` files are kept side-by-side so EmDash can read whichever one is appropriate per environment — they're not swapped during the build.
 
 ## Project Structure
 
@@ -109,7 +110,7 @@ Secrets are **never** committed — set them in the Cloudflare Pages dashboard u
 | Variable | Used by | Notes |
 |---|---|---|
 | `ADMIN_TOKEN` | `functions/admin/*` | Long random string; bearer auth for admin endpoints |
-| `RESEND_API_KEY` | confirm, unsubscribe, broadcast, EmDash email | Resend API key |
+| `RESEND_API_KEY` | signup, confirm, broadcast, admin preview, EmDash email | Resend API key |
 | `TURNSTILE_SECRET_KEY` | `functions/api/signup.js` | Cloudflare Turnstile server secret |
 | `CONFIRM_SECRET` | confirm, unsubscribe | HMAC signing secret (falls back to `ADMIN_TOKEN`) |
 | `FROM_EMAIL`, `FROM_NAME`, `BASE_URL` | email senders | Defaults exist; override per environment |
