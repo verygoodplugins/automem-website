@@ -39,10 +39,9 @@ public/              — Static assets (favicon, OG image)
 `npm run build` runs `scripts/build-pages.mjs`, which:
 
 1. Temporarily strips `pages_build_output_dir` from wrangler.toml
-2. Swaps in emdash live config (`src/live.config.emdash.ts` → `src/live.config.ts`)
-3. Runs `astro build`
-4. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
-5. Restores original config files
+2. Runs `astro build`
+3. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
+4. Restores wrangler.toml in a `finally` block
 
 **Never run `astro build` directly** — always use `npm run build`.
 

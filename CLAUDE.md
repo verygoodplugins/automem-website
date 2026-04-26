@@ -24,13 +24,13 @@ Astro 6.1 + React 19 islands · Tailwind CSS v4 (Vite plugin, not PostCSS) · St
 - **Two content systems**: long-form blog posts in `src/content/blog/NN-slug/index.md` (custom collection, schema in `src/content.config.ts`); product docs in `src/content/docs/docs/...` rendered by Starlight (sidebar configured in `astro.config.mjs`).
 - **Three runtimes share one project**: Astro SSR pages, Cloudflare Pages Functions in `functions/` (plain `.js`, not TS, dispatched via `src/middleware.ts`), and EmDash CMS routes mounted at `/_emdash/*`.
 - **Single base layout**: `src/layouts/Layout.astro` (hex line-number column, footer mascot). Starlight pages use a separate Starlight layout customized via `src/styles/starlight-custom.css`.
-- **Build pipeline**: `scripts/build-pages.mjs` strips `pages_build_output_dir` from `wrangler.toml`, swaps `src/live.config.emdash.ts` → `src/live.config.ts`, runs `astro build`, then runs `scripts/bundle-worker.mjs` (esbuild), then restores. Always invoke via `npm run build`.
+- **Build pipeline**: `scripts/build-pages.mjs` temporarily strips `pages_build_output_dir` from `wrangler.toml`, runs `astro build`, runs `scripts/bundle-worker.mjs` (esbuild), then restores `wrangler.toml`. Always invoke via `npm run build`.
 
 ## Environment & Cloudflare
 
 - **Get env via `import('cloudflare:workers')`** — `locals.runtime.env` is deprecated in Astro v6. Don't reintroduce it.
 - D1 bindings: `D1` (waitlist) and `EMDASH_DB` (CMS). KV binding: `SESSION` (emdash auth). Production and preview have separate database IDs in `wrangler.toml` — don't blindly edit those.
-- Pages Functions live in `functions/` as plain `.js` and are surfaced through `src/middleware.ts` (`api/signup.js`, `api/confirm.js`, `api/unsubscribe.js`, `api/admin/*`).
+- Pages Functions live in `functions/` as plain `.js` and are surfaced through `src/middleware.ts` (`api/signup.js`, `confirm.js`, `unsubscribe.js`, `admin/*`).
 
 ## Theming
 
