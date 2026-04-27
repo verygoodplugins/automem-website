@@ -25,7 +25,7 @@ graph TB
         end
 
         subgraph volumes["Docker Volumes"]
-            FalkorVol["falkordb_data<br/>/var/lib/falkordb/data"]
+            FalkorVol["falkordb_data<br/>/data"]
             QdrantVol["qdrant_data<br/>/qdrant/storage"]
         end
     end
