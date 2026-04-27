@@ -284,12 +284,12 @@ Decision, Pattern, Preference, Style, Habit, Insight, Context
 **Default relationship types:**
 
 ```
-RELATES_TO, LEADS_TO, OCCURRED_BEFORE, PREFERS_OVER, EXEMPLIFIES,
-CONTRADICTS, REINFORCES, INVALIDATED_BY, EVOLVED_INTO, DERIVED_FROM, PART_OF,
-SIMILAR_TO, PRECEDED_BY, DISCOVERED
+RELATES_TO, LEADS_TO, OCCURRED_BEFORE, SIMILAR_TO, PRECEDED_BY, PREFERS_OVER,
+EXEMPLIFIES, CONTRADICTS, REINFORCES, INVALIDATED_BY, EVOLVED_INTO, DERIVED_FROM,
+PART_OF, DISCOVERED
 ```
 
-The first 11 relation types are authorable. `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` are system-generated and appear in recall/filtering flows, but they are not valid inputs for `associate` or `associate_memories`.
+Eleven of the 14 relation types are user-authorable. `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` are system-generated and appear in recall/filtering flows, but they are not valid inputs for `associate` or `associate_memories`.
 
 **Type aliases** — The `TYPE_ALIASES` mapping in `automem.config` normalizes variations:
 
@@ -308,7 +308,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/classification/memory_classifier.py).
 
 ### Memory Content Governance
 
