@@ -7,8 +7,7 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
-- `automem/config.py` — Relationship type definitions and validation
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants; relationship type definitions and validation
 - `automem/enrichment/runtime_worker.py` — Automatic relationship creation
 - `automem/utils/entity_extraction.py` — Entity extraction for pattern linking
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/stores/graph_store.py) — Cypher query construction
