@@ -106,7 +106,9 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 
 ## Commit Style
 
-- Conventional commits: `feat(scope): desc`, `fix(scope): desc`, `docs:`, `chore:`, `refactor:`
+- PR titles must use Conventional Commit format because squash merges use the PR title as the release commit title. Do not prefix titles with `[codex]`, `[claude]`, `[copilot]`, `[wip]`, or similar labels; put agent/status context in the PR body.
+- Conventional commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `chore`, `perf`, `revert` with optional scope, such as `feat(scope): desc` or `docs: desc`.
+- Public API or documented surface changes should use `feat(api): ...` unless they are strictly bug fixes with no new public surface. Release automation uses `ci(release): ...` or `chore(release): ...`.
 - Doc updates: `docs: update [page-names] to reflect [source-repo]@[short-sha]`
 
 ## Documentation Update Workflow
