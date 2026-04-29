@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) — Flask API endpoints
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) — HTTP transport layer
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts) — TypeScript type definitions
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/memory.py) — Flask API endpoints
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP transport layer
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) — TypeScript type definitions
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -25,7 +25,7 @@ All operations except `/health` require authentication via `AUTOMEM_API_TOKEN`. 
 | Endpoint | Method | Purpose | Authentication |
 |----------|--------|---------|----------------|
 | `/memory` | POST | Create new memory | API Token |
-| `/memory` | POST | Batch ingest up to 500 memories | API Token |
+| `/memory/batch` | POST | Batch ingest up to 500 memories | API Token |
 | `/memory/:id` | GET | Retrieve single memory by ID | API Token |
 | `/recall` | GET | Search/retrieve memories | API Token |
 | `/memory/:id` | PATCH | Update existing memory | API Token |
@@ -306,7 +306,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 
 ---
 
-## POST /memory (Batch) — Batch Ingest
+## POST /memory/batch — Batch Ingest
 
 Ingests up to 500 memories in a single request. Each memory in the batch follows the same field schema as the single `POST /memory` endpoint.
 
@@ -334,7 +334,7 @@ Send the request body as a JSON array (not an object). The `Content-Type` must b
 ### Example Request
 
 ```bash
-curl -X POST https://your-automem-instance/memory \
+curl -X POST https://your-automem-instance/memory/batch \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '[
