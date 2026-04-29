@@ -29,9 +29,9 @@ The system is designed for **graceful degradation**: all core functionality cont
 ```mermaid
 graph TB
     subgraph api["Flask API Layer"]
-        StoreMemory["POST /memory<br/>api/memory.py:287"]
-        RecallMemory["GET /recall<br/>api/recall.py"]
-        UpdateMemory["PATCH /memory/:id<br/>api/memory.py:450"]
+        StoreMemory["POST /memory<br/>automem/api/memory.py:287"]
+        RecallMemory["GET /recall<br/>automem/api/recall.py"]
+        UpdateMemory["PATCH /memory/:id<br/>automem/api/memory.py:450"]
     end
 
     subgraph canonical["Canonical Storage FalkorDB"]
