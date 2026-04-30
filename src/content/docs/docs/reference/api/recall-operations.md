@@ -106,9 +106,9 @@ graph LR
     Request["GET /recall<br/>?query=X&tags=Y"]
 
     subgraph "Search Strategies"
-        Vector["_vector_search<br/>search/runtime_recall_helpers.py"]
-        Keyword["_graph_keyword_search<br/>search/runtime_recall_helpers.py"]
-        Trending["_graph_trending_results<br/>search/runtime_recall_helpers.py"]
+        Vector["_vector_search<br/>automem/search/runtime_recall_helpers.py"]
+        Keyword["_graph_keyword_search<br/>automem/search/runtime_recall_helpers.py"]
+        Trending["_graph_trending_results<br/>automem/search/runtime_recall_helpers.py"]
     end
 
     subgraph "Scoring"
@@ -138,7 +138,7 @@ graph LR
 ```
 
 **Search strategy:**
-1. **Vector Search** (`state.qdrant != None`): Semantic similarity using Voyage embeddings
+1. **Vector Search** (`state.qdrant != None`): Semantic similarity using the configured embedding provider (Voyage by default)
 2. **Keyword Search** (FalkorDB): Content and tag matching using Cypher `CONTAINS`
 3. **Trending Results** (no query): High-importance memories ordered by recency
 4. **Deduplication**: Track seen IDs across sources
