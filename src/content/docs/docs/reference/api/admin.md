@@ -241,7 +241,7 @@ curl -X POST https://your-automem-instance/admin/reembed \
 graph TB
     Request["POST /admin/reembed<br/>{batch_size: 32, limit: 1000}"]
     Auth["_require_admin_token()"]
-    Init["Initialize OpenAI client<br/>get_openai_client()"]
+    Init["Retrieve pre-initialized OpenAI client<br/>get_openai_client()"]
 
     FetchIDs["Query FalkorDB:<br/>MATCH (m:Memory)<br/>RETURN m.id<br/>LIMIT $limit"]
 
@@ -424,8 +424,8 @@ curl -X POST https://your-instance/enrichment/reprocess \
 
 When switching from `text-embedding-3-small` (1024-d, set by `VECTOR_SIZE`) to `text-embedding-3-large` (3072-d):
 
-:::caution[Model changes require code updates]
-Model changes require code updates to specify the new model in `_generate_real_embedding()`. Simply running `/admin/reembed` will regenerate with the currently configured model.
+:::caution[Set EMBEDDING_MODEL before re-embedding]
+Model selection is controlled by the `EMBEDDING_MODEL` environment variable (default: `text-embedding-3-small`). Simply running `/admin/reembed` will regenerate embeddings using the currently configured model — no code changes required.
 :::
 
 1. Update `VECTOR_SIZE` environment variable
