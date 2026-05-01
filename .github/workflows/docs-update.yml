@@ -111,3 +111,30 @@ jobs:
             --allowedTools 'Glob'
             --allowedTools 'Grep'
             --allowedTools 'Bash(npm run build)'
+
+      - name: Enable auto-merge on docs PRs created by this run
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          RUN_STARTED_AT: ${{ github.run_started_at }}
+        run: |
+          # Auto-merge keeps the manual-review window short. Otherwise PRs sit
+          # for days while the source SHAs and line numbers they pin go stale.
+          # Filter scope: same-repo PRs (no forks) on docs/audit-* branches
+          # opened on or after this run started.
+          PRS=$(gh pr list \
+            --state open \
+            --limit 200 \
+            --json number,headRefName,createdAt,isCrossRepository \
+            --jq "[.[] | select(.isCrossRepository == false) | select(.headRefName | startswith(\"docs/audit-\")) | select(.createdAt >= \"$RUN_STARTED_AT\")] | .[].number")
+
+          if [ -z "$PRS" ]; then
+            echo "No docs/audit-* PRs created during this run — nothing to do."
+            exit 0
+          fi
+
+          for pr in $PRS; do
+            echo "Enabling auto-merge on PR #$pr"
+            gh pr merge "$pr" --auto --squash \
+              || echo "  (skipped — may have conflicts or already be merged)"
+          done
