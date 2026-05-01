@@ -116,17 +116,20 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          RUN_STARTED_AT: ${{ github.run_started_at }}
         run: |
           # Auto-merge keeps the manual-review window short. Otherwise PRs sit
           # for days while the source SHAs and line numbers they pin go stale.
-          CUTOFF=$(date -u -d '60 minutes ago' '+%Y-%m-%dT%H:%M:%SZ')
+          # Filter scope: same-repo PRs (no forks) on docs/audit-* branches
+          # opened on or after this run started.
           PRS=$(gh pr list \
             --state open \
-            --json number,headRefName,createdAt \
-            --jq "[.[] | select(.headRefName | startswith(\"docs/audit-\")) | select(.createdAt >= \"$CUTOFF\")] | .[].number")
+            --limit 200 \
+            --json number,headRefName,createdAt,isCrossRepository \
+            --jq "[.[] | select(.isCrossRepository == false) | select(.headRefName | startswith(\"docs/audit-\")) | select(.createdAt >= \"$RUN_STARTED_AT\")] | .[].number")
 
           if [ -z "$PRS" ]; then
-            echo "No docs/audit-* PRs created in the last hour — nothing to do."
+            echo "No docs/audit-* PRs created during this run — nothing to do."
             exit 0
           fi
 
