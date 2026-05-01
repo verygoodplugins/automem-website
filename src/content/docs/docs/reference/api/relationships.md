@@ -6,12 +6,12 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/main/app.py) — Flask API `/associate` endpoint
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — `ALLOWED_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — FalkorDB edge operations
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) — MCP `associate_memories` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) — HTTP client
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts) — Relationship type definitions
+- [automem/api/memory.py#L506](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/memory.py#L506) — Flask blueprint `/associate` endpoint
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/stores/graph_store.py) — FalkorDB edge operations
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP `associate_memories` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP client
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) — Relationship type definitions
 :::
 
 The `/associate` endpoint creates typed relationships between memories to build a knowledge graph in FalkorDB. These associations enable graph traversal during recall, allowing multi-hop reasoning and discovery of related context beyond direct semantic similarity.
@@ -50,7 +50,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 |-------|------|----------|-------------|
 | `memory1_id` | string | Yes | Source memory UUID |
 | `memory2_id` | string | Yes | Target memory UUID |
-| `type` | string | Yes | Relationship type (must be in `ALLOWED_RELATIONS`) |
+| `type` | string | Yes | Relationship type (must be in `AUTHORABLE_RELATIONS`) |
 | `strength` | float | No | Edge weight 0.0–1.0 (default: 0.5) |
 | `properties` | object | No | Additional edge metadata (stored in graph) |
 
@@ -165,7 +165,7 @@ Although all relationships are stored as directed edges in FalkorDB (`memory1_id
 The `/associate` endpoint enforces the following validation:
 
 1. **Memory Existence**: Both `memory1_id` and `memory2_id` must reference existing Memory nodes in FalkorDB
-2. **Relationship Type**: `type` must be one of the 11 authorable relation types accepted by the association endpoint
+2. **Relationship Type**: `type` must be one of the 11 authorable relation types in `AUTHORABLE_RELATIONS`
 3. **Strength Bounds**: If provided, `strength` must be between 0.0 and 1.0 (inclusive)
 4. **Required Fields**: `memory1_id`, `memory2_id`, and `type` are mandatory
 5. **Authentication**: Valid `AUTOMEM_API_TOKEN` required via Authorization header
@@ -178,7 +178,7 @@ flowchart TD
     AuthCheck{"Valid API Token?"}
     FieldCheck{"Required Fields Present?"}
     SelfCheck{"memory1_id == memory2_id?"}
-    TypeCheck{"type in ALLOWED_RELATIONS?"}
+    TypeCheck{"type in AUTHORABLE_RELATIONS?"}
     StrengthCheck{"strength in 0.0-1.0?"}
     MemoryCheck{"Both memories exist?"}
     CreateEdge["Create FalkorDB Edge"]
@@ -451,7 +451,7 @@ The tool is annotated `idempotentHint: true` — creating the same relationship 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Flask["@app.route('/associate')<br/>POST"]
+    participant Flask["automem/api/memory.py<br/>POST /associate"]
     participant Falkor["FalkorDB"]
 
     Client->>Flask: POST /associate<br/>{memory1_id, memory2_id, type}
@@ -459,7 +459,7 @@ sequenceDiagram
     Flask->>Falkor: MATCH (m1:Memory {id: $id1})<br/>MATCH (m2:Memory {id: $id2})
     Flask->>Falkor: MERGE (m1)-[r:TYPE]->(m2)
     Flask->>Falkor: SET r.strength = $strength
-    Flask-->>Client: 200 OK
+    Flask-->>Client: 201 Created
 ```
 
 ---

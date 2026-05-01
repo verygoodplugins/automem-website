@@ -7,16 +7,16 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
-- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/provider.py) — Abstract provider base class
-- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/voyage.py) — Voyage AI provider
-- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/openai.py) — OpenAI provider
-- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/fastembed.py) — FastEmbed local provider
-- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/ollama.py) — Ollama local provider
-- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/placeholder.py) — Deterministic fallback provider
-- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/validation.py) — Dimension validation
-- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/main/tests/test_embedding_providers.py) — Provider tests
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/provider.py) — Abstract provider base class
+- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/voyage.py) — Voyage AI provider
+- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/openai.py) — OpenAI provider
+- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/fastembed.py) — FastEmbed local provider
+- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/ollama.py) — Ollama local provider
+- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/embedding/placeholder.py) — Deterministic fallback provider
+- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/utils/validation.py) — Dimension validation
+- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/tests/test_embedding_providers.py) — Provider tests
 :::
 
 The embedding generation subsystem handles asynchronous vector embedding creation for memories using multiple backend providers. The system implements batching optimization to reduce API costs by 40-50%, improves `/memory` endpoint latency by 60% through non-blocking queue-based processing, and provides automatic provider selection with graceful fallback.
@@ -110,7 +110,7 @@ flowchart TD
 The system validates embedding dimensions against the configured `VECTOR_SIZE` at two checkpoints — provider initialization and every write to Qdrant:
 
 - **At init:** when the provider chain resolves, the selected provider's declared dimension is compared to the Qdrant collection's actual `VECTOR_SIZE`. A mismatch aborts startup with a clear error instead of silently truncating or padding vectors at query time.
-- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/validation.py) re-checks every embedding before `upsert`.
+- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/utils/validation.py) re-checks every embedding before `upsert`.
 - Mismatches raise `ValueError` with the observed and expected dimensions in the message.
 - Prevents Qdrant collection corruption from mixed dimensions when switching providers.
 - FalkorDB writes always succeed regardless of embedding status — the graph never depends on a healthy vector path.
@@ -433,7 +433,7 @@ The embedding worker runs in a dedicated thread started during application initi
 
 ### Memory Storage Integration
 
-The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py).
+The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/api/memory.py).
 
 ### Enrichment Pipeline Coordination
 
