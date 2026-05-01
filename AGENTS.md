@@ -39,10 +39,9 @@ public/              — Static assets (favicon, OG image)
 `npm run build` runs `scripts/build-pages.mjs`, which:
 
 1. Temporarily strips `pages_build_output_dir` from wrangler.toml
-2. Swaps in emdash live config (`src/live.config.emdash.ts` → `src/live.config.ts`)
-3. Runs `astro build`
-4. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
-5. Restores original config files
+2. Runs `astro build`
+3. Runs `scripts/bundle-worker.mjs` (esbuild worker bundling)
+4. Restores wrangler.toml in a `finally` block
 
 **Never run `astro build` directly** — always use `npm run build`.
 
@@ -107,7 +106,9 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 
 ## Commit Style
 
-- Conventional commits: `feat(scope): desc`, `fix(scope): desc`, `docs:`, `chore:`, `refactor:`
+- PR titles must use Conventional Commit format because squash merges use the PR title as the release commit title. Do not prefix titles with `[codex]`, `[claude]`, `[copilot]`, `[wip]`, or similar labels; put agent/status context in the PR body.
+- Conventional commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `chore`, `perf`, `revert` with optional scope, such as `feat(scope): desc` or `docs: desc`.
+- Public API or documented surface changes should use `feat(api): ...` unless they are strictly bug fixes with no new public surface. Release automation uses `ci(release): ...` or `chore(release): ...`.
 - Doc updates: `docs: update [page-names] to reflect [source-repo]@[short-sha]`
 
 ## Documentation Update Workflow

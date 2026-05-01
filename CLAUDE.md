@@ -24,13 +24,13 @@ Astro 6.1 + React 19 islands · Tailwind CSS v4 (Vite plugin, not PostCSS) · St
 - **Two content systems**: long-form blog posts in `src/content/blog/NN-slug/index.md` (custom collection, schema in `src/content.config.ts`); product docs in `src/content/docs/docs/...` rendered by Starlight (sidebar configured in `astro.config.mjs`).
 - **Three runtimes share one project**: Astro SSR pages, Cloudflare Pages Functions in `functions/` (plain `.js`, not TS, dispatched via `src/middleware.ts`), and EmDash CMS routes mounted at `/_emdash/*`.
 - **Single base layout**: `src/layouts/Layout.astro` (hex line-number column, footer mascot). Starlight pages use a separate Starlight layout customized via `src/styles/starlight-custom.css`.
-- **Build pipeline**: `scripts/build-pages.mjs` strips `pages_build_output_dir` from `wrangler.toml`, swaps `src/live.config.emdash.ts` → `src/live.config.ts`, runs `astro build`, then runs `scripts/bundle-worker.mjs` (esbuild), then restores. Always invoke via `npm run build`.
+- **Build pipeline**: `scripts/build-pages.mjs` temporarily strips `pages_build_output_dir` from `wrangler.toml`, runs `astro build`, runs `scripts/bundle-worker.mjs` (esbuild), then restores `wrangler.toml`. Always invoke via `npm run build`.
 
 ## Environment & Cloudflare
 
 - **Get env via `import('cloudflare:workers')`** — `locals.runtime.env` is deprecated in Astro v6. Don't reintroduce it.
 - D1 bindings: `D1` (waitlist) and `EMDASH_DB` (CMS). KV binding: `SESSION` (emdash auth). Production and preview have separate database IDs in `wrangler.toml` — don't blindly edit those.
-- Pages Functions live in `functions/` as plain `.js` and are surfaced through `src/middleware.ts` (`api/signup.js`, `api/confirm.js`, `api/unsubscribe.js`, `api/admin/*`).
+- Pages Functions live in `functions/` as plain `.js` and are surfaced through `src/middleware.ts` (`api/signup.js`, `confirm.js`, `unsubscribe.js`, `admin/*`).
 
 ## Theming
 
@@ -45,7 +45,8 @@ Docs cover three sibling repos checked out next to this one: `../automem` (Pytho
 ## Conventions & gotchas
 
 - TypeScript strict mode (`extends astro/tsconfigs/strict`); ESM (`"type": "module"`).
-- Conventional commits (`feat(scope):`, `fix(scope):`, `docs:`, `chore:`, `refactor:`).
+- PR titles must use Conventional Commit format because squash merges use the PR title as the release commit title. Do not prefix titles with `[claude]`, `[codex]`, `[copilot]`, `[wip]`, or similar labels; put agent/status context in the PR body.
+- Conventional commit types are `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `chore`, `perf`, `revert` with optional scope. Public API or documented surface changes use `feat(api): ...` unless strictly a bug fix; release automation uses `ci(release): ...` or `chore(release): ...`.
 - Release Please manages versions — don't bump `package.json` by hand.
 - Don't run `astro build` directly — use `npm run build`.
 - Don't switch Tailwind to PostCSS — it uses `@tailwindcss/vite`.
