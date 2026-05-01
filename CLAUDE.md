@@ -45,7 +45,8 @@ Docs cover three sibling repos checked out next to this one: `../automem` (Pytho
 ## Conventions & gotchas
 
 - TypeScript strict mode (`extends astro/tsconfigs/strict`); ESM (`"type": "module"`).
-- Conventional commits (`feat(scope):`, `fix(scope):`, `docs:`, `chore:`, `refactor:`).
+- PR titles must use Conventional Commit format because squash merges use the PR title as the release commit title. Do not prefix titles with `[claude]`, `[codex]`, `[copilot]`, `[wip]`, or similar labels; put agent/status context in the PR body.
+- Conventional commit types are `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `chore`, `perf`, `revert` with optional scope. Public API or documented surface changes use `feat(api): ...` unless strictly a bug fix; release automation uses `ci(release): ...` or `chore(release): ...`.
 - Release Please manages versions — don't bump `package.json` by hand.
 - Don't run `astro build` directly — use `npm run build`.
 - Don't switch Tailwind to PostCSS — it uses `@tailwindcss/vite`.
