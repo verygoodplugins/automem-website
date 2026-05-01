@@ -6,12 +6,12 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Recall endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Graph expansion logic
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/scoring.py) — Scoring algorithm
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/main/automem/config.py) — Score weight configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) — MCP `recall_memory` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) — HTTP client and response normalization
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/config.py) — Score weight configuration
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP `recall_memory` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines nine scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
@@ -106,13 +106,13 @@ graph LR
     Request["GET /recall<br/>?query=X&tags=Y"]
 
     subgraph "Search Strategies"
-        Vector["_vector_search<br/>search/runtime_recall_helpers.py"]
-        Keyword["_graph_keyword_search<br/>search/runtime_recall_helpers.py"]
-        Trending["_graph_trending_results<br/>search/runtime_recall_helpers.py"]
+        Vector["_vector_search<br/>automem/search/runtime_recall_helpers.py"]
+        Keyword["_graph_keyword_search<br/>automem/search/runtime_recall_helpers.py"]
+        Trending["_graph_trending_results<br/>automem/search/runtime_recall_helpers.py"]
     end
 
     subgraph "Scoring"
-        Compute["_compute_metadata_score<br/>search/runtime_recall_helpers.py"]
+        Compute["_compute_metadata_score<br/>automem/utils/scoring.py"]
         Combine["Weighted combination<br/>vector+keyword+tag+<br/>importance+recency"]
     end
 
@@ -138,7 +138,7 @@ graph LR
 ```
 
 **Search strategy:**
-1. **Vector Search** (`state.qdrant != None`): Semantic similarity using OpenAI embeddings
+1. **Vector Search** (`state.qdrant != None`): Semantic similarity using the configured embedding provider (Voyage by default)
 2. **Keyword Search** (FalkorDB): Content and tag matching using Cypher `CONTAINS`
 3. **Trending Results** (no query): High-importance memories ordered by recency
 4. **Deduplication**: Track seen IDs across sources
@@ -260,7 +260,7 @@ graph TB
 
     CheckExpand{"expand_relations<br/>enabled?"}
 
-    FetchRelations["_fetch_relations()<br/>search/runtime_relations.py"]
+    FetchRelations["fetch_relations()<br/>search/runtime_relations.py"]
 
     FilterStrength{"Relation strength >=<br/>expand_min_strength?"}
 
