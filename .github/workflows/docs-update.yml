@@ -111,3 +111,27 @@ jobs:
             --allowedTools 'Glob'
             --allowedTools 'Grep'
             --allowedTools 'Bash(npm run build)'
+
+      - name: Enable auto-merge on docs PRs created by this run
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          # Auto-merge keeps the manual-review window short. Otherwise PRs sit
+          # for days while the source SHAs and line numbers they pin go stale.
+          CUTOFF=$(date -u -d '60 minutes ago' '+%Y-%m-%dT%H:%M:%SZ')
+          PRS=$(gh pr list \
+            --state open \
+            --json number,headRefName,createdAt \
+            --jq "[.[] | select(.headRefName | startswith(\"docs/audit-\")) | select(.createdAt >= \"$CUTOFF\")] | .[].number")
+
+          if [ -z "$PRS" ]; then
+            echo "No docs/audit-* PRs created in the last hour — nothing to do."
+            exit 0
+          fi
+
+          for pr in $PRS; do
+            echo "Enabling auto-merge on PR #$pr"
+            gh pr merge "$pr" --auto --squash \
+              || echo "  (skipped — may have conflicts or already be merged)"
+          done
