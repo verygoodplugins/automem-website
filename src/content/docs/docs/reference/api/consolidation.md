@@ -173,7 +173,7 @@ For `mode="full"`, the `consolidation` object contains combined metrics from all
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "full"}'
+  -d '{"mode": "full", "dry_run": false}'
 ```
 
 **Trigger single task (decay):**
@@ -182,7 +182,7 @@ curl -X POST https://your-automem-instance/consolidate \
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "decay"}'
+  -d '{"mode": "decay", "dry_run": false}'
 ```
 
 ---
