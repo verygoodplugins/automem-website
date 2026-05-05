@@ -94,8 +94,8 @@ graph TB
     end
 
     subgraph "Mock Objects"
-        FakeGraph["FakeGraph\nimplements GraphLike protocol"]
-        FakeVectorStore["FakeVectorStore\nimplements VectorStoreProtocol"]
+        FakeGraph["FakeGraph\nfake FalkorDB graph"]
+        FakeVectorStore["FakeVectorStore\nfake vector store"]
         FakeResult["FakeResult\nmimics FalkorDB result"]
     end
 
