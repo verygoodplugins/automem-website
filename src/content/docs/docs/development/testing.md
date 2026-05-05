@@ -128,7 +128,7 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeGraph` Class
 
-`FakeGraph` implements the `GraphLike` protocol and simulates FalkorDB query behavior ([tests/test_consolidation_engine.py:17-69](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py#L17-L69)):
+`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:25-667](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py#L25-L667)):
 
 - **Query pattern matching**: Uses string matching to identify query type (e.g., `"COUNT(DISTINCT r)"` for relationship counts)
 - **Deterministic responses**: Returns pre-configured data from state attributes
@@ -137,17 +137,17 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeVectorStore` Class
 
-`FakeVectorStore` implements `VectorStoreProtocol` and tracks vector deletion operations ([tests/test_consolidation_engine.py:72-77](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py#L72-L77)).
+`FakeVectorStore` tracks vector deletion operations ([tests/test_consolidation_engine.py:13-17](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L13-L17)).
 
 #### `FakeResult` Class
 
-`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/test_consolidation_engine.py:12-14](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py#L12-L14)).
+`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:8-10](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py#L8-L10)).
 
 ### Test Fixtures
 
 #### `freeze_time` Fixture
 
-The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:80-92](https://github.com/verygoodplugins/automem/blob/main/tests/test_consolidation_engine.py#L80-L92)):
+The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:20-28](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L20-L28)):
 
 - **Auto-use**: Applies to all tests automatically
 - **Module patching**: Patches `consolidation_module.datetime`, not global `datetime`
@@ -313,7 +313,7 @@ for i in {1..25}; do
 done
 ```
 
-Expected log: `Generated 20 OpenAI embeddings in batch`
+Expected log: a batch embedding log line from the embedding provider
 
 **Consolidation performance** — monitor logs during decay runs. After optimization, should see ~80% reduction in relationship query counts.
 
