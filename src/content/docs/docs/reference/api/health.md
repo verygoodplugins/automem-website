@@ -52,7 +52,7 @@ sequenceDiagram
         Note over Flask: status.falkordb = "connected"
     else Connection failed
         FalkorDB-->>Flask: Exception
-        Note over Flask: status.falkordb = "error: ..."<br/>status.status = "degraded"
+        Note over Flask: status.falkordb = "disconnected"<br/>status.status = "degraded"
     end
 
     Flask->>Qdrant: get_collection(COLLECTION_NAME)
