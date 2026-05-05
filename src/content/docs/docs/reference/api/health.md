@@ -6,7 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) — Health and analytics endpoints
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -78,8 +79,13 @@ sequenceDiagram
   "qdrant": "connected",
   "memory_count": 1247,
   "vector_count": 1247,
-  "sync_status": "in_sync",
-  "vector_dimensions": 1024,
+  "sync_status": "synced",
+  "vector_dimensions": {
+    "configured": 1024,
+    "effective": 1024,
+    "collection": 1024,
+    "mismatch": false
+  },
   "enrichment": {
     "status": "running",
     "queue_depth": 3,
@@ -98,12 +104,12 @@ sequenceDiagram
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when Qdrant unavailable) |
-| `falkordb` | string | FalkorDB status: `"connected"`, `"unknown"`, or `"error: ..."` |
+| `falkordb` | string | FalkorDB status: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer \| null | Total memories in FalkorDB (null if query fails) |
 | `vector_count` | integer \| null | Total points in Qdrant collection (null if unavailable) |
-| `sync_status` | string \| null | Drift status between FalkorDB and Qdrant (e.g., `"in_sync"`, `"drifted"`) |
-| `vector_dimensions` | integer \| null | Configured embedding vector dimensions |
+| `sync_status` | string | Drift status between FalkorDB and Qdrant: `"synced"`, `"drift_detected"`, `"orphaned_vectors"`, or `"unknown"` |
+| `vector_dimensions` | object | Embedding dimension info: `configured` (from `VECTOR_SIZE`), `effective` (provider-reported), `collection` (Qdrant collection size), `mismatch` (boolean) |
 | `enrichment` | object | Enrichment queue metrics (see below) |
 | `graph` | string | FalkorDB graph name (`FALKORDB_GRAPH` env variable) |
 | `timestamp` | string | ISO 8601 timestamp of health check |
@@ -411,7 +417,7 @@ graph LR
 For production deployments, a health monitoring service polls `/health` on an interval and takes action on anomalies:
 
 - Polls `/health` every 5 minutes (configurable)
-- Compares `memory_count` (FalkorDB) vs `qdrant_count` (Qdrant) to detect drift
+- Compares `memory_count` (FalkorDB) vs `vector_count` (Qdrant) to detect drift
 - Triggers alerts if drift exceeds 5%
 - Optionally triggers auto-recovery via `recover_from_qdrant.py`
 
