@@ -173,8 +173,8 @@ graph TB
     end
 
     subgraph ContextScoring["Context Scoring"]
-        RelationComp["Relation Component<br/>Computed from graph edges"]
-        RelevanceComp["Relevance Component<br/>Consolidation decay score"]
+        RelationComp["Relation Component<br/>Weight: SEARCH_WEIGHT_RELATION<br/>Computed from graph edges"]
+        RelevanceComp["Relevance Component<br/>Weight: SEARCH_WEIGHT_RELEVANCE<br/>Consolidation decay score"]
     end
 
     FinalScore["Final Weighted Score<br/>Sum of all components"]
