@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/config.py) — Score weight configuration
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py) — Score weight configuration
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP `recall_memory` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP client and response normalization
 :::
@@ -174,7 +174,7 @@ graph TB
 
     subgraph ContextScoring["Context Scoring"]
         RelationComp["Relation Component<br/>Computed from graph edges"]
-        TemporalComp["Temporal Component<br/>Time alignment score"]
+        RelevanceComp["Relevance Component<br/>Consolidation decay score"]
     end
 
     FinalScore["Final Weighted Score<br/>Sum of all components"]
@@ -192,7 +192,7 @@ graph TB
     RecencyComp --> FinalScore
     TagComp --> FinalScore
     RelationComp --> FinalScore
-    TemporalComp --> FinalScore
+    RelevanceComp --> FinalScore
 ```
 
 The formula:
@@ -205,8 +205,8 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
               (confidence × SEARCH_WEIGHT_CONFIDENCE) +
               (recency_score × SEARCH_WEIGHT_RECENCY) +
               (tag_score × SEARCH_WEIGHT_TAG) +
-              relation_score +
-              temporal_score
+              (relation_score × SEARCH_WEIGHT_RELATION) +
+              (relevance_score × SEARCH_WEIGHT_RELEVANCE)
 ```
 
 **Default weight configuration (all configurable via environment variables):**
