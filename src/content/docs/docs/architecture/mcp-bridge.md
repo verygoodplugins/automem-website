@@ -285,7 +285,7 @@ sequenceDiagram
 | `deleteMemory()` | DELETE | `/memory/{id}` | ID in URL |
 | `checkHealth()` | GET | `/health` | No body |
 
-**Error Handling:** [server.js:104-177](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/mcp-sse-server/server.js#L104-L177) wraps fetch failures and non-OK responses into Error objects with retry logic.
+**Error Handling:** [server.js:104-177](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/mcp-sse-server/server.js#L104-L177) wraps fetch failures and non-OK responses into Error objects.
 
 ---
 
@@ -364,7 +364,7 @@ Both bridge implementations expose six MCP tools with JSON schemas for validatio
 
 **`recall_memory`** — [server.js:378-442](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/mcp-sse-server/server.js#L378-L442)
 
-Advanced recall parameters (lines 278-291):
+Advanced recall parameters:
 - `expand_relations` (boolean): Enable graph traversal
 - `expand_entities` (boolean): Multi-hop via entities
 - `auto_decompose` (boolean): Generate sub-queries
@@ -373,7 +373,7 @@ Advanced recall parameters (lines 278-291):
 - `expand_min_importance` (number 0-1): Filter threshold
 - `expand_min_strength` (number 0-1): Relation strength threshold
 
-Context hints (lines 286-291):
+Context hints:
 - `context` (string): e.g., "coding-style", "architecture"
 - `language` (string): e.g., "python", "typescript"
 - `active_path` (string): Current file path
