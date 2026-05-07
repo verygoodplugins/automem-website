@@ -425,7 +425,7 @@ Each AI platform stores MCP server configuration differently:
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-service.railway.app",
+        "AUTOMEM_API_URL": "https://your-service.railway.app",
         "AUTOMEM_API_KEY": "your-api-token"
       }
     }
@@ -443,7 +443,7 @@ command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
 [mcp.servers.automem.env]
-AUTOMEM_ENDPOINT = "https://your-service.railway.app"
+AUTOMEM_API_URL = "https://your-service.railway.app"
 AUTOMEM_API_KEY = "your-api-token"
 ```
 
