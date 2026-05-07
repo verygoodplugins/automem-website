@@ -313,7 +313,7 @@ With the server running and verified, install the MCP client and connect it to y
 npx @verygoodplugins/mcp-automem setup
 ```
 
-The setup wizard performs four operations:
+The setup wizard runs the following steps:
 
 ```mermaid
 sequenceDiagram
@@ -321,7 +321,7 @@ sequenceDiagram
     participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
 
-    User->>CLI: npx mcp-automem setup
+    User->>CLI: npx @verygoodplugins/mcp-automem setup
     CLI->>User: Prompt: AutoMem API URL
     User->>CLI: http://localhost:8001
     CLI->>User: Prompt: API Key? (optional)
@@ -509,9 +509,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 
 ## Troubleshooting
 
-### Connection Failed During Setup
+### Health Check Failing After Setup
 
-**Symptom:** Setup wizard reports "Connection failed" when testing endpoint.
+**Symptom:** `GET /health` returns an error or the service is unreachable when you run the manual health check in Phase 2.
 
 **Causes and solutions:**
 
