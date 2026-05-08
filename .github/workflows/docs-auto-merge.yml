@@ -1,0 +1,30 @@
+name: Docs Auto-Merge
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    name: Enable auto-merge
+    if: >-
+      ${{
+        github.event.pull_request.base.ref == 'main' &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        !github.event.pull_request.draft &&
+        startsWith(github.event.pull_request.head.ref, 'docs/audit-') &&
+        startsWith(github.event.pull_request.title, 'docs:')
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge for eligible docs PR
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh pr merge "$PR_URL" --auto --delete-branch --match-head-commit "$HEAD_SHA"
