@@ -10,12 +10,12 @@ Key implementation files:
 - `automem/search/runtime_recall_helpers.py` — Vector and keyword search implementations
 - `automem/search/runtime_keywords.py` — Keyword matching logic
 - `automem/search/runtime_relations.py` — Relationship expansion
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L156-L165](https://github.com/verygoodplugins/automem/blob/main/automem/config.py#L156-L165) — Search weight configuration
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/graph.py) — Graph traversal utilities
-- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/time.py) — Temporal expression parsing
-- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/main/automem/utils/tags.py) — Tag prefix utilities
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — Recall endpoint orchestration
+- [automem/config.py#L135-L144](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py#L135-L144) — Search weight configuration
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/scoring.py) — Score computation
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/time.py) — Temporal expression parsing
+- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/tags.py) — Tag prefix utilities
 :::
 
 This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. The system implements a 9-component scoring algorithm that achieves **90.53% accuracy** on the LoCoMo benchmark.

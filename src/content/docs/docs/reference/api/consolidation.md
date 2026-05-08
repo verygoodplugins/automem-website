@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/consolidation.py) — Consolidation API endpoints
-- [consolidation.py](https://github.com/verygoodplugins/automem/blob/main/consolidation.py) — Consolidation engine implementation
+- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/consolidation.py) — Consolidation API endpoints
+- [consolidation.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py) — Consolidation engine implementation
 :::
 
 This page documents the HTTP API endpoints for triggering and monitoring memory consolidation tasks. Consolidation is AutoMem's background maintenance system that mimics biological memory processes — decay, creative association, clustering, and forgetting.
@@ -76,7 +76,7 @@ Manually trigger one or more consolidation tasks.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, or `full` |
-| `dry_run` | boolean | No | `false` | If `true`, simulate without making changes |
+| `dry_run` | boolean | No | `true` | If `true`, simulate without making changes |
 
 ### Task Types
 
@@ -173,7 +173,7 @@ For `mode="full"`, the `consolidation` object contains combined metrics from all
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "full"}'
+  -d '{"mode": "full", "dry_run": false}'
 ```
 
 **Trigger single task (decay):**
@@ -182,7 +182,7 @@ curl -X POST https://your-automem-instance/consolidate \
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "decay"}'
+  -d '{"mode": "decay", "dry_run": false}'
 ```
 
 ---
@@ -267,7 +267,7 @@ Consolidation state is persisted in FalkorDB using two node types:
 
 ### ConsolidationControl Node
 
-Properties correspond to the `CONSOLIDATION_TASK_FIELDS` mapping in `app.py`. A single `ConsolidationControl` node (with ID controlled by `CONSOLIDATION_CONTROL_NODE_ID`, defaulting to `"global"`) stores the last run timestamps for all four tasks.
+Properties correspond to the `CONSOLIDATION_TASK_FIELDS` mapping in `automem/config.py`. A single `ConsolidationControl` node (with ID controlled by `CONSOLIDATION_CONTROL_NODE_ID`, defaulting to `"global"`) stores the last run timestamps for all four tasks.
 
 ### ConsolidationRun Nodes
 

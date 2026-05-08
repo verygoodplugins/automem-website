@@ -24,7 +24,7 @@ Before setting up the development environment, ensure the following tools are in
 | git | Any recent version | Source control |
 
 :::tip[One-shot bootstrap]
-The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/main/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv, installs dev requirements, and downloads the spaCy model in one command. Prefer it over the manual steps below unless you need a custom setup.
+The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv and installs dev requirements in one command. Prefer it over the manual steps below unless you need a custom setup.
 :::
 
 ### Repository Contents
@@ -400,8 +400,9 @@ npm install   # Also installs Husky git hooks via "prepare" lifecycle script
 
 | Script | Command | Purpose |
 |---|---|---|
-| `build` | `tsc && npm run postbuild` | Compile TypeScript to `dist/`, make executable |
-| `postbuild` | `chmod +x dist/index.js` | Ensure binary is executable |
+| `prebuild` | `node scripts/sync-template-versions.mjs` | Sync template versions before build |
+| `build` | `tsc` | Compile TypeScript to `dist/` |
+| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js` | Build OpenClaw plugin package and make binary executable |
 | `dev` | `tsx watch src/index.ts` | Hot-reload development server |
 | `lint` | `eslint .` | Run ESLint static analysis |
 | `prepare` | `husky` | Install git hooks (runs on `npm install`) |
