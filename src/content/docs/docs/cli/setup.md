@@ -13,7 +13,7 @@ The mcp-automem package is a **bridge component** that translates Model Context 
 
 ### Node.js Runtime Requirements
 
-The mcp-automem package requires **Node.js 20.19.0+, 22.13.0+, or 24+**. This version requirement is enforced in the package manifest (`engines: "^20.19.0 || ^22.13.0 || >=24"`) and necessary for:
+The mcp-automem package requires **Node.js 20.19.0+, 22.13.0+, or 24+**. This version requirement is enforced in the package manifest and necessary for:
 
 - ECMAScript modules (ESM) support used throughout the codebase
 - Native fetch API used by the HTTP client
@@ -22,7 +22,7 @@ The mcp-automem package requires **Node.js 20.19.0+, 22.13.0+, or 24+**. This ve
 **Verify your Node.js version:**
 ```bash
 node --version
-# Should output: v20.19.x, v22.13.x, or v24.x.x or higher
+# Should output: v20.19.x, v22.13.x, or v24.x or higher
 ```
 
 **Install or upgrade Node.js:**
@@ -59,7 +59,7 @@ make dev
 
 This launches: Flask service on `:8001`, FalkorDB on `:6379`, Qdrant on `:6333`, FalkorDB graph browser on `:3000`.
 
-Endpoint configuration: `AUTOMEM_ENDPOINT=http://127.0.0.1:8001` (no API key required in development mode)
+Endpoint configuration: `AUTOMEM_API_URL=http://127.0.0.1:8001` (no API key required in development mode)
 
 **Option 2: Railway Cloud**
 
@@ -70,7 +70,7 @@ Best for: production use, multi-device access, team collaboration, always-on ava
 3. Configure environment variables in Railway dashboard
 4. Note the generated Railway URL: `https://your-project.up.railway.app`
 
-Endpoint configuration: `AUTOMEM_ENDPOINT=https://your-project.up.railway.app`, `AUTOMEM_API_KEY=<generated-token>`
+Endpoint configuration: `AUTOMEM_API_URL=https://your-project.up.railway.app`, `AUTOMEM_API_KEY=<generated-token>`
 
 Typical costs: development ~$0.50-1.00/month, production ~$5-10/month.
 
@@ -122,7 +122,7 @@ Before installation, determine where these files will be located:
 ### Pre-Installation Checklist
 
 **System Requirements**
-- Node.js 20.19.0+, 22.13.0+, or 24+ installed (`node --version`)
+- Node.js 20.19+, 22.13+, or 24+ installed (`node --version`)
 - npm available (`npm --version`)
 - Terminal access with write permissions
 
@@ -130,7 +130,7 @@ Before installation, determine where these files will be located:
 - AutoMem service deployed (local, Railway, or self-hosted)
 - Service is running and accessible
 - Health endpoint responds: `curl http://your-endpoint/health`
-- Note your `AUTOMEM_ENDPOINT` URL
+- Note your `AUTOMEM_API_URL` endpoint URL
 - Note your `AUTOMEM_API_KEY` (if using authentication)
 
 **Network Connectivity**
@@ -234,10 +234,10 @@ node dist/index.js setup
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Syncs template versions (`node scripts/sync-template-versions.mjs`)
+- `npm run prebuild` — Cleans the `dist/` output directory
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
-- `npm run postbuild` — Builds OpenClaw plugin package and makes `dist/index.js` executable (`node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js`)
-- `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
+- `npm run postbuild` — Makes `dist/index.js` executable (`chmod +x`)
+- `npm run dev` — Runs the TypeScript source directly via `tsx watch` for development
 
 ## Setup Wizard
 
@@ -250,9 +250,8 @@ sequenceDiagram
     participant User
     participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
-    participant API as AutoMem Service
 
-    User->>CLI: npx mcp-automem setup
+    User->>CLI: npx @verygoodplugins/mcp-automem setup
     CLI->>User: Prompt: AutoMem API URL?
     User->>CLI: http://localhost:8001
     CLI->>User: Prompt: API key?
@@ -269,7 +268,7 @@ sequenceDiagram
 
 ### Setup Wizard Implementation
 
-The wizard prompts for two required configuration values:
+The wizard prompts for one required and one optional configuration value:
 
 | Prompt | Environment Variable | Description | Default |
 |---|---|---|---|
@@ -313,7 +312,7 @@ After writing the `.env` file, the setup wizard prints platform-specific configu
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001",
+        "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-token"
       }
     }
@@ -337,17 +336,7 @@ These snippets can be copied directly into the respective platform configuration
 
 ### Setup Completion
 
-After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets:
-
-```
-✅ Saved AutoMem settings to .env
-[summary instructions]
-Claude Desktop snippet:
-{ ... }
-
-Claude Code setup:
-export AUTOMEM_API_URL=...
-```
+After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets.
 
 The wizard does **not** call the AutoMem service during setup — it writes the configuration and prints the snippets without validating reachability. To verify your connection manually after setup, use `curl http://your-endpoint/health` (see [Verification](#verification) below).
 
@@ -406,7 +395,7 @@ For platform-specific verification (Claude Desktop, Cursor, etc.), see the respe
 | `AUTOMEM_API_URL not set` | `.env` file missing or not in current directory | Run `setup` wizard or manually create `.env` |
 | `Connection refused` | AutoMem service not running | Start service: `cd automem && make dev` |
 | `401 Unauthorized` | Invalid API key | Check `AUTOMEM_API_KEY` matches service token |
-| `npx: command not found` | Node.js not installed | Install Node.js 20.19.0+, 22.13.0+, or 24+ |
+| `npx: command not found` | Node.js not installed | Install Node.js 20.19+, 22.13+, or 24+ |
 | `Module not found` errors | Incomplete installation | Run `npm install` or use `npx` instead |
 
 **Debug mode:** Set `AUTOMEM_LOG_LEVEL=debug` to enable verbose logging:
@@ -419,7 +408,7 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 
 **Symptom**: Error during installation: `The engine "node" is incompatible with this module`
 
-**Solution**: Upgrade Node.js to version 20 or higher using nvm or official installer.
+**Solution**: Upgrade Node.js to version 20.19+, 22.13+, or 24+ using nvm or official installer.
 
 ### Issue: AutoMem Service Not Running
 
@@ -447,7 +436,7 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 **Solution**:
 1. Check what's using the port: `lsof -i :8001` (macOS/Linux) or `netstat -ano | findstr :8001` (Windows)
 2. Stop conflicting service or reconfigure AutoMem to use different port
-3. Update `AUTOMEM_ENDPOINT` accordingly
+3. Update `AUTOMEM_API_URL` accordingly
 
 ## Next Steps
 
