@@ -7,11 +7,13 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_worker.py) — Enrichment worker thread, entity extraction, relationship creation
-- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/main/automem/enrichment/runtime_queue_bindings.py) — Queue management
-- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py) — EnrichmentJob dataclass
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/main/automem/stores/graph_store.py) — Graph write operations for enrichment
-- [.env.example](https://github.com/verygoodplugins/automem/blob/main/.env.example) — Enrichment configuration variables
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
+- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
+- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_queue_bindings.py) — Queue management
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/service_state.py) — EnrichmentJob dataclass
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/stores/graph_store.py) — Graph write operations for enrichment
+- [.env.example](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/.env.example) — Enrichment configuration variables
 :::
 
 The Enrichment Pipeline is a background worker system that automatically enhances stored memories with extracted entities, relationships, summaries, and pattern associations. This page documents the queue-based architecture, processing stages, entity extraction techniques, and relationship creation mechanisms.
@@ -72,7 +74,7 @@ Fields:
 - `attempt` — Retry counter (0-indexed), incremented on each failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
-([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/main/automem/service_state.py))
+([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/service_state.py))
 
 ---
 
