@@ -313,32 +313,24 @@ With the server running and verified, install the MCP client and connect it to y
 npx @verygoodplugins/mcp-automem setup
 ```
 
-The setup wizard performs four operations:
+The setup wizard runs the following steps:
 
 ```mermaid
 sequenceDiagram
     participant User
     participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
-    participant API as AutoMem Service
 
-    User->>CLI: npx mcp-automem setup
-    CLI->>User: Prompt: AutoMem Endpoint?
+    User->>CLI: npx @verygoodplugins/mcp-automem setup
+    CLI->>User: Prompt: AutoMem API URL
     User->>CLI: http://localhost:8001
     CLI->>User: Prompt: API Key? (optional)
     User->>CLI: [blank or token]
 
-    CLI->>ENV: Create/update .env<br/>AUTOMEM_ENDPOINT=...<br/>AUTOMEM_API_KEY=...
+    CLI->>User: Prompt: Write settings to .env? [Y/n]
+    User->>CLI: Y
+    CLI->>ENV: Create/update .env<br/>AUTOMEM_API_URL=...<br/>AUTOMEM_API_KEY=...
     ENV-->>CLI: File written
-
-    CLI->>API: GET /health
-    alt Service Available
-        API-->>CLI: 200 OK<br/>{status: healthy}
-        CLI->>User: Connection successful!
-    else Service Unavailable
-        API-->>CLI: Error
-        CLI->>User: Connection failed<br/>Check endpoint and service
-    end
 
     CLI->>User: Print config snippets<br/>(Claude Desktop, Cursor, etc.)
 ```
@@ -347,11 +339,11 @@ sequenceDiagram
 
 | Variable | Required | Description |
 |---|---|---|
-| `AUTOMEM_ENDPOINT` | Yes | URL to AutoMem service (e.g., `http://localhost:8001` or Railway URL) |
+| `AUTOMEM_API_URL` | Yes | URL to AutoMem service (e.g., `http://localhost:8001` or Railway URL) |
 | `AUTOMEM_API_KEY` | For Railway | API key for authenticated instances. Omit for local development. |
 
 **Default values if not set:**
-- `AUTOMEM_ENDPOINT`: `http://localhost:8001`
+- `AUTOMEM_API_URL`: `http://localhost:8001`
 - `AUTOMEM_API_KEY`: omitted from requests if not set
 
 :::tip
@@ -387,7 +379,7 @@ Edit `claude_desktop_config.json` and add the `mcp-automem` entry to the `mcpSer
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001"
+        "AUTOMEM_API_URL": "http://localhost:8001"
       }
     }
   }
@@ -403,7 +395,7 @@ Edit `claude_desktop_config.json` and add the `mcp-automem` entry to the `mcpSer
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-project.up.railway.app",
+        "AUTOMEM_API_URL": "https://your-project.up.railway.app",
         "AUTOMEM_API_KEY": "your-api-token-here"
       }
     }
@@ -429,7 +421,7 @@ To make Claude use AutoMem without being prompted every time, add the starter me
 
 Copy the template from the mcp-automem repo:
 
-- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
 
 The template assumes your MCP server key is `memory`. If your config uses `mcp-automem` or another key, update tool names in the pasted preferences to match Claude Desktop's prefix.
 
@@ -503,7 +495,7 @@ AutoMem accepts tokens via three methods, in order of preference:
 
 3. **Query parameter** (discouraged in production — tokens appear in logs):
    ```bash
-   curl "http://localhost:8001/health?token=YOUR_TOKEN"
+   curl "http://localhost:8001/health?api_key=YOUR_TOKEN"
    ```
 
 **Admin operations** require an additional header:
@@ -517,9 +509,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 
 ## Troubleshooting
 
-### Connection Failed During Setup
+### Health Check Failing After Setup
 
-**Symptom:** Setup wizard reports "Connection failed" when testing endpoint.
+**Symptom:** `GET /health` returns an error or the service is unreachable when you run the manual health check in Phase 2.
 
 **Causes and solutions:**
 
