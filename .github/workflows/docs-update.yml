@@ -9,7 +9,7 @@
 # 3. This workflow checks out the source at the release tag
 # 4. Claude Code Action reads source changes and updates doc pages
 # 5. If changes are needed, Claude creates a PR with a Cloudflare preview
-# 6. Human reviews the preview and merges
+# 6. Docs Auto-Merge queues eligible docs/audit-* PRs after required checks pass
 
 name: Auto-Update Docs
 
@@ -78,9 +78,9 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
@@ -111,30 +111,3 @@ jobs:
             --allowedTools 'Glob'
             --allowedTools 'Grep'
             --allowedTools 'Bash(npm run build)'
-
-      - name: Enable auto-merge on docs PRs created by this run
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          RUN_STARTED_AT: ${{ github.run_started_at }}
-        run: |
-          # Auto-merge keeps the manual-review window short. Otherwise PRs sit
-          # for days while the source SHAs and line numbers they pin go stale.
-          # Filter scope: same-repo PRs (no forks) on docs/audit-* branches
-          # opened on or after this run started.
-          PRS=$(gh pr list \
-            --state open \
-            --limit 200 \
-            --json number,headRefName,createdAt,isCrossRepository \
-            --jq "[.[] | select(.isCrossRepository == false) | select(.headRefName | startswith(\"docs/audit-\")) | select(.createdAt >= \"$RUN_STARTED_AT\")] | .[].number")
-
-          if [ -z "$PRS" ]; then
-            echo "No docs/audit-* PRs created during this run — nothing to do."
-            exit 0
-          fi
-
-          for pr in $PRS; do
-            echo "Enabling auto-merge on PR #$pr"
-            gh pr merge "$pr" --auto --squash \
-              || echo "  (skipped — may have conflicts or already be merged)"
-          done
