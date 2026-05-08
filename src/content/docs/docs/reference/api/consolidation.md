@@ -23,7 +23,7 @@ AutoMem provides two REST endpoints for consolidation operations:
 | Endpoint | Method | Purpose | Auth |
 |----------|--------|---------|------|
 | `/consolidate` | POST | Manually trigger consolidation tasks | API token |
-| `/consolidate/status` | GET | Query scheduler state and last run times | None required |
+| `/consolidate/status` | GET | Query scheduler state and last run times | API token |
 
 The consolidation system runs automatically on scheduled intervals (configurable via environment variables), but these endpoints allow manual triggers for testing, debugging, or forcing immediate execution.
 
@@ -76,7 +76,7 @@ Manually trigger one or more consolidation tasks.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, or `full` |
-| `dry_run` | boolean | No | `true` | If `true`, simulate without making changes |
+| `dry_run` | boolean | No | `false` | If `true`, simulate without making changes |
 
 ### Task Types
 
@@ -173,7 +173,7 @@ For `mode="full"`, the `consolidation` object contains combined metrics from all
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "full", "dry_run": false}'
+  -d '{"mode": "full"}'
 ```
 
 **Trigger single task (decay):**
@@ -182,14 +182,14 @@ curl -X POST https://your-automem-instance/consolidate \
 curl -X POST https://your-automem-instance/consolidate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"mode": "decay", "dry_run": false}'
+  -d '{"mode": "decay"}'
 ```
 
 ---
 
 ## GET /consolidate/status
 
-**Authentication:** None required
+**Authentication:** API token required (when `AUTOMEM_API_TOKEN` is configured)
 
 Query the current state of the consolidation scheduler and retrieve execution history.
 
@@ -250,13 +250,15 @@ Query the current state of the consolidation scheduler and retrieve execution hi
 **Check last run times:**
 
 ```bash
-curl "https://your-automem-instance/consolidate/status"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "https://your-automem-instance/consolidate/status"
 ```
 
 **Query recent execution history:**
 
 ```bash
-curl "https://your-automem-instance/consolidate/status?history_limit=50"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "https://your-automem-instance/consolidate/status?history_limit=50"
 ```
 
 ---
@@ -309,7 +311,7 @@ CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD=0.4
 
 ## Authentication
 
-`POST /consolidate` requires authentication using the `AUTOMEM_API_TOKEN`. `GET /consolidate/status` is unauthenticated. Three authentication methods are supported for authenticated endpoints:
+`POST /consolidate` requires authentication using the `AUTOMEM_API_TOKEN`. `GET /consolidate/status` also requires an API token when `AUTOMEM_API_TOKEN` is configured. Three authentication methods are supported:
 
 1. **Bearer Token** (recommended): `Authorization: Bearer <token>`
 2. **Custom Header**: `X-API-Key: <token>`

@@ -44,11 +44,11 @@ graph TB
         Reembed["/admin/reembed"]
     end
 
-    subgraph "Public Operations (no auth)"
-        Status["/enrichment/status<br/>(unauthenticated)"]
+    subgraph "API Token Required"
+        Status["/enrichment/status<br/>GET"]
     end
 
-    subgraph "Also Public"
+    subgraph "Public Endpoints"
         Health["/health<br/>(no auth)"]
     end
 
@@ -60,7 +60,7 @@ graph TB
 ### Error Responses
 
 | Status Code | Response | Meaning |
-|-------------|----------|---------|
+|-------------|----------|--------|
 | `401 Unauthorized` | `{"error": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
 | `401 Admin authorization required` | `{"error": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
 | `403 Admin token not configured` | `{"error": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
@@ -69,9 +69,9 @@ graph TB
 
 ## GET /enrichment/status
 
-**Authentication:** None required
+**Authentication:** API token required (when `AUTOMEM_API_TOKEN` is configured)
 
-**Purpose:** Monitor the enrichment pipeline's health and processing statistics. This endpoint provides visibility into background processing without requiring authentication.
+**Purpose:** Monitor the enrichment pipeline's health and processing statistics.
 
 ### Response Schema
 
@@ -100,7 +100,8 @@ graph TB
 ### Example Usage
 
 ```bash
-curl "https://your-automem-instance/enrichment/status"
+curl -H "Authorization: Bearer YOUR_API_TOKEN" \
+  "https://your-automem-instance/enrichment/status"
 ```
 
 ### Troubleshooting with Status
@@ -170,8 +171,7 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 
 ```mermaid
 graph TB
-    Request["POST /enrichment/reprocess<br/>{ids: [...]}"]
-    Auth["_require_admin_token()"]
+    Request["POST /enrichment/reprocess<br/>{ids: [...]}"]\n    Auth["_require_admin_token()"]
     Validate["Validate Request"]
 
     subgraph "Queueing Loop"

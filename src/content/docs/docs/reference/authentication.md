@@ -14,9 +14,9 @@ For deployment-specific token generation on Railway, see [Railway Deployment](/d
 ## Token Types
 
 | Token Type | Environment Variable | Required For | Purpose |
-|------------|---------------------|-------------|---------|
+|------------|---------------------|-------------|--------|
 | **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` | Standard memory operations (store, recall, update, delete) |
-| **Admin Token** | `ADMIN_API_TOKEN` | Admin and enrichment endpoints | Privileged operations (reprocessing, re-embedding, bulk operations) |
+| **Admin Token** | `ADMIN_API_TOKEN` | Admin endpoints and `/enrichment/reprocess` | Privileged operations (reprocessing, re-embedding, bulk operations) |
 
 ---
 
@@ -302,7 +302,7 @@ Desktop tools like Claude Desktop and Cursor IDE use the NPM package, which requ
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-service.railway.app",
+        "AUTOMEM_API_URL": "https://your-service.railway.app",
         "AUTOMEM_API_KEY": "YOUR_API_TOKEN"
       }
     }
@@ -335,7 +335,7 @@ For cloud-based AI platforms (ChatGPT, ElevenLabs), the SSE bridge requires `AUT
 ### Common Security Mistakes
 
 | Mistake | Risk | Solution |
-|---------|------|---------|
+|---------|------|----------|
 | Committing tokens to Git | Public exposure, unauthorized access | Use `.gitignore`, environment variables |
 | Using same token everywhere | Single point of compromise | Separate tokens per environment |
 | Query param authentication in production | Tokens logged in server logs | Use Bearer header |
