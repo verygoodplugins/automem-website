@@ -159,7 +159,7 @@ Self-contained consolidation engine with no Flask dependencies. Designed for bot
 | `GraphLike` (Protocol) | Database abstraction | `query()` method only |
 | `VectorStoreProtocol` (Protocol) | Vector store abstraction | `delete()` method only |
 
-**Caching optimization**: Relationship count queries use `@lru_cache` with hourly invalidation ([consolidation.py:152-176](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/consolidation.py#L152-L176)).
+**Caching optimization**: Relationship count queries use `@lru_cache` with hourly invalidation ([consolidation.py:152-176](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py#L152-L176)).
 
 :::tip[Flask independence]
 `consolidation.py` is deliberately Flask-independent. It can be imported and used in CLI scripts or schedulers without Flask overhead. The `GraphLike` and `VectorStoreProtocol` protocols enable testing with in-memory mocks.
@@ -244,10 +244,10 @@ tests/
 
 Tests use pytest markers to separate execution tiers: `unit` (no external services, runs with `make test`), `integration` (requires Docker stack, runs with `make test-integration`), and `live` (runs against a deployed Railway instance).
 
-**Mock objects** (defined in [`tests/test_consolidation_engine.py`](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/tests/test_consolidation_engine.py) and `tests/support/`):
+**Mock objects** (defined in [`tests/test_consolidation_engine.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py) and `tests/support/`):
 
-- `FakeGraph`: Implements `GraphLike` protocol with in-memory state — imported from [`tests/support/fake_graph.py`](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/tests/support/fake_graph.py)
-- `FakeVectorStore`: Implements `VectorStoreProtocol` for deletion tracking — defined in [`tests/test_consolidation_engine.py` ~L11](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/tests/test_consolidation_engine.py#L11)
+- `FakeGraph`: Implements `GraphLike` protocol with in-memory state — imported from [`tests/support/fake_graph.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py)
+- `FakeVectorStore`: Implements `VectorStoreProtocol` for deletion tracking — defined in [`tests/test_consolidation_engine.py` ~L11](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L11)
 
 **Test philosophy**: Consolidation tests use deterministic mocks and frozen time to ensure reproducible relevance score calculations.
 
@@ -327,14 +327,14 @@ graph TB
 
 #### Entry Point: `index.ts`
 
-The [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc/src/index.ts) file serves dual purposes based on command-line arguments:
+The [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) file serves dual purposes based on command-line arguments:
 
 1. **Server Mode** (no arguments): Launches an MCP server using `StdioServerTransport` from `@modelcontextprotocol/sdk`
 2. **CLI Mode** (with arguments): Routes commands to appropriate CLI handlers in `src/cli/`
 
 #### HTTP Client: `automem-client.ts`
 
-The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc/src/automem-client.ts) file implements the `AutoMemClient` class, providing a typed HTTP interface to the AutoMem backend service.
+The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) file implements the `AutoMemClient` class, providing a typed HTTP interface to the AutoMem backend service.
 
 | Method | HTTP Endpoint | Purpose |
 |---|---|---|
@@ -349,12 +349,12 @@ The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blo
 **Configuration resolution** (priority order):
 
 1. Constructor parameters (if provided)
-2. Environment variables (`AUTOMEM_ENDPOINT`, `AUTOMEM_API_KEY`)
+2. Environment variables (`AUTOMEM_API_URL`, `AUTOMEM_API_KEY`) — `AUTOMEM_ENDPOINT` is accepted as a deprecated alias for `AUTOMEM_API_URL`
 3. `.env` file (loaded via `dotenv`)
 
 #### Type Definitions: `types.ts`
 
-The [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc/src/types.ts) file defines TypeScript interfaces for all data structures:
+The [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) file defines TypeScript interfaces for all data structures:
 
 - **Configuration types**: `AutoMemConfig`, `MCPServerConfig`, `ClaudeCodeConfig`
 - **Memory operation arguments**: `StoreMemoryArgs`, `RecallMemoryArgs`, `AssociateMemoriesArgs`
@@ -413,7 +413,7 @@ The `dist/` directory is generated by TypeScript compilation (`tsc`) and contain
 2. **Type declarations** (`.d.ts`) — For TypeScript consumers
 3. **Source maps** (`.js.map`) — For debugging compiled code
 
-**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc/tsconfig.json)):
+**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/tsconfig.json)):
 
 - `outDir: "./dist"` — Output location
 - `declaration: true` — Generate `.d.ts` files
@@ -425,8 +425,9 @@ The `dist/` directory is generated by TypeScript compilation (`tsc`) and contain
 
 | Script | Command | Purpose |
 |---|---|---|
-| `build` | `tsc && npm run postbuild` | Compile + make executable |
-| `postbuild` | `chmod +x dist/index.js` | Add execute permission |
+| `prebuild` | `node scripts/sync-template-versions.mjs` | Sync template versions before compile |
+| `build` | `tsc` | Compile TypeScript source |
+| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js` | Package OpenClaw plugin + make executable |
 | `dev` | `tsx watch src/index.ts` | Hot-reload development |
 | `typecheck` | `tsc --noEmit` | Validate types without building |
 
@@ -455,13 +456,13 @@ The repository root contains multiple configuration files:
 
 Five files must maintain version consistency (managed by release-please):
 
-1. `package.json` — `"version": "0.12.0"`
-2. `plugins/mcp-automem/server.json` — `"version": "0.12.0"`
-3. `manifest.json` — `"version": "0.12.0"`
-4. `plugin.json` — `"version": "0.12.0"`
-5. `marketplace.json` — `"version": "0.12.0"`
+1. `package.json` — e.g. `"version": "0.14.0"` (at mcp-automem@b81c63a)
+2. `plugins/mcp-automem/server.json` — same version string
+3. `manifest.json` — same version string
+4. `plugin.json` — same version string
+5. `marketplace.json` — same version string
 
-The [`release-please.yml`](https://github.com/verygoodplugins/mcp-automem/blob/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc/.github/workflows/release-please.yml) workflow automatically updates all five files when creating releases based on conventional commits.
+The [`release-please.yml`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/.github/workflows/release-please.yml) workflow automatically updates all five files when creating releases based on conventional commits.
 
 ### GitHub Workflows (`.github/`)
 
