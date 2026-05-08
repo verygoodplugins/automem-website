@@ -3,6 +3,8 @@ name: Semantic PR Title
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   pull-requests: read
@@ -12,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: amannn/action-semantic-pull-request@v6
+        if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -31,3 +34,7 @@ jobs:
           subjectPatternError: |
             PR titles must not start with bracketed agent/status prefixes like [codex], [claude], [copilot], or [wip].
             Use a Conventional Commit title such as "feat(api): add memory-by-tag pagination" and put agent/status context in the PR body.
+
+      - name: Pass merge queue title check
+        if: github.event_name == 'merge_group'
+        run: echo "PR title validation already ran before merge queue entry."
