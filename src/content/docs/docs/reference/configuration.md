@@ -308,7 +308,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/2e2f39cb09a6a27ef0dc84c250b59282264a79e9/automem/classification/memory_classifier.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/classification/memory_classifier.py).
 
 ### Memory Content Governance
 
@@ -329,7 +329,8 @@ The `mcp-automem` client uses two primary environment variables to locate and au
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AUTOMEM_ENDPOINT` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service |
+| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service (written by setup wizard) |
+| `AUTOMEM_ENDPOINT` | No | — | Legacy alias for `AUTOMEM_API_URL` (still accepted) |
 | `AUTOMEM_API_KEY` | No | (none) | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | (none) | Alternative name for the API key |
 | `AUTOMEM_PROCESS_TAG` | No | (none) | Process title tag for safe cleanup in multi-process environments |
@@ -348,7 +349,7 @@ graph TB
     subgraph Env_Resolution["Environment Variable Resolution"]
         DOTENV["dotenv.config()<br/>.env file loading"]
 
-        ENDPOINT_CHECK{"AUTOMEM_ENDPOINT<br/>exists?"}
+        ENDPOINT_CHECK{"AUTOMEM_API_URL<br/>(or AUTOMEM_ENDPOINT)<br/>exists?"}
         ENDPOINT_DEFAULT["Default:<br/>http://127.0.0.1:8001"]
         ENDPOINT_VALUE["Use env value"]
 
@@ -370,6 +371,7 @@ graph TB
     DOTENV --> API_KEY_FUNC
     API_KEY_FUNC --> KEY_PRIORITY
     KEY_PRIORITY --> CONFIG_OBJ
+
 
     CONFIG_OBJ --> CLIENT_INSTANCE
 ```
@@ -393,7 +395,7 @@ graph TB
     ENV_FILE -->|Not found| PROCESS_ENV
     PROCESS_ENV -->|Not found| DEFAULT
 
-    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_ENDPOINT<br/>loads AUTOMEM_API_KEY"]
+    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_API_URL<br/>loads AUTOMEM_API_KEY"]
 ```
 
 1. **Environment variables** (highest priority) — Direct shell environment or `.env` file or platform-specific MCP server `env` blocks
@@ -423,7 +425,7 @@ Each AI platform stores MCP server configuration differently:
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-service.railway.app",
+        "AUTOMEM_API_URL": "https://your-service.railway.app",
         "AUTOMEM_API_KEY": "your-api-token"
       }
     }
@@ -441,7 +443,7 @@ command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
 [mcp.servers.automem.env]
-AUTOMEM_ENDPOINT = "https://your-service.railway.app"
+AUTOMEM_API_URL = "https://your-service.railway.app"
 AUTOMEM_API_KEY = "your-api-token"
 ```
 
@@ -458,10 +460,9 @@ The `store_memory` tool enforces content size limits to maintain embedding quali
 
 The setup wizard validates the endpoint before saving configuration:
 
-1. **URL format check** — Ensures `AUTOMEM_ENDPOINT` is a valid HTTP/HTTPS URL
-2. **Health endpoint probe** — Sends `GET /health` request with 2-second timeout
-3. **Database status check** — Verifies FalkorDB and Qdrant connectivity
-4. **Configuration write** — Saves validated config to `.env`
+1. **URL format check** — Ensures `AUTOMEM_API_URL` is a valid HTTP/HTTPS URL
+2. **Confirmation prompt** — Asks "Write settings to `.env`? [Y/n]" before writing
+3. **Configuration write** — Saves validated config to `.env`
 
 At runtime, if the endpoint is unreachable, queue operations are skipped rather than blocking. This prevents queue operations from stalling when the service is temporarily down.
 
