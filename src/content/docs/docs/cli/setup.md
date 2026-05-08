@@ -13,7 +13,7 @@ The mcp-automem package is a **bridge component** that translates Model Context 
 
 ### Node.js Runtime Requirements
 
-The mcp-automem package requires **Node.js 20.0.0 or higher**. This version requirement is enforced in the package manifest and necessary for:
+The mcp-automem package requires **Node.js 20.19.0+, 22.13.0+, or 24+**. This version requirement is enforced in the package manifest (`engines: "^20.19.0 || ^22.13.0 || >=24"`) and necessary for:
 
 - ECMAScript modules (ESM) support used throughout the codebase
 - Native fetch API used by the HTTP client
@@ -22,7 +22,7 @@ The mcp-automem package requires **Node.js 20.0.0 or higher**. This version requ
 **Verify your Node.js version:**
 ```bash
 node --version
-# Should output: v20.x.x or higher
+# Should output: v20.19.x, v22.13.x, or v24.x.x or higher
 ```
 
 **Install or upgrade Node.js:**
@@ -122,7 +122,7 @@ Before installation, determine where these files will be located:
 ### Pre-Installation Checklist
 
 **System Requirements**
-- Node.js 20.0.0 or higher installed (`node --version`)
+- Node.js 20.19.0+, 22.13.0+, or 24+ installed (`node --version`)
 - npm available (`npm --version`)
 - Terminal access with write permissions
 
@@ -234,9 +234,10 @@ node dist/index.js setup
 The built server is available at `dist/index.js`.
 
 **Build process:**
+- `npm run prebuild` — Syncs template versions (`node scripts/sync-template-versions.mjs`)
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
-- `npm run postbuild` — Makes `dist/index.js` executable (`chmod +x`)
-- `npm run dev` — Runs the TypeScript source directly via `tsx watch` for development
+- `npm run postbuild` — Builds OpenClaw plugin package and makes `dist/index.js` executable (`node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js`)
+- `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
 
 ## Setup Wizard
 
@@ -252,24 +253,18 @@ sequenceDiagram
     participant API as AutoMem Service
 
     User->>CLI: npx mcp-automem setup
-    CLI->>User: Prompt: AutoMem Endpoint?
+    CLI->>User: Prompt: AutoMem API URL?
     User->>CLI: http://localhost:8001
-    CLI->>User: Prompt: API Key? (optional)
+    CLI->>User: Prompt: API key?
     User->>CLI: [blank or token]
+    CLI->>User: Prompt: Write settings to .env? [Y/n]
+    User->>CLI: Y
 
-    CLI->>ENV: Create/update .env<br/>AUTOMEM_ENDPOINT=...<br/>AUTOMEM_API_KEY=...
+    CLI->>ENV: Create/update .env<br/>AUTOMEM_API_URL=...<br/>AUTOMEM_API_KEY=...
     ENV-->>CLI: File written
+    CLI->>User: ✅ Saved AutoMem settings to .env
 
-    CLI->>API: GET /health
-    alt Service Available
-        API-->>CLI: 200 OK<br/>{status: healthy}
-        CLI->>User: ✓ Connection successful!
-    else Service Unavailable
-        API-->>CLI: Error
-        CLI->>User: ❌ Connection failed<br/>Check endpoint and service
-    end
-
-    CLI->>User: Print config snippets<br/>(Claude Desktop, Cursor, etc.)
+    CLI->>User: Print config snippets<br/>(Claude Desktop, Claude Code)
 ```
 
 ### Setup Wizard Implementation
@@ -278,8 +273,8 @@ The wizard prompts for two required configuration values:
 
 | Prompt | Environment Variable | Description | Default |
 |---|---|---|---|
-| **AutoMem Endpoint** | `AUTOMEM_ENDPOINT` | HTTP URL to AutoMem service | `http://127.0.0.1:8001` |
-| **API Key** | `AUTOMEM_API_KEY` | Authentication token (optional for local) | None |
+| **AutoMem API URL** | `AUTOMEM_API_URL` | HTTP URL to AutoMem service | `http://127.0.0.1:8001` |
+| **API key** | `AUTOMEM_API_KEY` | Authentication token (optional for local) | None |
 
 **Endpoint validation:**
 - Must be a valid HTTP/HTTPS URL
@@ -296,7 +291,7 @@ The wizard prompts for two required configuration values:
 The setup wizard creates or updates a `.env` file in the current directory:
 
 ```
-AUTOMEM_ENDPOINT=http://localhost:8001
+AUTOMEM_API_URL=http://localhost:8001
 AUTOMEM_API_KEY=your-api-key-here
 ```
 
@@ -340,25 +335,21 @@ After writing the `.env` file, the setup wizard prints platform-specific configu
 
 These snippets can be copied directly into the respective platform configuration files. For platform-specific setup instructions, see [Platform Installers](/docs/cli/platform-installers/).
 
-### Connection Validation
+### Setup Completion
 
-The setup wizard validates the connection to the AutoMem service by calling the `/health` endpoint:
+After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets:
 
-**Successful response:**
 ```
-✓ Connection successful!
-✓ Config saved to .env
-✓ Claude Desktop config snippet generated
-```
+✅ Saved AutoMem settings to .env
+[summary instructions]
+Claude Desktop snippet:
+{ ... }
 
-**Failed response:**
-```
-❌ Connection failed
-Check that AutoMem service is running at http://localhost:8001
-See: https://github.com/verygoodplugins/automem/blob/main/INSTALLATION.md
+Claude Code setup:
+export AUTOMEM_API_URL=...
 ```
 
-The health check ensures both graph (FalkorDB) and vector (Qdrant) databases are accessible before completing setup.
+The wizard does **not** call the AutoMem service during setup — it writes the configuration and prints the snippets without validating reachability. To verify your connection manually after setup, use `curl http://your-endpoint/health` (see [Verification](#verification) below).
 
 ## Post-Installation File Structure
 
@@ -367,7 +358,7 @@ After running the setup wizard, your directory contains:
 ```
 your-project/
 ├── .env                          # Created by setup wizard
-│   ├── AUTOMEM_ENDPOINT=...
+│   ├── AUTOMEM_API_URL=...
 │   └── AUTOMEM_API_KEY=...
 └── node_modules/                 # If npm install was run
     └── @verygoodplugins/
@@ -412,10 +403,10 @@ For platform-specific verification (Claude Desktop, Cursor, etc.), see the respe
 
 | Issue | Cause | Solution |
 |---|---|---|
-| `AUTOMEM_ENDPOINT not set` | `.env` file missing or not in current directory | Run `setup` wizard or manually create `.env` |
+| `AUTOMEM_API_URL not set` | `.env` file missing or not in current directory | Run `setup` wizard or manually create `.env` |
 | `Connection refused` | AutoMem service not running | Start service: `cd automem && make dev` |
 | `401 Unauthorized` | Invalid API key | Check `AUTOMEM_API_KEY` matches service token |
-| `npx: command not found` | Node.js not installed | Install Node.js >=20.0.0 |
+| `npx: command not found` | Node.js not installed | Install Node.js 20.19.0+, 22.13.0+, or 24+ |
 | `Module not found` errors | Incomplete installation | Run `npm install` or use `npx` instead |
 
 **Debug mode:** Set `AUTOMEM_LOG_LEVEL=debug` to enable verbose logging:
