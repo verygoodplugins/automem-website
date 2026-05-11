@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/memory.py) — Flask API endpoints
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/memory.py) — Flask API endpoints
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP tool definitions and handlers
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP transport layer
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) — TypeScript type definitions
