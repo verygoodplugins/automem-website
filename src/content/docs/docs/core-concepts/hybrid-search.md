@@ -108,7 +108,7 @@ The `_vector_search()` function handles both explicit embeddings (passed by clie
 - Returns empty list if no query text and no explicit embedding provided
 - Applies tag filters via `_build_qdrant_tag_filter()`
 - Deduplicates results using `seen_ids` set
-- Attaches relations by calling `_fetch_relations()` for each hit
+- Attaches relations by calling `fetch_relations()` for each hit
 
 ### Keyword Search (Lexical Matching)
 
@@ -129,7 +129,7 @@ The keyword scoring algorithm rewards both individual keyword matches and phrase
 
 Graph traversal leverages FalkorDB's typed relationship edges to find connected memories. This enables multi-hop reasoning and bridge discovery.
 
-The `_fetch_relations()` helper queries all relationships for a given memory and returns a list of related memory summaries. Each relationship includes:
+The `fetch_relations()` helper queries all relationships for a given memory and returns a list of related memory summaries. Each relationship includes:
 
 - Target memory ID and summary
 - Relationship type (e.g., `"PREFERS_OVER"`)
