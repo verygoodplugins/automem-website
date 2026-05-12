@@ -76,7 +76,7 @@ graph TB
         end
 
         subgraph db["falkordb"]
-            FalkorDB["FalkorDB<br/>Port 6379<br/>FALKOR_PASSWORD"]
+            FalkorDB["FalkorDB<br/>Port 6379<br/>FALKORDB_PASSWORD"]
         end
     end
 
