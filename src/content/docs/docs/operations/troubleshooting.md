@@ -35,7 +35,7 @@ graph TB
         end
 
         subgraph db["falkordb"]
-            FalkorDB["FalkorDB<br/>Port 6379<br/>FALKOR_PASSWORD"]
+            FalkorDB["FalkorDB<br/>Port 6379<br/>FALKORDB_PASSWORD"]
         end
     end
 
@@ -416,7 +416,7 @@ flowchart TD
     Try1 -->|Yes| Voyage["VoyageEmbeddingProvider<br/>voyage-4: 1024d"]
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
-    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 768d"]
+    Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1024d"]
     Try2 -->|No| Try3{"FastEmbed<br/>available?"}
 
     Try3 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
