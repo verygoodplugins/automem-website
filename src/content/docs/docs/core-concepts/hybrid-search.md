@@ -11,7 +11,7 @@ Key implementation files:
 - `automem/search/runtime_keywords.py` — Keyword matching logic
 - `automem/search/runtime_relations.py` — Relationship expansion
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L135-L144](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py#L135-L144) — Search weight configuration
+- [automem/config.py#L281-L289](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py#L281-L289) — Search weight configuration
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/scoring.py) — Score computation
 - [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/graph.py) — Graph traversal utilities
 - [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/time.py) — Temporal expression parsing
@@ -306,7 +306,7 @@ Bridge discovery identifies memories that connect multiple seed results, reveali
 
 **Configuration:**
 
-- `expand_relations=false` — Enable relation expansion (default: false, opt-in)
+- `expand_relations=true` — Enable relation expansion (default: false, opt-in)
 - `expand_min_strength` — Minimum relationship strength (0.0-1.0)
 - `expand_min_importance` — Minimum target memory importance (0.0-1.0)
 - `RECALL_EXPANSION_LIMIT` — Maximum expanded results (default: 25)
@@ -401,7 +401,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `expand_entities` | boolean | false | Enable entity expansion |
 | `expand_min_strength` | float | — | Minimum relation strength filter |
 | `expand_min_importance` | float | — | Minimum target importance filter |
-| `limit` | integer | 20 | Maximum seed results |
+| `limit` | integer | 5 | Maximum seed results |
 | `sort` | enum | "score" | Sort order: `"score"`, `"time_asc"`, `"time_desc"`, `"updated_asc"`, `"updated_desc"` |
 
 ---
