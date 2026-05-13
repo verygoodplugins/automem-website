@@ -13,14 +13,14 @@ The mcp-automem client uses two primary environment variables to locate and auth
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `AUTOMEM_ENDPOINT` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service |
+| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service |
 | `AUTOMEM_API_KEY` | No | (none) | API key for authenticated instances |
 | `AUTOMEM_API_TOKEN` | No | (none) | Alternative name for API key |
 | `AUTOMEM_PROCESS_TAG` | No | (none) | Process title tag for safe cleanup |
 | `MCP_PROCESS_TAG` | No | (none) | Alternative process tag variable |
 | `AUTOMEM_LOG_LEVEL` | No | (none) | Set to `debug` for verbose logging |
 
-### AUTOMEM_ENDPOINT
+### AUTOMEM_API_URL
 
 Specifies the HTTP endpoint of your AutoMem service. Common values:
 
@@ -28,7 +28,7 @@ Specifies the HTTP endpoint of your AutoMem service. Common values:
 - **Railway deployment**: `https://your-service.railway.app`
 - **Custom deployment**: Your service's public or internal URL
 
-The endpoint is read at server startup by `AutoMemClient` and validated by the setup wizard.
+The endpoint is read at server startup by `AutoMemClient` and written by the `setup` wizard. The legacy alias `AUTOMEM_ENDPOINT` is also accepted.
 
 ### AUTOMEM_API_KEY
 
@@ -37,12 +37,10 @@ Optional authentication token for secured AutoMem instances. Required when deplo
 - `AUTOMEM_API_KEY` (preferred)
 - `AUTOMEM_API_TOKEN` (alternative)
 
-The `readAutoMemApiKeyFromEnv()` function checks all four variables in priority order:
+The `readAutoMemApiKeyFromEnv()` function checks these variables in priority order:
 
 1. `AUTOMEM_API_KEY`
 2. `AUTOMEM_API_TOKEN`
-3. `AUTOMEM_TOKEN`
-4. `API_KEY`
 
 ### Process Tags
 
@@ -60,15 +58,15 @@ The client resolves configuration from multiple sources with a defined priority 
 
 ```mermaid
 graph TB
-    subgraph Env_Resolution["Environment Variable Resolution<br/>src/env.js + src/index.ts"]
+    subgraph Env_Resolution["Environment Variable Resolution<br/>src/env.ts + src/index.ts"]
         DOTENV["dotenv.config()<br/>.env file loading"]
 
-        ENDPOINT_CHECK{"AUTOMEM_ENDPOINT<br/>exists?"}
+        ENDPOINT_CHECK{"AUTOMEM_API_URL<br/>exists?"}
         ENDPOINT_DEFAULT["Default:<br/>http://127.0.0.1:8001"]
         ENDPOINT_VALUE["Use env value"]
 
-        API_KEY_FUNC["readAutoMemApiKeyFromEnv()<br/>src/env.js"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. AUTOMEM_TOKEN<br/>4. API_KEY"]
+        API_KEY_FUNC["readAutoMemApiKeyFromEnv()<br/>src/env.ts"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
     end
 
     subgraph Client_Config["AutoMemClient Config<br/>src/index.ts"]
@@ -106,13 +104,13 @@ graph TB
     ENV_FILE -->|Not found| PROCESS_ENV
     PROCESS_ENV -->|Not found| DEFAULT
 
-    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_ENDPOINT<br/>loads AUTOMEM_API_KEY"]
+    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_API_URL<br/>loads AUTOMEM_API_KEY"]
 ```
 
 ### Priority Levels
 
 1. **Environment variables** (highest priority)
-   - Direct shell environment: `export AUTOMEM_ENDPOINT=...`
+   - Direct shell environment: `export AUTOMEM_API_URL=...`
    - `.env` file in current directory (loaded via `dotenv`)
    - Platform-specific MCP server `env` blocks
 2. **`~/.claude.json` configuration**
@@ -148,7 +146,7 @@ Each AI platform stores MCP server configuration differently. The setup wizard a
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001",
+        "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
       }
     }
@@ -167,7 +165,7 @@ command = "npx"
 args = ["@verygoodplugins/mcp-automem"]
 
 [mcp_servers.env]
-AUTOMEM_ENDPOINT = "http://localhost:8001"
+AUTOMEM_API_URL = "http://localhost:8001"
 AUTOMEM_API_KEY = "your-api-key"
 ```
 
@@ -179,19 +177,19 @@ The client performs validation at multiple stages to ensure reliable operation a
 
 ### Validation Flow
 
-The `setup` command validates the endpoint before saving configuration:
+The `setup` command collects and saves your configuration:
 
-1. **URL format check**: Ensures `AUTOMEM_ENDPOINT` is a valid HTTP/HTTPS URL
-2. **Health endpoint probe**: Sends `GET /health` request with 2-second timeout
-3. **Database status check**: Verifies FalkorDB and Qdrant connectivity
-4. **Configuration write**: Saves validated config to `.env`
+1. **Prompt for API URL**: Prompts for `AUTOMEM_API_URL` with default `http://127.0.0.1:8001`
+2. **Prompt for API key**: Optionally prompts for `AUTOMEM_API_KEY` (skipped if TTY unavailable)
+3. **Confirmation prompt**: Asks `"Write settings to <path>?"` before persisting
+4. **Configuration write**: Saves `AUTOMEM_API_URL` and `AUTOMEM_API_KEY` to `.env`
 
 ### Runtime Validation
 
 When the MCP server starts, it performs startup validation:
 
 1. Loads `.env` file (if present) via `dotenv.config()`
-2. Reads `AUTOMEM_ENDPOINT` from environment
+2. Reads `AUTOMEM_API_URL` (or legacy `AUTOMEM_ENDPOINT`) from environment
 3. Reads API key from environment (checking all supported variable names)
 4. Creates `AutoMemClient` instance with resolved config
 5. Logs connection details to stderr (never stdout, to avoid polluting JSON-RPC stream)
@@ -281,7 +279,7 @@ See [Platform Installers](/docs/cli/platform-installers/) for detailed instructi
 
 If the MCP server cannot reach the AutoMem service:
 
-1. **Verify endpoint**: Check that `AUTOMEM_ENDPOINT` is correct and reachable
+1. **Verify endpoint**: Check that `AUTOMEM_API_URL` is correct and reachable
 2. **Test health endpoint**: Run `curl http://your-endpoint/health`
 3. **Check API key**: Ensure `AUTOMEM_API_KEY` matches your deployed service
 4. **Network issues**: Verify firewall rules and DNS resolution
