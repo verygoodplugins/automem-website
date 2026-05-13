@@ -250,9 +250,8 @@ sequenceDiagram
     participant User
     participant CLI as setup command<br/>(src/cli/setup.ts)
     participant ENV as .env file
-    participant API as AutoMem Service
 
-    User->>CLI: npx mcp-automem setup
+    User->>CLI: npx @verygoodplugins/mcp-automem setup
     CLI->>User: Prompt: AutoMem API URL?
     User->>CLI: http://localhost:8001
     CLI->>User: Prompt: API key?
@@ -269,7 +268,7 @@ sequenceDiagram
 
 ### Setup Wizard Implementation
 
-The wizard prompts for two required configuration values:
+The wizard prompts for one required and one optional configuration value:
 
 | Prompt | Environment Variable | Description | Default |
 |---|---|---|---|
@@ -313,7 +312,7 @@ After writing the `.env` file, the setup wizard prints platform-specific configu
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001",
+        "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-token"
       }
     }
@@ -337,17 +336,7 @@ These snippets can be copied directly into the respective platform configuration
 
 ### Setup Completion
 
-After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets:
-
-```
-✅ Saved AutoMem settings to .env
-[summary instructions]
-Claude Desktop snippet:
-{ ... }
-
-Claude Code setup:
-export AUTOMEM_API_URL=...
-```
+After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets.
 
 The wizard does **not** call the AutoMem service during setup — it writes the configuration and prints the snippets without validating reachability. To verify your connection manually after setup, use `curl http://your-endpoint/health` (see [Verification](#verification) below).
 
@@ -419,7 +408,7 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 
 **Symptom**: Error during installation: `The engine "node" is incompatible with this module`
 
-**Solution**: Upgrade Node.js to version 20 or higher using nvm or official installer.
+**Solution**: Upgrade Node.js to version 20.19+, 22.13+, or 24+ using nvm or official installer.
 
 ### Issue: AutoMem Service Not Running
 
