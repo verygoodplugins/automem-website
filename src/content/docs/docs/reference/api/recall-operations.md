@@ -551,7 +551,7 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 |-----------|------|----------|-------------|-------------|
 | `query` | string | No | — | Semantic search query |
 | `queries` | array[string] | No | — | Multiple queries for broader recall |
-| `limit` | integer | No | 1–200, default 5 | Max results to return |
+| `limit` | integer | No | 1–200, default 5 | Max results to return; server enforces its own cap (default 100 via `RECALL_MAX_LIMIT`) |
 | `tags` | array[string] | No | — | Filter by tags |
 | `tag_mode` | string | No | `"any"` or `"all"` | Tag matching mode |
 | `tag_match` | string | No | `"exact"` or `"prefix"` | Tag matching strategy |
