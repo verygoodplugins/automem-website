@@ -168,7 +168,7 @@ When an AI assistant calls `store_memory`:
 When an AI assistant calls `recall_memory`, the system runs hybrid search: parallel queries against both the semantic vector store and the graph database, then merges and re-ranks results using a 9-component relevance score.
 
 :::note
-The `recall_memory` tool implements hybrid search with parallel queries when tags are present, calling both `/recall` (semantic + keyword) and `/memory/by-tag` endpoints simultaneously.
+The `recall_memory` tool selects one of three mutually exclusive retrieval modes: ID fetch (`GET /memory/{id}`), tag enumeration (`GET /memory/by-tag`, when `exhaustive: true`), or ranked hybrid search (`GET /recall`, the default). Only one endpoint is called per request.
 :::
 
 ## Why Two Repositories
