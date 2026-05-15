@@ -65,7 +65,7 @@ Edit `~/.claude.json` to add the AutoMem server:
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001",
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001",
         "AUTOMEM_API_KEY": "your-token-here"
       }
     }
@@ -82,7 +82,7 @@ For local development (no API key needed):
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
       }
     }
   }
@@ -107,7 +107,7 @@ This installs the following hook scripts into `~/.claude/hooks/`:
 
 Support scripts installed into `~/.claude/scripts/`:
 
-- `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`
+- `python-command.sh`, `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`
 
 It also merges the following into `permissions.allow` (assuming server named `"memory"`):
 
@@ -249,7 +249,7 @@ When installed via plugin, these slash commands are available:
 Checks AutoMem service health and connectivity:
 - Calls `check_database_health()`
 - Reports FalkorDB and Qdrant connection status
-- Validates `AUTOMEM_ENDPOINT` configuration
+- Validates `AUTOMEM_API_URL` configuration
 
 ```
 ✓ FalkorDB: Connected
