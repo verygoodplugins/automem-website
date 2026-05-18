@@ -245,7 +245,7 @@ Implemented in `_graph_keyword_search()` using Cypher queries:
 Computed by `_compute_metadata_score()` and `_parse_metadata_field()`:
 - **Importance**: Direct multiplication by weight (0.0–1.0 range)
 - **Confidence**: Classification confidence from memory type detection
-- **Recency**: `max(0, 1 - (age_days / 180))` — 6-month exponential decay based on time since last access
+- **Recency**: `max(0, 1 - (age_days / 180))` — 6-month linear decay based on time since last access
 - **Tag**: `matched_tokens / total_query_tokens` — overlap ratio between query tags and memory tags
 
 ---
@@ -331,18 +331,13 @@ The `queries` parameter (array of strings) allows multiple search queries in a s
 3. Keeps highest-scored version of each memory
 4. Returns `dedup_removed` count in response metadata
 
-### Parallel Query Optimization (MCP Layer)
+### MCP Client Routing (MCP Layer)
 
-The MCP `recall_memory` tool implements a performance optimization when tags are provided: it executes both the primary recall endpoint and a tag-only endpoint in parallel, then merges and deduplicates results.
+The MCP `recall_memory` tool (`src/automem-client.ts`) routes requests through three mutually exclusive branches — only one executes per call:
 
-**Implementation:**
-1. Tag detection: If `Array.isArray(recallArgs.tags) && recallArgs.tags.length > 0`
-2. Parallel execution: Uses `Promise.all()` to fetch both endpoints
-3. Merge logic: Creates a `Map<memory_id, result>` to deduplicate
-4. Sorting: Sorts by `final_score` descending, falls back to `importance`
-5. Limit enforcement: Slices to `recallArgs.limit` after merge
-
-**Rationale:** Tag-filtered semantic search might miss high-importance memories that only match by tag, so both strategies run concurrently for comprehensive recall.
+1. **ID fetch mode:** If `memory_id` is provided, short-circuits to `GET /memory/{id}` and returns immediately without evaluating other parameters.
+2. **Enumeration mode:** If `exhaustive: true` is set (with tags), routes to `GET /memory/by-tag`. Ranked-only parameters (`query`, `embedding`, `time_query`, etc.) are rejected with a validation error in this mode.
+3. **Ranked retrieval mode:** All other cases call `GET /recall` with URL parameters built from the tool arguments.
 
 ---
 
