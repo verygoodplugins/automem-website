@@ -255,9 +255,9 @@ This ensures low-traffic periods don't cause indefinite delays while high-traffi
 graph LR
     Batch["batch: List[Dict]<br/>(up to 20 jobs)"]
     Extract["Extract content<br/>text: List[str]"]
-    Generate["_generate_real_embeddings_batch()<br/>Provider bulk request"]
+    Generate["process_embedding_batch()<br/>Provider bulk request"]
     Embeddings["embeddings: List[List[float]]<br/>(dimensions per provider)"]
-    Store["_store_embedding_in_qdrant()<br/>For each (memory_id, embedding)"]
+    Store["store_embedding_in_qdrant()<br/>For each (memory_id, embedding)"]
     Success["Log success<br/>+ stats update"]
 
     Batch --> Extract
@@ -269,7 +269,7 @@ graph LR
 
 ### Bulk Embedding Generation
 
-The `_generate_real_embeddings_batch()` function sends multiple texts to the configured embedding provider:
+The `process_embedding_batch()` function sends multiple texts to the configured embedding provider:
 
 - **Input:** `List[str]` — Text content from each memory
 - **Output:** `List[List[float]]` — Embedding vectors (dimension depends on provider/model)
@@ -294,7 +294,7 @@ The `_generate_real_embeddings_batch()` function sends multiple texts to the con
 
 ### Storage Phase
 
-The `_store_embedding_in_qdrant()` helper function persists each embedding.
+The `store_embedding_in_qdrant()` helper function persists each embedding.
 
 **Payload Requirements:**
 - Must include all searchable fields: `content`, `tags`, `tag_prefixes`, `type`, `importance`, `timestamp`, `metadata`
