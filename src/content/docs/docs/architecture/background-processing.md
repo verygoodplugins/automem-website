@@ -64,7 +64,7 @@ graph TB
         EnrichWorker["EnrichmentWorker<br/>enrichment/runtime_worker.py"]
         EmbedWorker["EmbeddingWorker<br/>embedding/runtime_pipeline.py"]
         ConsolWorker["ConsolidationScheduler<br/>consolidation.py"]
-        SyncWorker["SyncWorker<br/>sync/runtime_worker.py"]
+        SyncWorker["SyncWorker<br/>sync/runtime_bindings.py"]
     end
 
     subgraph config["Configuration"]
@@ -306,7 +306,7 @@ Consolidation tasks catch exceptions and continue:
 **Relationship Count Caching (80% consolidation speedup):**
 - LRU cache with 10,000 entry capacity
 - Hourly cache invalidation via timestamp key
-- Dramatically reduces graph queries during decay cycles ([consolidation.py:152-176](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py#L152-L176))
+- Dramatically reduces graph queries during decay cycles ([consolidation.py:95-110](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/consolidation.py#L95-L110))
 
 ---
 
