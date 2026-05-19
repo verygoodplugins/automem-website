@@ -116,6 +116,8 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `CONSOLIDATION_PROTECTED_TYPES` | No | `Decision,Insight` | Comma-separated types to never forget |
 | `CONSOLIDATION_BASE_DECAY_RATE` | No | `0.01` | Base rate applied per decay cycle |
 | `CONSOLIDATION_IMPORTANCE_FLOOR_FACTOR` | No | `0.3` | Minimum importance fraction after decay |
+| `CONSOLIDATION_HISTORY_LIMIT` | No | `20` | Max consolidation run records retained in the graph |
+| `CONSOLIDATION_CONTROL_NODE_ID` | No | `global` | ID of the consolidation control node in the graph |
 
 ### Search and Recall
 
@@ -171,13 +173,15 @@ These variables configure the `mcp-automem` client package, not the server.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AUTOMEM_ENDPOINT` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem server |
+| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem server (canonical name) |
+| `AUTOMEM_ENDPOINT` | No | _unset_ | Deprecated alias for `AUTOMEM_API_URL`; still accepted but logs a warning |
 | `AUTOMEM_API_KEY` | No | _unset_ | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | _unset_ | Alternative name for the API key |
 | `AUTOMEM_LOG_LEVEL` | No | _unset_ | Set to `debug` for verbose MCP client logging |
 | `AUTOMEM_PROCESS_TAG` | No | _unset_ | Process title tag for safe process management |
 | `MCP_PROCESS_TAG` | No | _unset_ | Alternative process tag variable |
 
+The client checks endpoint variables in this priority order: `AUTOMEM_API_URL` → `AUTOMEM_ENDPOINT` (deprecated).
 The client checks API key variables in this priority order: `AUTOMEM_API_KEY` → `AUTOMEM_API_TOKEN`.
 
 ---
