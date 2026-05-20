@@ -155,7 +155,7 @@ Services start on:
 
 | Service | Port | Purpose | Volume |
 |---|---|---|---|
-| `flask-api` (Flask API) | `8001` | REST API | None (code mounted) |
+| `flask-api` (Flask API) | `8001` | REST API | `fastembed_models` (embedding model cache) |
 | `falkordb` | `6379` | Graph database | `falkordb_data` |
 | `qdrant` | `6333` | Vector database | `qdrant_data` |
 
