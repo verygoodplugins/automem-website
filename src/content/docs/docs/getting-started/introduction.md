@@ -94,7 +94,7 @@ graph TB
 
 ### The AutoMem Server
 
-The server (Flask/Gunicorn on port 8001) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
+The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
 
 - A REST API for storing, recalling, updating, and deleting memories
 - A FalkorDB graph database for canonical memory records and relationship traversal
