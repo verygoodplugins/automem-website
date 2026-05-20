@@ -55,7 +55,7 @@ graph TB
         end
 
         subgraph app_layer["Application Layer"]
-            FlaskAPI["Flask API<br/>app.py<br/>Gunicorn :8001"]
+            FlaskAPI["Flask API<br/>app.py<br/>Flask :8001"]
 
             subgraph workers["Background Workers"]
                 EnrichWorker["EnrichmentWorker<br/>Entity extraction<br/>Pattern detection"]
@@ -94,7 +94,7 @@ graph TB
 
 ### The AutoMem Server
 
-The server (Flask/Gunicorn on port 8001) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
+The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
 
 - A REST API for storing, recalling, updating, and deleting memories
 - A FalkorDB graph database for canonical memory records and relationship traversal
@@ -203,14 +203,14 @@ Without an `OPENAI_API_KEY`, the system uses `PlaceholderEmbeddingProvider` whic
 
 ### MCP Client Prerequisites
 
-- **Node.js 20.0.0 or higher** — required for ESM support, the native fetch API, and modern async/await patterns
+- **Node.js 20.19.0+, 22.13.0+, or 24+** — required for ESM support, the native fetch API, and modern async/await patterns (`engines: "^20.19.0 || ^22.13.0 || >=24"` in package.json)
 - **A running AutoMem service** — the backend must be deployed before the MCP client can be configured
 
 Check your Node.js version:
 
 ```bash
 node --version
-# Should output v20.0.0 or higher
+# Should output v20.19.x, v22.13.x, or v24.x.x or higher
 ```
 
 If you need to upgrade:
