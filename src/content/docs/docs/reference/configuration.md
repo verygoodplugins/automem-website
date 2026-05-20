@@ -104,6 +104,7 @@ Qdrant configuration enables semantic search but is not required. AutoMem operat
 | `QDRANT_COLLECTION` | string | No | `memories` | Collection name for memory vectors |
 | `COLLECTION_NAME` | string | No | `memories` | Alias for `QDRANT_COLLECTION` |
 | `VECTOR_SIZE` | int | No | `1024` | Embedding dimension (common values: 256/512/1024/1536/2048/3072) |
+| `QDRANT_VECTOR_SIZE` | int | No | `1024` | Alias for `VECTOR_SIZE` (checked as fallback when `VECTOR_SIZE` is unset) |
 
 :::caution[Dimension compatibility]
 AutoMem performs dimension validation before writing to Qdrant. Mismatches raise `ValueError` to prevent corrupting the vector store. When migrating dimensions, keep `VECTOR_SIZE` matching the existing collection until re-embedding completes.
