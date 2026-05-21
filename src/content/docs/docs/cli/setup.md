@@ -59,7 +59,7 @@ make dev
 
 This launches: Flask service on `:8001`, FalkorDB on `:6379`, Qdrant on `:6333`, FalkorDB graph browser on `:3000`.
 
-Endpoint configuration: `AUTOMEM_ENDPOINT=http://127.0.0.1:8001` (no API key required in development mode)
+Endpoint configuration: `AUTOMEM_API_URL=http://127.0.0.1:8001` (no API key required in development mode)
 
 **Option 2: Railway Cloud**
 
@@ -70,7 +70,7 @@ Best for: production use, multi-device access, team collaboration, always-on ava
 3. Configure environment variables in Railway dashboard
 4. Note the generated Railway URL: `https://your-project.up.railway.app`
 
-Endpoint configuration: `AUTOMEM_ENDPOINT=https://your-project.up.railway.app`, `AUTOMEM_API_KEY=<generated-token>`
+Endpoint configuration: `AUTOMEM_API_URL=https://your-project.up.railway.app`, `AUTOMEM_API_KEY=<generated-token>`
 
 Typical costs: development ~$0.50-1.00/month, production ~$5-10/month.
 
@@ -436,7 +436,7 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 **Solution**:
 1. Check what's using the port: `lsof -i :8001` (macOS/Linux) or `netstat -ano | findstr :8001` (Windows)
 2. Stop conflicting service or reconfigure AutoMem to use different port
-3. Update `AUTOMEM_ENDPOINT` accordingly
+3. Update `AUTOMEM_API_URL` accordingly
 
 ## Next Steps
 
