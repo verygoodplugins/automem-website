@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) — MCP server, tool definitions, and request handlers (lines 319–1237)
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/main/server.json) — MCP server manifest
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP server, tool definitions, and request handlers
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/server.json) — MCP server manifest
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -78,11 +78,14 @@ The `mcp-automem` package (`src/index.ts`) serves two purposes from a single ent
 Mode detection occurs immediately at startup:
 
 ```typescript
-// src/index.ts lines 36-37
-if (process.argv.length > 2) {
-  // CLI mode — execute command and exit
+// src/index.ts lines 58-61
+const command = (process.argv[2] || "").toLowerCase();
+const isServerMode = command.length === 0;
+// ...
+if (isServerMode) {
+  // Redirect console.log/info/debug/warn to stderr
 } else {
-  // Server mode — start MCP stdio transport
+  // CLI mode — execute command and exit
 }
 ```
 
@@ -102,12 +105,12 @@ console.error = (...args) => process.stderr.write(args.join(" ") + "\n");
 
 | Stage | Lines | Description |
 |-------|-------|-------------|
-| Entry | 1–35 | Shebang, imports, helper functions |
-| Mode Detection | 36–51 | Determine server vs CLI mode |
-| CLI Routing | 96–293 | Execute CLI commands and exit |
-| Configuration | 295–312 | Load environment, create `AutoMemClient` |
-| Server Setup | 314–876 | Create server, register tools and handlers |
-| Main Loop | 1225–1237 | Install guards, connect transport, run |
+| Entry | 1–57 | Shebang, imports, helper functions |
+| Mode Detection | 58–62 | Determine server vs CLI mode; redirect logging in server mode |
+| CLI Routing | 63–118 | Execute CLI commands and exit |
+| Configuration | 119–177 | Install stdio guards, load environment, create `AutoMemClient` |
+| Server Setup | 178–783 | Create server, register tools and handlers |
+| Main Loop | 785–795 | Connect transport, run |
 
 ### Error Resilience
 
@@ -116,10 +119,15 @@ The server guards against two classes of failures:
 **Broken pipe errors** — When the AI platform terminates the connection unexpectedly:
 
 ```typescript
-// installStdioErrorGuards() — lines 69-79
-process.stdout.on("error", (err) => {
-  if (err.code === "EPIPE") process.exit(0);
-});
+// installStdioErrorGuards() — lines 120-130
+const handler = (error: unknown) => {
+  const err = error as { code?: string } | undefined;
+  if (err?.code === "EPIPE" || err?.code === "ECONNRESET") {
+    process.exit(0);
+  }
+};
+process.stdout.on("error", handler);
+process.stderr.on("error", handler);
 ```
 
 **Tool execution errors** — All tool handlers are wrapped in try-catch, returning MCP error responses rather than crashing the server.
@@ -243,7 +251,7 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 |-----------|------|----------|-------------|-------------|
 | `query` | string | No | — | Semantic search query |
 | `queries` | array[string] | No | — | Multiple queries for broader recall |
-| `limit` | integer | No | 1–50, default 5 | Max results to return |
+| `limit` | integer | No | 1–200, default 5 | Max results to return |
 | `tags` | array[string] | No | — | Filter by tags |
 | `tag_mode` | string | No | `"any"` \| `"all"` | Tag matching mode |
 | `tag_match` | string | No | `"exact"` \| `"prefix"` | Tag matching strategy |
@@ -375,7 +383,10 @@ curl -X PATCH https://your-automem-instance/memory/a1b2c3d4-... \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `memory_id` | string | Yes | ID of memory to delete |
+| `memory_id` | string | No | ID of memory to delete (XOR with `tags`) |
+| `tags` | array[string] | No | Bulk-delete all memories matching any tag (XOR with `memory_id`) |
+
+Exactly one of `memory_id` or `tags` must be provided.
 
 **MCP Tool Output:**
 
@@ -466,8 +477,8 @@ AI platforms using the MCP protocol get automatic tool discovery, schema validat
 
 The `mcp-automem` server registers tools via the MCP SDK's schema-based routing:
 
-**`ListToolsRequestSchema` handler (line 874–876):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
+**`ListToolsRequestSchema` handler (lines 622–624):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
 
-**`CallToolRequestSchema` handler (lines 878–1223):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
+**`CallToolRequestSchema` handler (lines 626–783):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
 
-The `tools` array (lines 319–872) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
+The `tools` array (lines 178–620) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
