@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  benchmarkComparisonRows,
+  benchmarkMeaningCards,
+  benchmarkTimeline,
   artifactUrl,
   formatGeneratedDate,
   primaryPercent,
@@ -30,4 +33,30 @@ test("sourceLabel and artifactUrl produce human-facing source references", () =>
     artifactUrl("verygoodplugins/automem", "benchmarks/EXPERIMENT_LOG.md"),
     "https://github.com/verygoodplugins/automem/blob/main/benchmarks/EXPERIMENT_LOG.md",
   );
+});
+
+test("benchmark context keeps interpretation and comparison guardrails explicit", () => {
+  assert.deepEqual(
+    benchmarkMeaningCards.map((card) => card.title),
+    ["LongMemEval", "LoCoMo", "Recall@5"],
+  );
+  assert.equal(
+    benchmarkComparisonRows.find((row) => row.label === "AutoMem canonical runs")?.status,
+    "official rerun",
+  );
+  assert.equal(
+    benchmarkComparisonRows.find((row) => row.label === "Mem0, Zep/Graphiti, Letta, A-MEM")?.status,
+    "external reported",
+  );
+  assert.ok(
+    benchmarkComparisonRows
+      .find((row) => row.label === "External memory systems")
+      ?.note.includes("not apples-to-apples"),
+  );
+});
+
+test("benchmark timeline summarizes the release path to the May 2026 bundle", () => {
+  assert.equal(benchmarkTimeline.at(0)?.date, "Feb 2026");
+  assert.equal(benchmarkTimeline.at(-1)?.date, "May 2026");
+  assert.match(benchmarkTimeline.at(-1)?.summary ?? "", /publication bundle/i);
 });

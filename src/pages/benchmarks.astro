@@ -5,6 +5,9 @@ import Navigation from '../components/Navigation.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
 import benchmarkData from '../data/benchmarks.json';
 import {
+  benchmarkComparisonRows,
+  benchmarkMeaningCards,
+  benchmarkTimeline,
   formatGeneratedDate,
   primaryPercent,
   sourceLabel,
@@ -43,13 +46,13 @@ function toneClasses(status) {
       <div class="comment-header">:: BENCHMARK_SIGNAL</div>
       <div class="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-end relative z-10">
         <div>
-          <h1 class="text-4xl md:text-6xl font-bold tracking-tighter leading-tight mb-6">
-            Measured memory,<br />
-            <span class="text-lab-accent">not vibes.</span>
+          <h1 class="text-4xl md:text-6xl font-bold tracking-normal leading-tight mb-6">
+            Benchmarks for agent memory<br />
+            <span class="text-lab-accent">under pressure.</span>
           </h1>
           <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl">
-            AutoMem publishes benchmark claims from the main repository's official publication bundle.
-            Canonical results are separated from canary checks and exploratory evals so the page stays useful without over-claiming.
+            AutoMem measures whether a memory system can retrieve the right evidence and support correct answers across long histories.
+            The page separates official reruns from external context, canary checks, and exploratory evals so the numbers stay useful without over-claiming.
           </p>
           <div class="mt-8 flex flex-wrap gap-4">
             <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab-accent">
@@ -93,6 +96,73 @@ function toneClasses(status) {
       <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
     </section>
 
+    <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-surface">
+      <div class="comment-header">:: WHAT_THE_SCORES_MEAN</div>
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-[1.08fr_0.92fr] gap-8 items-start">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-normal mb-4">What these benchmarks mean</h2>
+            <p class="text-lab-muted leading-relaxed max-w-3xl">
+              LongMemEval and LoCoMo are not generic product leaderboards. They stress the two parts of agent memory that matter most in practice:
+              recovering the right evidence from long histories, then using that evidence to answer questions without drifting.
+            </p>
+
+            <div class="mt-8 grid md:grid-cols-3 gap-4">
+              {benchmarkMeaningCards.map((card) => (
+                <article class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-5">
+                  <h3 class="text-xl font-bold text-lab-accent">{card.title}</h3>
+                  <p class="mt-3 text-sm leading-relaxed text-lab-muted">{card.summary}</p>
+                  <p class="mt-4 text-xs leading-relaxed text-lab-text border-t border-lab-border pt-4">{card.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-6">
+            <div class="flex items-center justify-between gap-4 border-b border-lab-border pb-4 mb-5">
+              <h2 class="font-bold text-xl">How to compare AutoMem</h2>
+              <span class="font-mono text-xs uppercase tracking-widest text-lab-muted">Guardrails</span>
+            </div>
+            <div class="divide-y divide-lab-border">
+              {benchmarkComparisonRows.map((row) => (
+                <div class="py-4 first:pt-0 last:pb-0">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <h3 class="font-bold">{row.label}</h3>
+                    <span class="inline-flex border border-lab-secondary text-lab-secondary bg-lab-secondary/10 px-2 py-1 rounded text-xs uppercase tracking-widest">
+                      {row.status}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm leading-relaxed text-lab-muted">{row.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12">
+          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-bold tracking-normal">Why the current numbers are credible now</h2>
+              <p class="mt-2 text-lab-muted">
+                Recent changelog entries show the benchmark harness, evaluator, and recall system maturing before the May publication bundle.
+              </p>
+            </div>
+            <a href="/docs/development/changelog/" class="btn-lab">Changelog</a>
+          </div>
+
+          <ol class="grid md:grid-cols-4 gap-4">
+            {benchmarkTimeline.map((item) => (
+              <li class="border border-lab-border bg-lab-bg rounded-lg p-5">
+                <div class="text-xs font-mono uppercase tracking-widest text-lab-accent">{item.date}</div>
+                <h3 class="mt-3 font-bold">{item.title}</h3>
+                <p class="mt-2 text-sm leading-relaxed text-lab-muted">{item.summary}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+
     <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg">
       <div class="comment-header">:: CANONICAL_RESULTS</div>
       <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8">
@@ -105,7 +175,7 @@ function toneClasses(status) {
                 </span>
                 <span class="text-xs text-lab-muted uppercase tracking-widest">{claim.scope}</span>
               </div>
-              <h2 class="text-3xl font-bold tracking-tight">{claim.benchmark}</h2>
+              <h2 class="text-3xl font-bold tracking-normal">{claim.benchmark}</h2>
               <div class="mt-4 flex items-end gap-4">
                 <span class="text-5xl font-bold text-lab-accent">{primaryPercent(claim.score)}</span>
                 <span class="pb-2 text-lab-muted">{claim.questions} questions</span>
