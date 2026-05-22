@@ -36,7 +36,7 @@ export const benchmarkComparisonRows = [
     note: "Benchmarks are not apples-to-apples unless dataset version, extraction policy, answer model, judge, context budget, and scale are aligned.",
   },
   {
-    label: "BEAM, LongMemEval-V2, Memora/FAMA",
+    label: "BEAM and LongMemEval-V2",
     status: "not yet canonical",
     note: "Tracked as future comparison surfaces until the main repo promotes AutoMem-controlled runs.",
   },
@@ -88,7 +88,7 @@ export const publishedBenchmarkRows = [
   },
   {
     system: "Zep / Graphiti",
-    locomo: "not reported here",
+    locomo: "not reported",
     longMemEval: "71.2% (gpt-4o)",
     other: "63.8% (gpt-4o-mini)",
     status: "external reported",
@@ -99,7 +99,7 @@ export const publishedBenchmarkRows = [
   },
   {
     system: "Supermemory",
-    locomo: "not reported here",
+    locomo: "not reported",
     longMemEval: "81.6% (gpt-4o)",
     other: "LongMemEval-S",
     status: "external reported",
@@ -119,7 +119,7 @@ export const publishedBenchmarkRows = [
   },
   {
     system: "Mastra Observational Memory",
-    locomo: "not reported here",
+    locomo: "not reported",
     longMemEval: "84.23% (gpt-4o); 94.87% (gpt-5-mini)",
     other: "LongMemEval-S",
     status: "external reported",
@@ -159,7 +159,7 @@ export const publishedBenchmarkRows = [
   },
   {
     system: "HydraDB",
-    locomo: "not reported here",
+    locomo: "not reported",
     longMemEval: "90.23%",
     other: "LongMemEval-S / Gemini 3 Pro",
     status: "external reported",
@@ -169,23 +169,13 @@ export const publishedBenchmarkRows = [
   },
   {
     system: "Exabase M-1",
-    locomo: "not reported here",
+    locomo: "not reported",
     longMemEval: "96.4% top-50",
     other: "Gemini 3 Flash",
     status: "external reported",
     note: "Exabase reports a May 2026 LongMemEval run focused on retrieval quality with a smaller answer model and no question-specific prompt tuning.",
     sourceLabel: "Exabase research",
     sourceUrl: "https://exabase.io/research/exabase-achieves-state-of-the-art-on-longmemeval-benchmark",
-  },
-  {
-    system: "Memora / FAMA",
-    locomo: "benchmark/metric, not AutoMem run",
-    longMemEval: "not directly comparable",
-    other: "FAMA metric",
-    status: "new benchmark surface",
-    note: "Memora introduces weeks-to-months personalized-agent evaluation and FAMA; useful future context, but AutoMem has not run it canonically.",
-    sourceLabel: "Memora/FAMA arXiv",
-    sourceUrl: "https://arxiv.org/abs/2604.20006",
   },
 ];
 

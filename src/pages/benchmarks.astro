@@ -18,6 +18,7 @@ import {
 const canonicalClaims = benchmarkData.canonicalClaims;
 const canaryClaims = benchmarkData.canaryClaims;
 const supplementalClaims = benchmarkData.supplementalClaims;
+const notYetRunClaims = benchmarkData.notYetRun.filter((item) => item !== 'Memora/FAMA');
 const updatedDate = formatGeneratedDate(benchmarkData.generatedAt);
 
 const longMemEval = canonicalClaims.find((claim) => claim.benchmark === 'LongMemEval');
@@ -26,7 +27,7 @@ const locomo = canonicalClaims.find((claim) => claim.benchmark === 'LoCoMo');
 function toneClasses(status) {
   const tone = statusTone(status);
   if (tone === 'accent') {
-    return 'border-lab-accent text-lab-accent bg-lab-accent/10';
+    return 'border-lab-accent text-lab-accent-text bg-lab-accent/10';
   }
   if (tone === 'secondary') {
     return 'border-lab-secondary text-lab-secondary bg-lab-secondary/10';
@@ -49,7 +50,7 @@ function toneClasses(status) {
         <div>
           <h1 class="text-4xl md:text-6xl font-bold tracking-normal leading-tight mb-6">
             Benchmarks for agent memory<br />
-            <span class="text-lab-accent">under pressure.</span>
+            <span class="text-lab-accent-text">under pressure.</span>
           </h1>
           <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl">
             AutoMem measures whether a memory system can retrieve the right evidence and support correct answers across long histories.
@@ -68,13 +69,13 @@ function toneClasses(status) {
         <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
           <div class="flex items-center justify-between gap-4 border-b border-lab-border pb-4 mb-5">
             <span class="font-mono text-xs uppercase tracking-widest text-lab-muted">Canonical current</span>
-            <span class="font-mono text-xs text-lab-accent">{updatedDate}</span>
+            <span class="font-mono text-xs text-lab-accent-text">{updatedDate}</span>
           </div>
           <div class="grid grid-cols-2 gap-4">
             {longMemEval && (
               <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
                 <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LongMemEval</div>
-                <div class="text-4xl font-bold text-lab-accent">{primaryPercent(longMemEval.score)}</div>
+                <div class="text-4xl font-bold text-lab-accent-text">{primaryPercent(longMemEval.score)}</div>
                 <div class="text-xs text-lab-muted mt-2">{longMemEval.score}</div>
                 <div class="text-xs text-lab-success mt-1">{longMemEval.retrieval}</div>
               </div>
@@ -82,7 +83,7 @@ function toneClasses(status) {
             {locomo && (
               <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
                 <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LoCoMo</div>
-                <div class="text-4xl font-bold text-lab-accent">{primaryPercent(locomo.score)}</div>
+                <div class="text-4xl font-bold text-lab-accent-text">{primaryPercent(locomo.score)}</div>
                 <div class="text-xs text-lab-muted mt-2">{locomo.score}</div>
                 <div class="text-xs text-lab-success mt-1">pinned judge, full run</div>
               </div>
@@ -110,7 +111,7 @@ function toneClasses(status) {
           <div class="mt-8 grid md:grid-cols-3 gap-4">
             {benchmarkMeaningCards.map((card) => (
               <article class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-5">
-                <h3 class="text-xl font-bold text-lab-accent">{card.title}</h3>
+                <h3 class="text-xl font-bold text-lab-accent-text">{card.title}</h3>
                 <p class="mt-3 text-sm leading-relaxed text-lab-muted">{card.summary}</p>
                 <p class="mt-4 text-xs leading-relaxed text-lab-text border-t border-lab-border pt-4">{card.detail}</p>
               </article>
@@ -148,10 +149,10 @@ function toneClasses(status) {
             </div>
           </div>
 
-          <div class="overflow-x-auto border-2 border-lab-text rounded-lg bg-lab-bg shadow-hard">
+          <div class="benchmark-external-shell overflow-x-auto border-2 border-lab-text rounded-lg shadow-hard">
             <table class="w-full min-w-[980px] text-sm">
               <thead>
-                <tr class="border-b border-lab-border text-left text-lab-muted">
+                <tr class="benchmark-external-head border-b-2 border-lab-text text-left">
                   <th class="p-4 font-normal uppercase tracking-widest text-xs">System</th>
                   <th class="p-4 font-normal uppercase tracking-widest text-xs">LoCoMo</th>
                   <th class="p-4 font-normal uppercase tracking-widest text-xs">LongMemEval</th>
@@ -162,13 +163,13 @@ function toneClasses(status) {
               </thead>
               <tbody>
                 {publishedBenchmarkRows.map((row) => (
-                  <tr class="border-b border-lab-border/60 last:border-b-0 align-top">
+                  <tr class="benchmark-external-row border-b border-lab-border/70 last:border-b-0 align-top transition-colors">
                     <td class="p-4">
                       <div class="font-bold">{row.system}</div>
                       <p class="mt-2 text-xs leading-relaxed text-lab-muted">{row.note}</p>
                     </td>
-                    <td class="p-4 text-lab-accent whitespace-nowrap">{row.locomo}</td>
-                    <td class="p-4 text-lab-accent">{row.longMemEval}</td>
+                    <td class="benchmark-score p-4 font-bold whitespace-nowrap">{row.locomo}</td>
+                    <td class="benchmark-score p-4 font-bold">{row.longMemEval}</td>
                     <td class="p-4 text-lab-muted">{row.other}</td>
                     <td class="p-4">
                       <span class="inline-flex border border-lab-border bg-lab-surface px-2 py-1 rounded text-xs uppercase tracking-widest">
@@ -176,7 +177,7 @@ function toneClasses(status) {
                       </span>
                     </td>
                     <td class="p-4">
-                      <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer" class="text-lab-accent hover:underline whitespace-nowrap">
+                      <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer" class="benchmark-source hover:underline whitespace-nowrap">
                         {row.sourceLabel}
                       </a>
                     </td>
@@ -201,7 +202,7 @@ function toneClasses(status) {
           <ol class="grid md:grid-cols-4 gap-4">
             {benchmarkTimeline.map((item) => (
               <li class="border border-lab-border bg-lab-bg rounded-lg p-5">
-                <div class="text-xs font-mono uppercase tracking-widest text-lab-accent">{item.date}</div>
+                <div class="text-xs font-mono uppercase tracking-widest text-lab-accent-text">{item.date}</div>
                 <h3 class="mt-3 font-bold">{item.title}</h3>
                 <p class="mt-2 text-sm leading-relaxed text-lab-muted">{item.summary}</p>
               </li>
@@ -225,7 +226,7 @@ function toneClasses(status) {
               </div>
               <h2 class="text-3xl font-bold tracking-normal">{claim.benchmark}</h2>
               <div class="mt-4 flex items-end gap-4">
-                <span class="text-5xl font-bold text-lab-accent">{primaryPercent(claim.score)}</span>
+                <span class="text-5xl font-bold text-lab-accent-text">{primaryPercent(claim.score)}</span>
                 <span class="pb-2 text-lab-muted">{claim.questions} questions</span>
               </div>
               <p class="mt-3 text-lab-muted">{claim.score}</p>
@@ -272,7 +273,7 @@ function toneClasses(status) {
                     {claim.categoryBreakdown.map((row) => (
                       <tr class="border-b border-lab-border/60">
                         <td class="py-2 pr-4 capitalize">{row.label}</td>
-                        <td class="py-2 text-lab-accent">{row.value}</td>
+                        <td class="py-2 text-lab-accent-text">{row.value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -287,7 +288,7 @@ function toneClasses(status) {
             <div class="mt-auto border-t border-lab-border pt-4 text-xs text-lab-muted space-y-2">
               <p>
                 <span class="text-lab-text">Source:</span>
-                <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="text-lab-accent hover:underline">
+                <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="text-lab-accent-text hover:underline">
                   {sourceLabel(claim.source)}
                 </a>
               </p>
@@ -337,7 +338,7 @@ function toneClasses(status) {
                   <tr class="border-b border-lab-border/60 last:border-b-0">
                     <td class="p-4 font-bold">{claim.benchmark}</td>
                     <td class="p-4 text-lab-muted">{claim.scope}</td>
-                    <td class="p-4 text-lab-accent whitespace-nowrap">{claim.score}</td>
+                    <td class="p-4 text-lab-accent-text whitespace-nowrap">{claim.score}</td>
                     <td class="p-4"><span class={`inline-flex border px-2 py-1 rounded text-xs ${toneClasses(claim.status)}`}>{claim.statusLabel}</span></td>
                   </tr>
                 ))}
@@ -390,7 +391,7 @@ function toneClasses(status) {
         <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
           <h3 class="font-bold mb-4">Not yet canonical</h3>
           <ul class="space-y-3 text-sm text-lab-muted">
-            {benchmarkData.notYetRun.map((item) => (
+            {notYetRunClaims.map((item) => (
               <li class="flex gap-3">
                 <span class="text-lab-secondary">[ ]</span>
                 <span>{item}</span>
@@ -402,3 +403,36 @@ function toneClasses(status) {
     </section>
   </main>
 </Layout>
+
+<style>
+  .benchmark-external-shell {
+    background: rgb(var(--lab-surface));
+  }
+
+  .benchmark-external-head {
+    background: rgb(var(--lab-text));
+    color: rgb(var(--lab-bg));
+  }
+
+  .benchmark-external-row:nth-child(odd) {
+    background: rgb(var(--lab-bg));
+  }
+
+  .benchmark-external-row:nth-child(even) {
+    background: rgb(var(--lab-surface));
+  }
+
+  .benchmark-external-row:hover {
+    background: rgba(var(--lab-accent), 0.12);
+  }
+
+  .benchmark-score,
+  .benchmark-source {
+    color: rgb(var(--lab-accent-text));
+  }
+
+  .benchmark-source {
+    text-decoration-color: rgba(var(--lab-accent-text), 0.45);
+    font-weight: 700;
+  }
+</style>

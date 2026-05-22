@@ -533,7 +533,7 @@ Found it! The TypeError is in **MemoryHero.astro** line 291 — TypeScript synta
             const endBold = line.indexOf('**', i + 2);
             if (endBold > i) {
               const boldText = line.substring(i + 2, endBold);
-              element.innerHTML += `<strong class="text-lab-accent">${boldText}</strong>`;
+              element.innerHTML += `<strong class="text-lab-accent-text">${boldText}</strong>`;
               i = endBold + 1;
             } else {
               element.innerHTML += line[i];

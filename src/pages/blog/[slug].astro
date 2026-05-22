@@ -72,7 +72,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
       <!-- Back to Blog -->
       <a
         href="/blog"
-        class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent transition mb-8 font-mono text-sm"
+        class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent-text transition mb-8 font-mono text-sm"
       >
         ← Back to Blog
       </a>
@@ -115,13 +115,13 @@ const formattedDate = date?.toLocaleDateString('en-US', {
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-sm">
           <a
             href="/blog"
-            class="text-lab-accent hover:underline"
+            class="text-lab-accent-text hover:underline"
           >
             ← All Posts
           </a>
           <a
             href="/"
-            class="text-lab-accent hover:underline"
+            class="text-lab-accent-text hover:underline"
           >
             Return Home →
           </a>
@@ -163,7 +163,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
   }
 
   .prose :global(a) {
-    @apply text-lab-accent underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
+    @apply text-lab-accent-text underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
   }
 
   .prose :global(ul),
@@ -180,7 +180,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
   }
 
   .prose :global(code) {
-    @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent;
+    @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent-text;
   }
 
   .prose :global(pre) {

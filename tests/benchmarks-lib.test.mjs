@@ -77,7 +77,6 @@ test("published benchmark rows include relevant external systems with caveats", 
       "MemMachine",
       "HydraDB",
       "Exabase M-1",
-      "Memora / FAMA",
     ],
   );
   assert.equal(
@@ -87,6 +86,10 @@ test("published benchmark rows include relevant external systems with caveats", 
   assert.equal(
     publishedBenchmarkRows.find((row) => row.system === "Zep / Graphiti")?.longMemEval,
     "71.2% (gpt-4o)",
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Zep / Graphiti")?.locomo,
+    "not reported",
   );
   assert.equal(
     publishedBenchmarkRows.find((row) => row.system === "Hindsight")?.locomo,

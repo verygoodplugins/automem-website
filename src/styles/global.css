@@ -123,19 +123,19 @@
 
   /* Improve contrast for links on light backgrounds (inverted sections) */
   .prose a,
-  a.text-lab-accent {
+  a.text-lab-accent-text {
     @apply underline;
   }
 
   /* In light mode, use high-contrast color for inline text links */
   .light .prose a,
-  .light a.text-lab-accent:not(.btn-lab):not(.btn-lab-accent) {
+  .light a.text-lab-accent-text:not(.btn-lab):not(.btn-lab-accent) {
     color: rgb(var(--lab-accent-text));
   }
 
-  /* In dark mode, links with lab-accent on light backgrounds need dark text color instead */
+  /* In dark mode, accent-text links on light backgrounds need dark text color instead */
   @supports (color: rgb(var(--lab-accent))) {
-    :is(.bg-lab-text, [class*="bg-lab-text"]) a.text-lab-accent {
+    :is(.bg-lab-text, [class*="bg-lab-text"]) a.text-lab-accent-text {
       @apply text-[#1a1a1a] font-bold;
     }
   }
