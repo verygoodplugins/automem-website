@@ -7,11 +7,11 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- `automem/search/runtime_recall_helpers.py` — Vector and keyword search implementations
-- `automem/search/runtime_keywords.py` — Keyword matching logic
-- `automem/search/runtime_relations.py` — Relationship expansion
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
+- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/search/runtime_keywords.py) — Keyword matching logic
+- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/search/runtime_relations.py) — Relationship expansion
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L281-L289](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py#L281-L289) — Search weight configuration
+- [automem/config.py#L270-L279](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py#L270-L279) — Search weight configuration
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/scoring.py) — Score computation
 - [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/graph.py) — Graph traversal utilities
 - [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/time.py) — Temporal expression parsing
