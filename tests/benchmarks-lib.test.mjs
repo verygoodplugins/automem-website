@@ -5,6 +5,7 @@ import {
   benchmarkComparisonRows,
   benchmarkMeaningCards,
   benchmarkTimeline,
+  publishedBenchmarkRows,
   artifactUrl,
   formatGeneratedDate,
   primaryPercent,
@@ -55,8 +56,49 @@ test("benchmark context keeps interpretation and comparison guardrails explicit"
   );
 });
 
-test("benchmark timeline summarizes the release path to the May 2026 bundle", () => {
+test("benchmark timeline summarizes the release path without overemphasizing publication", () => {
   assert.equal(benchmarkTimeline.at(0)?.date, "Feb 2026");
   assert.equal(benchmarkTimeline.at(-1)?.date, "May 2026");
-  assert.match(benchmarkTimeline.at(-1)?.summary ?? "", /publication bundle/i);
+  assert.doesNotMatch(benchmarkTimeline.at(-1)?.summary ?? "", /publication bundle/i);
+});
+
+test("published benchmark rows include relevant external systems with caveats", () => {
+  assert.deepEqual(
+    publishedBenchmarkRows.map((row) => row.system),
+    [
+      "AutoMem",
+      "Mem0 Cloud",
+      "Zep / Graphiti",
+      "Supermemory",
+      "Hindsight",
+      "Mastra Observational Memory",
+      "Honcho",
+      "Letta / MemGPT",
+      "MemMachine",
+      "HydraDB",
+      "Exabase M-1",
+      "Memora / FAMA",
+    ],
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Mem0 Cloud")?.longMemEval,
+    "94.4%",
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Zep / Graphiti")?.longMemEval,
+    "71.2% (gpt-4o)",
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Hindsight")?.locomo,
+    "up to 89.61%",
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Exabase M-1")?.longMemEval,
+    "96.4% top-50",
+  );
+  assert.equal(
+    publishedBenchmarkRows.find((row) => row.system === "Letta / MemGPT")?.status,
+    "no official standardized score found",
+  );
+  assert.ok(publishedBenchmarkRows.every((row) => row.sourceUrl.startsWith("https://")));
 });
