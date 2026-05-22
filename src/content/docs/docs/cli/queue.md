@@ -46,7 +46,7 @@ graph TB
 
 ### UpdateMemoryArgs Parameters
 
-The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts)):
+The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)):
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -136,11 +136,12 @@ graph TB
 
 ### DeleteMemoryArgs Parameters
 
-The `delete_memory` tool accepts a single required parameter (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts)):
+The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `memory_id` | `string` | **Yes** | ID of memory to delete (from `store_memory` or `recall_memory`) |
+| `memory_id` | `string` | No | ID of a single memory to delete (from `store_memory` or `recall_memory`) |
+| `tags` | `string[]` | No | Delete all memories tagged with ANY of these tags (bulk delete) |
 
 ### Delete Implementation
 
@@ -210,7 +211,7 @@ graph TB
 
 ### HealthStatus Response Structure
 
-The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/types.ts)):
+The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)):
 
 | Field | Type | Description |
 |---|---|---|
@@ -314,7 +315,7 @@ npx @verygoodplugins/mcp-automem queue --dry-run
 npx @verygoodplugins/mcp-automem queue --limit 10
 ```
 
-The endpoint is resolved automatically using the priority chain: `AUTOMEM_ENDPOINT` environment variable → `.env` file (via dotenv) → default `http://127.0.0.1:8001`.
+The endpoint is resolved automatically using the priority chain: `AUTOMEM_API_URL` environment variable → `AUTOMEM_ENDPOINT` (legacy) → `.env` file (via dotenv) → default `http://127.0.0.1:8001`.
 
 ### Queue Processing Architecture
 
@@ -330,14 +331,16 @@ graph TB
     end
 
     subgraph "Configuration Priority"
-        EnvVars["1. AUTOMEM_ENDPOINT env var"]
-        EnvFile["2. .env file<br/>current directory (via dotenv)"]
-        Default["3. Default<br/>http://127.0.0.1:8001"]
+        EnvVars["1. AUTOMEM_API_URL env var"]
+        EnvVarsLegacy["2. AUTOMEM_ENDPOINT env var (legacy)"]
+        EnvFile["3. .env file<br/>current directory (via dotenv)"]
+        Default["4. Default<br/>http://127.0.0.1:8001"]
     end
 
     QueueCmd --> ConfigResolve
     ConfigResolve --> EnvVars
-    EnvVars -->|Not found| EnvFile
+    EnvVars -->|Not found| EnvVarsLegacy
+    EnvVarsLegacy -->|Not found| EnvFile
     EnvFile -->|Not found| Default
 
     ConfigResolve --> HealthCheck
