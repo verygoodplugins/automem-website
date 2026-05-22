@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/main/automem/) module paths, [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/), and the current optimization paths in the AutoMem repository.
+This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/) module paths, [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/embedding/runtime_pipeline.py), and [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py).
 :::
 
 This page describes AutoMem's performance optimization strategies, including embedding batching, relationship count caching, query time tracking, and structured logging. These optimizations reduce API costs by 40-50%, speed up consolidation by 80%, and improve monitoring capabilities. For operational monitoring strategies, see [Health Monitoring](/docs/operations/health/).
@@ -21,7 +21,7 @@ graph TB
         EmbedRequest["Memory POST requests<br/>automem/api/memory.py:/memory"]
         EmbedQueue["embedding_queue<br/>ServiceState.embedding_queue"]
         BatchCollect["Batch Collection<br/>Size: EMBEDDING_BATCH_SIZE=20<br/>Timeout: EMBEDDING_BATCH_TIMEOUT_SECONDS=2.0"]
-        BatchProcess["_process_embedding_batch()<br/>Single API call for 20 items"]
+        BatchProcess["process_embedding_batch()<br/>Single API call for 20 items"]
 
         EmbedRequest --> EmbedQueue
         EmbedQueue --> BatchCollect
@@ -92,10 +92,9 @@ The worker uses a timeout-based accumulation strategy:
 
 | Function | Purpose | Location |
 |---|---|---|
-| `embedding_worker()` | Main worker loop with batch accumulation | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) |
-| `_process_embedding_batch()` | Processes accumulated batch | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) |
-| `_generate_real_embeddings_batch()` | Calls OpenAI API with multiple texts | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) |
-| `_store_embedding_in_qdrant()` | Stores single embedding in Qdrant | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/main/automem/embedding/runtime_pipeline.py) |
+| `embedding_worker()` | Main worker loop with batch accumulation | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/embedding/runtime_pipeline.py) |
+| `process_embedding_batch()` | Processes accumulated batch | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/embedding/runtime_pipeline.py) |
+| `store_embedding_in_qdrant()` | Stores single embedding in Qdrant | [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/embedding/runtime_pipeline.py) |
 
 ### Configuration Parameters
 
@@ -171,10 +170,10 @@ All API endpoints track query execution time using `time.perf_counter()` and inc
 
 | Endpoint | Location | Metric Name |
 |---|---|---|
-| `GET /recall` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) | `query_time_ms` |
-| `POST /memory` | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) | `query_time_ms` |
-| `GET /health` | [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) | `query_time_ms` |
-| `GET /analyze` | [`automem/api/analyze.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/analyze.py) | `query_time_ms` |
+| `GET /recall` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) | `query_time_ms` |
+| `POST /memory` | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/memory.py) | `query_time_ms` |
+| `GET /health` | [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/health.py) | `query_time_ms` |
+| `GET /analyze` | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) | none — this route has no timing instrumentation |
 
 ### Response Format
 
@@ -384,7 +383,7 @@ CONSOLIDATION_DECAY_INTERVAL_SECONDS=86400
 
 **Impact**: Minimal for consolidation use case, as relevance scores change slowly.
 
-**Alternative**: For real-time applications, consider cache invalidation on relationship creation (requires code modification in [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/)).
+**Alternative**: For real-time applications, consider cache invalidation on relationship creation (requires code modification in [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/consolidation/)).
 
 ### Memory Overhead
 
@@ -412,9 +411,9 @@ CONSOLIDATION_DECAY_INTERVAL_SECONDS=86400
 
 ### Dimension Reduction (Not Implemented)
 
-**Potential**: Reduce embedding dimensions from 768 to 512 for additional 33% cost reduction
+**Potential**: Reduce embedding dimensions below the default `VECTOR_SIZE=1024` (e.g. to 512) for additional cost and storage reduction
 
-**Implementation**: Modify `_generate_real_embedding()` to pass `dimensions=512` to OpenAI API
+**Implementation**: Lower `VECTOR_SIZE` and rebuild the collection; or, for OpenAI, pass `dimensions=<n>` to truncate the vector before storage
 
 **Trade-off**: Slightly lower semantic search accuracy (~1-2% reduction)
 
@@ -457,4 +456,4 @@ The LRU cache uses `hour_key` for invalidation — this cannot be fully disabled
 
 ### Remove Health Enrichment Stats
 
-Remove the enrichment section from the health response by modifying [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/health.py) to exclude the `enrichment` key from the response JSON.
+Remove the enrichment section from the health response by modifying [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/health.py) to exclude the `enrichment` key from the response JSON.
