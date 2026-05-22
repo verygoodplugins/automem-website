@@ -36,7 +36,7 @@ img/*.jpeg
 .dev.vars
 
 # EmDash local data
-data/
+/data/
 uploads/
 
 # TypeScript

@@ -1,0 +1,286 @@
+---
+export const prerender = true;
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
+import benchmarkData from '../data/benchmarks.json';
+import {
+  formatGeneratedDate,
+  primaryPercent,
+  sourceLabel,
+  statusTone,
+} from '../lib/benchmarks.mjs';
+
+const canonicalClaims = benchmarkData.canonicalClaims;
+const canaryClaims = benchmarkData.canaryClaims;
+const supplementalClaims = benchmarkData.supplementalClaims;
+const updatedDate = formatGeneratedDate(benchmarkData.generatedAt);
+
+const longMemEval = canonicalClaims.find((claim) => claim.benchmark === 'LongMemEval');
+const locomo = canonicalClaims.find((claim) => claim.benchmark === 'LoCoMo');
+
+function toneClasses(status) {
+  const tone = statusTone(status);
+  if (tone === 'accent') {
+    return 'border-lab-accent text-lab-accent bg-lab-accent/10';
+  }
+  if (tone === 'secondary') {
+    return 'border-lab-secondary text-lab-secondary bg-lab-secondary/10';
+  }
+  return 'border-lab-border text-lab-muted bg-lab-surface';
+}
+---
+
+<Layout
+  title="Benchmarks"
+  description="AutoMem benchmark results sourced from the canonical automem publication bundle, with clear separation between canonical, canary, and exploratory claims."
+>
+  <OrganizationSchema />
+  <Navigation currentPath="/benchmarks" />
+
+  <main class="w-full pb-24">
+    <section class="px-4 md:px-12 pt-16 pb-20 border-b border-lab-border bg-lab-bg relative overflow-hidden">
+      <div class="comment-header">:: BENCHMARK_SIGNAL</div>
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-end relative z-10">
+        <div>
+          <h1 class="text-4xl md:text-6xl font-bold tracking-tighter leading-tight mb-6">
+            Measured memory,<br />
+            <span class="text-lab-accent">not vibes.</span>
+          </h1>
+          <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl">
+            AutoMem publishes benchmark claims from the main repository's official publication bundle.
+            Canonical results are separated from canary checks and exploratory evals so the page stays useful without over-claiming.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-4">
+            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab-accent">
+              Publication Bundle
+            </a>
+            <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">
+              Experiment Log
+            </a>
+          </div>
+        </div>
+
+        <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
+          <div class="flex items-center justify-between gap-4 border-b border-lab-border pb-4 mb-5">
+            <span class="font-mono text-xs uppercase tracking-widest text-lab-muted">Canonical current</span>
+            <span class="font-mono text-xs text-lab-accent">{updatedDate}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            {longMemEval && (
+              <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LongMemEval</div>
+                <div class="text-4xl font-bold text-lab-accent">{primaryPercent(longMemEval.score)}</div>
+                <div class="text-xs text-lab-muted mt-2">{longMemEval.score}</div>
+                <div class="text-xs text-lab-success mt-1">{longMemEval.retrieval}</div>
+              </div>
+            )}
+            {locomo && (
+              <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LoCoMo</div>
+                <div class="text-4xl font-bold text-lab-accent">{primaryPercent(locomo.score)}</div>
+                <div class="text-xs text-lab-muted mt-2">{locomo.score}</div>
+                <div class="text-xs text-lab-success mt-1">pinned judge, full run</div>
+              </div>
+            )}
+          </div>
+          <p class="mt-5 text-xs leading-relaxed text-lab-muted">
+            Source: {benchmarkData.sourceRepo}@{benchmarkData.sourceSha.slice(0, 7)}.
+            This is a reproducibility and systems claim, not a state-of-the-art claim.
+          </p>
+        </div>
+      </div>
+      <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg">
+      <div class="comment-header">:: CANONICAL_RESULTS</div>
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8">
+        {canonicalClaims.map((claim) => (
+          <article class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-6 flex flex-col gap-6">
+            <div>
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class={`inline-flex border px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${toneClasses(claim.status)}`}>
+                  {claim.statusLabel}
+                </span>
+                <span class="text-xs text-lab-muted uppercase tracking-widest">{claim.scope}</span>
+              </div>
+              <h2 class="text-3xl font-bold tracking-tight">{claim.benchmark}</h2>
+              <div class="mt-4 flex items-end gap-4">
+                <span class="text-5xl font-bold text-lab-accent">{primaryPercent(claim.score)}</span>
+                <span class="pb-2 text-lab-muted">{claim.questions} questions</span>
+              </div>
+              <p class="mt-3 text-lab-muted">{claim.score}</p>
+              {claim.retrieval && <p class="text-lab-success mt-1">{claim.retrieval}</p>}
+            </div>
+
+            <dl class="grid sm:grid-cols-2 gap-3 text-sm">
+              {claim.answerModel && (
+                <div class="bg-lab-surface border border-lab-border rounded p-3">
+                  <dt class="text-lab-muted text-xs uppercase tracking-widest">Answer model</dt>
+                  <dd class="mt-1 break-words">{claim.answerModel}</dd>
+                </div>
+              )}
+              {claim.judgeModel && (
+                <div class="bg-lab-surface border border-lab-border rounded p-3">
+                  <dt class="text-lab-muted text-xs uppercase tracking-widest">Judge</dt>
+                  <dd class="mt-1 break-words">{claim.judgeModel}</dd>
+                </div>
+              )}
+              {claim.judgeCalls !== null && (
+                <div class="bg-lab-surface border border-lab-border rounded p-3">
+                  <dt class="text-lab-muted text-xs uppercase tracking-widest">Judge calls</dt>
+                  <dd class="mt-1">{claim.judgeCalls}</dd>
+                </div>
+              )}
+              {claim.judgeErrors !== null && (
+                <div class="bg-lab-surface border border-lab-border rounded p-3">
+                  <dt class="text-lab-muted text-xs uppercase tracking-widest">Judge errors</dt>
+                  <dd class="mt-1">{claim.judgeErrors}</dd>
+                </div>
+              )}
+            </dl>
+
+            {claim.categoryBreakdown && (
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-lab-border text-left text-lab-muted">
+                      <th class="py-2 pr-4 font-normal uppercase tracking-widest text-xs">Category</th>
+                      <th class="py-2 font-normal uppercase tracking-widest text-xs">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {claim.categoryBreakdown.map((row) => (
+                      <tr class="border-b border-lab-border/60">
+                        <td class="py-2 pr-4 capitalize">{row.label}</td>
+                        <td class="py-2 text-lab-accent">{row.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {claim.failureSplit && (
+              <p class="text-sm text-lab-muted border-l-2 border-lab-secondary pl-4">{claim.failureSplit}</p>
+            )}
+
+            <div class="mt-auto border-t border-lab-border pt-4 text-xs text-lab-muted space-y-2">
+              <p>
+                <span class="text-lab-text">Source:</span>
+                <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="text-lab-accent hover:underline">
+                  {sourceLabel(claim.source)}
+                </a>
+              </p>
+              {claim.artifact && (
+                <p>
+                  <span class="text-lab-text">Artifact:</span>
+                  <code>{claim.artifact.path}</code>
+                  {claim.artifact.gitignored && <span> (generated, gitignored)</span>}
+                </p>
+              )}
+              {claim.artifact?.sha256 && (
+                <p class="break-all"><span class="text-lab-text">SHA256:</span> {claim.artifact.sha256}</p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-surface">
+      <div class="comment-header">:: CANARY_AND_EXPLORATORY</div>
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-[0.85fr_1.15fr] gap-8">
+        <div>
+          <h2 class="text-3xl font-bold mb-4">Canonical vs exploratory</h2>
+          <p class="text-lab-muted leading-relaxed">
+            Canary runs catch drift quickly. Exploratory runs expose useful signals, but they are not public headline claims until the main repository promotes them through the official benchmark flow.
+          </p>
+          <div class="mt-6 border border-lab-border bg-lab-bg rounded-lg p-5 text-sm text-lab-muted">
+            AutoMem should not be described as "best memory system" or a state-of-the-art winner from these rows. External comparisons need apples-to-apples reruns with current systems, judge policies, dataset versions, and scale settings.
+          </div>
+        </div>
+
+        <div class="space-y-8">
+          <div class="overflow-x-auto border-2 border-lab-text rounded-lg bg-lab-bg shadow-hard">
+            <table class="w-full text-sm">
+              <caption class="text-left px-4 py-3 font-bold border-b border-lab-border">Verification canaries</caption>
+              <thead>
+                <tr class="border-b border-lab-border text-left text-lab-muted">
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Benchmark</th>
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Scope</th>
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Score</th>
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {canaryClaims.map((claim) => (
+                  <tr class="border-b border-lab-border/60 last:border-b-0">
+                    <td class="p-4 font-bold">{claim.benchmark}</td>
+                    <td class="p-4 text-lab-muted">{claim.scope}</td>
+                    <td class="p-4 text-lab-accent whitespace-nowrap">{claim.score}</td>
+                    <td class="p-4"><span class={`inline-flex border px-2 py-1 rounded text-xs ${toneClasses(claim.status)}`}>{claim.statusLabel}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="overflow-x-auto border-2 border-lab-text rounded-lg bg-lab-bg shadow-hard">
+            <table class="w-full text-sm">
+              <caption class="text-left px-4 py-3 font-bold border-b border-lab-border">Exploratory signals</caption>
+              <thead>
+                <tr class="border-b border-lab-border text-left text-lab-muted">
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Benchmark</th>
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Scope</th>
+                  <th class="p-4 font-normal uppercase tracking-widest text-xs">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {supplementalClaims.map((claim) => (
+                  <tr class="border-b border-lab-border/60 last:border-b-0">
+                    <td class="p-4 font-bold">{claim.benchmark}</td>
+                    <td class="p-4 text-lab-muted">{claim.scope}</td>
+                    <td class="p-4 text-lab-muted">{claim.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 bg-lab-bg">
+      <div class="comment-header">:: REPRODUCE</div>
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <h2 class="text-3xl font-bold mb-4">Reproduction trail</h2>
+          <p class="text-lab-muted leading-relaxed max-w-3xl">
+            The website consumes <code>artifact-manifest.json</code> from the main repository publication bundle.
+            Detailed result JSON files may remain generated and gitignored; the durable claim source is the committed experiment log plus the publication bundle.
+          </p>
+
+          <div class="mt-8 grid sm:grid-cols-3 gap-4">
+            <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">Experiment Log</a>
+            <a href={benchmarkData.links.judgePolicy} target="_blank" rel="noopener noreferrer" class="btn-lab">Judge Policy</a>
+            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab">Bundle</a>
+          </div>
+        </div>
+
+        <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
+          <h3 class="font-bold mb-4">Not yet canonical</h3>
+          <ul class="space-y-3 text-sm text-lab-muted">
+            {benchmarkData.notYetRun.map((item) => (
+              <li class="flex gap-3">
+                <span class="text-lab-secondary">[ ]</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

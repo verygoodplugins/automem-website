@@ -1,7 +1,9 @@
 ---
 import { getEmDashCollection } from 'emdash';
+import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
+import { publicBlogSlug } from '../../lib/blog-slugs';
 import '../../styles/global.css';
 
 // CDN caching: 1h fresh, 24h stale-while-revalidate
@@ -16,10 +18,25 @@ if (error) {
   console.error("Failed to load posts:", error);
 }
 
+const contentPosts = await getCollection('blog', ({ data }) => !data.draft);
+const fallbackPosts = contentPosts
+  .map((entry) => ({
+    slug: publicBlogSlug(entry),
+    data: {
+      title: entry.data.title,
+      description: entry.data.description,
+      publishedAt: entry.data.date,
+      createdAt: entry.data.date,
+      tags: entry.data.tags ?? [],
+    },
+  }))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+const displayPosts = posts.length > 0 ? posts : fallbackPosts;
+
 // Group posts by year
-type Post = (typeof posts)[number];
+type Post = (typeof displayPosts)[number];
 const postsByYear: Record<number, Post[]> = {};
-posts.forEach(post => {
+displayPosts.forEach(post => {
   const date = post.data.publishedAt ?? post.data.createdAt;
   if (!date) return;
   const year = date.getFullYear();
@@ -99,7 +116,7 @@ const years = Object.keys(postsByYear)
         </section>
       ))}
 
-      {posts.length === 0 && (
+      {displayPosts.length === 0 && (
         <div class="text-center py-12 bg-lab-surface rounded-lg border-2 border-lab-border">
           <p class="text-lab-muted text-lg font-mono">// No posts yet. Check back soon.</p>
         </div>

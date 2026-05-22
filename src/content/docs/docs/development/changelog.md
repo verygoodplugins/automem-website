@@ -110,10 +110,10 @@ All MCP tools now return `structuredContent` with `outputSchema`, aligning recal
 
 Exposed `expand_entities`/`relations`, `auto_decompose`, context-aware boosts, and full tool metadata in the MCP client. Simplified Claude Code integration.
 
-### 0.9.1 · Entity Expansion + SOTA
+### 0.9.1 · Entity Expansion + Benchmarking
 **2025-12-02**
 
-Added `expand_entities`/`entity_expansion` params for graph hops and hit 90.53% on LoCoMo-10 (multi-hop up to 50%).
+Added `expand_entities`/`entity_expansion` params for graph hops and recorded an early LoCoMo-10 benchmark milestone. Current benchmark claims are maintained on the generated [Benchmarks](/benchmarks/) page.
 
 ---
 

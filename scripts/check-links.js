@@ -9,41 +9,96 @@
 import { LinkChecker } from 'linkinator';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import http from 'http';
 import net from 'net';
 import fs from 'fs';
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const distDir = join(__dirname, '../dist');
 
-// Check if dist exists
-if (!fs.existsSync(distDir)) {
-  console.error('❌ dist/ directory not found. Run `npm run build` first.');
-  process.exit(1);
+export function getServeDir(projectRoot = join(__dirname, '..')) {
+  const distDir = join(projectRoot, 'dist');
+  const cloudflareClientDir = join(distDir, 'client');
+
+  if (
+    fs.existsSync(cloudflareClientDir) &&
+    fs.existsSync(join(cloudflareClientDir, 'index.html'))
+  ) {
+    return cloudflareClientDir;
+  }
+
+  return distDir;
+}
+
+export function getServeCommand(serveDir, port) {
+  if (fs.existsSync(join(serveDir, '_worker.js'))) {
+    return {
+      label: 'Cloudflare Pages worker',
+      command: 'npx',
+      args: ['wrangler', 'pages', 'dev', serveDir, '--port', String(port)],
+    };
+  }
+
+  return {
+    label: 'static files',
+    command: 'npx',
+    args: ['serve', serveDir, '-l', String(port)],
+  };
 }
 
 // Find an available port
 function findPort(startPort = 3456) {
   return new Promise((resolve) => {
     const server = net.createServer();
-    server.listen(startPort, () => {
+    server.listen(startPort, '127.0.0.1', () => {
       server.close(() => resolve(startPort));
     });
     server.on('error', () => resolve(findPort(startPort + 1)));
   });
 }
 
+function killProcessesOnPort(port) {
+  const result = spawnSync('lsof', [`-tiTCP:${port}`, '-sTCP:LISTEN'], {
+    encoding: 'utf8',
+  });
+
+  if (result.error || result.status !== 0 || !result.stdout?.trim()) {
+    return;
+  }
+
+  for (const pid of result.stdout.trim().split(/\s+/)) {
+    try {
+      process.kill(Number(pid), 'SIGKILL');
+    } catch {
+      // Ignore cleanup errors; the primary process may have exited already.
+    }
+  }
+}
+
 // Wait for server to be ready
-async function waitForServer(port, maxAttempts = 20) {
+async function waitForServer(port, maxAttempts = 60) {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       await new Promise((resolve, reject) => {
-        const socket = new net.Socket();
-        socket.setTimeout(500);
-        socket.on('connect', () => { socket.destroy(); resolve(); });
-        socket.on('error', reject);
-        socket.on('timeout', () => { socket.destroy(); reject(); });
-        socket.connect(port, 'localhost');
+        const request = http.get({
+          hostname: 'localhost',
+          port,
+          path: '/',
+          timeout: 1000,
+        }, (response) => {
+          response.resume();
+          if (response.statusCode && response.statusCode < 500) {
+            resolve();
+          } else {
+            reject(new Error(`HTTP ${response.statusCode}`));
+          }
+        });
+
+        request.on('error', reject);
+        request.on('timeout', () => {
+          request.destroy();
+          reject(new Error('HTTP readiness timed out'));
+        });
       });
       return true;
     } catch {
@@ -54,14 +109,26 @@ async function waitForServer(port, maxAttempts = 20) {
 }
 
 async function main() {
-  const port = await findPort();
-  console.log(`🚀 Starting server on port ${port}...`);
+  const projectRoot = join(__dirname, '..');
+  const serveDir = getServeDir(projectRoot);
 
-  // Start serve in the background (no -s flag so 404s are real 404s)
-  const server = spawn('npx', ['serve', 'dist', '-l', String(port)], {
-    cwd: join(__dirname, '..'),
+  // Check if dist exists
+  if (!fs.existsSync(serveDir)) {
+    console.error('❌ dist/ directory not found. Run `npm run build` first.');
+    process.exit(1);
+  }
+
+  const port = await findPort();
+  const serveCommand = getServeCommand(serveDir, port);
+  console.log(`🚀 Starting server on port ${port}...`);
+  console.log(`📁 Serving ${serveDir} via ${serveCommand.label}`);
+
+  // Start the built site in the background. Cloudflare adapter builds need the
+  // Pages worker for dynamic routes; static builds can use serve directly.
+  const server = spawn(serveCommand.command, serveCommand.args, {
+    cwd: projectRoot,
     stdio: ['ignore', 'pipe', 'pipe'],
-    detached: true
+    detached: false
   });
 
   let serverPid = server.pid;
@@ -71,6 +138,12 @@ async function main() {
   server.on('error', (err) => {
     spawnError = err;
     console.error('❌ Failed to spawn server:', err);
+  });
+  server.stdout?.on('data', (chunk) => {
+    if (process.env.CHECK_LINKS_DEBUG) process.stdout.write(chunk);
+  });
+  server.stderr?.on('data', (chunk) => {
+    if (process.env.CHECK_LINKS_DEBUG) process.stderr.write(chunk);
   });
   
   try {
@@ -103,6 +176,8 @@ async function main() {
         'railway.com',
         'api.pirsch.io', 
         'echodash.com',  // Bot protection returns 403
+        'github.com',    // GitHub edit/source links often rate-limit CI
+        'automem.ai',    // Canonical/OG URLs point at production before deploy
         'localhost:4321', // Dev server references
         'localhost:4322',
         'localhost:4323',
@@ -128,15 +203,18 @@ async function main() {
     // Only kill if we have a valid PID
     if (serverPid && typeof serverPid === 'number') {
       try { 
-        process.kill(-serverPid); 
+        server.kill('SIGTERM');
       } catch (killErr) {
         // Ignore kill errors in cleanup
       }
     }
+    killProcessesOnPort(port);
   }
 }
 
-main().catch((err) => {
-  console.error('Error:', err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Error:', err);
+    process.exit(1);
+  });
+}
