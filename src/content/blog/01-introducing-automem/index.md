@@ -68,7 +68,7 @@ Not "blazingly fast" or "game-changing" — just solid infrastructure that works
 
 Stop reading. Start deploying:
 
-1️⃣ **Click this:** [Deploy on Railway](https://railway.com/deploy/automem-ai-memory-service?utm_source=automem.ai&utm_medium=blog&utm_campaign=intro-post)
+1️⃣ **Click this:** [Deploy on Railway](https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 2️⃣ **Add your OpenAI key** (for embeddings)
 
