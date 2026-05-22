@@ -221,8 +221,6 @@ Configure authentication tokens via environment variables loaded in this order:
 2. `.env` file in project root
 3. `~/.config/automem/.env` (user-specific configuration)
 
-The variables `API_TOKEN` and `ADMIN_TOKEN` are accepted as backward-compatible aliases for `AUTOMEM_API_TOKEN` and `ADMIN_API_TOKEN` respectively.
-
 ### Token Generation
 
 **Railway (Automatic):**
@@ -302,7 +300,7 @@ Desktop tools like Claude Desktop and Cursor IDE use the NPM package, which requ
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-service.railway.app",
+        "AUTOMEM_API_URL": "https://your-service.railway.app",
         "AUTOMEM_API_KEY": "YOUR_API_TOKEN"
       }
     }
