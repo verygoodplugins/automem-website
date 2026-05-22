@@ -88,7 +88,7 @@ The health endpoint provides real-time service status, database connectivity che
   "falkordb": "connected",
   "qdrant": "connected",
   "memory_count": 884,
-  "qdrant_count": 884,
+  "vector_count": 884,
   "graph": "memories",
   "timestamp": "2025-10-20T14:30:00Z",
   "enrichment": {
@@ -154,13 +154,13 @@ sequenceDiagram
 
     Client->>API: GET /health
 
-    API->>Falkor: Test connection<br/>redis_ping()
+    API->>Falkor: Test connection<br/>get_memory_graph()
     alt FalkorDB Available
-        Falkor-->>API: PONG
+        Falkor-->>API: graph handle
         API->>API: Set falkordb: connected
     else FalkorDB Unavailable
-        Falkor-->>API: Exception
-        API->>API: Set falkordb: unavailable
+        Falkor-->>API: None
+        API->>API: Set falkordb: disconnected
         API-->>Client: 503 Service Unavailable
     end
 
@@ -466,7 +466,7 @@ flowchart TD
 
     Monitor --> Count["Count memories:<br/>FalkorDB vs Qdrant"]
 
-    Count --> Calc["Calculate drift %:<br/>(|falkor - qdrant| / qdrant) * 100"]
+    Count --> Calc["Calculate drift %:<br/>abs(falkor - qdrant) / max(falkor, qdrant) * 100"]
 
     Calc --> Check{"Drift level?"}
 
@@ -488,7 +488,7 @@ Deploy as a dedicated Railway service for continuous monitoring.
 **Environment Variables for health-monitor service:**
 
 ```
-AUTOMEM_URL=http://memory-service.railway.internal:8001
+AUTOMEM_API_URL=http://memory-service.railway.internal:8001
 HEALTH_MONITOR_WEBHOOK=https://hooks.slack.com/...
 HEALTH_MONITOR_AUTO_RECOVER=false
 HEALTH_MONITOR_CHECK_INTERVAL=300
