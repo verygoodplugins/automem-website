@@ -86,7 +86,7 @@ export default defineConfig({
           label: 'Getting Started',
           items: [
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
-            { label: 'Quick Start (Railway)', slug: 'docs/getting-started/quick-start' },
+            { label: 'Quick Start', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
             { label: 'Environment Variables', slug: 'docs/getting-started/environment-variables' },
           ],
@@ -159,6 +159,7 @@ export default defineConfig({
         {
           label: 'Deployment',
           items: [
+            { label: 'InstaPods', slug: 'docs/deployment/instapods' },
             { label: 'Railway', slug: 'docs/deployment/railway' },
             { label: 'Docker', slug: 'docs/deployment/docker' },
           ],

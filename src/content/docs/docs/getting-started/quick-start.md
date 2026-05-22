@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Deploy AutoMem on Railway and connect your first AI platform in 5 minutes.
+description: Deploy AutoMem and connect your first AI platform in 5 minutes.
 sidebar:
   order: 2
 ---
@@ -17,7 +17,10 @@ The AutoMem server is a Python/Flask service that stores and retrieves memories.
 graph TB
     Start["Choose Installation Method"]
 
-    Start --> Q1{"Multi-device access<br/>or team sharing?"}
+    Start --> Q0{"Want hosted AutoMem<br/>with generated MCP config?"}
+    Q0 -->|Yes| InstaPods["InstaPods Hosted Pod<br/>About 30 seconds"]
+    Q0 -->|No| Q1{"Multi-device access<br/>or team sharing?"}
+
     Q1 -->|Yes| Railway["Railway Cloud Deploy<br/>One-click or manual"]
     Q1 -->|No| Q2{"Full local stack<br/>with dependencies?"}
 
@@ -27,25 +30,47 @@ graph TB
     Q3 -->|Yes| Bare["Bare Metal Python<br/>Direct app.py execution"]
     Q3 -->|No| Docker
 
-    Railway --> RNote["Always-on availability<br/>HTTPS public endpoint<br/>~$0.50/month after trial<br/>Persistent volumes"]
+    InstaPods --> INote["HTTPS included<br/>$15/mo flat AutoMem plan<br/>SSH access<br/>Generated MCP config"]
+    Railway --> RNote["Always-on availability<br/>HTTPS public endpoint<br/>Usage-based billing<br/>Persistent volumes"]
     Docker --> DNote["Complete isolation<br/>One-command startup<br/>Development-ready<br/>No cloud costs"]
     Bare --> BNote["Fastest iteration<br/>Minimal resource usage<br/>Direct debugging<br/>Requires external DB"]
 ```
 
 **Feature comparison:**
 
-| Feature | Railway | Docker Compose | Bare Metal |
-|---|---|---|---|
-| Setup time | 60 seconds (one-click) | 5 minutes | 2 minutes |
-| External access | HTTPS domain | Local only | Local only |
-| Data persistence | Automatic volumes | Manual volumes | External DB dependent |
-| Cost | $0.50–5/month | Free | Free |
-| Use case | Production, collaboration | Full-stack development | API development |
-| Services included | `app.py`, FalkorDB, optional MCP SSE | `app.py`, FalkorDB, Qdrant | `app.py` only |
+| Feature | InstaPods | Railway | Docker Compose | Bare Metal |
+|---|---|---|---|---|
+| Setup time | About 30 seconds | 60 seconds (one-click) | 5 minutes | 2 minutes |
+| External access | HTTPS domain | HTTPS domain | Local only | Local only |
+| Data persistence | Hosted pod | Automatic volumes | Manual volumes | External DB dependent |
+| Cost | $15/mo flat | Usage-based | Free | Free |
+| Use case | Fast hosted AutoMem | Production, collaboration | Full-stack development | API development |
+| Services included | AutoMem pod + generated MCP config | `app.py`, FalkorDB, optional MCP SSE | `app.py`, FalkorDB, Qdrant | `app.py` only |
 
 ---
 
-### Option A: Railway One-Click Deploy (Recommended)
+### Option A: InstaPods Hosted Deploy (Recommended)
+
+InstaPods is the fastest path to a hosted AutoMem instance. It deploys AutoMem in about 30 seconds and gives you HTTPS, SSH access, custom domains, and generated MCP config.
+
+**Steps:**
+
+1. Open the AutoMem app:
+
+   <a href="https://instapods.com/apps/automem/?ref=jack" target="_blank" rel="noopener noreferrer" class="btn-lab-accent shadow-hard not-content" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #1a1a1a;">
+     Deploy on InstaPods
+   </a>
+
+2. Choose the Grow plan for the flat `$15/mo` AutoMem setup.
+3. Deploy the pod and wait for the service to come online.
+4. Copy the generated MCP configuration.
+5. Paste it into your MCP-compatible client.
+
+See [InstaPods Deployment](/docs/deployment/instapods/) for the full setup and verification flow.
+
+---
+
+### Option B: Railway One-Click Deploy
 
 Railway is the fastest path to a production-ready AutoMem instance with automatic persistence, HTTPS, and cross-device access.
 
@@ -127,7 +152,7 @@ The `PORT=8001` variable is mandatory for `memory-service`. Without it, Flask de
 
 ---
 
-### Option B: Docker Compose (Local)
+### Option C: Docker Compose (Local)
 
 For local development with full stack control and no cloud costs.
 
@@ -180,7 +205,7 @@ Services start on:
 
 ---
 
-### Option C: Bare Metal Python (Advanced)
+### Option D: Bare Metal Python (Advanced)
 
 For development without Docker or integration with existing infrastructure.
 
@@ -228,7 +253,7 @@ Before installing the MCP client, verify the AutoMem service is running correctl
 ### Health Check
 
 ```bash
-# Railway
+# InstaPods or Railway
 curl https://your-project.up.railway.app/health \
   -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
 

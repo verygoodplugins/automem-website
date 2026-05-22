@@ -61,7 +61,20 @@ This launches: Flask service on `:8001`, FalkorDB on `:6379`, Qdrant on `:6333`,
 
 Endpoint configuration: `AUTOMEM_API_URL=http://127.0.0.1:8001` (no API key required in development mode)
 
-**Option 2: Railway Cloud**
+**Option 2: InstaPods Hosted**
+
+Best for: fastest hosted setup, individual production use, generated MCP configuration.
+
+1. Open the [AutoMem app on InstaPods](https://instapods.com/apps/automem/?ref=jack)
+2. Deploy the AutoMem pod
+3. Copy the generated MCP config
+4. Note the HTTPS endpoint and API token
+
+Endpoint configuration: `AUTOMEM_API_URL=<your-instapods-url>`, `AUTOMEM_API_KEY=<generated-token>`
+
+Typical cost: `$15/mo flat` for the AutoMem plan.
+
+**Option 3: Railway Cloud**
 
 Best for: production use, multi-device access, team collaboration, always-on availability.
 
@@ -74,7 +87,7 @@ Endpoint configuration: `AUTOMEM_API_URL=https://your-project.up.railway.app`, `
 
 Typical costs: development ~$0.50-1.00/month, production ~$5-10/month.
 
-**Option 3: Self-Hosted Production**
+**Option 4: Self-Hosted Production**
 
 Best for: enterprise deployments, custom infrastructure, air-gapped environments.
 
@@ -90,6 +103,7 @@ Best for: enterprise deployments, custom infrastructure, air-gapped environments
 | Deployment | Ports Used | Accessibility |
 |---|---|---|
 | **Local** | `8001` (AutoMem API) | Localhost only |
+| **InstaPods** | `443` (HTTPS) | Internet |
 | **Railway** | `443` (HTTPS) | Internet |
 | **Self-hosted** | `8001` or custom | Depends on configuration |
 
@@ -127,7 +141,7 @@ Before installation, determine where these files will be located:
 - Terminal access with write permissions
 
 **AutoMem Service**
-- AutoMem service deployed (local, Railway, or self-hosted)
+- AutoMem service deployed (local, InstaPods, Railway, or self-hosted)
 - Service is running and accessible
 - Health endpoint responds: `curl http://your-endpoint/health`
 - Note your `AUTOMEM_ENDPOINT` URL
