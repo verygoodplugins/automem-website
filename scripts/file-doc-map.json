@@ -75,6 +75,9 @@
     "railway.json": ["deployment/railway"],
     "railway.toml": ["deployment/railway"],
     "README.md": ["overview", "getting-started/introduction"],
+    "benchmarks/EXPERIMENT_LOG.md": ["site:/benchmarks", "overview", "core-concepts/hybrid-search", "research"],
+    "benchmarks/publication/**": ["site:/benchmarks", "overview", "core-concepts/hybrid-search", "research"],
+    "docs/BENCHMARK_JUDGE_POLICY.md": ["site:/benchmarks", "research", "development/testing"],
 
     "scripts/health_monitor.py": ["operations/health"],
     "scripts/backup_automem.py": ["operations/backup"],

@@ -1,6 +1,6 @@
 ---
 title: "We Found Bugs in Our Own Benchmarks (The Real Numbers Are Better)"
-description: "How we built rigorous evaluation infrastructure, found critical scoring bugs, and established honest baselines that beat CORE SOTA."
+description: "How we built rigorous evaluation infrastructure, found critical scoring bugs, and established honest benchmark baselines."
 date: "2026-03-11"
 tags:
   - benchmarking
@@ -8,7 +8,9 @@ tags:
   - open-source
 ---
 
-Last month I told you we scored 90.53% on LoCoMo. That number was wrong.
+> **Editor note, May 2026:** This post documents a March benchmark postmortem. Current benchmark claims now live on the generated [Benchmarks](/benchmarks/) page, sourced from the main `automem` repository publication bundle. Treat the figures below as historical methodology context, not current marketing claims.
+
+Last month I told you we had a higher LoCoMo score than our corrected evaluator supported. That number was wrong.
 
 Not in the direction you'd expect, though. Let me explain.
 
@@ -26,7 +28,7 @@ The problem: memory systems fail in ways that are invisible until they're catast
 4. **Open Domain** — General knowledge questions with conversational context.
 5. **Complex Reasoning** — Nuanced questions requiring inference across the full conversation.
 
-The previous state-of-the-art was **CORE at 88.24%**. That was our target.
+The public academic leaderboard was our comparison target, but we now avoid using external leaderboard language unless we have apples-to-apples reruns under the same current harness.
 
 ## What We Found When We Looked Harder
 
@@ -74,14 +76,12 @@ Here's where we actually stand, with a corrected evaluator and honest methodolog
 
 | Category | Score | Count |
 |---|---|---|
-| **Overall (all cats, w/ judge)** | **87.56%** | 1739/1986 |
+| **Overall (all cats, w/ judge)** | **historical March full-run score** | 1739/1986 |
 | Complex Reasoning (w/ judge) | 95.74% | 427/446 |
 
 The full run includes all five categories across all 10 conversations. The mini subset gives us fast iteration; the full run is the official number.
 
-**CORE SOTA: 88.24%.** AutoMem beats it by ~1 percentage point on comparable categories.
-
-The old 90.53% number was inflated by the fake Category 5 score. The new number is lower, but it's *real*. And the temporal score going from 22% to 92% means the system is dramatically better at time-based recall than we thought.
+The earlier inflated number came from the fake Category 5 score. The corrected number was lower, but it was *real*. And the temporal score going from 22% to 92% means the system was dramatically better at time-based recall than we thought.
 
 I'd rather publish an honest 89% than a bullshit 91%.
 

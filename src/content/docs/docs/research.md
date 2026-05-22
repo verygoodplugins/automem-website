@@ -79,7 +79,7 @@ graph TB
 
 ### HippoRAG 2: Graph-Vector Hybrid Architecture
 
-**Paper**: "HippoRAG 2: Bridging Vector Retrieval and Knowledge Graphs for Long-Context Understanding" (Ohio State, January 2025)
+**Paper**: "HippoRAG 2: Bridging Vector Retrieval and Knowledge Graphs for Long-Context Understanding" (Ohio State, 2025)
 
 **Key Finding**: Graph-vector hybrid achieves **7% better associative memory** than pure vector RAG, approaching human long-term memory performance.
 
@@ -236,17 +236,14 @@ Pure vector databases cannot represent these relationships:
 
 ## Performance Validation
 
-AutoMem includes benchmark testing against the LoCoMo dataset (ACL 2024), a standardized long-term memory benchmark:
+AutoMem includes benchmark testing against LoCoMo (ACL 2024) and LongMemEval (ICLR 2025). Current public claims are sourced from the main repository's committed publication bundle and rendered on the [Benchmarks](/benchmarks/) page.
 
-**Benchmark Results** (as of January 2025):
+| Benchmark | Scope | Score | Retrieval | Claim status |
+|---|---|---|---|---|
+| LongMemEval full | 500 questions | **87.00% (435/500)** | recall@5 **97.00% (485/500)** | Canonical |
+| LoCoMo full | 10 conversations, 1,986 questions | **84.74% (1683/1986)** | -- | Canonical |
 
-| Metric | AutoMem Score | Baseline (Vector-only) | Improvement |
-|---|---|---|---|
-| Exact match rate | 73.2% | 68.5% | +4.7% |
-| Semantic similarity | 0.847 | 0.791 | +7.1% |
-| Avg retrieval time | 127ms | 145ms | 12% faster |
-
-The 7% semantic similarity improvement aligns with HippoRAG 2's published findings.
+These are reproducibility and systems claims, not state-of-the-art claims. Exploratory BEAM, Writ, and hook-replay signals remain labeled separately until promoted by the official benchmark flow.
 
 ---
 
@@ -254,11 +251,12 @@ The 7% semantic similarity improvement aligns with HippoRAG 2's published findin
 
 Benchmarking a memory system is harder than benchmarking retrieval. Temporal reasoning, episodic questions, and adversarial phrasing all break assumptions that single-turn RAG evals get away with. AutoMem's eval infrastructure is deliberately separate from the production code and documented publicly so the numbers above can be reproduced, challenged, and improved on:
 
-- **[automem-evals](https://github.com/verygoodplugins/automem-evals)** — the standalone evaluation lab. Runs LoCoMo and other harnesses against AutoMem branches and produces per-experiment postmortems.
+- **[Benchmarks](/benchmarks/)** — the public benchmark page generated from the canonical publication bundle.
+- **[automem-evals](https://github.com/verygoodplugins/automem-evals)** — the standalone exploratory evaluation lab. It is useful for diagnostics, but official LoCoMo and LongMemEval claims live in the main `automem` repository.
 - **[docs/EVALS_CONTRACT.md](https://github.com/verygoodplugins/automem/blob/main/docs/EVALS_CONTRACT.md)** — the contract the server exposes to eval harnesses. Defines the endpoints, payload shapes, and determinism guarantees that make reproducible runs possible.
 - **Opt-in LoCoMo cat5 judge** — category 5 (adversarial temporal reasoning) questions are scored by an LLM judge behind a feature flag. Off by default to keep free/fast eval runs cheap; opt in when you need the full benchmark.
 
-The [blog post on benchmarking honesty](/blog/12-benchmarking-honesty/) walks through a real postmortem where this infrastructure caught an evaluator bug that had been inflating scores — the kind of failure that is cheap to find when the eval layer is accessible and expensive when it's buried inside the server.
+The [blog post on benchmarking honesty](/blog/benchmarking-honesty/) walks through a real postmortem where this infrastructure caught an evaluator bug that had been inflating scores — the kind of failure that is cheap to find when the eval layer is accessible and expensive when it's buried inside the server.
 
 ---
 

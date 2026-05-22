@@ -1,21 +1,31 @@
 ---
 import { getEmDashEntry } from 'emdash';
 import { PortableText } from 'emdash/ui';
+import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import AuthorBio from '../../components/AuthorBio.astro';
 import BlogPostingSchema from '../../components/schemas/BlogPostingSchema.astro';
 import SEOMeta from '../../components/SEOMeta.astro';
+import { publicBlogSlug } from '../../lib/blog-slugs';
 import '../../styles/global.css';
 
 const { slug } = Astro.params;
 const { entry: post, isPreview, error } = await getEmDashEntry("posts", slug!);
 
-if (error) {
+const contentPosts = await getCollection('blog', ({ data }) => !data.draft);
+const contentPost = post
+  ? undefined
+  : contentPosts.find((entry) => {
+      const publicSlug = publicBlogSlug(entry);
+      return publicSlug === slug || entry.slug === slug || entry.id === slug;
+    });
+
+if (error && !contentPost) {
   console.error("Failed to load post:", error);
 }
 
-if (!post) {
+if (!post && !contentPost) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
@@ -24,7 +34,14 @@ if (!isPreview) {
   Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 }
 
-const date = post.data.publishedAt ?? post.data.createdAt;
+const renderedContentPost = contentPost ? await render(contentPost) : undefined;
+const ContentPost = renderedContentPost?.Content;
+const title = post?.data.title ?? contentPost!.data.title;
+const description = post?.data.description ?? contentPost!.data.description;
+const tags = post?.data.tags ?? contentPost?.data.tags ?? [];
+const date = post
+  ? post.data.publishedAt ?? post.data.createdAt
+  : contentPost!.data.date;
 const formattedDate = date?.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
@@ -32,21 +49,21 @@ const formattedDate = date?.toLocaleDateString('en-US', {
 }) ?? '';
 ---
 
-<Layout title={`${post.data.title} - AutoMem Blog`} description={post.data.description ?? ''}>
+<Layout title={`${title} - AutoMem Blog`} description={description ?? ''}>
   <SEOMeta
-    title={`${post.data.title} - AutoMem Blog`}
-    description={post.data.description ?? ''}
+    title={`${title} - AutoMem Blog`}
+    description={description ?? ''}
     url={`/blog/${slug}`}
     type="article"
     publishedTime={date?.toISOString()}
-    tags={[]}
+    tags={tags}
   />
   <BlogPostingSchema
-    title={post.data.title}
-    description={post.data.description ?? ''}
+    title={title}
+    description={description ?? ''}
     datePublished={date ?? new Date()}
     slug={slug!}
-    tags={[]}
+    tags={tags}
   />
   <Navigation currentPath="/blog" />
 
@@ -55,7 +72,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
       <!-- Back to Blog -->
       <a
         href="/blog"
-        class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent transition mb-8 font-mono text-sm"
+        class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent-text transition mb-8 font-mono text-sm"
       >
         ← Back to Blog
       </a>
@@ -64,18 +81,18 @@ const formattedDate = date?.toLocaleDateString('en-US', {
       <header class="mb-10 sm:mb-12 bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text shadow-hard min-w-0">
         <div class="comment-header mb-4">:: POST_CONTENT</div>
         <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight break-words">
-          {post.data.title}
+          {title}
         </h1>
         <p class="text-base sm:text-xl text-lab-muted mb-6 font-mono border-l-4 border-lab-accent pl-4 break-words">
-          {post.data.description}
+          {description}
         </p>
         <div class="flex flex-wrap items-center gap-4 text-sm">
           <time class="text-lab-muted font-mono bg-lab-bg px-2 py-1 border border-lab-border">
             {formattedDate}
           </time>
-          {post.data.tags && post.data.tags.length > 0 && (
+          {tags.length > 0 && (
             <div class="flex flex-wrap gap-2">
-              {post.data.tags.map(tag => (
+              {tags.map(tag => (
                 <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
                   {tag}
                 </span>
@@ -87,7 +104,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
 
       <!-- Post Content -->
       <div class="prose prose-lg max-w-none bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text min-w-0">
-        <PortableText value={post.data.content} />
+        {post ? <PortableText value={post.data.content} /> : ContentPost && <ContentPost />}
       </div>
 
       <!-- Author Bio -->
@@ -98,13 +115,13 @@ const formattedDate = date?.toLocaleDateString('en-US', {
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-sm">
           <a
             href="/blog"
-            class="text-lab-accent hover:underline"
+            class="text-lab-accent-text hover:underline"
           >
             ← All Posts
           </a>
           <a
             href="/"
-            class="text-lab-accent hover:underline"
+            class="text-lab-accent-text hover:underline"
           >
             Return Home →
           </a>
@@ -146,7 +163,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
   }
 
   .prose :global(a) {
-    @apply text-lab-accent underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
+    @apply text-lab-accent-text underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
   }
 
   .prose :global(ul),
@@ -163,7 +180,7 @@ const formattedDate = date?.toLocaleDateString('en-US', {
   }
 
   .prose :global(code) {
-    @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent;
+    @apply bg-lab-bg px-1.5 py-0.5 text-sm border border-lab-border text-lab-accent-text;
   }
 
   .prose :global(pre) {

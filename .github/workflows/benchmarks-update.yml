@@ -1,0 +1,100 @@
+name: Update Benchmarks
+
+on:
+  repository_dispatch:
+    types: [benchmarks-update]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "automem commit SHA, branch, or tag to sync"
+        required: false
+      reason:
+        description: "Why benchmark data needs updating"
+        required: false
+
+jobs:
+  update-benchmarks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve source ref
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          SOURCE_REPO="verygoodplugins/automem"
+          SOURCE_REF="${{ github.event.client_payload.source_sha || github.event.inputs.source_sha || 'main' }}"
+          REASON="${{ github.event.client_payload.reason || github.event.inputs.reason || 'Benchmark update' }}"
+          FULL_SHA=$(gh api "repos/$SOURCE_REPO/commits/$SOURCE_REF" -q '.sha')
+          SHORT_SHA="${FULL_SHA:0:7}"
+
+          echo "source_repo=$SOURCE_REPO" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$FULL_SHA" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout automem source
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ steps.resolve.outputs.source_repo }}
+          ref: ${{ steps.resolve.outputs.source_sha }}
+          path: .source-repo
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync benchmark data
+        run: npm run sync-benchmarks -- --source .source-repo
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/data/benchmarks.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create benchmark update PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          SHORT_SHA: ${{ steps.resolve.outputs.short_sha }}
+          FULL_SHA: ${{ steps.resolve.outputs.source_sha }}
+          REASON: ${{ steps.resolve.outputs.reason }}
+        run: |
+          BRANCH="docs/benchmarks-$SHORT_SHA"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/data/benchmarks.json
+          git commit -m "docs(benchmarks): update data from automem@$SHORT_SHA"
+          git push --set-upstream origin "$BRANCH"
+          gh pr create \
+            --title "docs(benchmarks): update benchmark data from automem@$SHORT_SHA" \
+            --body "## Summary
+
+- Syncs benchmark data from verygoodplugins/automem@$FULL_SHA
+- Source trigger: $REASON
+- Verified with npm run build
+
+## Breaking changes
+
+None." \
+            --base main \
+            --head "$BRANCH"

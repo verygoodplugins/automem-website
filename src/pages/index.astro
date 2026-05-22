@@ -121,7 +121,7 @@ const timelineEntries = [
             class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[0.9]"
           >
             Recall is<br />
-            <span class="text-lab-accent">Power.</span>
+            <span class="text-lab-accent-text">Power.</span>
           </h1>
 
           <div
@@ -252,7 +252,7 @@ const timelineEntries = [
               Sub-50ms latency. Your agent knows what you know before you finish
               typing the prompt.
             </p>
-            <div class="mt-4 font-mono text-xs text-lab-accent">>> 48ms</div>
+            <div class="mt-4 font-mono text-xs text-lab-accent-text">>> 48ms</div>
           </div>
         </div>
       </div>
@@ -293,7 +293,7 @@ const timelineEntries = [
               class="font-mono text-sm text-lab-muted text-right w-28 pt-1 hidden md:block"
             >
               {entry.pending ? (
-                <span class="text-lab-accent font-bold">{entry.date}</span>
+                <span class="text-lab-accent-text font-bold">{entry.date}</span>
               ) : (
                 <>{entry.date}<br />{entry.time}</>
               )}
@@ -302,13 +302,13 @@ const timelineEntries = [
               <div class={`timeline-dot ${entry.pending ? 'pending' : ''}`}></div>
               <div class="md:hidden text-xs font-mono text-lab-muted mb-1">
                 {entry.pending ? (
-                  <span class="text-lab-accent font-bold">{entry.date}</span>
+                  <span class="text-lab-accent-text font-bold">{entry.date}</span>
                 ) : (
                   <>{entry.date} · {entry.time}</>
                 )}
               </div>
               <h3 class="text-xl font-bold">
-                {entry.pending && <span class="text-lab-accent">[PENDING] </span>}
+                {entry.pending && <span class="text-lab-accent-text">[PENDING] </span>}
                 {entry.title}
               </h3>
               <p class="mt-2 text-lab-text/80 max-w-xl">{entry.description}</p>
@@ -321,7 +321,7 @@ const timelineEntries = [
       </div>
 
       <div class="text-center mt-8">
-        <a href="/docs/development/changelog/" class="inline-flex items-center gap-2 font-mono text-sm text-lab-muted hover:text-lab-accent transition-colors">
+        <a href="/docs/development/changelog/" class="inline-flex items-center gap-2 font-mono text-sm text-lab-muted hover:text-lab-accent-text transition-colors">
           View full changelog <span aria-hidden="true">→</span>
         </a>
       </div>
@@ -384,7 +384,7 @@ const timelineEntries = [
               automatically.
             </p>
             <div
-              class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent"
+              class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent-text"
             >
               > Deploying to prod...<br />> Success (24s)
             </div>

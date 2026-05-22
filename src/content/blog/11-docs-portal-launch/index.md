@@ -13,6 +13,8 @@ That era is over.
 
 The **AutoMem docs portal** is live at [automem.ai/docs](/docs/), and it's not a FAQ page. It's 53 pages of production-grade technical documentation covering the full stack — from first deploy to benchmark internals.
 
+> **Editor note, May 2026:** Benchmark claims have been promoted to a generated [Benchmarks](/benchmarks/) page sourced from the main `automem` repository publication bundle. This launch post is historical context; use the benchmark page for current figures.
+
 ## How We Got Here
 
 When I built the first version of AutoMem, it came out of frustration. I was building AutoJack (my personal AI assistant) and kept hitting the same wall: every AI tool has amnesia. Claude forgets what I told it yesterday. Cursor doesn't know what I taught Claude. New tool? Starts from zero. Re-explain everything.
@@ -43,7 +45,7 @@ This is the section I wish existed when I was debugging my own system at 2am.
 
 - **[Memory Model](/docs/core-concepts/memory-model/)** — how memories are stored, scored, enriched, and retrieved. The importance scoring system, entity extraction, what `draft: true` actually means.
 
-- **[Hybrid Search](/docs/core-concepts/hybrid-search/)** — why we combine vector similarity + keyword matching + graph traversal instead of picking one. The 90.53% LoCoMo accuracy doesn't happen by accident.
+- **[Hybrid Search](/docs/core-concepts/hybrid-search/)** — why we combine vector similarity + keyword matching + graph traversal instead of picking one. The current LongMemEval and LoCoMo figures are tracked on the generated [Benchmarks](/benchmarks/) page.
 
 - **[Relationship Types](/docs/core-concepts/relationship-types/)** — all 11 authorable typed edges (`LEADS_TO`, `CONTRADICTS`, `EXEMPLIFIES`, etc.) with real examples of when to use each one. This is the part that makes AutoMem a knowledge graph instead of a fancy text file.
 
@@ -101,13 +103,11 @@ The [Memory Rules & Patterns](/docs/best-practices/memory-rules/) guide is basic
 
 ## The Number That Matters
 
-**90.53% on the LoCoMo benchmark** (ACL 2024). That's the standard academic benchmark for conversational AI memory systems.
+The current canonical benchmark surface is [automem.ai/benchmarks](/benchmarks/). It reports LongMemEval full and LoCoMo full from the main repository's publication bundle, with canary and exploratory rows clearly separated.
 
-CORE, the previous SOTA, sits at 88.24%. AutoMem beats it.
+The hardest parts of these benchmarks are temporal reasoning — "what did we talk about 3 weeks ago?" — and multi-hop inference — "based on what I know about X, what should I do about Y?" Those are exactly the failure modes that make AI memory frustrating in real use.
 
-The hardest part of that benchmark is temporal reasoning — "what did we talk about 3 weeks ago?" — and multi-hop inference — "based on what I know about X, what should I do about Y?" Those are exactly the failure modes that make AI memory frustrating in real use.
-
-We didn't optimize for the benchmark. We optimized for actual usefulness. The benchmark result is a side effect of getting the architecture right.
+We don't optimize for a single scoreboard. We optimize for actual usefulness, then keep the benchmark trail public enough to audit.
 
 ## What's Not There Yet
 

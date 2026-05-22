@@ -8,6 +8,9 @@
     "start": "astro dev",
     "build": "rm -rf dist .astro node_modules/.astro .wrangler/deploy && node scripts/build-pages.mjs",
     "preview": "astro preview",
+    "sync-benchmarks": "node scripts/sync-benchmarks.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:benchmarks": "node --test tests/benchmarks-lib.test.mjs tests/sync-benchmarks.test.mjs",
     "astro": "astro",
     "check-links": "node scripts/check-links.js",
     "postinstall": "patch-package"

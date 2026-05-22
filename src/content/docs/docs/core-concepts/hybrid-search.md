@@ -18,7 +18,7 @@ Key implementation files:
 - [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/tags.py) — Tag prefix utilities
 :::
 
-This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. The system implements a 9-component scoring algorithm that achieves **90.53% accuracy** on the LoCoMo benchmark.
+This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the publication bundle and methodology links.
 
 For information about the memory structure being searched, see [Memory Model](/docs/core-concepts/memory-model/). For details on relationship types used in graph traversal, see [Relationship Types](/docs/core-concepts/relationship-types/). For API usage, see [Recall Operations](/docs/reference/api/recall-operations/).
 
@@ -408,17 +408,16 @@ The recall endpoint orchestrates the entire hybrid search process:
 
 ## Performance Characteristics
 
-### Benchmark Results (LoCoMo ACL 2024)
+### Benchmark Results
 
-AutoMem achieves **90.53% accuracy** on the LoCoMo benchmark with the following category breakdown:
+AutoMem's current canonical results are sourced from the main repository's May 2026 publication bundle, not from hand-maintained prose. The headline results are:
 
-| Category | Accuracy | Notes |
-|---|---|---|
-| Complex Reasoning | 100.00% | Perfect score on multi-step queries |
-| Open Domain | 95.84% | General knowledge recall |
-| Temporal Understanding | 85.05% | Time-aware queries |
-| Single-hop Recall | 79.79% | Basic fact retrieval |
-| Multi-hop Reasoning | 50.00% | Bridge discovery (+12.5pp over baseline) |
+| Benchmark | Scope | Score | Retrieval | Notes |
+|---|---|---|---|---|
+| LongMemEval full | 500 questions | **87.00% (435/500)** | recall@5 **97.00% (485/500)** | `gpt-5-mini` answerer, pinned `gpt-5.4-mini-2026-03-17` judge |
+| LoCoMo full | 10 conversations, 1,986 questions | **84.74% (1683/1986)** | -- | Pinned `gpt-5.4-mini-2026-03-17` judge, 0 skips/errors |
+
+For category breakdowns, canary runs, exploratory signals, and reproduction links, see [Benchmarks](/benchmarks/).
 
 ### Query Response Times
 
