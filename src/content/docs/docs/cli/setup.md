@@ -70,7 +70,7 @@ Best for: fastest hosted setup, individual production use, generated MCP configu
 3. Copy the generated MCP config
 4. Note the HTTPS endpoint and API token
 
-Endpoint configuration: `AUTOMEM_API_URL=<your-instapods-url>`, `AUTOMEM_API_KEY=<generated-token>`
+Endpoint configuration: `AUTOMEM_API_URL=https://your-instapods-url` (base URL, no `/health` path), `AUTOMEM_API_KEY=<generated-token>`
 
 Typical cost: `$15/mo flat` for the AutoMem plan.
 

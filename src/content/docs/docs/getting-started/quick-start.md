@@ -254,7 +254,7 @@ Before installing the MCP client, verify the AutoMem service is running correctl
 
 ```bash
 # InstaPods or Railway
-curl https://your-project.up.railway.app/health \
+curl https://your-automem-url/health \
   -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
 
 # Docker Compose or local

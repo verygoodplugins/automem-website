@@ -11,6 +11,10 @@ test("homepage promotes InstaPods referral deployment and works-everywhere posit
   assert.match(homepage, /description=\{homepageDescription\}/);
   assert.match(homepage, /Claude, Cursor, Copilot, Codex, ChatGPT/);
   assert.match(homepage, /MCP and Streamable HTTP/);
+  assert.match(homepage, /Deploy Once\. Remember Everywhere\./);
+  assert.match(homepage, />InstaPods</);
+  assert.match(homepage, />Railway</);
+  assert.match(homepage, /Self-hosted \/ Docker/);
 
   for (const client of [
     "Claude Desktop",
@@ -25,17 +29,6 @@ test("homepage promotes InstaPods referral deployment and works-everywhere posit
     assert.match(homepage, new RegExp(client.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 
-  for (const providerClaim of [
-    "30 seconds",
-    "$15/mo flat",
-    "Generated MCP config",
-    "SSH access",
-    "60 seconds",
-    "Usage-based",
-    "Manual HTTPS",
-  ]) {
-    assert.match(homepage, new RegExp(providerClaim.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  }
 });
 
 test("footer links to the InstaPods referral page", async () => {
