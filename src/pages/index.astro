@@ -3,7 +3,6 @@ export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
 import ChatDemo from '../components/ChatDemo.astro';
-import EmailSignup from '../components/EmailSignup.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
 import Typewriter from '../components/Typewriter.astro';
 import MemoryDrive from '../components/MemoryDrive.astro';
@@ -11,6 +10,55 @@ import MemoryHero from '../components/MemoryHero.astro';
 
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist`;
+const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
+const RAILWAY_DEPLOY_URL =
+  'https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic';
+const homepageDescription =
+  'AutoMem gives Claude, Cursor, Copilot, Codex, ChatGPT, and MCP-compatible AI tools persistent memory via MCP and Streamable HTTP.';
+
+const supportedClients = [
+  { name: 'Claude Desktop', transport: 'stdio MCP' },
+  { name: 'Claude Code', transport: 'stdio MCP' },
+  { name: 'Cursor', transport: 'stdio MCP' },
+  { name: 'GitHub Copilot', transport: 'stdio MCP via VS Code' },
+  { name: 'Codex', transport: 'stdio MCP' },
+  { name: 'Windsurf', transport: 'stdio MCP' },
+  { name: 'ChatGPT', transport: 'Streamable HTTP / remote MCP' },
+  { name: 'Any MCP-compatible client', transport: 'MCP or Streamable HTTP' },
+];
+
+const providerComparisonRows = [
+  {
+    feature: 'Deploy time',
+    instapods: '30 seconds',
+    railway: '60 seconds',
+    selfHosted: 'Manual',
+  },
+  {
+    feature: 'Pricing',
+    instapods: '$15/mo flat',
+    railway: 'Usage-based',
+    selfHosted: 'VPS or local cost',
+  },
+  {
+    feature: 'Config',
+    instapods: 'Generated MCP config',
+    railway: 'Generated env vars',
+    selfHosted: 'Manual config',
+  },
+  {
+    feature: 'HTTPS',
+    instapods: 'Included',
+    railway: 'Included',
+    selfHosted: 'Manual HTTPS',
+  },
+  {
+    feature: 'SSH',
+    instapods: 'SSH access',
+    railway: 'Not the focus',
+    selfHosted: 'Host-dependent SSH',
+  },
+];
 
 const timelineEntries = [
   {
@@ -100,7 +148,7 @@ const timelineEntries = [
 ];
 ---
 
-<Layout title="Home">
+<Layout title="Home" description={homepageDescription}>
   <OrganizationSchema />
   <Navigation currentPath="/" />
 
@@ -146,7 +194,7 @@ const timelineEntries = [
               INIT_SYSTEM.sh
             </a>
             <a
-              href="https://github.com/verygoodplugins/automem?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist"
+              href={GITHUB_URL_UTM}
               class="btn-lab group gap-2"
             >
               <span>SOURCE_CODE</span>
@@ -258,6 +306,49 @@ const timelineEntries = [
       </div>
     </section>
 
+    <!-- Client Compatibility -->
+    <section
+      class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg relative overflow-hidden"
+    >
+      <div class="comment-header">:: COMPATIBILITY_MATRIX</div>
+      <div class="max-w-6xl mx-auto">
+        <div class="max-w-3xl mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Where AutoMem Works
+          </h2>
+          <p class="text-lab-muted leading-relaxed">
+            Wherever you work — Claude, Cursor, Copilot, Codex, ChatGPT,
+            Windsurf, or another MCP-compatible client — AutoMem can sit behind
+            it. Local tools use stdio MCP; cloud tools can connect through
+            Streamable HTTP.
+          </p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {supportedClients.map((client) => (
+            <div class="bg-lab-surface border border-lab-border rounded-lg p-5 shadow-hard">
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <h3 class="font-bold text-sm">{client.name}</h3>
+                <span class="w-2.5 h-2.5 rounded-full bg-lab-success flex-shrink-0"></span>
+              </div>
+              <p class="text-xs text-lab-muted">{client.transport}</p>
+            </div>
+          ))}
+        </div>
+
+        <div class="mt-8 bg-lab-surface border border-lab-border rounded-lg p-5">
+          <p class="text-sm text-lab-muted leading-relaxed">
+            AutoMem supports both MCP and Streamable HTTP, so your memory store
+            can follow you between local coding assistants and browser-hosted AI
+            tools without becoming tied to one vendor.
+          </p>
+        </div>
+      </div>
+      <div
+        class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"
+      ></div>
+    </section>
+
     <!-- Memory Graph Visualization -->
     <section
       class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
@@ -331,71 +422,85 @@ const timelineEntries = [
     <section class="px-4 md:px-12 py-24 bg-lab-surface">
       <div class="comment-header">:: DEPLOYMENT_PROTOCOLS</div>
       <div class="max-w-6xl mx-auto">
-        <div class="text-center max-w-2xl mx-auto mb-16">
+        <div class="text-center max-w-3xl mx-auto mb-16">
           <h2 class="text-4xl font-bold mb-6 tracking-tighter">
-            Open Source & Portable
+            Deploy Once. Remember Everywhere.
           </h2>
           <p class="text-xl text-lab-muted">
-            Your memory infrastructure should be as portable as your code. Run
-            it on your laptop, your private cloud, or our managed service.
+            Your memory infrastructure should be as portable as your code.
+            Start with a hosted pod, launch on Railway, or run the full stack
+            yourself.
           </p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
-          <!-- Option 1: Docker -->
+          <!-- Option 1: InstaPods -->
           <div
-            class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
-          >
-            <div
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
-            >
-              Standard
-            </div>
-            <div class="text-4xl mb-4">🐳</div>
-            <h3 class="text-2xl font-bold mb-2">Docker</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              The standard container. Run it locally or on any VPS.
-            </p>
-            <div
-              class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
-            >
-              docker run -p 3000:3000<br />automem/server:latest
-            </div>
-            <a
-              href="https://github.com/verygoodplugins/automem"
-              class="btn-lab w-full"
-              >View Image</a
-            >
-          </div>
-
-          <!-- Option 2: Railway -->
-          <div
-            class="bg-lab-bg border-2 border-lab-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform scale-105 z-10"
+            class="bg-lab-bg border-2 border-lab-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform md:scale-105 z-10"
           >
             <div
               class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-accent text-[#1a1a1a] px-3 py-1 text-xs font-bold uppercase tracking-widest"
             >
               Fastest
             </div>
-            <div class="text-4xl mb-4">🚂</div>
-            <h3 class="text-2xl font-bold mb-2">Railway</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <img
+                src="/logos/instapods.svg"
+                alt=""
+                width="36"
+                height="36"
+                class="w-9 h-9 rounded-md bg-lab-surface border border-lab-border"
+              />
+              <h3 class="text-2xl font-bold">InstaPods</h3>
+            </div>
             <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              One-click production deployment. Handles DBs & updates
-              automatically.
+              Deploy AutoMem in about 30 seconds on the Grow plan with HTTPS,
+              custom domains, SSH access, and generated MCP config.
             </p>
             <div
               class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent-text"
             >
-              > Deploying to prod...<br />> Success (24s)
+              > AutoMem pod online<br />> $15/mo flat
             </div>
             <a
-              href="https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic"
-              class="btn-lab-accent w-full"
-              >One-Click Deploy</a
+              href={INSTAPODS_REFERRAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-lab-accent w-full px-4 tracking-wide whitespace-nowrap"
+              >Deploy on InstaPods</a
             >
           </div>
 
-          <!-- Option 3: Source -->
+          <!-- Option 2: Railway -->
+          <div
+            class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
+          >
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
+            >
+              Flexible
+            </div>
+            <div class="text-4xl mb-4">🚂</div>
+            <h3 class="text-2xl font-bold mb-2">Railway</h3>
+            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
+              One-click production deployment with usage-based pricing,
+              generated environment variables, and a public HTTPS domain.
+            </p>
+            <div
+              class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
+            >
+              > Template deploy<br />> Ready in ~60 seconds
+            </div>
+            <a
+              href={RAILWAY_DEPLOY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-lab w-full px-4 tracking-wide whitespace-nowrap"
+              >Deploy on Railway</a
+            >
+          </div>
+
+          <!-- Option 3: Self-hosted -->
           <div
             class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
           >
@@ -405,9 +510,10 @@ const timelineEntries = [
               Hacker
             </div>
             <div class="text-4xl mb-4">💻</div>
-            <h3 class="text-2xl font-bold mb-2">Source</h3>
+            <h3 class="text-2xl font-bold mb-2">Self-hosted</h3>
             <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              Fork the repo. Hack the graph logic. It's your code.
+              Run the Docker stack locally or on your own VPS. Bring your own
+              domain, HTTPS, operations, and SSH policy.
             </p>
             <div
               class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
@@ -415,10 +521,54 @@ const timelineEntries = [
               git clone ...<br />npm install
             </div>
             <a
-              href="https://github.com/verygoodplugins/automem"
-              class="btn-lab w-full"
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-lab w-full px-4 tracking-wide whitespace-nowrap"
               >Fork Repo</a
             >
+          </div>
+        </div>
+
+        <div class="mt-16">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-2xl font-bold">Provider Comparison</h3>
+              <p class="text-sm text-lab-muted mt-2">
+                Choose the deployment path by how much platform work you want
+                AutoMem to do for you.
+              </p>
+            </div>
+            <a
+              href={INSTAPODS_REFERRAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-lab-accent md:w-auto px-4 tracking-wide whitespace-nowrap"
+              >Try InstaPods</a
+            >
+          </div>
+
+          <div class="overflow-x-auto border-2 border-lab-text rounded-lg shadow-hard bg-lab-bg">
+            <table class="w-full min-w-[720px] text-left text-sm">
+              <thead class="bg-lab-text text-lab-bg">
+                <tr>
+                  <th class="p-4 font-bold">Capability</th>
+                  <th class="p-4 font-bold">InstaPods</th>
+                  <th class="p-4 font-bold">Railway</th>
+                  <th class="p-4 font-bold">Self-hosted / Docker</th>
+                </tr>
+              </thead>
+              <tbody>
+                {providerComparisonRows.map((row) => (
+                  <tr class="border-t border-lab-border">
+                    <th class="p-4 font-bold text-lab-text">{row.feature}</th>
+                    <td class="p-4 text-lab-accent-text">{row.instapods}</td>
+                    <td class="p-4 text-lab-muted">{row.railway}</td>
+                    <td class="p-4 text-lab-muted">{row.selfHosted}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

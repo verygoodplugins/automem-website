@@ -9,7 +9,10 @@ export interface Props {
   description?: string;
 }
 
-const { title, description = 'automem.ai - Intelligent Memory Service for AI Agents' } = Astro.props;
+const {
+  title,
+  description = 'automem.ai - persistent memory for MCP-compatible AI tools across Claude, Cursor, Codex, ChatGPT, and more',
+} = Astro.props;
 const pageTitle = `${title} | automem.ai`;
 const pageUrl = Astro.site ? new URL(Astro.url.pathname || '/', Astro.site).toString() : undefined;
 const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : 'https://automem.ai/og-image.png';

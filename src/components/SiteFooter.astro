@@ -1,6 +1,8 @@
 ---
 import AutoJack from './AutoJack.astro';
 import DiscordIcon from './DiscordIcon.astro';
+
+const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
 ---
 
 <footer class="py-12 border-t border-lab-border mt-20 text-lab-muted text-sm relative">
@@ -14,6 +16,8 @@ import DiscordIcon from './DiscordIcon.astro';
         <DiscordIcon class="w-3.5 h-3.5" />
         Discord
       </a>
+      <span class="text-lab-border">|</span>
+      <a href={INSTAPODS_REFERRAL_URL} target="_blank" rel="noopener noreferrer" class="hover:text-lab-accent-text transition-colors">InstaPods</a>
       <span class="text-lab-border">|</span>
       <a href="https://github.com/verygoodplugins/automem" target="_blank" rel="noopener noreferrer" class="hover:text-lab-accent-text transition-colors">GitHub</a>
       <span class="text-lab-border">|</span>

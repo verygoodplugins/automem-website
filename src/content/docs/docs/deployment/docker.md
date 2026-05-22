@@ -242,15 +242,16 @@ Docker Compose is optimized for development. Production deployments require secu
 | **SSL/TLS** | HTTP only | Terminate SSL at reverse proxy or use Traefik |
 | **Monitoring** | Docker logs | External monitoring (Prometheus, health checks) |
 
-### When to Use Docker Compose vs. Railway
+### When to Use Docker Compose vs. Hosted Providers
 
 | Scenario | Recommended Deployment |
 |---|---|
 | Single developer, local-only access | Docker Compose on local machine |
+| Fast hosted setup with generated MCP config | InstaPods (see [InstaPods Deployment](/docs/deployment/instapods/)) |
 | Team collaboration, remote access needed | Railway (see [Railway Deployment](/docs/deployment/railway/)) |
 | Self-hosted production, existing infrastructure | Docker Compose with reverse proxy + backups |
 | Prototyping, short-term experiments | Docker Compose (no cloud costs) |
-| Production with minimal ops overhead | Railway (managed backups, monitoring) |
+| Production with minimal ops overhead | InstaPods or Railway |
 | Air-gapped environments, strict data locality | Docker Compose on self-hosted infrastructure |
 | Multi-region deployment | Multiple Railway projects or Kubernetes |
 
