@@ -163,7 +163,7 @@ To start it again later, open terminal, `cd` back to the automem folder, and run
 
 Once you're comfortable with this local setup:
 
-- **Want access from your phone?** Deploy to [Railway](https://railway.com/deploy/automem-ai-memory-service) (still free tier available)
+- **Want access from your phone?** Deploy to [Railway](https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic) (still free tier available)
 - **Want to hack on it?** The code is right there in the folder you downloaded
 - **Found a bug?** [Open an issue](https://github.com/verygoodplugins/automem/issues)
 
