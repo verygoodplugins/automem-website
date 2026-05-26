@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -64,7 +64,7 @@ sequenceDiagram
         Note over Flask: status.qdrant = "disconnected"<br/>status.status = "degraded"
     end
 
-    Flask->>EnrichmentQ: _enrichment_queue_status()
+    Flask->>EnrichmentQ: state.enrichment_queue.qsize()
     EnrichmentQ-->>Flask: queue metrics
 
     Flask-->>Client: HTTP 200/503 + JSON status
@@ -196,17 +196,16 @@ graph TB
 
 ### Analytics Components
 
-The `/analyze` endpoint executes 7 independent Cypher queries against FalkorDB:
+The `/analyze` endpoint executes 6 Cypher queries against FalkorDB:
 
 | # | Component | Cypher | Returns |
 |---|-----------|--------|---------|
-| 1 | Total Memory Count | `MATCH (m:Memory) RETURN count(m)` | Integer |
-| 2 | Type Distribution | Groups memories by `m.type` field | `{type: count}` map |
-| 3 | Entity Frequency | Unwinds `m.entities` array, counts occurrences | Top 20 entities |
-| 4 | Confidence Distribution | Buckets `m.confidence` by 0.1 intervals | `{bucket: count}` map |
-| 5 | Activity by Hour | Extracts hour from `m.timestamp`, counts | `{hour: count}` map |
-| 6 | Tag Frequency | Unwinds `m.tags` array, counts occurrences | Top 20 tags |
-| 7 | Relationship Counts | Counts all edges by type | `{type: count}` map |
+| 1 | Memory Types | `MATCH (m:Memory) WHERE m.type IS NOT NULL RETURN m.type, COUNT(m) as count, AVG(m.confidence) as avg_confidence ORDER BY count DESC` | `{type: {count, average_confidence}}` map |
+| 2 | High-Confidence Patterns | `MATCH (p:Pattern) WHERE p.confidence > 0.6 RETURN p.type, p.content, p.confidence, p.observations ORDER BY p.confidence DESC LIMIT 10` | Top 10 pattern objects |
+| 3 | Preference Relationships | `MATCH (m1:Memory)-[r:PREFERS_OVER]->(m2:Memory) RETURN m1.content, m2.content, r.context, r.strength ORDER BY r.strength DESC LIMIT 10` | Top 10 preference pairs |
+| 4 | Temporal Activity | `MATCH (m:Memory) WHERE m.timestamp IS NOT NULL RETURN m.timestamp, m.importance LIMIT 100` | Aggregated into `hour_HH: {count, avg_importance}` |
+| 5 | Entity Frequency | `MATCH (m:Memory) WHERE m.metadata IS NOT NULL RETURN m.metadata LIMIT 200` | Extracts `entities`/`keywords`/`topics` from metadata JSON; top 50 by count |
+| 6 | Confidence Distribution | `MATCH (m:Memory) WHERE m.confidence IS NOT NULL RETURN m.confidence LIMIT 500` | Buckets: `low` (< 0.4), `medium` (0.4–0.7), `high` (≥ 0.7) |
 
 Each query is wrapped in a try-except block. If a query fails, the corresponding field is set to `null`, `{}`, or `[]` depending on expected type — partial failures do not prevent a response.
 
@@ -214,43 +213,24 @@ Each query is wrapped in a try-except block. If a query fails, the corresponding
 
 ```json
 {
-  "total_memories": 1247,
-  "memories_by_type": {
-    "Decision": 312,
-    "Pattern": 289,
-    "Preference": 201,
-    "Context": 178,
-    "Insight": 145,
-    "Style": 89,
-    "Habit": 33
-  },
-  "top_entities": [
-    {"entity": "Python", "count": 87},
-    {"entity": "FastAPI", "count": 54}
-  ],
-  "confidence_distribution": {
-    "0.9-1.0": 423,
-    "0.8-0.9": 389,
-    "0.7-0.8": 251,
-    "0.6-0.7": 122,
-    "0.5-0.6": 62
-  },
-  "activity_by_hour": {
-    "9": 145,
-    "10": 167,
-    "14": 134,
-    "15": 98
-  },
-  "top_tags": [
-    {"tag": "project:automem", "count": 201},
-    {"tag": "language:python", "count": 167}
-  ],
-  "relationships": {
-    "SIMILAR_TO": 3421,
-    "EXEMPLIFIES": 892,
-    "RELATES_TO": 445,
-    "INVALIDATED_BY": 23,
-    "EVOLVED_INTO": 67
+  "status": "success",
+  "analytics": {
+    "memory_types": {
+      "Decision": {"count": 312, "average_confidence": 0.851},
+      "Pattern": {"count": 289, "average_confidence": 0.803}
+    },
+    "patterns": [
+      {"type": "workflow", "description": "User iterates on code before committing", "confidence": 0.9, "observations": 12}
+    ],
+    "preferences": [
+      {"prefers": "TypeScript", "over": "JavaScript", "context": "new projects", "strength": 0.95}
+    ],
+    "temporal_insights": {
+      "hour_09": {"count": 145, "avg_importance": 0.72},
+      "hour_14": {"count": 134, "avg_importance": 0.65}
+    },
+    "entity_frequency": {"python": 87, "fastapi": 54},
+    "confidence_distribution": {"low": 23, "medium": 187, "high": 1037}
   }
 }
 ```
@@ -297,70 +277,71 @@ The startup recall endpoint returns a curated set of memories suitable for initi
 sequenceDiagram
     participant Client
     participant Flask as "Flask API<br/>/startup-recall"
-    participant TrendingFn as "_graph_trending_results()"
     participant FalkorDB
 
     Client->>Flask: GET /startup-recall
-    Flask->>Flask: Set limit=10, seen_ids={}
 
-    Flask->>TrendingFn: Get trending memories
-    TrendingFn->>FalkorDB: MATCH (m:Memory)<br/>ORDER BY importance DESC<br/>LIMIT 10
-    FalkorDB-->>TrendingFn: result_set
-    TrendingFn->>TrendingFn: _format_graph_result()<br/>for each row
-    TrendingFn-->>Flask: results (count=N)
+    Flask->>FalkorDB: MATCH (m:Memory)<br/>WHERE 'critical' IN m.tags<br/>OR 'lesson' IN m.tags<br/>OR 'ai-assistant' IN m.tags<br/>ORDER BY m.importance DESC LIMIT 10
+    FalkorDB-->>Flask: critical_lessons (up to 10)
 
-    alt N < 10 (need more memories)
-        Flask->>FalkorDB: MATCH (m:Memory)<br/>WHERE NOT m.id IN seen_ids<br/>ORDER BY timestamp DESC<br/>LIMIT (10-N)
-        FalkorDB-->>Flask: recent memories
-        Flask->>Flask: _format_graph_result()<br/>for each row
-        Flask->>Flask: Append to results
-    end
+    Flask->>FalkorDB: MATCH (m:Memory)<br/>WHERE 'system' IN m.tags<br/>OR 'memory-recall' IN m.tags<br/>LIMIT 5
+    FalkorDB-->>Flask: system_rules (up to 5)
 
-    Flask-->>Client: HTTP 200 + JSON<br/>{memories, count, timestamp}
+    Flask-->>Client: HTTP 200 + JSON<br/>{status, critical_lessons, system_rules,<br/>lesson_count, has_critical, summary}
 ```
 
 ### Retrieval Strategy
 
-The endpoint uses a two-phase retrieval strategy to fill up to 10 results:
+The endpoint runs two sequential Cypher queries:
 
-**Phase 1: High-Importance Memories (primary)**
-
-```cypher
-MATCH (m:Memory) ORDER BY m.importance DESC, m.timestamp DESC LIMIT 10
-```
-
-Returns high-importance memories regardless of recency. Implemented via `_graph_trending_results()`.
-
-**Phase 2: Recent Memories (fallback)**
-
-Only triggered if Phase 1 returns fewer than 10 memories:
+**Phase 1: Critical / Lesson Memories**
 
 ```cypher
 MATCH (m:Memory)
-WHERE NOT m.id IN $seen_ids
-ORDER BY m.timestamp DESC
-LIMIT $remaining
+WHERE 'critical' IN m.tags OR 'lesson' IN m.tags OR 'ai-assistant' IN m.tags
+RETURN m.id, m.content, m.tags, m.importance, m.type, m.metadata
+ORDER BY m.importance DESC
+LIMIT 10
 ```
 
-Fills remaining slots with the most recently stored memories.
+Returns memories tagged as critical lessons or AI-assistant instructions, ordered by importance.
+
+**Phase 2: System Rules**
+
+```cypher
+MATCH (m:Memory)
+WHERE 'system' IN m.tags OR 'memory-recall' IN m.tags
+RETURN m.id, m.content, m.tags
+LIMIT 5
+```
+
+Returns system-level rules and memory-recall directives.
 
 ### Response Schema
 
 ```json
 {
-  "memories": [
+  "status": "success",
+  "critical_lessons": [
     {
-      "memory_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "content": "User prefers TypeScript over JavaScript for new projects",
-      "tags": ["preference", "language:typescript"],
+      "tags": ["preference", "language:typescript", "critical"],
       "importance": 0.9,
-      "confidence": 0.95,
-      "timestamp": "2025-01-10T14:22:00Z",
-      "type": "Preference"
+      "type": "Preference",
+      "metadata": {}
     }
   ],
-  "count": 10,
-  "timestamp": "2025-01-15T10:30:00Z"
+  "system_rules": [
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "content": "Always respond in English",
+      "tags": ["system"]
+    }
+  ],
+  "lesson_count": 1,
+  "has_critical": true,
+  "summary": "Recalled 1 lesson(s) and 1 system rule(s)"
 }
 ```
 
