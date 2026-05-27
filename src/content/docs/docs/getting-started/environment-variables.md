@@ -62,8 +62,6 @@ AutoMem operates in graph-only mode if these variables are not set. Qdrant enabl
 |----------|----------|---------|-------------|
 | `AUTOMEM_API_TOKEN` | Yes | _unset_ | Token for all standard API operations |
 | `ADMIN_API_TOKEN` | Yes | _unset_ | Token for admin endpoints (`/admin/*`, `/enrichment/reprocess`) |
-| `API_TOKEN` | No | _unset_ | Backward-compatible alias for `AUTOMEM_API_TOKEN` |
-| `ADMIN_TOKEN` | No | _unset_ | Backward-compatible alias for `ADMIN_API_TOKEN` |
 
 See [Authentication](/docs/reference/authentication/) for token generation and usage details.
 
@@ -76,7 +74,6 @@ See [Authentication](/docs/reference/authentication/) for token generation and u
 | `OPENAI_API_KEY` | No | _unset_ | OpenAI (or compatible provider) API key |
 | `OPENAI_BASE_URL` | No | _unset_ | Custom base URL for OpenAI-compatible APIs (OpenRouter, LiteLLM, vLLM) |
 | `VOYAGE_API_KEY` | No | _unset_ | Voyage AI API key |
-| `VOYAGE_MODEL` | No | `voyage-4` | Voyage model name (`voyage-4`, `voyage-4-large`) |
 | `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server endpoint |
 | `OLLAMA_MODEL` | No | `nomic-embed-text` | Ollama embedding model |
 | `EMBEDDING_BATCH_SIZE` | No | `20` | Items per batch API call (reduces costs 40–50%) |
@@ -260,7 +257,7 @@ VECTOR_SIZE=1024
 ```json
 {
   "env": {
-    "AUTOMEM_ENDPOINT": "https://your-service.railway.app",
+    "AUTOMEM_API_URL": "https://your-service.railway.app",
     "AUTOMEM_API_KEY": "your-api-token"
   }
 }
