@@ -6,12 +6,12 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py) — Score weight configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP `recall_memory` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP client and response normalization
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/config.py) — Score weight configuration
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/src/index.ts) — MCP `recall_memory` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines nine scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
