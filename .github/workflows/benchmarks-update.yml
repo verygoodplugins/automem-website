@@ -85,16 +85,20 @@ jobs:
           git add src/data/benchmarks.json
           git commit -m "docs(benchmarks): update data from automem@$SHORT_SHA"
           git push --set-upstream origin "$BRANCH"
+          BODY="$(cat <<EOF
+          ## Summary
+
+          - Syncs benchmark data from verygoodplugins/automem@$FULL_SHA
+          - Source trigger: $REASON
+          - Verified with npm run build
+
+          ## Breaking changes
+
+          None.
+          EOF
+          )"
           gh pr create \
             --title "docs(benchmarks): update benchmark data from automem@$SHORT_SHA" \
-            --body "## Summary
-
-- Syncs benchmark data from verygoodplugins/automem@$FULL_SHA
-- Source trigger: $REASON
-- Verified with npm run build
-
-## Breaking changes
-
-None." \
+            --body "$BODY" \
             --base main \
             --head "$BRANCH"
