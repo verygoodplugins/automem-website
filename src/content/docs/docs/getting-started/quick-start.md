@@ -446,7 +446,7 @@ To make Claude use AutoMem without being prompted every time, add the starter me
 
 Copy the template from the mcp-automem repo:
 
-- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
 
 The template assumes your MCP server key is `memory`. If your config uses `mcp-automem` or another key, update tool names in the pasted preferences to match Claude Desktop's prefix.
 
