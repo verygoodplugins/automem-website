@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/consolidation.py) — Consolidation API endpoints
-- [consolidation.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py) — Consolidation engine implementation
+- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/consolidation.py) — Consolidation API endpoints
+- [consolidation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py) — Consolidation engine implementation
 :::
 
 This page documents the HTTP API endpoints for triggering and monitoring memory consolidation tasks. Consolidation is AutoMem's background maintenance system that mimics biological memory processes — decay, creative association, clustering, and forgetting.
@@ -193,11 +193,7 @@ curl -X POST https://your-automem-instance/consolidate \
 
 Query the current state of the consolidation scheduler and retrieve execution history.
 
-### Query Parameters
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `history_limit` | integer | No | 20 | Number of recent execution records to return (0–100) |
+The number of history records returned is controlled server-side by `CONSOLIDATION_HISTORY_LIMIT` (default: 20); this endpoint accepts no query parameters.
 
 ### Response Format
 
@@ -247,16 +243,10 @@ Query the current state of the consolidation scheduler and retrieve execution hi
 
 ### Usage Examples
 
-**Check last run times:**
+**Check last run times and history:**
 
 ```bash
 curl "https://your-automem-instance/consolidate/status"
-```
-
-**Query recent execution history:**
-
-```bash
-curl "https://your-automem-instance/consolidate/status?history_limit=50"
 ```
 
 ---
@@ -271,7 +261,7 @@ Properties correspond to the `CONSOLIDATION_TASK_FIELDS` mapping in `automem/con
 
 ### ConsolidationRun Nodes
 
-Each execution creates a timestamped record stored as a `ConsolidationRun` node in FalkorDB. The `/consolidate/status` endpoint reads the most recent `ConsolidationRun` nodes ordered by timestamp descending, respecting the `history_limit` parameter (default 20, max 100).
+Each execution creates a timestamped record stored as a `ConsolidationRun` node in FalkorDB. The `/consolidate/status` endpoint reads the most recent `ConsolidationRun` nodes ordered by timestamp descending, up to the number configured by `CONSOLIDATION_HISTORY_LIMIT` (default 20).
 
 ---
 
@@ -325,16 +315,14 @@ Requests to authenticated endpoints without valid authentication receive a `401 
 
 | Status | Condition | Response |
 |--------|-----------|----------|
-| 400 Bad Request | Invalid `mode` parameter | `{"error": "Invalid task type: xyz"}` |
-| 400 Bad Request | `history_limit` out of range | `{"error": "history_limit must be between 0 and 100"}` |
 | 401 Unauthorized | Missing or invalid token | `{"error": "Unauthorized"}` |
 
 ### Server Errors (5xx)
 
 | Status | Condition | Response |
 |--------|-----------|----------|
-| 500 Internal Server Error | Database connection failure | `{"error": "Consolidation task 'decay' failed: ..."}` |
-| 500 Internal Server Error | Task execution exception | `{"error": "Failed to query consolidation status: ..."}` |
+| 500 Internal Server Error | Task execution exception (POST) | `{"error": "Consolidation failed", "details": "<exception message>"}` |
+| 500 Internal Server Error | Status query failure (GET) | `{"error": "Failed to get status", "details": "<exception message>"}` |
 
 All errors are logged with full stack traces to facilitate debugging.
 
