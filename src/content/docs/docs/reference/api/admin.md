@@ -78,11 +78,11 @@ graph TB
 ```json
 {
   "status": "running",
-  "queue_depth": 3,
+  "queue_size": 3,
   "pending": 2,
   "inflight": 1,
-  "processed": 1247,
-  "failed": 3
+  "max_attempts": 3,
+  "stats": {}
 }
 ```
 
@@ -91,11 +91,11 @@ graph TB
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | `"running"` if enrichment worker is active, `"stopped"` if worker thread is dead |
-| `queue_depth` | integer | Total jobs in queue (pending + inflight) |
+| `queue_size` | integer | Current number of jobs in the enrichment queue |
 | `pending` | integer | Count of memories waiting to be processed |
 | `inflight` | integer | Count of memories currently being processed |
-| `processed` | integer | Total enrichment attempts completed since service start |
-| `failed` | integer | Total failed enrichment attempts since service start |
+| `max_attempts` | integer | Maximum retry attempts per memory before marking failed (from `ENRICHMENT_MAX_ATTEMPTS`) |
+| `stats` | object | Lifetime enrichment statistics (nested object with processing counters) |
 
 ### Example Usage
 
@@ -108,8 +108,8 @@ curl "https://your-automem-instance/enrichment/status"
 | Observation | Likely Cause | Action |
 |-------------|-------------|--------|
 | `status: "stopped"` | Worker thread crashed | Check application logs for exceptions, restart service |
-| `queue_depth` increasing | Worker processing slower than intake | Monitor `inflight`, check for spaCy or OpenAI issues |
-| High `failed` count | Enrichment logic errors | Review application logs, check Qdrant connectivity |
+| `queue_size` increasing | Worker processing slower than intake | Monitor `inflight`, check for spaCy or OpenAI issues |
+| High failure count in `stats` | Enrichment logic errors | Review application logs, check Qdrant connectivity |
 | `inflight` stuck | Worker deadlocked | Restart enrichment worker or service |
 
 ---
@@ -283,7 +283,7 @@ graph TB
 
 ```json
 {
-  "status": "success",
+  "status": "complete",
   "processed": 1000,
   "failed": 0,
   "total": 1000,
