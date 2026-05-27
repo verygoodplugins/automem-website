@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/enrichment.py) — Enrichment endpoints
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -171,7 +171,7 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 ```mermaid
 graph TB
     Request["POST /enrichment/reprocess<br/>{ids: [...]}"]
-    Auth["_require_admin_token()"]
+    Auth["require_admin_token()"]
     Validate["Validate Request"]
 
     subgraph "Queueing Loop"
@@ -193,10 +193,10 @@ graph TB
 The reprocessing operation performs these steps:
 
 1. **Validation Phase** — Validates that the `ids` array is non-empty
-2. **Queueing** — Calls `enqueue_enrichment(memory_id, forced=True, attempt=0)` which:
+2. **Queueing** — Calls `enqueue_enrichment(memory_id, forced=True)` which:
    - Acquires `state.enrichment_lock`
    - Adds memory ID to `state.enrichment_pending`
-   - Puts `EnrichmentJob(memory_id, attempt=0, forced=True)` in queue
+   - Puts an `EnrichmentJob` with `forced=True` in queue
 3. **Background Processing** — The `enrichment_worker()` thread picks up jobs and calls `enrich_memory()` which:
    - Extracts entities via spaCy (if installed)
    - Creates temporal `PRECEDED_BY` edges
@@ -240,7 +240,7 @@ curl -X POST https://your-automem-instance/admin/reembed \
 ```mermaid
 graph TB
     Request["POST /admin/reembed<br/>{batch_size: 32, limit: 1000}"]
-    Auth["_require_admin_token()"]
+    Auth["require_admin_token()"]
     Init["Retrieve pre-initialized OpenAI client<br/>get_openai_client()"]
 
     FetchIDs["Query FalkorDB:<br/>MATCH (m:Memory)<br/>RETURN m.id<br/>LIMIT $limit"]
@@ -417,7 +417,7 @@ curl -X POST https://your-instance/enrichment/reprocess \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Admin-Token: $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"ids\": $MEMORY_IDS, \"force\": true}"
+  -d "{\"ids\": $MEMORY_IDS}"
 ```
 
 ### Embedding Model Migration
