@@ -146,9 +146,6 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `MEMORY_TYPES` | No | `Decision,Pattern,Preference,Style,Habit,Insight,Context` | Comma-separated valid memory types (`Memory` is a legacy alias for `Context`) |
-| `RELATIONSHIP_TYPES` | No | `RELATES_TO,LEADS_TO,...` | Comma-separated valid relationship types (14 total) |
-| `ALLOWED_RELATIONS` | No | Same as `RELATIONSHIP_TYPES` | Alias for backward compatibility |
 | `CLASSIFICATION_MODEL` | No | `gpt-4o-mini` | OpenAI model used for content classification fallback |
 | `MEMORY_CONTENT_SOFT_LIMIT` | No | `500` | Character threshold above which a warning is issued and auto-summarize may trigger |
 | `MEMORY_CONTENT_HARD_LIMIT` | No | `2000` | Character limit above which the request is rejected immediately |
