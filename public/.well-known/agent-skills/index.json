@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "use-automem-docs",
+      "type": "skill-md",
+      "description": "Find the right AutoMem documentation for setup, API usage, authentication, platform integrations, and operations.",
+      "url": "https://automem.ai/.well-known/agent-skills/use-automem-docs/SKILL.md",
+      "digest": "sha256:afe9db8bf6d02128efc5083bbc2cb4f5092a03f88b737d8a715b8208735e4f63"
+    }
+  ]
+}

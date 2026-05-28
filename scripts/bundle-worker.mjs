@@ -243,6 +243,8 @@ const routesJson = JSON.stringify({
   // Only invoke the worker for routes that actually need runtime logic.
   // Everything else should be served directly from the Pages asset bucket.
   include: [
+    '/',
+    '/.well-known/api-catalog',
     '/_emdash/*',
     '/api/*',
     '/admin/*',

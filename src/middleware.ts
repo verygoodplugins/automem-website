@@ -1,4 +1,9 @@
 import type { MiddlewareHandler } from 'astro';
+import {
+  createHomepageMarkdownResponse,
+  wantsHomepageMarkdown,
+  withAgentDiscoveryHeaders,
+} from './lib/agent-readiness.mjs';
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const { request, locals, url } = context;
@@ -13,6 +18,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     // Not running in Cloudflare runtime (e.g. local dev without bindings)
   }
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
+
+  if (wantsHomepageMarkdown(request, pathname)) {
+    return createHomepageMarkdownResponse(request.method);
+  }
 
   // Keep preview CMS auth/setup on one stable hostname so passkeys, sessions,
   // and setup state are exercised against a single preview surface instead of
@@ -120,5 +129,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     });
   }
 
-  return next();
+  const response = await next();
+  if (request.method === 'GET' || request.method === 'HEAD') {
+    return withAgentDiscoveryHeaders(response, url);
+  }
+
+  return response;
 };
