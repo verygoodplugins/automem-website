@@ -106,6 +106,12 @@ export function withAgentDiscoveryHeaders(response, url) {
     headers.append("Link", link);
   }
   headers.set("Content-Signal", CONTENT_SIGNAL);
+  const vary = headers.get("Vary");
+  if (!vary) {
+    headers.set("Vary", "Accept");
+  } else if (!vary.split(",").some((part) => part.trim().toLowerCase() === "accept")) {
+    headers.set("Vary", `${vary}, Accept`);
+  }
 
   return new Response(response.body, {
     status: response.status,

@@ -44,6 +44,7 @@ test("agent readiness helper serves homepage markdown and discovery Link headers
   assert.match(linkHeader, /<\/\.well-known\/api-catalog>; rel="api-catalog"/);
   assert.match(linkHeader, /<\/llms\.txt>; rel="describedby"/);
   assert.match(linkHeader, /<\/auth\.md>; rel="describedby"/);
+  assert.equal(linkedResponse.headers.get("Vary"), "Accept");
 });
 
 test("API catalog is a truthful docs catalog, not fake OAuth metadata", async () => {
