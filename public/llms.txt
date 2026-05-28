@@ -1,0 +1,38 @@
+# AutoMem
+
+AutoMem is an open-source persistent memory layer for AI agents and MCP-compatible tools.
+
+## Primary Pages
+
+- Home: https://automem.ai/
+- Documentation: https://automem.ai/docs/
+- Quick start: https://automem.ai/docs/getting-started/quick-start/
+- Docker setup: https://automem.ai/docs/getting-started/docker/
+- Configuration: https://automem.ai/docs/reference/configuration/
+- Authentication: https://automem.ai/docs/reference/authentication/
+- API reference: https://automem.ai/docs/reference/api/direct-vs-mcp/
+- Health and analytics: https://automem.ai/docs/reference/api/health/
+- Operations health: https://automem.ai/docs/operations/health/
+
+## Platform Guides
+
+- Claude Desktop: https://automem.ai/docs/platforms/claude-desktop/
+- Claude Code: https://automem.ai/docs/platforms/claude-code/
+- Cursor IDE: https://automem.ai/docs/platforms/cursor/
+- OpenAI Codex: https://automem.ai/docs/platforms/codex/
+- ChatGPT: https://automem.ai/docs/platforms/chatgpt/
+- GitHub Copilot: https://automem.ai/docs/platforms/github-copilot/
+- ElevenLabs Agents: https://automem.ai/docs/platforms/elevenlabs/
+- OpenClaw: https://automem.ai/docs/platforms/openclaw/
+- Google AntiGravity: https://automem.ai/docs/platforms/antigravity/
+
+## Source Repositories
+
+- AutoMem server: https://github.com/verygoodplugins/automem
+- MCP client and CLI: https://github.com/verygoodplugins/mcp-automem
+- Graph viewer: https://github.com/verygoodplugins/automem-graph-viewer
+
+## Notes For Agents
+
+automem.ai is the marketing and documentation origin. Use deployment-specific
+AutoMem API URLs and credentials from the user's own AutoMem installation.
