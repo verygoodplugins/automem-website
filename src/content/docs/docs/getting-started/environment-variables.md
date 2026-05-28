@@ -129,7 +129,6 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `SEARCH_WEIGHT_EXACT` | No | `0.20` | Content token overlap weight |
 | `SEARCH_WEIGHT_RELATION` | No | `0.25` | Graph relation proximity boost |
 | `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | LLM-scored relevance (disabled by default) |
-| `RECALL_MAX_LIMIT` | No | `100` | Maximum results returned by `/recall` |
 | `RECALL_RELATION_LIMIT` | No | `5` | Max related memories per result |
 | `RECALL_EXPANSION_LIMIT` | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
