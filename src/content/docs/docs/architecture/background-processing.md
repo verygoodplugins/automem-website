@@ -7,14 +7,14 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/enrichment/runtime_queue_bindings.py) — Enrichment queue setup
-- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/enrichment/runtime_worker.py) — Enrichment worker thread
-- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/embedding/runtime_bindings.py) — Embedding queue setup
-- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing
-- [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/consolidation/runtime_bindings.py) — Consolidation scheduler
-- [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/sync/runtime_bindings.py) — Sync worker
-- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/runtime_wiring.py) — Startup sequence and worker initialization
-- [.env.example](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/.env.example) — Background processing configuration variables
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_queue_bindings.py) — Enrichment queue setup
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_worker.py) — Enrichment worker thread
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/runtime_bindings.py) — Embedding queue setup
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing
+- [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/consolidation/runtime_bindings.py) — Consolidation scheduler
+- [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/sync/runtime_bindings.py) — Sync worker
+- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/runtime_wiring.py) — Startup sequence and worker initialization
+- [.env.example](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/.env.example) — Background processing configuration variables
 :::
 
 AutoMem implements four background processing systems that operate independently of the main Flask API request/response cycle. These systems handle computationally expensive operations without blocking client requests.
@@ -152,9 +152,9 @@ All background workers run in daemon threads started during Flask application in
 
 | Component | Started At | Daemon | Lifecycle |
 |---|---|---|---|
-| `enrichment_worker` | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/enrichment/runtime_queue_bindings.py) | Yes | Runs until app shutdown |
-| `embedding_worker` | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/embedding/runtime_bindings.py) | Yes | Runs until app shutdown |
-| Consolidation scheduler | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/consolidation/runtime_bindings.py) | Yes | Custom thread-based scheduler |
+| `enrichment_worker` | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_queue_bindings.py) | Yes | Runs until app shutdown |
+| `embedding_worker` | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/runtime_bindings.py) | Yes | Runs until app shutdown |
+| Consolidation scheduler | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/consolidation/runtime_bindings.py) | Yes | Custom thread-based scheduler |
 
 **Thread Safety:**
 - `enrichment_queue` and `embedding_queue` use Python's thread-safe `Queue` class
@@ -167,7 +167,7 @@ All background workers run in daemon threads started during Flask application in
 
 ### Application Startup Sequence
 
-Startup is orchestrated by [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/automem/runtime_wiring.py):
+Startup is orchestrated by [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/runtime_wiring.py):
 
 1. `init_falkordb()` — Establish FalkorDB connection
 2. `init_qdrant()` — Establish optional Qdrant connection
@@ -306,7 +306,7 @@ Consolidation tasks catch exceptions and continue:
 **Relationship Count Caching (80% consolidation speedup):**
 - LRU cache with 10,000 entry capacity
 - Hourly cache invalidation via timestamp key
-- Dramatically reduces graph queries during decay cycles ([consolidation.py:95-110](https://github.com/verygoodplugins/automem/blob/a742602f5d6ad2dea5a4d3c387d5b49d610afe2c/consolidation.py#L95-L110))
+- Dramatically reduces graph queries during decay cycles ([consolidation.py:85-100](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L85-L100))
 
 ---
 
