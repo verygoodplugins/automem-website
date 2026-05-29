@@ -46,7 +46,7 @@ graph TB
 
 ### UpdateMemoryArgs Parameters
 
-The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)):
+The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)):
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -136,7 +136,7 @@ graph TB
 
 ### DeleteMemoryArgs Parameters
 
-The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
+The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -211,7 +211,7 @@ graph TB
 
 ### HealthStatus Response Structure
 
-The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts)):
+The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)):
 
 | Field | Type | Description |
 |---|---|---|
@@ -315,7 +315,7 @@ npx @verygoodplugins/mcp-automem queue --dry-run
 npx @verygoodplugins/mcp-automem queue --limit 10
 ```
 
-The endpoint is resolved automatically using the priority chain: `AUTOMEM_API_URL` environment variable → `AUTOMEM_ENDPOINT` (legacy) → `.env` file (via dotenv) → default `http://127.0.0.1:8001`.
+The endpoint is resolved automatically using the priority chain: `AUTOMEM_API_URL` environment variable (or `AUTOMEM_ENDPOINT` legacy alias) → `~/.claude.json` MCP server config → default `http://127.0.0.1:8001`.
 
 ### Queue Processing Architecture
 
@@ -323,7 +323,7 @@ The endpoint is resolved automatically using the priority chain: `AUTOMEM_API_UR
 graph TB
     subgraph "Queue Processing"
         QueueCmd["queue command<br/>src/cli/queue.ts"]
-        ConfigResolve["Config resolution<br/>AUTOMEM_ENDPOINT → .env → default"]
+        ConfigResolve["Config resolution<br/>AUTOMEM_API_URL → ~/.claude.json → default"]
         HealthCheck["Health check<br/>GET /health"]
         QueueEntries["Read pending entries<br/>local queue file"]
         ProcessEntry["Process each entry<br/>POST /memory or PATCH /memory/{id}"]
@@ -331,16 +331,14 @@ graph TB
     end
 
     subgraph "Configuration Priority"
-        EnvVars["1. AUTOMEM_API_URL env var"]
-        EnvVarsLegacy["2. AUTOMEM_ENDPOINT env var (legacy)"]
-        EnvFile["3. .env file<br/>current directory (via dotenv)"]
-        Default["4. Default<br/>http://127.0.0.1:8001"]
+        EnvVars["1. AUTOMEM_API_URL env var<br/>(or AUTOMEM_ENDPOINT legacy alias)"]
+        EnvFile["2. ~/.claude.json<br/>MCP server config"]
+        Default["3. Default<br/>http://127.0.0.1:8001"]
     end
 
     QueueCmd --> ConfigResolve
     ConfigResolve --> EnvVars
-    EnvVars -->|Not found| EnvVarsLegacy
-    EnvVarsLegacy -->|Not found| EnvFile
+    EnvVars -->|Not found| EnvFile
     EnvFile -->|Not found| Default
 
     ConfigResolve --> HealthCheck
