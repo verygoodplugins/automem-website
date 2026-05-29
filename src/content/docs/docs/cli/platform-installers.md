@@ -43,7 +43,7 @@ Add the `automem` entry to the `mcpServers` object in your Claude Desktop config
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001",
+        "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
       }
     }
@@ -93,7 +93,7 @@ Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem
 ```
 
 :::note
-Cursor can receive `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
+Cursor can receive `AUTOMEM_API_URL` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
 :::
 
 ### Project-Specific Rules
@@ -129,7 +129,7 @@ Claude Code reads MCP server configuration from `~/.claude.json`:
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://localhost:8001",
+        "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
       }
     }
@@ -160,7 +160,7 @@ command = "npx"
 args = ["@verygoodplugins/mcp-automem"]
 
 [mcp_servers.env]
-AUTOMEM_ENDPOINT = "http://localhost:8001"
+AUTOMEM_API_URL = "http://localhost:8001"
 AUTOMEM_API_KEY = "your-api-key"
 ```
 
@@ -287,7 +287,7 @@ AutoMem is connected and healthy:
 
 **Solutions**:
 1. Check `~/.cursor/mcp.json` exists and has valid JSON
-2. Ensure `AUTOMEM_ENDPOINT` and `AUTOMEM_API_KEY` are available either in `~/.cursor/mcp.json` under `env` or via the inherited process environment
+2. Ensure `AUTOMEM_API_URL` and `AUTOMEM_API_KEY` are available either in `~/.cursor/mcp.json` under `env` or via the inherited process environment
 3. Reload the Cursor window (Cmd/Ctrl+Shift+P → "Reload Window")
 
 ### Claude Code: Permission Denied
@@ -305,5 +305,5 @@ AutoMem is connected and healthy:
 
 **Solutions**:
 1. Verify AutoMem service is running: `curl http://localhost:8001/health`
-2. Check `AUTOMEM_ENDPOINT` is set correctly in `.env` or platform config `env` block
+2. Check `AUTOMEM_API_URL` is set correctly in `.env` or platform config `env` block
 3. For Railway deployments, verify the public URL is accessible
