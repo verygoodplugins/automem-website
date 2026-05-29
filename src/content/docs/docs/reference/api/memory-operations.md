@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/memory.py) — Flask API endpoints
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP transport layer
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) — TypeScript type definitions
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py) — Flask API endpoints
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/index.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/automem-client.ts) — HTTP transport layer
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts) — TypeScript type definitions
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -347,9 +347,11 @@ curl -X POST https://your-automem-instance/memory/batch \
 
 ```json
 {
-  "status": "stored",
-  "count": 2,
+  "status": "success",
+  "stored": 2,
   "memory_ids": ["abc-123", "def-456"],
+  "qdrant": "ok",
+  "enrichment": "queued",
   "query_time_ms": 45.2
 }
 ```
@@ -360,7 +362,7 @@ Each memory in the batch is written to FalkorDB synchronously and queued for bac
 
 | Status | Condition |
 |--------|-----------|
-| 200 OK | All memories stored successfully |
+| 201 Created | All memories stored successfully |
 | 400 Bad Request | Validation error (invalid field, missing content, etc.) |
 | 401 Unauthorized | Missing or invalid API token |
 | 413 Payload Too Large | Batch exceeds 500 memories |
@@ -591,7 +593,7 @@ curl -X DELETE https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef12
 ```json
 {
   "status": "success",
-  "message": "Memory a1b2c3d4-e5f6-7890-abcd-ef1234567890 deleted"
+  "memory_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
