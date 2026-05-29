@@ -7,9 +7,9 @@ sidebar:
 
 :::note[Source files]
 - [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py) — Flask API endpoints
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/index.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/automem-client.ts) — HTTP transport layer
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts) — TypeScript type definitions
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP transport layer
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — TypeScript type definitions
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -567,7 +567,7 @@ sequenceDiagram
         Note over DELETE_endpoint: Continue without error
     end
 
-    DELETE_endpoint-->>Client: 200 OK<br/>{status: "success",<br/>message: "Memory deleted"}
+    DELETE_endpoint-->>Client: 200 OK<br/>{status: "success",<br/>memory_id: "..."}
 ```
 
 **Deletion process:**
