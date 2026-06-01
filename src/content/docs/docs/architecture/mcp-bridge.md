@@ -65,10 +65,10 @@ graph TB
 | Component | File Location | Purpose |
 |---|---|---|
 | Express app | [server.js:543-1010](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L543-L1010) | HTTP server with endpoint routing |
-| `AutoMemClient` | [server.js:184-289](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L184-L289) | HTTP client for AutoMem API |
-| `buildMcpServer()` | [server.js:292-485](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L292-L485) | MCP server factory with tool handlers |
-| `InMemoryEventStore` | [server.js:149-181](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L149-L181) | Event buffering for stream resumption |
-| Session management | [server.js:543](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L543) | Map-based session tracking with TTL |
+| `AutoMemClient` | [server.js:240-306](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L240-L306) | HTTP client for AutoMem API |
+| `buildMcpServer()` | [server.js:365-511](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L365-L511) | MCP server factory with tool handlers |
+| `InMemoryEventStore` | [server.js:202-237](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L202-L237) | Event buffering for stream resumption |
+| Session management | [server.js:532-554](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L532-L554) | Map-based session tracking with TTL |
 
 ---
 
@@ -90,7 +90,7 @@ graph LR
         STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:76-85"]
         MCP_SERVER["new Server()<br/>src/index.ts:277-280"]
         STDIO_TRANSPORT["StdioServerTransport<br/>stdin/stdout"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:747-1027"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:540-757"]
     end
 
     subgraph CLI_Mode["CLI Mode"]
@@ -395,9 +395,9 @@ Context hints:
 
 **`formatRecallAsItems()` Function:**
 
-[server.js:487-541](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L487-L541) transforms AutoMem API responses into MCP content items.
+[server.js:308-362](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L308-L362) transforms AutoMem API responses into MCP content items.
 
-**Relation Summarization:** [server.js:487-541](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L487-L541) — Shows up to 5 relations with type, strength, and source ID.
+**Relation Summarization:** [server.js:308-362](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L308-L362) — Shows up to 5 relations with type, strength, and source ID.
 
 ---
 
