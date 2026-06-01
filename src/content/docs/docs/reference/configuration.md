@@ -213,6 +213,8 @@ Controls background memory maintenance cycles:
 | `CONSOLIDATION_PROTECTED_TYPES` | string | No | `Decision,Insight` | Comma-separated types to never forget |
 | `CONSOLIDATION_BASE_DECAY_RATE` | float | No | `0.01` | Base rate applied per decay cycle |
 | `CONSOLIDATION_IMPORTANCE_FLOOR_FACTOR` | float | No | `0.3` | Minimum importance fraction after decay |
+| `CONSOLIDATION_HISTORY_LIMIT` | int | No | `20` | Max consolidation run records retained in the graph |
+| `CONSOLIDATION_CONTROL_NODE_ID` | string | No | `global` | ID of the consolidation control node in the graph |
 
 **Consolidation task details:**
 
@@ -309,7 +311,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/classification/memory_classifier.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/classification/memory_classifier.py).
 
 ### Memory Content Governance
 
