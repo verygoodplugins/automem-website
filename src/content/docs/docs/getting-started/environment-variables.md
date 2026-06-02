@@ -31,11 +31,11 @@ Use `~/.config/automem/.env` for personal API keys and secrets that should never
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `FALKORDB_HOST` | Yes | `localhost` | FalkorDB graph database hostname |
-| `FALKORDB_PORT` | Yes | `6379` | FalkorDB port |
+| `FALKORDB_HOST` | No | `localhost` | FalkorDB graph database hostname |
+| `FALKORDB_PORT` | No | `6379` | FalkorDB port |
 | `FALKORDB_PASSWORD` | No | _unset_ | FalkorDB/Redis password (set in production) |
 | `FALKORDB_GRAPH` | No | `memories` | Graph name for Cypher queries |
-| `GRAPH_NAME` | No | `memories` | Alias for `FALKORDB_GRAPH` |
+| `GRAPH_NAME` | — | `memories` | Python-internal alias for `FALKORDB_GRAPH`; set `FALKORDB_GRAPH`, not this name |
 | `PORT` | No | `8001` | Flask API server port |
 
 :::caution
@@ -53,8 +53,9 @@ AutoMem operates in graph-only mode if these variables are not set. Qdrant enabl
 | `QDRANT_PORT` | No | `6333` | Qdrant port (used with `QDRANT_HOST`) |
 | `QDRANT_API_KEY` | No | _unset_ | Qdrant authentication key (required for Qdrant Cloud) |
 | `QDRANT_COLLECTION` | No | `memories` | Collection name for memory vectors |
-| `COLLECTION_NAME` | No | `memories` | Alias for `QDRANT_COLLECTION` |
+| `COLLECTION_NAME` | — | `memories` | Python-internal alias for `QDRANT_COLLECTION`; set `QDRANT_COLLECTION`, not this name |
 | `VECTOR_SIZE` | No | `1024` | Embedding dimension — must match collection (768/1024/2048/3072) |
+| `QDRANT_VECTOR_SIZE` | No | `1024` | Alternative name for `VECTOR_SIZE` (checked as fallback when `VECTOR_SIZE` is unset) |
 
 ### Authentication
 
@@ -133,6 +134,7 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `RECALL_EXPANSION_LIMIT` | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
 | `RECALL_ADAPTIVE_FLOOR` | No | `true` | Dynamically adjust score floor based on result set |
+| `RECALL_MAX_LIMIT` | No | `100` | Hard cap on the number of results `/recall` can return |
 
 ### Sync Worker
 
