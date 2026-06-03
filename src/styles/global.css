@@ -4,7 +4,9 @@
 @theme {
   --color-lab-bg: rgb(var(--lab-bg));
   --color-lab-surface: rgb(var(--lab-surface));
+  --color-lab-panel: rgb(var(--lab-panel));
   --color-lab-border: rgb(var(--lab-border));
+  --color-lab-line: rgb(var(--lab-line));
   --color-lab-text: rgb(var(--lab-text));
   --color-lab-muted: rgb(var(--lab-muted));
   --color-lab-accent: rgb(var(--lab-accent));
@@ -25,47 +27,50 @@
 
 @layer base {
   :root {
-    /* Default: Memory Lab - Luminous Gold Era */
-    --lab-bg: 10 10 10;          /* #0A0A0A */
-    --lab-surface: 26 26 26;     /* #1A1A1A */
-    --lab-border: 51 51 51;      /* #333333 */
-    --lab-text: 224 224 224;     /* #E0E0E0 */
-    --lab-muted: 136 136 136;    /* #888888 */
-    --lab-accent: 249 216 87;    /* #F9D857 - Luminous Gold */
-    --lab-accent-text: 249 216 87; /* #F9D857 - Same as accent in dark mode */
-    --lab-secondary: 139 92 246; /* #8B5CF6 - Bright Violet (improved contrast) */
-    --lab-success: 52 211 153;   /* #34D399 - Memory Green */
+    /* Default: dark terminal surface */
+    --lab-bg: 6 10 14;           /* #060A0E */
+    --lab-surface: 11 16 22;     /* #0B1016 */
+    --lab-panel: 15 22 30;       /* #0F161E */
+    --lab-border: 45 55 68;      /* #2D3744 */
+    --lab-line: 70 82 96;        /* #465260 */
+    --lab-text: 239 244 249;     /* #EFF4F9 */
+    --lab-muted: 158 169 184;    /* #9EA9B8 */
+    --lab-accent: 249 207 44;    /* #F9CF2C */
+    --lab-accent-text: 249 207 44;
+    --lab-secondary: 174 102 255; /* #AE66FF */
+    --lab-success: 79 223 105;   /* #4FDF69 */
     --lab-error: 239 68 68;      /* #EF4444 */
-    --lab-gold: 249 216 87;      /* #F9D857 - Luminous */
-    --lab-gold-soft: 255 217 102;/* #FFD966 - Soft Gold */
-    --lab-gold-classic: 255 193 7;/* #FFC107 - Classic */
-    --lab-gold-dark: 218 165 32; /* #DAA520 - Dark Gold */
+    --lab-gold: 249 207 44;
+    --lab-gold-soft: 255 222 92;
+    --lab-gold-classic: 255 193 7;
+    --lab-gold-dark: 194 136 19;
     --lab-discord: 88 101 242;   /* #5865F2 - Discord Blurple */
     --lab-on-discord: 255 255 255; /* #FFFFFF - Text on Discord bg */
-    --grid-color: #333333;
-    --shadow-color: rgba(0,0,0,1);
+    --grid-color: rgba(92, 109, 128, 0.18);
+    --shadow-color: rgba(0,0,0,0.85);
   }
 
   .light {
-    /* Light Mode - Warm & Inviting */
-    --lab-bg: 255 251 240;       /* #FFFBF0 - Warm cream */
+    --lab-bg: 246 248 252;       /* #F6F8FC */
     --lab-surface: 255 255 255;  /* #FFFFFF */
-    --lab-border: 229 211 171;   /* #E5D3AB - Warm border */
-    --lab-text: 38 32 20;        /* #262014 - Dark brown */
-    --lab-muted: 128 115 90;     /* #80735A */
-    --lab-accent: 249 216 87;    /* #F9D857 - Luminous Gold (restored original) */
-    --lab-accent-text: 168 94 10; /* #A85E0A - Dark gold for text contrast */
-    --lab-secondary: 139 92 246; /* #8B5CF6 - Bright Violet (improved contrast) */
-    --lab-success: 34 197 94;    /* #22C55E */
+    --lab-panel: 238 242 247;    /* #EEF2F7 */
+    --lab-border: 191 200 213;   /* #BFC8D5 */
+    --lab-line: 112 124 140;     /* #707C8C */
+    --lab-text: 14 20 28;        /* #0E141C */
+    --lab-muted: 85 98 116;      /* #556274 */
+    --lab-accent: 232 178 18;    /* #E8B212 */
+    --lab-accent-text: 149 92 0; /* #955C00 */
+    --lab-secondary: 116 58 198; /* #743AC6 */
+    --lab-success: 27 155 71;    /* #1B9B47 */
     --lab-error: 220 38 38;      /* #DC2626 */
-    --lab-gold: 249 216 87;      /* #F9D857 */
-    --lab-gold-soft: 255 217 102;/* #FFD966 */
-    --lab-gold-classic: 255 193 7;/* #FFC107 */
-    --lab-gold-dark: 218 165 32; /* #DAA520 */
+    --lab-gold: 232 178 18;
+    --lab-gold-soft: 255 214 83;
+    --lab-gold-classic: 255 193 7;
+    --lab-gold-dark: 149 92 0;
     --lab-discord: 88 101 242;   /* #5865F2 - Discord Blurple */
     --lab-on-discord: 255 255 255; /* #FFFFFF - Text on Discord bg */
-    --grid-color: #E5D3AB;
-    --shadow-color: rgba(38, 32, 20, 0.15);
+    --grid-color: rgba(112, 124, 140, 0.22);
+    --shadow-color: rgba(14, 20, 28, 0.18);
   }
 
   html {
@@ -77,11 +82,13 @@
     @apply antialiased bg-lab-bg text-lab-text font-mono;
     overflow-x: hidden;
     width: 100%;
-
-    /* Blueprint Grid */
-    background-size: 24px 24px;
     background-image:
+      radial-gradient(circle at 72% 8%, rgb(var(--lab-secondary) / 0.12), transparent 30rem),
+      radial-gradient(circle at 12% 0%, rgb(var(--lab-accent) / 0.08), transparent 26rem),
       radial-gradient(var(--grid-color) 1px, transparent 1px);
+    background-size: auto, auto, 24px 24px;
+    background-attachment: fixed;
+    letter-spacing: 0;
   }
 
   /* Scrollbar */
@@ -110,15 +117,25 @@
   }
 
   .btn-lab {
-    @apply bg-lab-surface border-2 border-lab-text text-lab-text px-6 py-3
-           hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
-           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg;
+    @apply bg-lab-surface border border-lab-line text-lab-text px-6 py-3
+           hover:border-lab-secondary hover:text-lab-accent-text hover:shadow-hard
+           active:translate-y-[1px] active:shadow-none
+           transition-all text-sm font-bold flex items-center justify-center rounded;
   }
 
   .btn-lab-accent {
-    @apply bg-lab-accent text-[#1a1a1a] px-6 py-3
-           hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard active:translate-x-[0px] active:translate-y-[0px] active:shadow-none
-           transition-all uppercase tracking-wider text-sm font-bold flex items-center justify-center rounded-lg border-2 border-lab-text;
+    @apply bg-lab-accent text-[#05080c] px-6 py-3
+           hover:shadow-hard active:translate-y-[1px] active:shadow-none
+           transition-all text-sm font-bold flex items-center justify-center rounded border border-lab-accent;
+  }
+
+  .glass-panel {
+    @apply border border-lab-line bg-lab-surface/80 backdrop-blur-md rounded-md;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  .light .glass-panel {
+    box-shadow: 0 10px 30px rgb(14 20 28 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.75);
   }
 
   /* Improve contrast for links on light backgrounds (inverted sections) */

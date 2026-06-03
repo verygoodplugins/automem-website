@@ -2,680 +2,384 @@
 export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
-import ChatDemo from '../components/ChatDemo.astro';
+import AutoJack from '../components/AutoJack.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
-import Typewriter from '../components/Typewriter.astro';
-import MemoryDrive from '../components/MemoryDrive.astro';
-import MemoryHero from '../components/MemoryHero.astro';
 
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
-const GITHUB_URL_UTM = `${GITHUB_URL}?utm_source=automem.ai&utm_medium=gate&utm_campaign=waitlist`;
 const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
 const RAILWAY_DEPLOY_URL =
   'https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic';
+const INSTALL_COMMAND = 'curl -fsSL https://automem.ai | sh';
+const SKILL_URL = 'https://automem.ai/skill.md';
 const homepageDescription =
-  'AutoMem gives Claude, Cursor, Copilot, Codex, ChatGPT, and MCP-compatible AI tools persistent memory via MCP and Streamable HTTP.';
+  'AutoMem gives Claude, Cursor, Copilot, Codex, ChatGPT, and MCP-compatible AI tools persistent memory through MCP and Streamable HTTP.';
 
-const supportedClients = [
-  { name: 'Claude Desktop', transport: 'stdio MCP' },
-  { name: 'Claude Code', transport: 'stdio MCP' },
-  { name: 'Cursor', transport: 'stdio MCP' },
-  { name: 'GitHub Copilot', transport: 'stdio MCP via VS Code' },
-  { name: 'Codex', transport: 'stdio MCP' },
-  { name: 'Windsurf', transport: 'stdio MCP' },
-  { name: 'ChatGPT', transport: 'Streamable HTTP / remote MCP' },
-  { name: 'Any MCP-compatible client', transport: 'MCP or Streamable HTTP' },
+const terminalChecks = ['detect environment', 'choose local or cloud', 'provision AutoMem', 'wire MCP clients'];
+
+const agentClients = [
+  { name: 'Codex', mark: '⌬' },
+  { name: 'Claude Code', mark: 'AI' },
+  { name: 'Cursor', mark: '◈' },
+  { name: 'ChatGPT', mark: '◌' },
 ];
 
-const providerComparisonRows = [
+const setupPaths = [
   {
-    feature: 'Deploy time',
-    instapods: '30 seconds',
-    railway: '60 seconds',
-    selfHosted: 'Manual',
+    title: 'Local (Docker)',
+    tone: 'green',
+    badge: 'recommended',
+    icon: '▱',
+    detail: 'Run everything on your machine.',
+    bullets: ['Full control, no external deps', 'Data stays local', 'Works offline'],
+    command: 'curl -fsSL https://automem.ai | sh -s -- --local',
   },
   {
-    feature: 'Pricing',
-    instapods: '$15/mo flat',
-    railway: 'Usage-based',
-    selfHosted: 'VPS or local cost',
+    title: 'Railway',
+    tone: 'violet',
+    icon: '▤',
+    detail: 'Managed cloud in minutes.',
+    bullets: ['One-command deploy', 'Auto updates & backups', 'Global availability'],
+    command: 'curl -fsSL https://automem.ai | sh -s -- --railway',
+    href: RAILWAY_DEPLOY_URL,
   },
   {
-    feature: 'Config',
-    instapods: 'Generated MCP config',
-    railway: 'Generated env vars',
-    selfHosted: 'Manual config',
-  },
-  {
-    feature: 'HTTPS',
-    instapods: 'Included',
-    railway: 'Included',
-    selfHosted: 'Manual HTTPS',
-  },
-  {
-    feature: 'SSH',
-    instapods: 'SSH access',
-    railway: 'Not the focus',
-    selfHosted: 'Host-dependent SSH',
+    title: 'InstaPods',
+    tone: 'gold',
+    icon: '⬡',
+    detail: 'Self-hosted cloud in your infra.',
+    bullets: ['Your VPC, your data', 'K8s native', 'Enterprise ready'],
+    command: 'curl -fsSL https://automem.ai | sh -s -- --instapods',
+    href: INSTAPODS_REFERRAL_URL,
   },
 ];
 
-const timelineEntries = [
+const installerSteps = [
   {
-    date: '2026-04-23',
-    time: '22:00 UTC',
-    title: '0.15.2 • Recall Quality & Tag Ops',
-    description:
-      'Keyword scoring for vector results with a softer adaptive floor. Expansion candidates now bypass the tag filter so graph walks aren\'t cut off at the seed set. Memory-by-tag pagination and bulk delete endpoints. LoCoMo judge runs hardened against flaky rate limits.',
+    number: '1',
+    title: 'Detect environment',
+    detail: 'Identifies OS, Docker/K8s, and available resources.',
   },
   {
-    date: '2026-04-23',
-    time: '20:00 UTC',
-    title: 'MCP 0.14.0 • OpenClaw Plugin-First & Antigravity',
-    description:
-      'Plugin-first memory parity for OpenClaw with shared policy across plugin, MCP, and skill modes. Google Antigravity setup templates shipped. Claude Code plugin deprecated in favor of the CLI installer. Windows Python wrapper for hook scripts.',
+    number: '2',
+    title: 'Choose deployment',
+    detail: 'You pick Local, Railway, InstaPods, or Existing Endpoint.',
   },
   {
-    date: '2026-03-25',
-    time: '18:00 UTC',
-    title: '0.15.0 • Relationship Engine & Benchmarks',
-    description:
-      'Optimized relationship taxonomy for cleaner graph traversal. LoCoMo cat5 multi-hop judge for automated recall quality scoring. priority_ids now boosts relevance instead of hard-filtering. Embedding dimension validation catches provider mismatches at startup.',
+    number: '3',
+    title: 'Provision AutoMem',
+    detail: 'Pulls images, starts services, and runs health checks.',
   },
   {
-    date: '2026-03-25',
-    time: '12:00 UTC',
-    title: 'MCP 0.13.0 • OpenClaw Overhaul & Cursor Rules',
-    description:
-      'Complete OpenClaw plugin rewrite — native MCP integration and new skill setup. Split global vs. project rules for Cursor. Hook stdin parsing with truncation guards and dedup checks.',
-  },
-  {
-    date: '2026-03-08',
-    time: '04:30 UTC',
-    title: '0.14.0 • Docker & Hardened Deployments',
-    description:
-      'Official Docker build workflow. QDRANT_HOST + QDRANT_PORT for flexible Qdrant config. Stateless MCP bridge transport for resilient connections. Consolidation overhaul: reduced decay rate, importance floor, archived memory filtering. Voyage AI set as recommended embedding default.',
-  },
-  {
-    date: '2026-03-02',
-    time: '09:00 UTC',
-    title: '0.13.0 • Adaptive Recall & Graph Viewer',
-    description:
-      'min_score threshold with adaptive floor filtering — low-relevance results get cut automatically. LoCoMo benchmark harness for rapid experiment iteration. Graph viewer externalized as standalone module.',
-  },
-  {
-    date: '2026-02-20',
-    time: '05:55 UTC',
-    title: '0.12.0 • Recall Quality Lab & JIT Enrichment',
-    description:
-      'Just-in-time enrichment on recall for higher-quality results. Recall Quality Lab for data-driven recall optimization. LongMemEval benchmark harness (ICLR 2025) for measuring memory quality. relevance_score now synced to Qdrant payload for accurate vector search.',
-  },
-  {
-    date: '2026-02-16',
-    time: '11:56 UTC',
-    title: '0.11.0 • Embedding Providers & Memory Lookup',
-    description:
-      'Voyage AI embedding provider for high-accuracy recall. OpenAI-compatible providers via OPENAI_BASE_URL (LM Studio, Ollama, xAI, etc.). GET /memory/<id> endpoint for direct memory lookup. Hardened time parser for numeric timestamps.',
-  },
-  {
-    date: '2026-02-07',
-    time: '07:40 UTC',
-    title: '0.10.1 • Stability Fixes',
-    description:
-      'Temporal query bound to 7-day window with timeout to prevent runaway queries. Skip temperature param for o-series and gpt-5 models.',
-  },
-  {
-    date: '2026-02-06',
-    time: '19:56 UTC',
-    title: '0.10.0 • Visualization & Observability',
-    description:
-      'Interactive graph visualization API. automem-watch real-time observability with SSE streaming and TUI. Ollama embedding provider for fully local deployments. Memory content size governance with auto-summarization. Streamable HTTP transport for MCP connections.',
-  },
-  {
-    date: '2026-02-06',
-    time: '14:00 UTC',
-    title: 'MCP 0.12.0 • OpenClaw Integration',
-    description:
-      'Native OpenClaw integration replacing mcporter dependency chain. Direct HTTP API calls to AutoMem with new SKILL.md template. Simplified setup and troubleshooting documentation.',
-  },
-  {
-    date: '2026-02-03',
-    time: '12:00 UTC',
-    title: 'MCP 0.11.0 • Claude Code Plugin',
-    description:
-      'Claude Code plugin with automatic memory capture hooks. Session start recall, session end summary. Cursor hooks integration for automatic capture. Integration tests and CLI smoke tests.',
+    number: '4',
+    title: 'Wire MCP clients',
+    detail: 'Generates config and shows you how to connect your agents.',
   },
 ];
+
+const compatibilityRows = [
+  ['Codex (CLI)', 'MCP'],
+  ['Claude Code', 'MCP'],
+  ['Cursor', 'MCP'],
+  ['ChatGPT (Code Interpreter)', 'MCP'],
+  ['Custom MCP Clients', 'MCP'],
+];
+
+const extendedClients =
+  'Claude Desktop, Claude Code, Cursor, GitHub Copilot, Codex, Windsurf, ChatGPT, Any MCP-compatible client';
 ---
 
 <Layout title="Home" description={homepageDescription}>
   <OrganizationSchema />
   <Navigation currentPath="/" />
 
-  <main class="w-full pt-12 pb-24">
-    <!-- Hero Section: Memory Lab -->
-    <section
-      class="px-4 md:px-12 pt-12 pb-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
-    >
-      <!-- Lab Label -->
-      <div class="comment-header">:: SEQUENCE_INIT</div>
-
-      <div
-        class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10"
-      >
-        <!-- Left: Manifesto -->
-        <div>
-          <h1
-            class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[0.9]"
-          >
-            Recall is<br />
-            <span class="text-lab-accent-text">Power.</span>
+  <main class="w-full">
+    <section class="relative overflow-hidden px-4 pb-10 pt-10 sm:px-7 lg:px-10 lg:pb-12 lg:pt-14">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_65%_12%,rgb(var(--lab-secondary)/0.14),transparent_34rem)]"></div>
+      <div class="relative mx-auto grid max-w-[1360px] gap-10 xl:grid-cols-[0.54fr_0.46fr] xl:gap-16">
+        <div class="w-full min-w-0 max-w-full">
+          <h1 class="text-[3.85rem] font-extrabold leading-[0.82] text-lab-accent-text min-[380px]:text-[4.25rem] sm:text-[6rem] lg:text-[7rem]">
+            AutoMem
           </h1>
-
-          <div
-            class="space-y-6 text-lg md:text-xl leading-relaxed border-l-4 border-lab-secondary pl-6 py-2"
-          >
-            <p>
-              <Typewriter
-                text="Deploy once. Remember everywhere."
-                delay="{200}"
-              />
-              <br />
-              <Typewriter
-                text="The universal memory layer for your AI agents."
-                delay="{1500}"
-                class="text-lab-muted"
-              />
-            </p>
-          </div>
-
-          <div class="mt-12 flex flex-wrap gap-4">
-            <a href="/docs/overview" class="btn-lab-accent shadow-hard">
-              INIT_SYSTEM.sh
-            </a>
-            <a
-              href={GITHUB_URL_UTM}
-              class="btn-lab group gap-2"
-            >
-              <span>SOURCE_CODE</span>
-              <span class="text-xs bg-lab-text text-lab-bg px-1.5 rounded"
-                >GITHUB</span
-              >
-            </a>
-          </div>
-        </div>
-
-        <!-- Right: The Machine (Chat Demo) -->
-        <div class="relative">
-          <div
-            class="absolute inset-0 bg-lab-accent/5 blur-3xl rounded-full"
-          ></div>
-          <ChatDemo />
-        </div>
-      </div>
-    </section>
-
-    <!-- Memory Transformation: Before/After Animation -->
-    <section
-      class="px-4 md:px-12 py-12 md:py-16 border-b border-lab-border bg-lab-bg relative overflow-hidden"
-    >
-      <div class="comment-header">:: MEMORY_TRANSFORMATION</div>
-      <div class="relative z-10">
-        <div class="text-center mb-6">
-          <h2 class="text-3xl font-bold mb-4">From Forgetful to Brilliant.</h2>
-          <p class="text-lab-muted max-w-xl mx-auto">
-            Watch how AutoMem transforms your AI from a blank slate into a context-aware assistant.
-          </p>
-        </div>
-        <MemoryHero />
-      </div>
-      <div
-        class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"
-      ></div>
-    </section>
-
-    <!-- Features: The Circuit -->
-    <section
-      class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg/50 relative"
-    >
-      <div class="comment-header">:: SYSTEM_ARCHITECTURE</div>
-
-      <div class="max-w-6xl mx-auto">
-        <div class="grid md:grid-cols-3 gap-8">
-          <!-- Node 1 -->
-          <div
-            class="border-2 border-lab-text p-6 rounded-lg shadow-hard bg-lab-bg hover:translate-y-[-4px] transition-transform relative group"
-          >
-            <div
-              class="absolute -top-3 left-6 bg-lab-secondary text-lab-bg px-2 text-xs font-bold uppercase"
-            >
-              Input
-            </div>
-            <h3 class="text-xl font-bold mb-2 mt-2">Universal I/O</h3>
-            <p class="text-lab-muted text-sm leading-relaxed">
-              Compatible with Claude Code, Cursor, ChatGPT, OpenClaw,
-              Antigravity, and any MCP client. Local or remote — works everywhere
-              via MCP and Streamable HTTP.
-            </p>
-            <div class="mt-4 flex gap-2">
-              <span
-                class="w-2 h-2 bg-lab-success rounded-full animate-pulse"
-              ></span>
-              <span class="text-xs font-mono opacity-50">LISTENING...</span>
-            </div>
-          </div>
-
-          <!-- Node 2 -->
-          <div
-            class="border-2 border-lab-text p-6 rounded-lg shadow-hard bg-lab-bg hover:translate-y-[-4px] transition-transform relative group"
-          >
-            <div
-              class="absolute -top-3 left-6 bg-lab-accent text-[#1a1a1a] px-2 text-xs font-bold uppercase"
-            >
-              Process
-            </div>
-            <h3 class="text-xl font-bold mb-2 mt-2">Graph Engine</h3>
-            <p class="text-lab-muted text-sm leading-relaxed">
-              FalkorDB + Qdrant hybrid core. Maps relationships between
-              memories, not just vector similarity.
-            </p>
-            <div class="mt-4 flex gap-1">
-              {[1,2,3].map(() =>
-              <div class="w-2 h-4 bg-lab-muted/30"></div>
-              )}
-            </div>
-          </div>
-
-          <!-- Node 3 -->
-          <div
-            class="border-2 border-lab-text p-6 rounded-lg shadow-hard bg-lab-bg hover:translate-y-[-4px] transition-transform relative group"
-          >
-            <div
-              class="absolute -top-3 left-6 bg-lab-text text-lab-bg px-2 text-xs font-bold uppercase"
-            >
-              Output
-            </div>
-            <h3 class="text-xl font-bold mb-2 mt-2">Instant Recall</h3>
-            <p class="text-lab-muted text-sm leading-relaxed">
-              Sub-50ms latency. Your agent knows what you know before you finish
-              typing the prompt.
-            </p>
-            <div class="mt-4 font-mono text-xs text-lab-accent-text">>> 48ms</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Client Compatibility -->
-    <section
-      class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg relative overflow-hidden"
-    >
-      <div class="comment-header">:: COMPATIBILITY_MATRIX</div>
-      <div class="max-w-6xl mx-auto">
-        <div class="max-w-3xl mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            Where AutoMem Works
+          <h2 class="mt-5 max-w-[13ch] text-3xl font-extrabold leading-[1.03] tracking-normal text-lab-text sm:text-4xl lg:text-[2.75rem]">
+            Persistent memory for every agent you use.
           </h2>
-          <p class="text-lab-muted leading-relaxed">
-            Wherever you work — Claude, Cursor, Copilot, Codex, ChatGPT,
-            Windsurf, or another MCP-compatible client — AutoMem can sit behind
-            it. Local tools use stdio MCP; cloud tools can connect through
-            Streamable HTTP.
+          <p class="mt-5 max-w-[66ch] text-sm leading-6 text-lab-muted">
+            Open-source memory layer your agents and MCP tools can read, write, and reason over-across sessions and systems.
           </p>
-        </div>
+          <p class="mt-3 max-w-[66ch] text-xs leading-5 text-lab-muted">
+            Claude, Cursor, Copilot, Codex, ChatGPT, and remote agents connect through MCP and Streamable HTTP.
+          </p>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {supportedClients.map((client) => (
-            <div class="bg-lab-surface border border-lab-border rounded-lg p-5 shadow-hard">
-              <div class="flex items-center justify-between gap-3 mb-3">
-                <h3 class="font-bold text-sm">{client.name}</h3>
-                <span class="w-2.5 h-2.5 rounded-full bg-lab-success flex-shrink-0"></span>
+          <div class="relative mt-6 sm:mb-8">
+            <div class="w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-lab-line bg-lab-surface/90 shadow-[0_24px_90px_rgb(0_0_0/0.28)] sm:max-w-full">
+              <div class="flex items-center justify-between border-b border-lab-border px-5 py-3">
+                <div class="flex items-center gap-2 text-sm font-bold text-lab-accent-text">
+                  <span>$</span>
+                  <span>automem install</span>
+                </div>
+                <div class="flex items-center gap-3 text-lab-muted sm:gap-6">
+                  <span aria-hidden="true">−</span>
+                  <span aria-hidden="true">□</span>
+                  <span aria-hidden="true">×</span>
+                </div>
               </div>
-              <p class="text-xs text-lab-muted">{client.transport}</p>
-            </div>
-          ))}
-        </div>
-
-        <div class="mt-8 bg-lab-surface border border-lab-border rounded-lg p-5">
-          <p class="text-sm text-lab-muted leading-relaxed">
-            AutoMem supports both MCP and Streamable HTTP, so your memory store
-            can follow you between local coding assistants and browser-hosted AI
-            tools without becoming tied to one vendor.
-          </p>
-        </div>
-      </div>
-      <div
-        class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"
-      ></div>
-    </section>
-
-    <!-- Memory Graph Visualization -->
-    <section
-      class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg relative overflow-hidden"
-    >
-      <div class="comment-header">:: VISUALIZE_MEMORY</div>
-      <div class="relative z-10">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Dreams while you dream.</h2>
-          <p class="text-lab-muted max-w-2xl mx-auto leading-relaxed">
-            AutoMem runs quietly in the background, stitching every thought into a retrieval graph.
-            It notices patterns, links context, and keeps the right edges warm—without you ever thinking about it.
-          </p>
-        </div>
-        <MemoryDrive />
-      </div>
-      <div
-        class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"
-      ></div>
-    </section>
-
-    <!-- Timeline / Changelog -->
-    <section class="px-4 md:px-12 py-24 border-b border-lab-border bg-lab-bg">
-      <div class="comment-header">:: MEMORY_STREAM</div>
-
-      <div class="max-w-4xl mx-auto relative mt-12" id="project-timeline">
-        <div class="timeline-line"></div>
-        <div class="timeline-line-fill" id="timeline-line-fill"></div>
-
-        <div class="space-y-12 relative timeline-entries">
-          {timelineEntries.map((entry) => (
-          <div class={`timeline-item flex gap-6 ${entry.pending ? 'pending' : ''}`} data-timeline-item>
-            <div
-              class="font-mono text-sm text-lab-muted text-right w-28 pt-1 hidden md:block"
-            >
-              {entry.pending ? (
-                <span class="text-lab-accent-text font-bold">{entry.date}</span>
-              ) : (
-                <>{entry.date}<br />{entry.time}</>
-              )}
-            </div>
-            <div class={`flex-1 border-l-2 ${entry.pending ? 'border-lab-accent border-dashed' : 'border-lab-border'} pl-8 relative`}>
-              <div class={`timeline-dot ${entry.pending ? 'pending' : ''}`}></div>
-              <div class="md:hidden text-xs font-mono text-lab-muted mb-1">
-                {entry.pending ? (
-                  <span class="text-lab-accent-text font-bold">{entry.date}</span>
-                ) : (
-                  <>{entry.date} · {entry.time}</>
-                )}
+              <div class="p-5 sm:p-7">
+                <a href="/install" class="block max-w-full break-all text-[13px] font-medium leading-6 text-lab-text no-underline [overflow-wrap:anywhere] sm:text-2xl sm:leading-normal">
+                  <span>curl -fsSL </span><span class="text-lab-accent-text">https://automem.ai</span><span> | sh</span>
+                </a>
+                <div class="mt-5 rounded border border-lab-border bg-lab-bg/70 p-4">
+                  {terminalChecks.map((check) => (
+                    <div class="grid grid-cols-[1rem_minmax(0,1fr)_1.5rem] items-center gap-2 py-1 text-xs min-[380px]:text-sm sm:gap-3">
+                      <span class="flex h-4 w-4 items-center justify-center rounded-full bg-lab-success text-[10px] font-bold text-lab-bg">✓</span>
+                      <span class="min-w-0 text-lab-muted">{check}</span>
+                      <span class="text-right text-lab-success">ok</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3 class="text-xl font-bold">
-                {entry.pending && <span class="text-lab-accent-text">[PENDING] </span>}
-                {entry.title}
-              </h3>
-              <p class="mt-2 text-lab-text/80 max-w-xl">{entry.description}</p>
+            </div>
+            <div class="autojack-hero pointer-events-none absolute -bottom-9 right-6 hidden sm:block" aria-hidden="true">
+              <AutoJack size={74} expression="wink" animate={true} />
             </div>
           </div>
-          ))}
+
+          <div class="mt-5 grid w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded border border-lab-line bg-lab-surface/80 sm:max-w-full sm:grid-cols-[4rem_1fr_3rem]">
+            <div class="flex items-center justify-center border-b border-lab-line p-4 text-3xl text-lab-secondary sm:border-b-0 sm:border-r">›</div>
+            <a href={SKILL_URL} class="border-b border-lab-line p-4 text-sm no-underline sm:border-b-0 sm:border-r">
+              <span class="block text-lab-muted">Point your agent at</span>
+              <span class="mt-1 block break-all text-base font-bold text-lab-secondary">{SKILL_URL}</span>
+            </a>
+            <button class="flex items-center justify-center p-4 text-lab-muted transition-colors hover:text-lab-accent-text" aria-label="Copy skill URL">
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M7 7h8v8H7zM5 13H3V3h10v2" stroke="currentColor" stroke-width="1.5" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="mt-5 flex flex-col gap-4 sm:flex-row">
+            <a href="/install" class="btn-lab-accent w-full sm:w-auto">
+              <span>›</span>
+              <span class="ml-2 sm:hidden">Install AutoMem</span>
+              <span class="ml-2 hidden sm:inline">{INSTALL_COMMAND}</span>
+            </a>
+            <a href="/install" class="btn-lab w-full sm:w-auto">
+              <span>Open install guide</span>
+              <span class="ml-3">→</span>
+            </a>
+          </div>
+          <p class="mt-3 text-xs text-lab-muted">macOS, Linux, and Windows (WSL2)</p>
         </div>
 
-        <div class="timeline-fadeout"></div>
-      </div>
+        <div class="relative min-h-[560px] w-full max-w-full min-w-0 overflow-hidden rounded-md xl:min-h-[580px] xl:rounded-none">
+          <div class="absolute left-0 right-0 top-0 text-center text-xs font-bold uppercase tracking-[0.16em] text-lab-muted">AGENT CLIENTS</div>
+          <div class="grid min-w-0 grid-cols-2 gap-3 pt-9 sm:grid-cols-4 sm:gap-4">
+            {agentClients.map((client) => (
+              <div class="glass-panel flex h-20 min-w-0 flex-col items-center justify-center gap-2 text-center sm:h-24">
+                <div class="text-2xl font-bold text-lab-text sm:text-3xl">{client.mark}</div>
+                <div class="max-w-full truncate px-2 text-[11px] font-bold text-lab-text sm:text-xs">{client.name}</div>
+              </div>
+            ))}
+          </div>
 
-      <div class="text-center mt-8">
-        <a href="/docs/development/changelog/" class="inline-flex items-center gap-2 font-mono text-sm text-lab-muted hover:text-lab-accent-text transition-colors">
-          View full changelog <span aria-hidden="true">→</span>
-        </a>
+          <div class="mx-auto mt-8 h-10 w-px bg-lab-secondary"></div>
+          <div class="mx-auto flex h-12 w-20 items-center justify-center rounded border-2 border-lab-secondary bg-lab-surface text-2xl font-bold shadow-[0_0_30px_rgb(var(--lab-secondary)/0.2)]">
+            MCP
+          </div>
+          <p class="mx-auto mt-3 max-w-[10rem] text-center text-xs leading-4 text-lab-muted sm:absolute sm:right-2 sm:top-[12.2rem] sm:mt-0 sm:text-left">Model Context Protocol</p>
+
+          <div class="mx-auto h-8 w-px bg-lab-secondary"></div>
+          <div class="mx-auto flex w-full max-w-[min(100%,27.5rem)] items-center justify-center gap-4 rounded border-2 border-lab-accent bg-lab-surface/92 px-4 py-6 text-center sm:gap-6 sm:px-8 sm:py-7">
+            <img src="/automem-icon.svg" alt="" class="h-12 w-12 shrink-0 rounded-md sm:h-14 sm:w-14" loading="eager" decoding="async" />
+            <div class="min-w-0 text-left">
+              <div class="text-2xl font-extrabold text-lab-accent-text min-[380px]:text-3xl sm:text-4xl">AutoMem</div>
+              <div class="mt-2 text-sm text-lab-text sm:text-base">Persistent Memory Layer</div>
+            </div>
+          </div>
+
+          <div class="mx-auto grid max-w-[440px] grid-cols-2 gap-10 sm:gap-24">
+            <div class="h-12 border-r border-dashed border-lab-line"></div>
+            <div class="h-12 border-l border-dashed border-lab-line"></div>
+          </div>
+          <div class="grid gap-4 min-[520px]:grid-cols-2 sm:gap-10">
+            <div class="glass-panel flex min-h-24 items-center gap-3 p-4 sm:min-h-28 sm:gap-4 sm:p-5">
+              <span class="text-3xl text-lab-success sm:text-4xl">⌘</span>
+              <div>
+                <div class="text-lg font-bold text-lab-text sm:text-xl">FalkorDB</div>
+                <div class="text-xs text-lab-muted">Graph Storage</div>
+              </div>
+            </div>
+            <div class="glass-panel flex min-h-24 items-center gap-3 p-4 sm:min-h-28 sm:gap-4 sm:p-5">
+              <span class="text-3xl text-lab-accent-text sm:text-4xl">◈</span>
+              <div>
+                <div class="text-lg font-bold text-lab-text sm:text-xl">Qdrant</div>
+                <div class="text-xs text-lab-muted">Vector Store</div>
+              </div>
+            </div>
+          </div>
+          <p class="mt-7 text-center text-sm text-lab-muted">Graph for relationships. Vector for meaning.</p>
+        </div>
       </div>
     </section>
 
-    <!-- Deployment Options -->
-    <section class="px-4 md:px-12 py-24 bg-lab-surface">
-      <div class="comment-header">:: DEPLOYMENT_PROTOCOLS</div>
-      <div class="max-w-6xl mx-auto">
-        <div class="text-center max-w-3xl mx-auto mb-16">
-          <h2 class="text-4xl font-bold mb-6 tracking-tighter">
-            Deploy Once. Remember Everywhere.
-          </h2>
-          <p class="text-xl text-lab-muted">
-            Your memory infrastructure should be as portable as your code.
-            Start with a hosted pod, launch on Railway, or run the full stack
-            yourself.
-          </p>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-          <!-- Option 1: InstaPods -->
-          <div
-            class="bg-lab-bg border-2 border-lab-accent p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform md:scale-105 z-10"
-          >
-            <div
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-accent text-[#1a1a1a] px-3 py-1 text-xs font-bold uppercase tracking-widest"
-            >
-              Fastest
-            </div>
-            <div class="flex items-center gap-3 mb-4">
-              <img
-                src="/logos/instapods.svg"
-                alt=""
-                width="36"
-                height="36"
-                class="w-9 h-9 rounded-md bg-lab-surface border border-lab-border"
-              />
-              <h3 class="text-2xl font-bold">InstaPods</h3>
-            </div>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              Deploy AutoMem in about 30 seconds on the Grow plan with HTTPS,
-              custom domains, SSH access, and generated MCP config.
-            </p>
-            <div
-              class="bg-lab-bg border border-lab-accent p-3 rounded font-mono text-xs text-left mb-6 text-lab-accent-text"
-            >
-              > AutoMem pod online<br />> $15/mo flat
-            </div>
-            <a
-              href={INSTAPODS_REFERRAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-lab-accent w-full px-4 tracking-wide whitespace-nowrap"
-              >Deploy on InstaPods</a
-            >
-          </div>
-
-          <!-- Option 2: Railway -->
-          <div
-            class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
-          >
-            <div
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
-            >
-              Flexible
-            </div>
-            <div class="text-4xl mb-4">🚂</div>
-            <h3 class="text-2xl font-bold mb-2">Railway</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              One-click production deployment with usage-based pricing,
-              generated environment variables, and a public HTTPS domain.
-            </p>
-            <div
-              class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
-            >
-              > Template deploy<br />> Ready in ~60 seconds
-            </div>
-            <a
-              href={RAILWAY_DEPLOY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-lab w-full px-4 tracking-wide whitespace-nowrap"
-              >Deploy on Railway</a
-            >
-          </div>
-
-          <!-- Option 3: Self-hosted -->
-          <div
-            class="bg-lab-bg border-2 border-lab-text p-8 rounded-lg shadow-hard relative group hover:translate-y-[-4px] transition-transform"
-          >
-            <div
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lab-text text-lab-bg px-3 py-1 text-xs font-bold uppercase tracking-widest"
-            >
-              Hacker
-            </div>
-            <div class="text-4xl mb-4">💻</div>
-            <h3 class="text-2xl font-bold mb-2">Self-hosted</h3>
-            <p class="text-lab-muted mb-6 text-sm min-h-[40px]">
-              Run the Docker stack locally or on your own VPS. Bring your own
-              domain, HTTPS, operations, and SSH policy.
-            </p>
-            <div
-              class="bg-lab-surface border border-lab-text p-3 rounded font-mono text-xs text-left mb-6"
-            >
-              git clone ...<br />npm install
-            </div>
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-lab w-full px-4 tracking-wide whitespace-nowrap"
-              >Fork Repo</a
-            >
-          </div>
-        </div>
-
-        <div class="mt-16">
-          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-            <div>
-              <h3 class="text-2xl font-bold">Provider Comparison</h3>
-              <p class="text-sm text-lab-muted mt-2">
-                Choose the deployment path by how much platform work you want
-                AutoMem to do for you.
-              </p>
-            </div>
-            <a
-              href={INSTAPODS_REFERRAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-lab-accent md:w-auto px-4 tracking-wide whitespace-nowrap"
-              >Try InstaPods</a
-            >
-          </div>
-
-          <div class="overflow-x-auto border-2 border-lab-text rounded-lg shadow-hard bg-lab-bg">
-            <table class="w-full min-w-[720px] text-left text-sm">
-              <thead class="bg-lab-text text-lab-bg">
-                <tr>
-                  <th class="p-4 font-bold">Capability</th>
-                  <th class="p-4 font-bold">InstaPods</th>
-                  <th class="p-4 font-bold">Railway</th>
-                  <th class="p-4 font-bold">Self-hosted / Docker</th>
-                </tr>
-              </thead>
-              <tbody>
-                {providerComparisonRows.map((row) => (
-                  <tr class="border-t border-lab-border">
-                    <th class="p-4 font-bold text-lab-text">{row.feature}</th>
-                    <td class="p-4 text-lab-accent-text">{row.instapods}</td>
-                    <td class="p-4 text-lab-muted">{row.railway}</td>
-                    <td class="p-4 text-lab-muted">{row.selfHosted}</td>
-                  </tr>
+    <section class="px-4 py-10 sm:px-7 lg:px-10">
+      <div class="mx-auto max-w-[1360px]">
+        <h2 class="text-2xl font-bold">Choose your setup</h2>
+        <p class="mt-2 text-sm font-bold text-lab-muted">Deploy Once. Remember Everywhere.</p>
+        <div class="mt-5 grid gap-5 lg:grid-cols-3">
+          {setupPaths.map((path) => (
+            <article class={`setup-card setup-card-${path.tone} relative rounded border bg-lab-surface/74 p-5`}>
+              {path.badge && <div class="absolute right-5 top-4 text-[10px] font-bold uppercase text-lab-success">{path.badge}</div>}
+              <div class="flex items-start gap-4">
+                <div class="flex h-10 w-10 items-center justify-center rounded border text-2xl">{path.icon}</div>
+                <div>
+                  <h3 class="text-xl font-bold">{path.title}</h3>
+                  <p class="mt-2 text-sm text-lab-muted">{path.detail}</p>
+                </div>
+              </div>
+              <ul class="mt-5 space-y-3 text-sm">
+                {path.bullets.map((bullet) => (
+                  <li class="flex items-center gap-3">
+                    <span class="text-current">✓</span>
+                    <span class="text-lab-text">{bullet}</span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+              <a href={path.href ?? '/install'} target={path.href ? '_blank' : undefined} rel={path.href ? 'noopener noreferrer' : undefined} class="mt-5 block break-all rounded border border-lab-border bg-lab-bg/72 px-3 py-2 text-xs text-lab-muted no-underline">
+                {path.command}
+              </a>
+            </article>
+          ))}
+        </div>
+        <p class="mt-5 text-center text-sm text-lab-muted">
+          All options expose the same MCP endpoint, including the Existing Endpoint path.
+          <span class="ml-2">Self-hosted / Docker remains available for teams that want full control.</span>
+          <a href="/install" class="ml-2 font-bold text-lab-secondary no-underline hover:underline">Learn more in the install guide →</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="border-t border-lab-border/70 px-4 py-10 sm:px-7 lg:px-10">
+      <div class="mx-auto max-w-[1360px]">
+        <h2 class="text-2xl font-bold">What the installer does</h2>
+        <div class="mt-8 grid gap-6 lg:grid-cols-4 lg:gap-0">
+          {installerSteps.map((step, index) => (
+            <div class="relative lg:pr-8">
+              {index < installerSteps.length - 1 && <div class="absolute left-14 right-4 top-5 hidden border-t border-lab-line lg:block"></div>}
+              <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-lab-secondary bg-lab-bg text-lg font-bold text-lab-secondary">{step.number}</div>
+              <h3 class="mt-5 font-bold text-lab-secondary">{step.title}</h3>
+              <p class="mt-2 max-w-[18rem] text-sm leading-5 text-lab-muted">{step.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t border-lab-border/70 px-4 py-10 sm:px-7 lg:px-10">
+      <div class="mx-auto max-w-[1360px]">
+        <h2 class="text-2xl font-bold">Works where agents already run</h2>
+        <div class="mt-4 overflow-x-auto rounded border border-lab-line bg-lab-surface/72">
+          <table class="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-lab-line text-lab-text">
+                <th class="border-r border-lab-border px-4 py-3 text-left font-bold">Client / Platform</th>
+                <th class="border-r border-lab-border px-4 py-3 text-center font-bold">AutoMem MCP</th>
+                <th class="border-r border-lab-border px-4 py-3 text-center font-bold">macOS</th>
+                <th class="border-r border-lab-border px-4 py-3 text-center font-bold">Linux</th>
+                <th class="border-r border-lab-border px-4 py-3 text-center font-bold">Windows (WSL2)</th>
+                <th class="border-r border-lab-border px-4 py-3 text-center font-bold">Docker</th>
+                <th class="px-4 py-3 text-center font-bold">Kubernetes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {compatibilityRows.map(([client, mcp]) => (
+                <tr class="border-b border-lab-border last:border-b-0">
+                  <td class="border-r border-lab-border px-4 py-2 text-lab-text">{client}</td>
+                  <td class="border-r border-lab-border px-4 py-2 text-center text-lab-text">{mcp}</td>
+                  {[0, 1, 2, 3, 4].map(() => (
+                    <td class="border-r border-lab-border px-4 py-2 text-center text-lg font-bold text-lab-success last:border-r-0">✓</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 text-center text-sm text-lab-muted">
+          If your client supports MCP, AutoMem works.
+          <a href="/docs/platforms/codex/" class="ml-3 font-bold text-lab-secondary no-underline hover:underline">See full compatibility guide →</a>
+        </p>
+        <p class="mt-3 text-center text-xs text-lab-muted">Extended compatibility: {extendedClients}.</p>
+      </div>
+    </section>
+
+    <section class="border-t border-lab-border/70 px-4 py-12 sm:px-7 lg:px-10">
+      <div class="mx-auto grid max-w-[1360px] gap-8 lg:grid-cols-[0.82fr_0.72fr_0.58fr] lg:items-center">
+        <div>
+          <h2 class="text-2xl font-bold">Built on research. Designed for recall.</h2>
+          <p class="mt-5 max-w-[48rem] text-sm leading-6 text-lab-muted">
+            AutoMem combines a knowledge graph and vector search so agents can recall both facts and their context.
+          </p>
+          <div class="mt-8 space-y-6">
+            <div class="flex gap-5">
+              <span class="text-4xl text-lab-success">⌘</span>
+              <p class="max-w-[28rem] text-base text-lab-muted"><span class="text-lab-text">Graph (FalkorDB)</span> captures entities, relationships, and time.</p>
+            </div>
+            <div class="flex gap-5">
+              <span class="text-4xl text-lab-secondary">✣</span>
+              <p class="max-w-[28rem] text-base text-lab-muted"><span class="text-lab-text">Vector (Qdrant)</span> captures meaning, similarity, and intent.</p>
+            </div>
           </div>
+        </div>
+
+        <pre class="glass-panel overflow-x-auto p-6 text-sm leading-6 text-lab-muted"><code><span class="text-lab-secondary"># Example: hybrid recall</span>
+
+MATCH (p:Project)-[:USES]-&gt;(t:Tool)
+WHERE p.name = 'AutoMem'
+RETURN p, t
+ORDER BY ts DESC
+LIMIT 20;
+
+<span class="text-lab-secondary"># + vector search for semantic matches</span>
+
+SEARCH "install script errors WSL" LIMIT 20;</code></pre>
+
+        <div>
+          <p class="text-base leading-7 text-lab-muted">
+            The result: fewer repeats, more relevant answers, and memory that compounds over time.
+          </p>
+          <a href="/docs/research/" class="mt-8 inline-flex font-bold text-lab-accent-text no-underline hover:underline">Read the research overview →</a>
         </div>
       </div>
     </section>
   </main>
 
   <style>
-    #project-timeline {
-      position: relative;
+    .setup-card {
+      border-color: rgb(var(--lab-line));
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
     }
-
-    .timeline-line {
+    .setup-card-green {
+      color: rgb(var(--lab-success));
+      border-color: rgb(var(--lab-success) / 0.55);
+    }
+    .setup-card-violet {
+      color: rgb(var(--lab-secondary));
+      border-color: rgb(var(--lab-secondary) / 0.55);
+    }
+    .setup-card-gold {
+      color: rgb(var(--lab-accent));
+      border-color: rgb(var(--lab-accent) / 0.65);
+    }
+    .autojack-hero {
+      transform: rotate(-7deg);
+    }
+    .autojack-hero::before {
+      content: '';
       position: absolute;
-      left: 1.05rem;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background: #1f1f1f;
-      opacity: 0.7;
-    }
-
-    .timeline-line-fill {
-      position: absolute;
-      left: 1.05rem;
-      top: 0;
-      width: 2px;
-      height: 0;
-      background: linear-gradient(180deg, #f472b6, #22c55e);
-      transition: height 0.4s ease;
-    }
-
-    .timeline-item {
-      opacity: 0;
-      transform: translateY(16px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    .timeline-item.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .timeline-dot {
-      position: absolute;
-      left: -11px;
-      top: 0;
-      width: 14px;
-      height: 14px;
-      background: #0a0a0a;
-      border: 2px solid #f472b6;
+      inset: 1.35rem 0.75rem 0.2rem;
+      z-index: -1;
       border-radius: 999px;
-      box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12);
-    }
-
-    .timeline-dot.pending {
-      border-color: rgb(var(--lab-accent));
-      box-shadow: 0 0 0 3px rgba(var(--lab-accent), 0.2);
-      animation: pending-pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pending-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(var(--lab-accent), 0.2); }
-      50% { box-shadow: 0 0 0 6px rgba(var(--lab-accent), 0.1); }
-    }
-
-    .timeline-item.pending {
-      opacity: 0.9;
-    }
-
-    .timeline-fadeout {
-      position: relative;
-      height: 120px;
-      margin-top: -120px;
-      background: linear-gradient(to bottom, transparent, rgb(var(--lab-bg)));
-      pointer-events: none;
-      z-index: 10;
+      background: rgb(var(--lab-accent) / 0.12);
+      filter: blur(14px);
     }
   </style>
-
-  <script>
-    const timeline = document.getElementById("project-timeline");
-    const items = Array.from(document.querySelectorAll("[data-timeline-item]"));
-    const fill = document.getElementById("timeline-line-fill");
-
-    function updateFill(target) {
-      if (!timeline || !fill || !target) return;
-      const containerTop =
-        timeline.getBoundingClientRect().top + window.scrollY;
-      const rect = target.getBoundingClientRect();
-      const center =
-        rect.top + window.scrollY - containerTop + rect.height * 0.5;
-      const maxHeight = timeline.offsetHeight || 0;
-      fill.style.height = `${Math.min(center, maxHeight)}px`;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            updateFill(entry.target);
-          }
-        });
-      },
-      { threshold: 0.35 }
-    );
-
-    items.forEach((item) => observer.observe(item));
-  </script>
 </Layout>

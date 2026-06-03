@@ -12,8 +12,8 @@ test("homepage promotes InstaPods referral deployment and works-everywhere posit
   assert.match(homepage, /Claude, Cursor, Copilot, Codex, ChatGPT/);
   assert.match(homepage, /MCP and Streamable HTTP/);
   assert.match(homepage, /Deploy Once\. Remember Everywhere\./);
-  assert.match(homepage, />InstaPods</);
-  assert.match(homepage, />Railway</);
+  assert.match(homepage, /title: 'InstaPods'/);
+  assert.match(homepage, /title: 'Railway'/);
   assert.match(homepage, /Self-hosted \/ Docker/);
 
   for (const client of [

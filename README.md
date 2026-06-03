@@ -118,9 +118,20 @@ Secrets are **never** committed — set them in the Cloudflare Pages dashboard u
 
 For local dev, mirror these in `.dev.vars` (gitignored).
 
+Preview isolation note: `wrangler.toml` currently uses a separate preview
+`EMDASH_DB`, but preview still shares the waitlist `D1` database and `SESSION`
+KV namespace with production. Before enabling write-capable PR previews for
+signup/admin/session flows, create preview-specific waitlist D1 and session KV
+resources and bind those under `[env.preview]`.
+
 ## Deployment
 
-Deployed to Cloudflare Pages. The site auto-builds from `main` via the connected Git integration; the build command is `npm run build` and the output directory is `dist/client`. A GitHub Actions workflow at `.github/workflows/deploy.yml` is also configured.
+Deployed to Cloudflare Pages. The repo-owned production deploy path is
+`.github/workflows/deploy.yml`, which builds with `npm run build` and uploads
+`dist/client` via `wrangler pages deploy --project-name automem-website --branch
+main`. If Cloudflare's connected Git integration is enabled in the dashboard,
+keep one deploy path canonical and disable or document the other to avoid double
+deploys.
 
 To deploy manually:
 

@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import AutoJackPeek from '../components/AutoJackPeek.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import ThemeInit from '../components/ThemeInit.astro';
 
@@ -45,29 +44,15 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
   </head>
-  <body class="bg-lab-bg text-lab-text min-h-screen flex font-mono selection:bg-lab-accent/20 relative">
-    
-    <!-- Line Numbers (Scrolls with content) -->
-    <div class="hidden md:block w-20 border-r border-lab-border bg-lab-bg flex-shrink-0 text-right pr-4 py-6 select-none text-lab-muted/30 text-xs font-mono leading-7 min-h-screen">
-      {Array.from({ length: 200 }).map((_, i) => (
-        <div>0x{(i * 16).toString(16).toUpperCase().padStart(4, '0')}</div>
-      ))}
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="flex-1 w-full max-w-full overflow-x-hidden relative">
-      
-      <div class="max-w-7xl mx-auto px-0 md:px-6 border-r border-lab-border min-h-screen bg-lab-bg/50 backdrop-blur-[2px]">
+  <body class="bg-lab-bg text-lab-text min-h-screen font-mono selection:bg-lab-accent/25 relative">
+    <div class="w-full max-w-full overflow-x-hidden relative">
+      <div class="max-w-[1440px] mx-auto min-h-screen bg-lab-bg/55 backdrop-blur-[1px]">
         <slot />
 
         <SiteFooter />
       </div>
-      
-      <!-- AutoJack Peek Helper -->
-      <AutoJackPeek position="bottom-right" />
     </div>
-    
-    <!-- Film Grain Overlay -->
+
     <div class="grain-overlay"></div>
     
     <style is:global>

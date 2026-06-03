@@ -20,6 +20,7 @@ export default defineConfig({
   site: 'https://automem.ai',
   adapter: isBuilding ? cloudflare() : undefined,
   output: 'server',
+  devToolbar: { enabled: false },
   ...(isBuilding ? {} : { session: { driver: 'fs' } }),
   integrations: [
     mermaid({

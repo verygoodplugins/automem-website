@@ -52,7 +52,7 @@ public/              — Static assets (favicon, OG image)
 - **Environment access**: Use `import('cloudflare:workers')` to get env — do NOT use `locals.runtime.env` (deprecated in Astro v6)
 - **Pages Functions**: Plain JS files in `functions/` (not TypeScript, not in `src/`)
 - **API routes**: Dispatched through `src/middleware.ts`, which dynamically imports from `functions/`
-- **Environments**: `wrangler.toml` has production and preview configs with separate D1 databases
+- **Environments**: `wrangler.toml` has production and preview configs. Preview currently has a separate `EMDASH_DB`, but shares the waitlist `D1` and `SESSION` KV IDs with production; create and bind separate preview resources before enabling write-capable PR previews.
 
 ## Theming System
 

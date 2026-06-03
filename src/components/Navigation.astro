@@ -1,67 +1,73 @@
 ---
-import AutoJack from './AutoJack.astro';
 import ThemeToggle from './ThemeToggle.astro';
-import DiscordIcon from './DiscordIcon.astro';
 
 const { currentPath = '' } = Astro.props;
 
+const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const links = [
-  { href: '/', label: 'home' },
-  { href: '/docs/overview', label: 'docs' },
-  { href: '/benchmarks', label: 'benchmarks' },
-  { href: '/blog', label: 'blog' },
-  { href: '/about', label: 'about' },
+  { href: '/docs/overview', label: 'Docs' },
+  { href: '/install', label: 'Install' },
+  { href: '/docs/getting-started/quick-start/', label: 'Guides' },
+  { href: '/docs/core-concepts/memory-model/', label: 'Concepts' },
+  { href: '/docs/reference/api/direct-vs-mcp/', label: 'API' },
 ];
+
+const isActive = (href: string) => {
+  if (href === '/docs/overview') return currentPath.startsWith('/docs') || currentPath === '/docs/overview';
+  return currentPath === href;
+};
 ---
 
-<nav class="sticky top-0 z-40 bg-lab-bg border-b border-lab-border">
-  <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 px-3 sm:px-6 h-14">
-    <!-- Left: Breadcrumbs / Logo -->
-    <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-      <a href="/" class="font-bold text-lab-text hover:text-lab-accent-text transition-colors flex items-center gap-3 group">
-        <!-- AutoJack Logo -->
-        <div class="transform transition-transform group-hover:rotate-12 group-hover:scale-110">
-           <AutoJack size={32} expression="confident" animate={false} />
-        </div>
-        <span class="hidden sm:inline">~/automem</span>
-      </a>
-    </div>
+<nav class="sticky top-0 z-40 border-b border-lab-border/80 bg-lab-bg/88 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-7 lg:px-10">
+    <a href="/" class="group flex shrink-0 items-center gap-3 text-lab-text no-underline">
+      <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center transition-transform group-hover:scale-105">
+        <img src="/automem-icon.svg" alt="" class="h-9 w-9 rounded-md" loading="eager" decoding="async" />
+      </span>
+      <span class="text-xl font-bold tracking-normal sm:text-2xl">AutoMem</span>
+    </a>
 
-    <!-- Right: Links -->
-    <div class="flex items-center overflow-x-auto no-scrollbar min-w-0">
-      {links.map((link) => (
+    <div class="flex min-w-0 items-center justify-end gap-2">
+      <div class="hidden items-center gap-1 md:flex">
+        {links.map((link) => (
+          <a
+            href={link.href}
+            class={`
+              rounded px-4 py-2 text-sm font-medium text-lab-muted no-underline transition-colors
+              hover:bg-lab-panel hover:text-lab-text
+              ${isActive(link.href) ? 'text-lab-accent-text' : ''}
+            `}
+          >
+            {link.label}
+          </a>
+        ))}
         <a
-          href={link.href}
-          class={`
-            h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border transition-colors whitespace-nowrap
-            ${currentPath === link.href
-              ? 'bg-lab-accent text-[#1a1a1a] font-bold'
-              : 'text-lab-muted hover:bg-lab-accent hover:text-[#1a1a1a]'}
-          `}
-        >
-          {link.label}
-        </a>
-      ))}
-      <a
-        href="https://automem.ai/discord"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Join our Discord community"
-        title="Join our Discord community"
-        class="h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-discord hover:text-lab-on-discord transition-colors whitespace-nowrap text-lab-muted"
-      >
-        <DiscordIcon class="w-4 h-4 mr-1.5" />
-        <span class="sr-only sm:not-sr-only sm:inline">discord</span>
-      </a>
-      <a
-        href="https://github.com/verygoodplugins/automem"
+          href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
-        class="h-14 px-3 md:px-6 flex items-center text-sm font-mono border-l border-lab-border hover:bg-lab-accent hover:text-lab-bg transition-colors whitespace-nowrap"
+          class="rounded px-4 py-2 text-sm font-medium text-lab-muted no-underline transition-colors hover:bg-lab-panel hover:text-lab-text"
+        >
+          GitHub
+          <svg class="ml-1 inline h-3 w-3 align-[-1px]" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M5 4h7v7M12 4 4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="glass-panel flex h-9 shrink-0 items-center gap-2 px-3 text-sm font-bold text-lab-text no-underline transition-colors hover:border-lab-accent hover:text-lab-accent-text"
+        aria-label="Star AutoMem on GitHub"
       >
-        ★ Star us
+        <svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 1.2 10.1 5.5l4.7.7-3.4 3.3.8 4.7L8 12l-4.2 2.2.8-4.7L1.2 6.2l4.7-.7L8 1.2Z" />
+        </svg>
+        <span>Star</span>
+        <span class="hidden text-lab-muted sm:inline">745</span>
       </a>
-      <slot name="trailing" />
+
       <ThemeToggle />
     </div>
   </div>

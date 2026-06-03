@@ -29,7 +29,7 @@ Astro 6.1 + React 19 islands · Tailwind CSS v4 (Vite plugin, not PostCSS) · St
 ## Environment & Cloudflare
 
 - **Get env via `import('cloudflare:workers')`** — `locals.runtime.env` is deprecated in Astro v6. Don't reintroduce it.
-- D1 bindings: `D1` (waitlist) and `EMDASH_DB` (CMS). KV binding: `SESSION` (emdash auth). Production and preview have separate database IDs in `wrangler.toml` — don't blindly edit those.
+- D1 bindings: `D1` (waitlist) and `EMDASH_DB` (CMS). KV binding: `SESSION` (emdash auth). Preview currently uses a separate `EMDASH_DB`, but reuses the production waitlist `D1` and `SESSION` KV IDs. Treat write-capable previews as non-isolated until separate preview waitlist D1/KV resources are created and bound in `wrangler.toml`.
 - Pages Functions live in `functions/` as plain `.js` and are surfaced through `src/middleware.ts` (`api/signup.js`, `confirm.js`, `unsubscribe.js`, `admin/*`).
 
 ## Theming
