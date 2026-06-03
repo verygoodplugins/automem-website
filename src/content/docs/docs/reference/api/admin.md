@@ -44,15 +44,16 @@ graph TB
         Reembed["/admin/reembed"]
     end
 
-    subgraph "Public Operations (no auth)"
-        Status["/enrichment/status<br/>(unauthenticated)"]
-    end
-
     subgraph "Also Public"
         Health["/health<br/>(no auth)"]
     end
 
+    subgraph "API Token Required (when AUTOMEM_API_TOKEN configured)"
+        Status["/enrichment/status"]
+    end
+
     Layer1-->Layer2
+    Layer1-->Status
     Layer2-->Reprocess
     Layer2-->Reembed
 ```
@@ -69,9 +70,9 @@ graph TB
 
 ## GET /enrichment/status
 
-**Authentication:** None required
+**Authentication:** API token (when `AUTOMEM_API_TOKEN` is configured)
 
-**Purpose:** Monitor the enrichment pipeline's health and processing statistics. This endpoint provides visibility into background processing without requiring authentication.
+**Purpose:** Monitor the enrichment pipeline's health and processing statistics. Unlike `/health`, this endpoint is protected by the global API token guard whenever `AUTOMEM_API_TOKEN` is set.
 
 ### Response Schema
 
@@ -100,7 +101,8 @@ graph TB
 ### Example Usage
 
 ```bash
-curl "https://your-automem-instance/enrichment/status"
+curl "https://your-automem-instance/enrichment/status" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ### Troubleshooting with Status
@@ -243,7 +245,7 @@ graph TB
     Auth["require_admin_token()"]
     Init["Retrieve pre-initialized OpenAI client<br/>get_openai_client()"]
 
-    FetchAll["Single FalkorDB query:<br/>MATCH (m:Memory)<br/>RETURN id, content, tags,<br/>importance, type, …<br/>ORDER BY timestamp DESC"]
+    FetchAll["Single FalkorDB query:<br/>MATCH (m:Memory)<br/>[WHERE m.content IS NOT NULL]<br/>RETURN id, content, tags, …<br/>ORDER BY timestamp DESC<br/>[LIMIT limit if set]"]
 
     subgraph "Batch Processing Loop"
         Slice["Slice next batch_size memories"]
@@ -304,9 +306,10 @@ RETURN m.id AS id, m.content AS content, m.tags AS tags,
        m.metadata AS metadata, m.updated_at AS updated_at,
        m.last_accessed AS last_accessed
 ORDER BY m.timestamp DESC
+-- When the `limit` request parameter is set, a LIMIT clause is appended after this line
 ```
 
-When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted. There is no separate per-batch content retrieval step — all memory data is loaded upfront.
+When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted from the query. However, the Python collection loop still checks `if content:` before adding a row to the processing list, so memories with null or empty content are excluded regardless of `force`. There is no separate per-batch content retrieval step — all memory data is loaded upfront.
 
 **Phase 2: OpenAI Embedding Generation**
 
