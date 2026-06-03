@@ -60,11 +60,12 @@ public/              — Static assets (favicon, OG image)
 
 Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, default) and `.light`:
 
-- `--lab-accent`: `249 216 87` (#F9D857, Luminous Gold)
-- `--lab-secondary`: Violet #8B5CF6
-- `--lab-bg`, `--lab-surface`, `--lab-border`, `--lab-text`, `--lab-muted`
+- `--lab-accent`: `249 207 44` (#F9CF2C, refreshed gold; was #F9D857)
+- `--lab-secondary`: Violet #AE66FF (was #8B5CF6)
+- `--lab-bg` (#060A0E), `--lab-surface`, `--lab-panel` (#0F161E), `--lab-line` (#465260), `--lab-border`, `--lab-text`, `--lab-muted`
 - `--lab-success`: Memory Green #34D399
 - `--lab-gold`, `--lab-gold-soft`, `--lab-gold-classic`, `--lab-gold-dark`
+- `.glass-panel`: frosted semi-transparent card surface (border-lab-line + backdrop blur)
 
 ### Tailwind v4
 
@@ -77,7 +78,7 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 ### Dark/Light Modes
 
 - Dark mode is the default ("Memory Lab" theme)
-- Light mode via `.light` class on `<html>` element ("Warm Archive" theme)
+- Light mode via `.light` class on `<html>` element (cool white `#F6F8FC`)
 
 ## Content Collections (`src/content.config.ts`)
 
@@ -91,8 +92,8 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 - **AutoJack mascot**: SVG floppy disk character with 6 expression states (confident, wink, happy, sleeping, bliss, focused)
 - **Gold gradient**: `#FFE082 → #F9D857 → #DAA520`
 - **Buttons**: `.btn-lab` (outline) and `.btn-lab-accent` (gold filled), both with hard shadow hover
-- **Grid background**: 24px radial-gradient dot pattern
-- **Body layout**: Flex with optional hex line numbers column (hidden on mobile)
+- **Grid background**: 24px radial-gradient dot pattern with violet + gold radial glows
+- **Body layout**: `max-w-[1440px]` container in `Layout.astro` (the old hex line-number gutter column and `AutoJackPeek` mascot were removed in the install-first redesign)
 
 ## Coding Conventions
 

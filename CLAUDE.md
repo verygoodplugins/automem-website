@@ -34,9 +34,11 @@ Astro 6.1 + React 19 islands · Tailwind CSS v4 (Vite plugin, not PostCSS) · St
 
 ## Theming
 
-CSS variables in `src/styles/global.css` use RGB triplets so Tailwind utilities can apply alpha. Default (dark) theme is "Memory Lab — Luminous Gold Era": `--lab-accent` is `#F9D857` (gold), `--lab-secondary` is `#8B5CF6` (violet). Light mode is "Warm Archive", activated by adding `.light` to `<html>`. Tailwind v4 maps these via an `@theme` block to `bg-lab-*` / `text-lab-*` / `border-lab-*` utilities. Cards and buttons use a `4px 4px 0` hard shadow (`shadow-hard`); body has a 24px radial-dot blueprint grid.
+CSS variables in `src/styles/global.css` use RGB triplets so Tailwind utilities can apply alpha. Default (dark) theme is "Memory Lab": `--lab-accent` is `#F9CF2C` (gold), `--lab-secondary` is `#AE66FF` (violet), `--lab-bg` is `#060A0E`. Surfaces layer through `--lab-surface` → `--lab-panel` (`#0F161E`) with `--lab-line` (`#465260`) hairlines; the `.glass-panel` utility is the frosted, semi-transparent card surface. Light mode (cool white `#F6F8FC`, not the old cream) is activated by adding `.light` to `<html>`. Tailwind v4 maps these via an `@theme` block to `bg-lab-*` / `text-lab-*` / `border-lab-*` utilities. Cards and buttons use a `4px 4px 0` hard shadow (`shadow-hard`); the body background layers violet + gold radial-gradient glows over a 24px radial-dot grid.
 
-If you see references to hot pink `#FF33CC` anywhere, that's a leftover from the pre-rebrand color and should not be reintroduced.
+The base `Layout.astro` is an install-first chrome — the old hex line-number gutter column and the `AutoJackPeek` mascot were removed in the redesign; content sits in a `max-w-[1440px]` container.
+
+If you see references to hot pink `#FF33CC` anywhere, that's a leftover from the pre-rebrand color and should not be reintroduced. The accent gold was refreshed from `#F9D857` to `#F9CF2C` and the violet from `#8B5CF6` to `#AE66FF`; new chrome should use the `--lab-*` tokens, though decorative mascot/SVG art (e.g. `AutoJack`, `MemoryHero`) may still embed the older gold and that's fine.
 
 ## Documentation update workflow
 
