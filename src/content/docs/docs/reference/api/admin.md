@@ -48,8 +48,8 @@ graph TB
         Health["/health<br/>(no auth)"]
     end
 
-    subgraph "API Token Required"
-        Status["/enrichment/status<br/>(when AUTOMEM_API_TOKEN set)"]
+    subgraph "API Token Required (when AUTOMEM_API_TOKEN configured)"
+        Status["/enrichment/status"]
     end
 
     Layer1-->Layer2
@@ -306,7 +306,7 @@ RETURN m.id AS id, m.content AS content, m.tags AS tags,
        m.metadata AS metadata, m.updated_at AS updated_at,
        m.last_accessed AS last_accessed
 ORDER BY m.timestamp DESC
--- When the `limit` request parameter is set, LIMIT {limit} is appended here
+-- When the `limit` request parameter is set, a LIMIT clause is appended after this line
 ```
 
 When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted from the query. However, the Python collection loop still checks `if content:` before adding a row to the processing list, so memories with null or empty content are excluded regardless of `force`. There is no separate per-batch content retrieval step — all memory data is loaded upfront.
