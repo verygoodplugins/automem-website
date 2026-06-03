@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` require a valid API token when `AUTOMEM_API_TOKEN` is configured.
+AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` and `/enrichment/status` require a valid API token when `AUTOMEM_API_TOKEN` is configured.
 
 For deployment-specific token generation on Railway, see [Railway Deployment](/docs/deployment/railway/). For complete endpoint documentation with authentication requirements, see [Memory Operations](/docs/reference/api/memory-operations/).
 
@@ -15,7 +15,7 @@ For deployment-specific token generation on Railway, see [Railway Deployment](/d
 
 | Token Type | Environment Variable | Required For | Purpose |
 |------------|---------------------|-------------|---------|
-| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` | Standard memory operations (store, recall, update, delete) |
+| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` and `/enrichment/status` | Standard memory operations (store, recall, update, delete) |
 | **Admin Token** | `ADMIN_API_TOKEN` | Admin and enrichment endpoints | Privileged operations (reprocessing, re-embedding, bulk operations) |
 
 ---
@@ -158,7 +158,7 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 | `/admin/sync` | POST | Non-destructive drift repair |
 | `/enrichment/reprocess` | POST | Re-queue memories for enrichment |
 
-Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is configured — only `/health` is unconditionally public.
+Note: `/health` and `/enrichment/status` are unconditionally public — no API token is needed for either endpoint regardless of `AUTOMEM_API_TOKEN` configuration.
 
 ---
 
@@ -168,6 +168,7 @@ Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is con
 graph TB
     subgraph "Public Endpoints"
         Health["/health<br/>GET"]
+        EnrichStatus["/enrichment/status<br/>GET"]
     end
 
     subgraph "API Token Required"
@@ -179,7 +180,6 @@ graph TB
         ConsolidateStatus["/consolidate/status<br/>GET"]
         Analyze["/analyze<br/>GET"]
         StartupRecall["/startup-recall<br/>GET"]
-        EnrichStatus["/enrichment/status<br/>GET"]
     end
 
     subgraph "Admin Token Required"
@@ -189,6 +189,7 @@ graph TB
     end
 
     style Health fill:#90EE90
+    style EnrichStatus fill:#90EE90
     style Memory fill:#FFD700
     style Recall fill:#FFD700
     style Associate fill:#FFD700
@@ -197,7 +198,6 @@ graph TB
     style ConsolidateStatus fill:#FFD700
     style Analyze fill:#FFD700
     style StartupRecall fill:#FFD700
-    style EnrichStatus fill:#FFD700
     style Reembed fill:#FF6B6B
     style Sync fill:#FF6B6B
     style Reprocess fill:#FF6B6B
@@ -205,8 +205,8 @@ graph TB
 
 | Category | Endpoints | API Token | Admin Token |
 |----------|-----------|-----------|-------------|
-| **Public** | `/health` | No | No |
-| **Standard** | `/memory`, `/recall`, `/associate`, `/memory/by-tag`, `/consolidate`, `/consolidate/status`, `/analyze`, `/startup-recall`, `/enrichment/status` | Yes | No |
+| **Public** | `/health`, `/enrichment/status` | No | No |
+| **Standard** | `/memory`, `/recall`, `/associate`, `/memory/by-tag`, `/consolidate`, `/consolidate/status`, `/analyze`, `/startup-recall` | Yes | No |
 | **Admin** | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess` | Yes | Yes |
 
 ---
