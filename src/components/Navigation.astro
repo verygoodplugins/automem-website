@@ -1,20 +1,26 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+import DiscordIcon from './DiscordIcon.astro';
 
 const { currentPath = '' } = Astro.props;
 
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
+const DISCORD_URL = 'https://automem.ai/discord';
 const links = [
   { href: '/docs/overview', label: 'Docs' },
-  { href: '/install', label: 'Install' },
-  { href: '/docs/getting-started/quick-start/', label: 'Guides' },
   { href: '/docs/core-concepts/memory-model/', label: 'Concepts' },
-  { href: '/docs/reference/api/direct-vs-mcp/', label: 'API' },
+  { href: '/benchmarks', label: 'Benchmarks' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 const isActive = (href: string) => {
-  if (href === '/docs/overview') return currentPath.startsWith('/docs') || currentPath === '/docs/overview';
-  return currentPath === href;
+  if (href === '/docs/overview') {
+    return currentPath.startsWith('/docs') && !currentPath.startsWith('/docs/core-concepts');
+  }
+  if (href === '/docs/core-concepts/memory-model/') {
+    return currentPath.startsWith('/docs/core-concepts');
+  }
+  return currentPath === href || (href !== '/' && currentPath.startsWith(`${href}/`));
 };
 ---
 
@@ -28,12 +34,13 @@ const isActive = (href: string) => {
     </a>
 
     <div class="flex min-w-0 items-center justify-end gap-2">
+      <!-- Desktop links -->
       <div class="hidden items-center gap-1 md:flex">
         {links.map((link) => (
           <a
             href={link.href}
             class={`
-              rounded px-4 py-2 text-sm font-medium text-lab-muted no-underline transition-colors
+              rounded px-3 py-2 text-sm font-medium text-lab-muted no-underline transition-colors
               hover:bg-lab-panel hover:text-lab-text
               ${isActive(link.href) ? 'text-lab-accent-text' : ''}
             `}
@@ -42,33 +49,113 @@ const isActive = (href: string) => {
           </a>
         ))}
         <a
-          href={GITHUB_URL}
+          href={DISCORD_URL}
           target="_blank"
           rel="noopener noreferrer"
-          class="rounded px-4 py-2 text-sm font-medium text-lab-muted no-underline transition-colors hover:bg-lab-panel hover:text-lab-text"
+          aria-label="Join our Discord community"
+          title="Join our Discord community"
+          class="flex items-center gap-1.5 rounded px-3 py-2 text-sm font-medium text-lab-muted no-underline transition-colors hover:text-lab-on-discord hover:bg-lab-discord"
         >
-          GitHub
-          <svg class="ml-1 inline h-3 w-3 align-[-1px]" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M5 4h7v7M12 4 4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+          <DiscordIcon class="h-4 w-4" />
+          <span>Discord</span>
         </a>
       </div>
 
+      <!-- Install CTA (desktop) -->
+      <a
+        href="/install"
+        class="hidden h-9 shrink-0 items-center rounded bg-lab-accent px-4 text-sm font-bold text-[#05080c] no-underline transition-transform hover:-translate-y-px md:inline-flex"
+      >
+        Install
+      </a>
+
+      <!-- GitHub star (desktop) -->
       <a
         href={GITHUB_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="glass-panel flex h-9 shrink-0 items-center gap-2 px-3 text-sm font-bold text-lab-text no-underline transition-colors hover:border-lab-accent hover:text-lab-accent-text"
+        class="glass-panel hidden h-9 shrink-0 items-center gap-2 px-3 text-sm font-bold text-lab-text no-underline transition-colors hover:border-lab-accent hover:text-lab-accent-text md:flex"
         aria-label="Star AutoMem on GitHub"
       >
         <svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M8 1.2 10.1 5.5l4.7.7-3.4 3.3.8 4.7L8 12l-4.2 2.2.8-4.7L1.2 6.2l4.7-.7L8 1.2Z" />
         </svg>
         <span>Star</span>
-        <span class="hidden text-lab-muted sm:inline">745</span>
+        <span class="hidden text-lab-muted lg:inline">745</span>
       </a>
 
       <ThemeToggle />
+
+      <!-- Mobile menu toggle -->
+      <button
+        type="button"
+        id="nav-menu-toggle"
+        class="glass-panel flex h-9 w-9 shrink-0 items-center justify-center text-lab-text transition-colors hover:border-lab-accent hover:text-lab-accent-text md:hidden"
+        aria-label="Open navigation menu"
+        aria-expanded="false"
+        aria-controls="nav-mobile-panel"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile panel -->
+  <div id="nav-mobile-panel" class="hidden border-t border-lab-border/70 bg-lab-bg/96 backdrop-blur-xl md:hidden">
+    <div class="mx-auto flex max-w-[1440px] flex-col gap-1 px-4 py-4 sm:px-7">
+      {links.map((link) => (
+        <a
+          href={link.href}
+          class={`
+            rounded px-3 py-2.5 text-base font-medium text-lab-muted no-underline transition-colors
+            hover:bg-lab-panel hover:text-lab-text
+            ${isActive(link.href) ? 'text-lab-accent-text' : ''}
+          `}
+        >
+          {link.label}
+        </a>
+      ))}
+      <a
+        href={DISCORD_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center gap-2 rounded px-3 py-2.5 text-base font-medium text-lab-muted no-underline transition-colors hover:bg-lab-discord hover:text-lab-on-discord"
+      >
+        <DiscordIcon class="h-5 w-5" />
+        <span>Discord</span>
+      </a>
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center gap-2 rounded px-3 py-2.5 text-base font-medium text-lab-muted no-underline transition-colors hover:bg-lab-panel hover:text-lab-text"
+        aria-label="Star AutoMem on GitHub"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 1.2 10.1 5.5l4.7.7-3.4 3.3.8 4.7L8 12l-4.2 2.2.8-4.7L1.2 6.2l4.7-.7L8 1.2Z" />
+        </svg>
+        <span>Star on GitHub</span>
+      </a>
+      <a
+        href="/install"
+        class="mt-2 inline-flex h-11 items-center justify-center rounded bg-lab-accent px-4 text-base font-bold text-[#05080c] no-underline"
+      >
+        Install AutoMem
+      </a>
     </div>
   </div>
 </nav>
+
+<script>
+  const toggle = document.getElementById('nav-menu-toggle');
+  const panel = document.getElementById('nav-mobile-panel');
+  if (toggle && panel) {
+    toggle.addEventListener('click', () => {
+      const open = panel.classList.toggle('hidden') === false;
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+    });
+  }
+</script>

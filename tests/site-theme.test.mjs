@@ -18,13 +18,13 @@ test('shared chrome follows the mockup navigation and removes old lab framing', 
   assert.match(navigation, /AutoMem/);
   assert.match(navigation, /Docs/);
   assert.match(navigation, /Install/);
-  assert.match(navigation, /Guides/);
   assert.match(navigation, /Concepts/);
-  assert.match(navigation, /API/);
+  assert.match(navigation, /Benchmarks/);
+  assert.match(navigation, /Blog/);
+  assert.match(navigation, /Discord/);
   assert.match(navigation, /GitHub/);
   assert.match(navigation, /Star/);
   assert.doesNotMatch(navigation, /~\/automem/);
-  assert.doesNotMatch(navigation, /benchmarks/);
 
   assert.doesNotMatch(layout, /Line Numbers/);
   assert.doesNotMatch(layout, /0x/);
