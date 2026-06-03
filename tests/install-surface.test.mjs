@@ -43,6 +43,13 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /Cursor/i);
   assert.match(homepage, /ChatGPT/i);
   assert.match(homepage, /MCP-compatible/i);
+  // concept story restored on top of the install-first page
+  assert.match(homepage, /import MemoryHero/);
+  assert.match(homepage, /import MemoryDrive/);
+  assert.match(homepage, /<MemoryHero/);
+  assert.match(homepage, /<MemoryDrive/);
+  assert.match(homepage, /From forgetful to brilliant/);
+  assert.match(homepage, /Dreams while you dream/);
   assert.doesNotMatch(homepage, /comment-header/);
   assert.doesNotMatch(homepage, /timelineEntries/);
   assert.doesNotMatch(homepage, /MEMORY_STREAM/);
