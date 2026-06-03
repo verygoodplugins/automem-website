@@ -243,15 +243,14 @@ graph TB
     Auth["require_admin_token()"]
     Init["Retrieve pre-initialized OpenAI client<br/>get_openai_client()"]
 
-    FetchIDs["Query FalkorDB:<br/>MATCH (m:Memory)<br/>RETURN m.id<br/>LIMIT $limit"]
+    FetchAll["Single FalkorDB query:<br/>MATCH (m:Memory)<br/>RETURN id, content, tags,<br/>importance, type, …<br/>ORDER BY timestamp DESC"]
 
     subgraph "Batch Processing Loop"
-        Slice["Slice next batch_size IDs"]
-        FetchContent["Query content for batch:<br/>MATCH (m:Memory)<br/>WHERE m.id IN $ids<br/>RETURN m.id, m.content"]
+        Slice["Slice next batch_size memories"]
 
-        CallOpenAI["OpenAI API:<br/>embeddings.create()<br/>model=text-embedding-3-small<br/>input=[contents]"]
+        CallOpenAI["OpenAI API:<br/>embeddings.create()<br/>model=embedding_model<br/>input=[contents]"]
 
-        UpdateQdrant["Qdrant: upsert()<br/>PointStruct<br/>id, vector, payload"]
+        UpdateQdrant["Qdrant: upsert()<br/>PointStruct with full payload<br/>(metadata_preserved=True)"]
 
         IncrCount["processed_count += batch_size"]
     end
@@ -260,10 +259,9 @@ graph TB
 
     Request-->Auth
     Auth-->Init
-    Init-->FetchIDs
-    FetchIDs-->Slice
-    Slice-->FetchContent
-    FetchContent-->CallOpenAI
+    Init-->FetchAll
+    FetchAll-->Slice
+    Slice-->CallOpenAI
     CallOpenAI-->UpdateQdrant
     UpdateQdrant-->IncrCount
     IncrCount-->|More batches?|Slice
@@ -294,25 +292,27 @@ graph TB
 
 ### Implementation Details
 
-**Phase 1: Memory Enumeration**
+**Phase 1: Memory Enumeration and Content Fetch**
 
-Fetches all memory IDs (or up to `limit`) from FalkorDB:
+Fetches all memory data (or up to `limit`) in a single FalkorDB query:
 ```cypher
-MATCH (m:Memory) RETURN m.id LIMIT $limit
+MATCH (m:Memory)
+WHERE m.content IS NOT NULL
+RETURN m.id AS id, m.content AS content, m.tags AS tags,
+       m.importance AS importance, m.timestamp AS timestamp,
+       m.type AS type, m.confidence AS confidence,
+       m.metadata AS metadata, m.updated_at AS updated_at,
+       m.last_accessed AS last_accessed
+ORDER BY m.timestamp DESC
 ```
 
-**Phase 2: Batch Content Retrieval**
+When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted. There is no separate per-batch content retrieval step — all memory data is loaded upfront.
 
-For each batch of `batch_size` IDs, queries FalkorDB for content. Missing memories are logged but don't halt processing.
+**Phase 2: OpenAI Embedding Generation**
 
-**Phase 3: OpenAI Embedding Generation**
+Generates embeddings for the entire batch in a single API call using the configured `embedding_model`. Dimension is determined by the `VECTOR_SIZE` environment variable (default 1024).
 
-Generates embeddings for entire batch in single API call. OpenAI's `text-embedding-3-small` model:
-- Dimension: 1024
-- Context window: 8191 tokens
-- Cost: $0.00002 per 1K tokens
-
-**Phase 4: Qdrant Update**
+**Phase 3: Qdrant Update**
 
 Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt the operation (graceful degradation). FalkorDB graph data is not modified by this operation.
 
