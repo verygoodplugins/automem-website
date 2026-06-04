@@ -85,10 +85,33 @@
   }
 
   :global(html.light) .memory-graph {
-    --mg-border: rgb(0 0 0 / 0.08);
-    --mg-border-dim: rgb(0 0 0 / 0.04);
-    --mg-border-hover: rgb(0 0 0 / 0.15);
-    --mg-edge: rgb(0 0 0 / 0.12);
+    /* On white the glow-based depth vanishes, so light mode leans on opaque
+       node surfaces, higher-contrast ink text, and visible edges instead. */
+    --mg-surface: rgb(255 255 255 / 0.9);
+    --mg-surface-strong: rgb(255 255 255 / 0.96);
+    --mg-text: rgb(var(--lab-text) / 0.72);
+    --mg-text-dim: rgb(var(--lab-text) / 0.5);
+    --mg-text-hover: rgb(var(--lab-text) / 0.92);
+    --mg-border: rgb(var(--lab-line) / 0.5);
+    --mg-border-dim: rgb(var(--lab-line) / 0.3);
+    --mg-border-hover: rgb(var(--lab-secondary) / 0.5);
+    --mg-edge: rgb(var(--lab-line) / 0.5);
+    --mg-secondary: rgb(var(--lab-secondary) / 0.95);
+    --mg-secondary-border: rgb(var(--lab-secondary) / 0.4);
+    --mg-secondary-dim: rgb(var(--lab-secondary) / 0.7);
+    --mg-secondary-strong: rgb(var(--lab-secondary));
+    --mg-secondary-ring: rgb(var(--lab-secondary) / 0.3);
+    --mg-secondary-core-border: rgb(var(--lab-secondary) / 0.45);
+    --mg-accent: rgb(var(--lab-accent-text) / 0.95);
+    --mg-accent-border: rgb(var(--lab-accent-text) / 0.55);
+    --mg-accent-edge: rgb(var(--lab-accent-text) / 0.5);
+    --mg-success: rgb(var(--lab-success) / 0.9);
+    --mg-success-border: rgb(var(--lab-success) / 0.45);
+  }
+
+  /* Core node needs a cast shadow on light to read as the focal point. */
+  :global(html.light) .core-inner {
+    box-shadow: 0 12px 30px rgb(14 20 28 / 0.1);
   }
 
   /* ── Nodes ── */

@@ -36,12 +36,15 @@ if (!isPreview) {
 
 const renderedContentPost = contentPost ? await render(contentPost) : undefined;
 const ContentPost = renderedContentPost?.Content;
-const title = post?.data.title ?? contentPost!.data.title;
-const description = post?.data.description ?? contentPost!.data.description;
+// emdash posts expose their summary as `excerpt`; content-collection posts use `description`.
+// `contentPost` is undefined whenever the post came from emdash, so every fallback must be
+// optional — non-null assertions here crash on emdash posts (TypeError reading 'data').
+const title = post?.data.title ?? contentPost?.data.title ?? 'Untitled';
+const description = post?.data.description ?? post?.data.excerpt ?? contentPost?.data.description ?? '';
 const tags = post?.data.tags ?? contentPost?.data.tags ?? [];
-const date = post
+const date = (post
   ? post.data.publishedAt ?? post.data.createdAt
-  : contentPost!.data.date;
+  : contentPost?.data.date) ?? undefined;
 const formattedDate = date?.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',

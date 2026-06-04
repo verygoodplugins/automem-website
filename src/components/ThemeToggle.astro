@@ -1,7 +1,7 @@
 <button
   id="theme-toggle"
-  class="h-14 px-4 md:px-6 flex items-center justify-center border-l border-lab-border hover:bg-lab-text hover:text-lab-bg transition-colors cursor-pointer focus:outline-none"
-  aria-label="Toggle Dark Mode"
+  class="glass-panel flex h-9 w-9 cursor-pointer items-center justify-center text-lab-muted transition-colors hover:border-lab-accent hover:text-lab-accent-text focus:outline-none"
+  aria-label="Toggle color theme"
 >
   <!-- Sun Icon (shows in default/dark mode) -->
   <svg
@@ -43,29 +43,16 @@
 <script>
   const themeToggle = document.getElementById('theme-toggle');
 
-  // Check local storage. Fall back to legacy 'starlight-theme' key (set by docs)
-  // before defaulting to 'dark' (Neon/Lab).
-  const getTheme = () => {
-    try {
-      return localStorage.getItem('theme') || localStorage.getItem('starlight-theme') || 'dark';
-    } catch (_) {
-      return 'dark';
-    }
-  };
+  // Reads the theme ThemeInit already resolved + applied in <head> (explicit
+  // choice, else OS preference). The class is the source of truth here.
+  const currentTheme = () =>
+    document.documentElement.classList.contains('light') ? 'light' : 'dark';
 
-  const setTheme = (theme) => {
-    const isLight = theme === 'light';
-    document.documentElement.classList.toggle('light', isLight);
-    document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
-    try {
-      localStorage.setItem('theme', theme);
-      localStorage.setItem('starlight-theme', theme);
-    } catch (_) {}
-    
-    // Update icons visibility manually since we're using custom classes
+  // Update icon visibility manually since we're using custom light: classes.
+  const syncIcons = (theme) => {
     const sunIcon = document.querySelector('.light\\:hidden');
     const moonIcon = document.querySelector('.light\\:block');
-    
+
     if (theme === 'light') {
       sunIcon?.classList.add('hidden');
       sunIcon?.classList.remove('block');
@@ -79,12 +66,27 @@
     }
   };
 
-  // Init
-  setTheme(getTheme());
+  // Pin the theme on an explicit toggle. The 'theme-explicit' marker tells
+  // ThemeInit to honor this stored value on future loads instead of following
+  // the OS — so only a deliberate click overrides system preference.
+  const pinTheme = (theme) => {
+    const isLight = theme === 'light';
+    document.documentElement.classList.toggle('light', isLight);
+    document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
+    try {
+      localStorage.setItem('theme', theme);
+      localStorage.setItem('starlight-theme', theme);
+      localStorage.setItem('theme-explicit', '1');
+    } catch (_) {}
+    syncIcons(theme);
+  };
 
-  // Toggle
+  // On load, ThemeInit has already applied the correct class. Don't persist
+  // here — that auto-write is what used to freeze auto-mode visitors. Just
+  // sync the icon to whatever ThemeInit chose.
+  syncIcons(currentTheme());
+
   themeToggle?.addEventListener('click', () => {
-    const isLight = document.documentElement.classList.contains('light');
-    setTheme(isLight ? 'dark' : 'light');
+    pinTheme(currentTheme() === 'light' ? 'dark' : 'light');
   });
 </script>

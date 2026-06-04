@@ -1,0 +1,165 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+
+const installCommand = 'curl -fsSL https://automem.ai/install.sh | sh';
+const clients = ['codex', 'claude-code', 'cursor', 'openclaw', 'hermes'];
+const paths = [
+  {
+    title: 'Hosted Cloud',
+    label: 'recommended',
+    detail:
+      'Deploy on InstaPods or Railway, paste the generated HTTPS endpoint and token, then let the wizard wire your local agents.',
+    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
+  },
+  {
+    title: 'Local Docker',
+    label: 'private',
+    detail:
+      'Clone AutoMem into ~/.automem/server, generate local tokens, start Docker Compose, verify /health, then install agent rules.',
+    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=local sh',
+  },
+  {
+    title: 'Existing Endpoint',
+    label: 'fast path',
+    detail:
+      'Use a running AutoMem instance you already control. The wizard verifies it before touching agent configuration.',
+    command:
+      'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=existing AUTOMEM_API_URL=https://memory.example sh',
+  },
+];
+---
+
+<Layout
+  title="Install AutoMem"
+  description="Install AutoMem locally, on the cloud, or against an existing endpoint, then wire it into Codex, Claude Code, Cursor, OpenClaw, and Hermes."
+>
+  <Navigation currentPath="/install" />
+
+  <main class="w-full pt-12 pb-24">
+    <section class="px-4 md:px-12 pt-12 pb-16 border-b border-lab-border bg-lab-bg relative overflow-hidden">
+      <div class="comment-header">:: INSTALL_PROTOCOL</div>
+
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-start relative z-10">
+        <div>
+          <h1 class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[0.9]">
+            Install memory<br />
+            <span class="text-lab-accent-text">where your agents live.</span>
+          </h1>
+          <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl border-l-4 border-lab-secondary pl-6">
+            One guided installer detects your machine, offers local or cloud setup,
+            verifies AutoMem, then reviews every Codex, Claude Code, Cursor,
+            OpenClaw, and Hermes write before installing.
+          </p>
+
+          <div class="mt-10 flex flex-wrap gap-4">
+            <a href="#run" class="btn-lab-accent shadow-hard">INSTALL_AUTOMEM.sh</a>
+            <a href="#paths" class="btn-lab">CHOOSE_PATH</a>
+          </div>
+        </div>
+
+        <div id="run" class="bg-lab-surface border-2 border-lab-text rounded-lg shadow-hard overflow-hidden">
+          <div class="border-b-2 border-lab-text px-4 py-3 flex items-center justify-between gap-4">
+            <span class="font-bold text-lab-accent-text">automem.ai/install.sh</span>
+            <span class="text-xs text-lab-muted">launcher</span>
+          </div>
+          <div class="p-5">
+            <pre class="bg-lab-bg border border-lab-border rounded p-4 overflow-x-auto text-sm text-lab-accent-text"><code>{installCommand}</code></pre>
+            <div class="grid sm:grid-cols-3 gap-3 mt-5 text-xs">
+              <div class="border border-lab-border rounded p-3">
+                <div class="font-bold text-lab-text">Detects</div>
+                <div class="text-lab-muted mt-1">Node, npm, Docker, Git, agent roots</div>
+              </div>
+              <div class="border border-lab-border rounded p-3">
+                <div class="font-bold text-lab-text">Verifies</div>
+                <div class="text-lab-muted mt-1">/health and authenticated recall</div>
+              </div>
+              <div class="border border-lab-border rounded p-3">
+                <div class="font-bold text-lab-text">Reviews</div>
+                <div class="text-lab-muted mt-1">Paths, backups, and commands first</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="paths" class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg/50">
+      <div class="comment-header">:: SETUP_PATHS</div>
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-6">
+          {paths.map((pathOption) => (
+            <div class="bg-lab-bg border-2 border-lab-text rounded-lg shadow-hard p-6 relative">
+              <div class="absolute -top-3 left-5 bg-lab-accent text-[#1a1a1a] px-2 text-xs font-bold uppercase">
+                {pathOption.label}
+              </div>
+              <h2 class="text-2xl font-bold mb-3">{pathOption.title}</h2>
+              <p class="text-sm text-lab-muted leading-relaxed min-h-[88px]">{pathOption.detail}</p>
+              <pre class="mt-5 bg-lab-surface border border-lab-border rounded p-3 overflow-x-auto text-[11px] text-lab-accent-text"><code>{pathOption.command}</code></pre>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg">
+      <div class="comment-header">:: AGENT_TARGETS</div>
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-[0.8fr_1.2fr] gap-10">
+        <div>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Review before write.</h2>
+          <p class="text-lab-muted leading-relaxed">
+            The installer writes environment values, then delegates to the existing
+            platform installers. Config files are backed up before changes, and
+            platforms with unreliable automatic config still print exact manual snippets.
+          </p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {clients.map((client) => (
+            <div class="bg-lab-surface border border-lab-border rounded-lg p-4">
+              <div class="flex items-center justify-between gap-3">
+                <span class="font-bold">{client}</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-lab-success"></span>
+              </div>
+              <div class="text-xs text-lab-muted mt-2">mcp-automem install</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 bg-lab-surface">
+      <div class="comment-header">:: ADVANCED_FLAGS</div>
+      <div class="max-w-6xl mx-auto">
+        <div class="overflow-x-auto border-2 border-lab-text rounded-lg shadow-hard bg-lab-bg">
+          <table class="w-full min-w-[760px] text-left text-sm">
+            <thead class="bg-lab-text text-lab-bg">
+              <tr>
+                <th class="p-4 font-bold">Flag / Env</th>
+                <th class="p-4 font-bold">Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['AUTOMEM_INSTALL_TARGET', 'local, cloud, or existing'],
+                ['AUTOMEM_CLIENTS', 'Comma-separated agent list'],
+                ['AUTOMEM_API_URL', 'AutoMem HTTP API endpoint'],
+                ['AUTOMEM_API_KEY', 'Bearer token for authenticated deployments'],
+                ['AUTOMEM_LOCAL_DIR', 'Local backend checkout path'],
+                ['AUTOMEM_YES=1', 'Apply the reviewed plan without prompting'],
+                ['AUTOMEM_DRY_RUN=1', 'Print the plan without writing files'],
+                ['AUTOMEM_NO_AGENT_INSTALL=1', 'Configure endpoint only'],
+              ].map(([flag, purpose]) => (
+                <tr class="border-t border-lab-border">
+                  <th class="p-4 font-bold text-lab-accent-text">{flag}</th>
+                  <td class="p-4 text-lab-muted">{purpose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

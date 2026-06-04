@@ -388,6 +388,16 @@
     fill: #1a1a1a;
     font-size: 16px;
   }
+
+  /* Light mode: the gold/pastel node labels and faint gold edges wash out on
+     white, so darken them to readable ink-tinted tones. The gold disk keeps its
+     dark outline and reads fine as-is. */
+  :global(html.light) .node-label { fill: #8a5a00; }
+  :global(html.light) .node-label.purple { fill: #6b3fb8; }
+  :global(html.light) .node-label.green { fill: #14794f; }
+  :global(html.light) .node-label.orange { fill: #c2410c; }
+  :global(html.light) .connection { stroke: rgba(149, 92, 0, 0.3); }
+  :global(html.light) .connection.active { stroke: rgba(149, 92, 0, 0.6); }
   
   .chat-window {
     transition: box-shadow 0.6s ease, border-color 0.6s ease;

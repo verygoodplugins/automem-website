@@ -44,6 +44,7 @@ compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 [[env.preview.d1_databases]]
 binding = "D1"
+# TODO: replace with a preview-only waitlist D1 before enabling write-capable PR previews.
 database_name = "automem-waitlist"
 database_id = "71da6056-2641-488b-a82d-ee44618bfb56"
 
@@ -54,6 +55,7 @@ database_id = "72cecb2d-d3e3-4322-b377-93dc4f032257"
 
 [[env.preview.kv_namespaces]]
 binding = "SESSION"
+# TODO: replace with a preview-only session KV before enabling write-capable PR previews.
 id = "f02355fe3bbb4a4b8a8429ea1eb53192"
 
 [env.preview.vars]

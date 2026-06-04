@@ -7,7 +7,7 @@
   /* Layout */
   --sl-content-width: 50rem;
   --sl-sidebar-width: 18rem;
-  --sl-nav-height: 3.5rem; /* Match marketing Navigation h-14 */
+  --sl-nav-height: 4rem; /* Match marketing Navigation h-16 */
 }
 
 @media (min-width: 1600px) {
@@ -23,8 +23,8 @@
 :root[data-theme="dark"],
 :root[data-theme="light"] {
   --sl-color-bg: rgb(var(--lab-bg));
-  --sl-color-bg-nav: rgb(var(--lab-bg) / 0.9);
-  --sl-color-bg-sidebar: rgb(var(--lab-bg) / 0.5);
+  --sl-color-bg-nav: rgb(var(--lab-bg) / 0.88);
+  --sl-color-bg-sidebar: rgb(var(--lab-surface) / 0.72);
 
   --sl-color-text: rgb(var(--lab-text));
   --sl-color-text-accent: rgb(var(--lab-accent-text));
@@ -39,8 +39,8 @@
   --sl-color-gray-2: rgb(var(--lab-text) / 0.85);
   --sl-color-gray-3: rgb(var(--lab-muted));
   --sl-color-gray-4: rgb(var(--lab-border));
-  --sl-color-gray-5: rgb(var(--lab-surface));
-  --sl-color-gray-6: rgb(var(--lab-bg));
+  --sl-color-gray-5: rgb(var(--lab-panel));
+  --sl-color-gray-6: rgb(var(--lab-surface));
 
   --sl-color-hairline-light: rgb(var(--lab-border));
   --sl-color-hairline-shade: rgb(var(--lab-surface));
@@ -51,8 +51,11 @@
 
 /* Background Grid Pattern */
 body {
-  background-size: 24px 24px;
-  background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+  background-size: auto, auto, 24px 24px;
+  background-image:
+    linear-gradient(180deg, rgb(var(--lab-bg)) 0%, rgb(var(--lab-surface)) 100%),
+    radial-gradient(circle at 82% 8%, rgb(var(--lab-secondary) / 0.12), transparent 32rem),
+    radial-gradient(var(--grid-color) 1px, transparent 1px);
   background-attachment: fixed;
 }
 
@@ -98,7 +101,7 @@ body {
 /* Code Blocks - "AutoMem" Tech Style */
 .expressive-code .frame {
   border: 1px solid var(--sl-color-hairline-light) !important;
-  background: rgb(var(--lab-surface)) !important;
+  background: rgb(var(--lab-panel)) !important;
   box-shadow: 4px 4px 0px 0px var(--shadow-color);
 }
 
@@ -118,13 +121,13 @@ body {
 .starlight-aside {
   border: 1px solid var(--sl-color-hairline-light);
   border-radius: 8px;
-  background: var(--sl-color-gray-6);
+  background: rgb(var(--lab-panel) / 0.82);
   box-shadow: 2px 2px 0px 0px var(--sl-color-hairline-light); /* Subtle hard shadow */
 }
 
 /* Mermaid Diagrams - High Contrast & Readability */
 .mermaid {
-  background: var(--sl-color-gray-6);
+  background: rgb(var(--lab-panel) / 0.9);
   border: 1px solid var(--sl-color-hairline-light);
   border-radius: 8px;
   padding: 1.5rem;
@@ -194,7 +197,7 @@ th {
   font-weight: 600;
   font-family: var(--sl-font-mono);
   border-bottom: 2px solid var(--sl-color-hairline-light);
-  background: var(--sl-color-gray-6);
+  background: rgb(var(--lab-panel));
 }
 
 td {
@@ -203,7 +206,7 @@ td {
 }
 
 tr:hover td {
-  background: var(--sl-color-gray-6);
+  background: rgb(var(--lab-panel) / 0.72);
 }
 
 /* Custom Scrollbar */
