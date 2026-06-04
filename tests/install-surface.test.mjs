@@ -13,7 +13,7 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /href="\/install"/);
   assert.doesNotMatch(homepage, /AutoMemMark/);
   assert.match(homepage, /\/automem-icon\.svg/);
-  assert.match(homepage, /curl -fsSL https:\/\/automem\.ai \| sh/);
+  assert.match(homepage, /curl -fsSL https:\/\/automem\.ai\/install\.sh \| sh/);
   assert.match(homepage, /https:\/\/automem\.ai\/skill\.md/);
   assert.match(homepage, /AGENT CLIENTS/);
   assert.match(homepage, /Model Context Protocol/);

@@ -93,7 +93,7 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 - **Gold gradient**: `#FFE082 → #F9D857 → #DAA520`
 - **Buttons**: `.btn-lab` (outline) and `.btn-lab-accent` (gold filled), both with hard shadow hover
 - **Grid background**: 24px radial-gradient dot pattern with violet + gold radial glows
-- **Body layout**: `max-w-[1440px]` container in `Layout.astro` (the old hex line-number gutter column and `AutoJackPeek` mascot were removed in the install-first redesign)
+- **Body layout**: `max-w-[1440px]` container in `Layout.astro` (the old hex line-number gutter column was removed in the install-first redesign; the `AutoJackPeek` mascot is still wired in as a fixed, scroll-triggered peek)
 
 ## Coding Conventions
 

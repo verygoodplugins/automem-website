@@ -26,12 +26,6 @@ editor, or MCP-compatible client.
 curl -fsSL https://automem.ai/install.sh | sh
 ```
 
-The homepage short form also works for shell clients:
-
-```sh
-curl -fsSL https://automem.ai | sh
-```
-
 ## Setup Flow
 
 1. Inspect the user's environment for Node.js, npm, Git, Docker, existing

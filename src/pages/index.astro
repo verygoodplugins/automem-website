@@ -10,7 +10,7 @@ const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
 const RAILWAY_DEPLOY_URL =
   'https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic';
-const INSTALL_COMMAND = 'curl -fsSL https://automem.ai | sh';
+const INSTALL_COMMAND = 'curl -fsSL https://automem.ai/install.sh | sh';
 const SKILL_URL = 'https://automem.ai/skill.md';
 const homepageDescription =
   'AutoMem gives Claude, Cursor, Copilot, Codex, ChatGPT, and MCP-compatible AI tools persistent memory through MCP and Streamable HTTP.';
@@ -32,7 +32,7 @@ const setupPaths = [
     icon: '▱',
     detail: 'Run everything on your machine.',
     bullets: ['Full control, no external deps', 'Data stays local', 'Works offline'],
-    command: 'curl -fsSL https://automem.ai | sh -s -- --local',
+    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=local sh',
   },
   {
     title: 'Railway',
@@ -40,7 +40,7 @@ const setupPaths = [
     icon: '▤',
     detail: 'Managed cloud in minutes.',
     bullets: ['One-command deploy', 'Auto updates & backups', 'Global availability'],
-    command: 'curl -fsSL https://automem.ai | sh -s -- --railway',
+    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
     href: RAILWAY_DEPLOY_URL,
   },
   {
@@ -49,7 +49,7 @@ const setupPaths = [
     icon: '⬡',
     detail: 'Self-hosted cloud in your infra.',
     bullets: ['Your VPC, your data', 'K8s native', 'Enterprise ready'],
-    command: 'curl -fsSL https://automem.ai | sh -s -- --instapods',
+    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
     href: INSTAPODS_REFERRAL_URL,
   },
 ];
@@ -127,7 +127,7 @@ const extendedClients =
               </div>
               <div class="p-5 sm:p-7">
                 <a href="/install" class="block max-w-full break-all text-[13px] font-medium leading-6 text-lab-text no-underline [overflow-wrap:anywhere] sm:text-2xl sm:leading-normal">
-                  <span>curl -fsSL </span><span class="text-lab-accent-text">https://automem.ai</span><span> | sh</span>
+                  <span>curl -fsSL </span><span class="text-lab-accent-text">https://automem.ai/install.sh</span><span> | sh</span>
                 </a>
                 <div class="mt-5 rounded border border-lab-border bg-lab-bg/70 p-4">
                   {terminalChecks.map((check) => (
