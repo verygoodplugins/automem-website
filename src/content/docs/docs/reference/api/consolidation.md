@@ -94,38 +94,25 @@ Manually trigger one or more consolidation tasks.
 sequenceDiagram
     participant Client
     participant API as "POST /consolidate"
-    participant Scheduler as ConsolidationScheduler
     participant Consolidator as MemoryConsolidator
     participant FalkorDB
     participant Qdrant
 
     Client->>API: "POST /consolidate<br/>{mode: 'decay', dry_run: false}"
     API->>API: "Validate API token"
-    API->>API: "Normalize task parameter"
 
-    alt task = "full"
-        API->>Consolidator: "run_decay(force)"
-        API->>Consolidator: "run_creative(force)"
-        API->>Consolidator: "run_cluster(force)"
-        API->>Consolidator: "run_forget(force)"
-    else specific task
-        API->>Consolidator: "run_<task>(force)"
-    end
-
-    Consolidator->>FalkorDB: "Query ConsolidationControl node"
-    FalkorDB-->>Consolidator: "Last run timestamp"
+    API->>Consolidator: "consolidate(mode=mode, dry_run=dry_run)"
 
     alt dry_run=true
-        Consolidator-->>API: "Simulated results"
+        Consolidator-->>API: "Simulated results (no writes)"
         API-->>Client: "200 {status: 'success', consolidation: {...}}"
-    else proceed
+    else dry_run=false
         Consolidator->>FalkorDB: "Read Memory nodes"
         Consolidator->>Qdrant: "Search vectors (if needed)"
         Consolidator->>FalkorDB: "Update nodes/edges"
-        Consolidator->>FalkorDB: "Create ConsolidationRun node"
         Consolidator-->>API: "Results + metrics"
-        API->>Scheduler: "Update next_run times"
-        API-->>Client: "200 {status: 'success', results: {...}}"
+        API->>FalkorDB: "persist_run() — Create ConsolidationRun node"
+        API-->>Client: "200 {status: 'success', consolidation: {...}}"
     end
 ```
 
