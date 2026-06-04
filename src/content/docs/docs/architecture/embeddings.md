@@ -123,7 +123,7 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` a
 
 **Configuration:**
 - `VOYAGE_API_KEY` — Required
-- `VOYAGE_MODEL` — Default: `voyage-4` (also: `voyage-4-large`, `voyage-4-lite`)
+- Model defaults to `voyage-4`; also supports `voyage-4-large` and `voyage-4-lite`. Not configurable via environment variable — set in the provider constructor at initialization.
 
 **Voyage-specific features:**
 - Shared embedding space across voyage-4 family models
@@ -408,7 +408,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 - Minimizes latency with local inference, sacrifices batching efficiency
 
 **Cost-optimized (free tier):**
-- `EMBEDDING_PROVIDER=voyage`, `VOYAGE_MODEL=voyage-4-lite`, `EMBEDDING_BATCH_SIZE=50`
+- `EMBEDDING_PROVIDER=voyage`, `EMBEDDING_BATCH_SIZE=50`
 - Voyage generous free tier + lite model for best cost/performance
 
 **Development/testing:**
