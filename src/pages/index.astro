@@ -2,7 +2,6 @@
 export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
-import AutoJack from '../components/AutoJack.astro';
 import MemoryHero from '../components/MemoryHero.astro';
 import MemoryDrive from '../components/MemoryDrive.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
@@ -100,7 +99,7 @@ const extendedClients =
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_65%_12%,rgb(var(--lab-secondary)/0.14),transparent_34rem)]"></div>
       <div class="relative mx-auto grid max-w-[1360px] gap-10 xl:grid-cols-[0.54fr_0.46fr] xl:gap-16">
         <div class="w-full min-w-0 max-w-full">
-          <h1 class="text-[3.85rem] font-extrabold leading-[0.82] text-lab-accent-text min-[380px]:text-[4.25rem] sm:text-[6rem] lg:text-[7rem]">
+          <h1 class="hero-wordmark text-[3.85rem] font-extrabold leading-[0.82] min-[380px]:text-[4.25rem] sm:text-[6rem] lg:text-[7rem]">
             AutoMem
           </h1>
           <h2 class="mt-5 max-w-[13ch] text-3xl font-extrabold leading-[1.03] tracking-normal text-lab-text sm:text-4xl lg:text-[2.75rem]">
@@ -114,7 +113,7 @@ const extendedClients =
           </p>
 
           <div class="relative mt-6 sm:mb-8">
-            <div class="w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-lab-line bg-lab-surface/90 shadow-[0_24px_90px_rgb(0_0_0/0.28)] sm:max-w-full">
+            <div class="hero-terminal w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-lab-line bg-lab-surface/90 sm:max-w-full">
               <div class="flex items-center justify-between border-b border-lab-border px-5 py-3">
                 <div class="flex items-center gap-2 text-sm font-bold text-lab-accent-text">
                   <span>$</span>
@@ -140,9 +139,6 @@ const extendedClients =
                   ))}
                 </div>
               </div>
-            </div>
-            <div class="autojack-hero pointer-events-none absolute -bottom-9 right-6 hidden sm:block" aria-hidden="true">
-              <AutoJack size={74} expression="wink" animate={true} />
             </div>
           </div>
 
@@ -194,7 +190,7 @@ const extendedClients =
           <div class="mx-auto flex w-full max-w-[min(100%,27.5rem)] items-center justify-center gap-4 rounded border-2 border-lab-accent bg-lab-surface/92 px-4 py-6 text-center sm:gap-6 sm:px-8 sm:py-7">
             <img src="/automem-icon.svg" alt="" class="h-12 w-12 shrink-0 rounded-md sm:h-14 sm:w-14" loading="eager" decoding="async" />
             <div class="min-w-0 text-left">
-              <div class="text-2xl font-extrabold text-lab-accent-text min-[380px]:text-3xl sm:text-4xl">AutoMem</div>
+              <div class="hero-wordmark text-2xl font-extrabold min-[380px]:text-3xl sm:text-4xl">AutoMem</div>
               <div class="mt-2 text-sm text-lab-text sm:text-base">Persistent Memory Layer</div>
             </div>
           </div>
@@ -411,6 +407,12 @@ SEARCH "install script errors WSL" LIMIT 20;</code></pre>
       border-color: rgb(var(--lab-line));
       box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
     }
+    /* Light mode: real elevation + an opaque surface so the blueprint grid
+       doesn't read through the card. */
+    :global(html.light) .setup-card {
+      background-color: rgb(255 255 255 / 0.94);
+      box-shadow: 0 10px 28px rgb(14 20 28 / 0.07);
+    }
     .setup-card-green {
       color: rgb(var(--lab-success));
       border-color: rgb(var(--lab-success) / 0.55);
@@ -422,18 +424,6 @@ SEARCH "install script errors WSL" LIMIT 20;</code></pre>
     .setup-card-gold {
       color: rgb(var(--lab-accent));
       border-color: rgb(var(--lab-accent) / 0.65);
-    }
-    .autojack-hero {
-      transform: rotate(-7deg);
-    }
-    .autojack-hero::before {
-      content: '';
-      position: absolute;
-      inset: 1.35rem 0.75rem 0.2rem;
-      z-index: -1;
-      border-radius: 999px;
-      background: rgb(var(--lab-accent) / 0.12);
-      filter: blur(14px);
     }
   </style>
 </Layout>

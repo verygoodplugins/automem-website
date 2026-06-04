@@ -76,6 +76,8 @@ const years = Object.keys(postsByYear)
             {postsByYear[year].map(post => {
               const date = post.data.publishedAt ?? post.data.createdAt;
               const slug = post.slug ?? post.id;
+              // emdash posts store their summary as `excerpt`, content posts as `description`.
+              const summary = post.data.description ?? (post.data as { excerpt?: string }).excerpt;
               return (
               <article class="group">
                 <a
@@ -87,9 +89,9 @@ const years = Object.keys(postsByYear)
                       <h3 class="text-xl sm:text-2xl font-bold mb-2 text-lab-text group-hover:text-lab-accent-text transition break-words">
                         {post.data.title}
                       </h3>
-                      {post.data.description && (
+                      {summary && (
                         <p class="text-lab-muted mb-3 font-mono text-sm break-words">
-                          {post.data.description}
+                          {summary}
                         </p>
                       )}
                       <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">

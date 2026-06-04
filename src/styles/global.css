@@ -91,6 +91,18 @@
     letter-spacing: 0;
   }
 
+  /* Light mode gets its OWN atmosphere — an engineering-blueprint paper —
+     instead of the dark glows, which wash out to nothing on white. */
+  .light body {
+    background-image:
+      radial-gradient(circle at 80% 4%, rgb(var(--lab-secondary) / 0.12), transparent 30rem),
+      radial-gradient(circle at 4% 0%, rgb(var(--lab-accent) / 0.10), transparent 24rem),
+      linear-gradient(rgb(var(--lab-line) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--lab-line) / 0.05) 1px, transparent 1px),
+      radial-gradient(var(--grid-color) 1px, transparent 1px);
+    background-size: auto, auto, 96px 96px, 96px 96px, 24px 24px;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar {
     @apply w-2;
@@ -144,10 +156,15 @@
     @apply underline;
   }
 
-  /* In light mode, use high-contrast color for inline text links */
-  .light .prose a,
-  .light a.text-lab-accent-text:not(.btn-lab):not(.btn-lab-accent) {
+  /* In light mode, prose links keep the readable amber-gold accent-text tone */
+  .light .prose a {
     color: rgb(var(--lab-accent-text));
+  }
+
+  /* In light mode, inline accent links use violet for emphasis. Gold (accent-text)
+     stays for non-link fills/stats/glyphs — e.g. the benchmark stat numbers. */
+  .light a.text-lab-accent-text:not(.btn-lab):not(.btn-lab-accent) {
+    color: rgb(var(--lab-secondary));
   }
 
   /* In dark mode, accent-text links on light backgrounds need dark text color instead */
@@ -155,6 +172,33 @@
     :is(.bg-lab-text, [class*="bg-lab-text"]) a.text-lab-accent-text {
       @apply text-[#1a1a1a] font-bold;
     }
+  }
+
+  /* Wordmark (hero + hub diagram): gold text in dark; ink + gold underline in light.
+     Gold-as-text fails on white, so in light the emphasis comes from the keyline. */
+  .hero-wordmark {
+    color: rgb(var(--lab-accent));
+  }
+  .light .hero-wordmark {
+    color: rgb(var(--lab-text));
+    text-decoration: underline;
+    text-decoration-color: rgb(var(--lab-accent));
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.14em;
+  }
+
+  /* Hero terminal card elevation — flip the dark ambient shadow to a light one
+     (the inline shadow utility can't theme itself). */
+  .hero-terminal {
+    box-shadow: 0 24px 90px rgb(0 0 0 / 0.28);
+  }
+  .light .hero-terminal {
+    box-shadow: 0 18px 50px rgb(14 20 28 / 0.10);
+  }
+
+  /* Primary CTA gets real presence on the light paper. */
+  .light .btn-lab-accent {
+    box-shadow: 0 8px 20px rgb(var(--lab-accent) / 0.34);
   }
 }
 

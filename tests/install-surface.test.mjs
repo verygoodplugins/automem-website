@@ -11,9 +11,6 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /Persistent memory for\s*every agent you use\./);
   assert.match(homepage, /Open-source memory layer your agents and MCP tools can/);
   assert.match(homepage, /href="\/install"/);
-  assert.match(homepage, /import AutoJack/);
-  assert.match(homepage, /AutoJack/);
-  assert.match(homepage, /autojack-hero/);
   assert.doesNotMatch(homepage, /AutoMemMark/);
   assert.match(homepage, /\/automem-icon\.svg/);
   assert.match(homepage, /curl -fsSL https:\/\/automem\.ai \| sh/);

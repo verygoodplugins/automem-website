@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import SiteFooter from '../components/SiteFooter.astro';
 import ThemeInit from '../components/ThemeInit.astro';
+import AutoJackPeek from '../components/AutoJackPeek.astro';
 
 export interface Props {
   title: string;
@@ -52,6 +53,8 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
         <SiteFooter />
       </div>
     </div>
+
+    <AutoJackPeek position="bottom-right" />
 
     <div class="grain-overlay"></div>
     
