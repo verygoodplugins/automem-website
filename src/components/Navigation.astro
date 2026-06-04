@@ -86,6 +86,9 @@ const isActive = (href: string) => {
 
       <ThemeToggle />
 
+      <!-- Docs search (rendered only when a consumer passes the trailing slot, e.g. Starlight) -->
+      <slot name="trailing" />
+
       <!-- Mobile menu toggle -->
       <button
         type="button"

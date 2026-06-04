@@ -55,6 +55,9 @@ test('homepage promotes the install-first path', async () => {
 test('/install page describes local, cloud, and existing endpoint setup', async () => {
   const installPage = await readSource('../src/pages/install.astro');
 
+  // /install must prerender to a static asset; output: 'server' + absence from
+  // the _worker.js routes (scripts/bundle-worker.mjs) would otherwise 404 it.
+  assert.match(installPage, /export const prerender = true/);
   assert.match(installPage, /INSTALL_AUTOMEM\.sh/);
   assert.match(installPage, /Local Docker/i);
   assert.match(installPage, /Hosted Cloud/i);

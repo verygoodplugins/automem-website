@@ -7,7 +7,7 @@
   /* Layout */
   --sl-content-width: 50rem;
   --sl-sidebar-width: 18rem;
-  --sl-nav-height: 3.5rem; /* Match marketing Navigation h-14 */
+  --sl-nav-height: 4rem; /* Match marketing Navigation h-16 */
 }
 
 @media (min-width: 1600px) {
