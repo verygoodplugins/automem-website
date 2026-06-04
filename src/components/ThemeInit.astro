@@ -34,7 +34,8 @@
 
     let theme;
     if (isExplicit()) {
-      theme = pinned() === 'light' ? 'light' : 'dark';
+      const stored = pinned();
+      theme = stored === 'light' || stored === 'dark' ? stored : system();
     } else {
       theme = system();
     }
