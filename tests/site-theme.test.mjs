@@ -29,9 +29,12 @@ test('shared chrome follows the mockup navigation and removes old lab framing', 
   assert.doesNotMatch(layout, /Line Numbers/);
   assert.doesNotMatch(layout, /0x/);
   assert.match(layout, /max-w-\[1440px\]/);
+  // floating mascot (fixed, scroll-triggered peek) must stay wired into the base layout
+  assert.match(layout, /AutoJackPeek/);
 
   assert.match(footer, /© 2026 AutoMem/);
-  assert.match(footer, /Apache-2\.0/);
+  assert.match(footer, /MIT/);
+  assert.doesNotMatch(footer, /Apache/);
   assert.match(footer, /Made with/);
   assert.doesNotMatch(footer, /cool people/);
 });
@@ -52,4 +55,21 @@ test('global theme tokens support the refined dark surface and neutral light mod
 
   assert.match(starlightCss, /rgb\(var\(--lab-panel\)/);
   assert.match(starlightCss, /linear-gradient/);
+});
+
+test('theme follows the OS preference unless the user explicitly pinned a choice', async () => {
+  const themeInit = await readSource('../src/components/ThemeInit.astro');
+  const themeToggle = await readSource('../src/components/ThemeToggle.astro');
+
+  // Init resolves from the OS and gates any stored value behind the explicit marker.
+  assert.match(themeInit, /prefers-color-scheme: dark/);
+  assert.match(themeInit, /theme-explicit/);
+  // Init must NOT persist the resolved theme — that auto-write is what froze
+  // visitors on whatever they first saw and ignored later OS changes.
+  assert.doesNotMatch(themeInit, /setItem/);
+
+  // The toggle is the only place that persists, and it sets the explicit marker.
+  assert.match(themeToggle, /setItem\('theme-explicit', '1'\)/);
+  // The old unconditional 'dark' fallback (which overrode the OS on load) is gone.
+  assert.doesNotMatch(themeToggle, /\|\| 'dark'/);
 });

@@ -1,29 +1,45 @@
 {/* Inline FOUC-prevention script. MUST be rendered early in <head> so it
-    runs synchronously before the body paints. Reads localStorage["theme"]
-    (with legacy fallback to "starlight-theme"), then applies BOTH
-    class="light" (consumed by global.css --lab-* swap) and data-theme
-    (consumed by Starlight's --sl-* selectors). Mirrors both keys so any
-    leftover Starlight reader stays in sync. */}
+    runs synchronously before the body paints. Applies BOTH class="light"
+    (consumed by global.css --lab-* swap) and data-theme (consumed by
+    Starlight's --sl-* selectors).
+
+    Theme resolution: an explicit user choice — set by ThemeToggle and flagged
+    with localStorage["theme-explicit"] === "1" — always wins. Otherwise we
+    follow the OS via prefers-color-scheme and do NOT persist that value.
+    Persisting the auto-detected theme is what used to freeze every visitor on
+    whatever they first saw, ignoring any later change to their system setting. */}
 <script is:inline>
   (() => {
-    let stored = null;
-    try {
-      stored = localStorage.getItem('theme') || localStorage.getItem('starlight-theme');
-    } catch (_) {}
-    let theme = stored;
-    if (!theme) {
+    const isExplicit = () => {
       try {
-        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        return localStorage.getItem('theme-explicit') === '1';
       } catch (_) {
-        theme = 'dark';
+        return false;
       }
+    };
+    const pinned = () => {
+      try {
+        return localStorage.getItem('theme') || localStorage.getItem('starlight-theme');
+      } catch (_) {
+        return null;
+      }
+    };
+    const system = () => {
+      try {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } catch (_) {
+        return 'dark';
+      }
+    };
+
+    let theme;
+    if (isExplicit()) {
+      theme = pinned() === 'light' ? 'light' : 'dark';
+    } else {
+      theme = system();
     }
     const isLight = theme === 'light';
     document.documentElement.classList.toggle('light', isLight);
     document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
-    try {
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      localStorage.setItem('starlight-theme', isLight ? 'light' : 'dark');
-    } catch (_) {}
   })();
 </script>
