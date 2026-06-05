@@ -6,12 +6,12 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/aa4b491b7c0ba1afa4c73edfb7d8eec726d91e1f/automem/config.py) — Score weight configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/src/index.ts) — MCP `recall_memory` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/src/automem-client.ts) — HTTP client and response normalization
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — Score weight configuration
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `recall_memory` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines nine scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
@@ -387,7 +387,8 @@ sequenceDiagram
 
 ```json
 {
-  "count": 3,
+  "status": "success",
+  "query": "PostgreSQL database decisions",
   "results": [
     {
       "memory": {
@@ -408,9 +409,16 @@ sequenceDiagram
       "relations": []
     }
   ],
+  "count": 1,
   "dedup_removed": 0,
-  "time_window": null,
-  "tags": []
+  "sort": "score",
+  "vector_search": {
+    "enabled": true,
+    "matched": true
+  },
+  "tag_mode": "any",
+  "tag_match": "prefix",
+  "query_time_ms": 47.3
 }
 ```
 
@@ -430,8 +438,12 @@ When `expand_relations=true`:
 ```json
 {
   "expansion": {
+    "enabled": true,
+    "seed_count": 3,
     "expanded_count": 5,
-    "seed_count": 3
+    "relation_limit": 5,
+    "expansion_limit": 25,
+    "respect_tags": false
   }
 }
 ```
@@ -441,6 +453,7 @@ When `expand_entities=true`:
 ```json
 {
   "entity_expansion": {
+    "enabled": true,
     "expanded_count": 4,
     "entities_found": ["Rachel", "Platform team"]
   }
