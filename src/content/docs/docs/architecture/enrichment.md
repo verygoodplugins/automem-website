@@ -75,7 +75,7 @@ Fields:
 - `attempt` — Retry counter (0-indexed), incremented on each failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
-([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/service_state.py))
+([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/service_state.py))
 
 ---
 
@@ -303,8 +303,8 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
 **Fields:**
 - `status` — Worker thread state: `"running"` or `"stopped"`
 - `queue_size` — Items in the underlying queue (`enrichment_queue.qsize()`)
-- `pending` — IDs in the `enrichment_pending` tracking set (not yet dequeued)
-- `inflight` — IDs in the `enrichment_inflight` tracking set (currently processing)
+- `pending` — Count of IDs in `enrichment_pending` (items not yet dequeued; `len(state.enrichment_pending)`)
+- `inflight` — Count of IDs in `enrichment_inflight` (items currently processing; `len(state.enrichment_inflight)`)
 - `max_attempts` — Configured retry limit (`ENRICHMENT_MAX_ATTEMPTS`)
 - `stats` — Lifetime counters from `EnrichmentStats.to_dict()`: `processed_total`, `successes`, `failures`, `last_success_id`, `last_success_at`, `last_error`, `last_error_at`
 
@@ -315,7 +315,7 @@ Thread-safe sets prevent duplicate processing:
 - `enrichment_pending` — Set of memory IDs awaiting enrichment (not yet dequeued)
 - `enrichment_inflight` — Set of memory IDs currently being processed
 
-When a job is dequeued, the ID is moved from `pending` to `inflight`. When processing completes (success or final failure), it is removed from `inflight`. New enqueues check both sets to prevent duplicates.
+When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment_inflight`. When processing completes (success or final failure), it is removed from `enrichment_inflight`. New enqueues check both sets to prevent duplicates.
 
 ---
 
