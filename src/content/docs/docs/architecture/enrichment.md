@@ -7,13 +7,14 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
-- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
-- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
-- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/enrichment/runtime_queue_bindings.py) — Queue management
-- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/service_state.py) — EnrichmentJob dataclass
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/stores/graph_store.py) — Graph write operations for enrichment
-- [.env.example](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/.env.example) — Enrichment configuration variables
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/enrichment.py) — `/enrichment/status` and `/enrichment/reprocess` route handlers
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
+- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
+- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_queue_bindings.py) — Queue management
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/service_state.py) — EnrichmentJob dataclass
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Graph write operations for enrichment
+- [.env.example](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/.env.example) — Enrichment configuration variables
 :::
 
 The Enrichment Pipeline is a background worker system that automatically enhances stored memories with extracted entities, relationships, summaries, and pattern associations. This page documents the queue-based architecture, processing stages, entity extraction techniques, and relationship creation mechanisms.
@@ -280,13 +281,32 @@ Discovers recurring themes by analyzing memories of the same type and linking th
 
 The `GET /enrichment/status` endpoint exposes real-time worker metrics:
 
-**Metrics:**
-- `queue_depth` — Jobs waiting in `enrichment_pending`
-- `inflight_count` — Jobs currently being processed in `enrichment_inflight`
-- `processed_total` — Lifetime total of processed jobs
-- `successes` / `failures` — Success/failure counters
-- `last_success_id` / `last_success_at` — Most recent successful enrichment
-- `last_error` / `last_error_at` — Most recent error details
+```json
+{
+  "status": "running",
+  "queue_size": 3,
+  "pending": 3,
+  "inflight": 1,
+  "max_attempts": 3,
+  "stats": {
+    "processed_total": 1024,
+    "successes": 1021,
+    "failures": 3,
+    "last_success_id": "a1b2c3d4-...",
+    "last_success_at": "2025-01-15T10:30:00Z",
+    "last_error": "FalkorDB write failed",
+    "last_error_at": "2025-01-14T08:15:00Z"
+  }
+}
+```
+
+**Fields:**
+- `status` — Worker thread state: `"running"` or `"stopped"`
+- `queue_size` — Items in the underlying queue (`enrichment_queue.qsize()`)
+- `pending` — IDs in the `enrichment_pending` tracking set (not yet dequeued)
+- `inflight` — IDs in the `enrichment_inflight` tracking set (currently processing)
+- `max_attempts` — Configured retry limit (`ENRICHMENT_MAX_ATTEMPTS`)
+- `stats` — Lifetime counters from `EnrichmentStats.to_dict()`: `processed_total`, `successes`, `failures`, `last_success_id`, `last_success_at`, `last_error`, `last_error_at`
 
 ### Tracking Sets
 
