@@ -409,7 +409,7 @@ sequenceDiagram
       "relations": []
     }
   ],
-  "count": 3,
+  "count": 1,
   "dedup_removed": 0,
   "sort": "score",
   "vector_search": {
