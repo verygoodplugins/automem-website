@@ -315,7 +315,7 @@ Thread-safe sets prevent duplicate processing:
 - `enrichment_pending` — Set of memory IDs awaiting enrichment (not yet dequeued)
 - `enrichment_inflight` — Set of memory IDs currently being processed
 
-When a job is dequeued, the ID is moved from `pending` to `inflight`. When processing completes (success or final failure), it is removed from `inflight`. New enqueues check both sets to prevent duplicates.
+When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment_inflight`. When processing completes (success or final failure), it is removed from `enrichment_inflight`. New enqueues check both sets to prevent duplicates.
 
 ---
 
