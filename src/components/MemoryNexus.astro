@@ -707,7 +707,7 @@
       const rels = EDGES.filter((ed) => ed.s === nd.id || ed.t === nd.id).map((ed) => {
         const out = ed.s === nd.id; const other = byId[out ? ed.t : ed.s]; const ar = out ? '→' : '←';
         const auto = AUTO_TYPES.has(ed.type);
-        return `<div class="rel" data-go="${other.id}"><span class="rt ${auto ? 'auto' : ''}">${ed.type.replace(/_/g, ' ')}</span><span class="rn">${ar} ${other.label}</span></div>`;
+        return `<div class="rel" data-go="${other.id}" role="button" tabindex="0"><span class="rt ${auto ? 'auto' : ''}">${ed.type.replace(/_/g, ' ')}</span><span class="rn">${ar} ${other.label}</span></div>`;
       }).join('');
       const tags = (nd.tags || []).map((t) => `<span class="tag">${t}</span>`).join('');
       const kindChip = isEntity
@@ -724,7 +724,11 @@
         </div>
         ${tags ? `<div class="sec">Tags</div><div class="tags">${tags}</div>` : ''}
         <div class="sec">Relations (${EDGES.filter((ed) => ed.s === nd.id || ed.t === nd.id).length})</div>${rels}`;
-      detail.querySelectorAll<HTMLElement>('.rel[data-go]').forEach((r) => (r.onclick = () => select(r.dataset.go!)));
+      detail.querySelectorAll<HTMLElement>('.rel[data-go]').forEach((r) => {
+        const go = () => select(r.dataset.go!);
+        r.onclick = go;
+        r.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+      });
     }
 
     // ── legend (kind filter) ──
@@ -735,8 +739,11 @@
       const h = document.createElement('span'); h.className = 'lg-head'; h.textContent = head; legend.appendChild(h);
       kinds.forEach((k) => {
         const s = document.createElement('span'); s.className = 'lg';
+        s.setAttribute('role', 'button'); s.tabIndex = 0; s.setAttribute('aria-pressed', 'true');
         s.innerHTML = `<span class="sw" style="background:${KIND_COLOR[k]}"></span>${KIND_LABEL[k]}`;
-        s.addEventListener('click', () => { kindState[k] = !kindState[k]; s.classList.toggle('off', !kindState[k]); applyFilters(); });
+        const toggle = () => { kindState[k] = !kindState[k]; s.classList.toggle('off', !kindState[k]); s.setAttribute('aria-pressed', String(kindState[k])); applyFilters(); };
+        s.addEventListener('click', toggle);
+        s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
         legend.appendChild(s);
       });
     }
