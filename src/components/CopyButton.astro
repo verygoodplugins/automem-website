@@ -43,6 +43,12 @@ const { text, label = 'Copy', class: className = '' } = Astro.props;
     const icon = button.querySelector('.copy-icon');
     const check = button.querySelector('.copy-check');
     const defaultLabel = button.getAttribute('aria-label') ?? 'Copy';
+    // Announce what was copied (e.g. "Copied install command") rather than a
+    // bare "Copied" — screen-reader users with several copy buttons on the page
+    // need to know which one fired.
+    const copiedLabel = /^Copy(\s|$)/.test(defaultLabel)
+      ? defaultLabel.replace(/^Copy/, 'Copied')
+      : `Copied — ${defaultLabel}`;
     let resetTimer: ReturnType<typeof setTimeout> | undefined;
 
     button.addEventListener('click', async () => {
@@ -50,7 +56,7 @@ const { text, label = 'Copy', class: className = '' } = Astro.props;
         await navigator.clipboard.writeText(button.dataset.copyText ?? '');
         icon?.classList.add('hidden');
         check?.classList.remove('hidden');
-        button.setAttribute('aria-label', 'Copied');
+        button.setAttribute('aria-label', copiedLabel);
         clearTimeout(resetTimer);
         resetTimer = setTimeout(() => {
           check?.classList.add('hidden');
