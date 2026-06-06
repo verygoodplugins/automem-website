@@ -1,0 +1,66 @@
+---
+/**
+ * Generic copy-to-clipboard icon button.
+ *
+ * Renders the copy/check icon pair used across the site and exposes the text to
+ * copy via `data-copy-text`. A single hoisted script (below) wires every
+ * `[data-copy-text]` button on the page, reading `dataset.copyText` live at click
+ * time — so a consumer (e.g. InstallCommand) can retarget the same button by
+ * mutating that attribute.
+ */
+interface Props {
+  text: string;
+  label?: string;
+  class?: string;
+}
+
+const { text, label = 'Copy', class: className = '' } = Astro.props;
+---
+
+<button
+  type="button"
+  data-copy-text={text}
+  aria-label={label}
+  class:list={['copy-button', className]}
+>
+  <svg class="copy-icon h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M7 7h8v8H7zM5 13H3V3h10v2" stroke="currentColor" stroke-width="1.5" />
+  </svg>
+  <svg class="copy-check hidden h-5 w-5 text-lab-success" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M4 10.5 8 14.5 16 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+</button>
+
+<script>
+  // Wire every copy button on the page. Reads `data-copy-text` at click time so
+  // a consumer that swaps the attribute (InstallCommand's Script/npm toggle)
+  // copies whichever command is currently active.
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-copy-text]');
+  buttons.forEach((button) => {
+    if (button.dataset.copyWired === 'true') return;
+    button.dataset.copyWired = 'true';
+
+    const icon = button.querySelector('.copy-icon');
+    const check = button.querySelector('.copy-check');
+    const defaultLabel = button.getAttribute('aria-label') ?? 'Copy';
+    let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copyText ?? '');
+        icon?.classList.add('hidden');
+        check?.classList.remove('hidden');
+        button.setAttribute('aria-label', 'Copied');
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          check?.classList.add('hidden');
+          icon?.classList.remove('hidden');
+          button.setAttribute('aria-label', defaultLabel);
+        }, 2000);
+      } catch {
+        /* Clipboard API unavailable (insecure context / denied) — the command
+           stays visible so it can be selected and copied manually. */
+      }
+    });
+  });
+</script>

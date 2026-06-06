@@ -1,0 +1,107 @@
+---
+/**
+ * Install command widget: a Script ⇄ npm toggle, the active command (one line,
+ * horizontally scrollable — never wrapping), and a copy button that copies the
+ * active command.
+ *
+ * The command strings live only in src/lib/install-commands.ts; the colored
+ * display segments below are derived from those constants so they can't drift.
+ */
+import { INSTALL_COMMANDS } from '../lib/install-commands';
+import CopyButton from './CopyButton.astro';
+
+interface Props {
+  size?: 'hero' | 'page';
+}
+
+const { size = 'hero' } = Astro.props;
+
+// Split the script command around its URL for syntax coloring, derived from the
+// constant (no second copy of the command string).
+const scriptUrl = INSTALL_COMMANDS.script.match(/https?:\/\/\S+/)?.[0] ?? '';
+const [scriptBefore, scriptAfter] = scriptUrl
+  ? INSTALL_COMMANDS.script.split(scriptUrl)
+  : [INSTALL_COMMANDS.script, ''];
+
+// Color the leading `npx` token of the npm command, the rest in body text.
+const npmSplit = INSTALL_COMMANDS.npm.indexOf(' ');
+const npmHead = npmSplit === -1 ? INSTALL_COMMANDS.npm : INSTALL_COMMANDS.npm.slice(0, npmSplit);
+const npmTail = npmSplit === -1 ? '' : INSTALL_COMMANDS.npm.slice(npmSplit);
+
+const commandFont = size === 'hero' ? 'text-[13px] sm:text-base lg:text-lg' : 'text-xs sm:text-sm';
+const commandRowClass =
+  size === 'page'
+    ? 'mt-3 flex items-center gap-3 rounded border border-lab-border bg-lab-bg p-3'
+    : 'mt-3 flex items-center gap-3';
+---
+
+<div
+  data-install-command
+  data-command-script={INSTALL_COMMANDS.script}
+  data-command-npm={INSTALL_COMMANDS.npm}
+  class="w-full min-w-0"
+>
+  <div class="inline-flex rounded border border-lab-line bg-lab-bg/60 p-0.5" role="group" aria-label="Install method">
+    <button
+      type="button"
+      data-install-tab="script"
+      aria-pressed="true"
+      class="rounded bg-lab-accent px-3 py-1 text-xs font-bold text-[#05080c] transition-colors"
+    >Script</button>
+    <button
+      type="button"
+      data-install-tab="npm"
+      aria-pressed="false"
+      class="rounded px-3 py-1 text-xs font-bold text-lab-muted transition-colors hover:text-lab-text"
+    >npm</button>
+  </div>
+
+  <div class={commandRowClass}>
+    <div class={`min-w-0 flex-1 font-mono ${commandFont}`}>
+      <div data-install-panel="script" class="overflow-x-auto whitespace-nowrap text-lab-text">
+        <span>{scriptBefore}</span><span class="text-lab-accent-text">{scriptUrl}</span><span>{scriptAfter}</span>
+      </div>
+      <div data-install-panel="npm" class="hidden overflow-x-auto whitespace-nowrap text-lab-text">
+        <span class="text-lab-accent-text">{npmHead}</span><span>{npmTail}</span>
+      </div>
+    </div>
+    <CopyButton
+      text={INSTALL_COMMANDS.script}
+      label="Copy install command"
+      class="flex-shrink-0 rounded p-2 text-lab-muted transition-colors hover:text-lab-accent-text"
+    />
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-install-command]').forEach((root) => {
+    const tabs = root.querySelectorAll<HTMLButtonElement>('[data-install-tab]');
+    const panels = root.querySelectorAll<HTMLElement>('[data-install-panel]');
+    const copyButton = root.querySelector<HTMLButtonElement>('[data-copy-text]');
+    const commands: Record<string, string> = {
+      script: root.dataset.commandScript ?? '',
+      npm: root.dataset.commandNpm ?? '',
+    };
+
+    const activate = (name: string) => {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.installTab === name;
+        tab.setAttribute('aria-pressed', String(isActive));
+        tab.classList.toggle('bg-lab-accent', isActive);
+        tab.classList.toggle('text-[#05080c]', isActive);
+        tab.classList.toggle('text-lab-muted', !isActive);
+        tab.classList.toggle('hover:text-lab-text', !isActive);
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.installPanel !== name);
+      });
+      if (copyButton) {
+        copyButton.dataset.copyText = commands[name] ?? commands.script;
+      }
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => activate(tab.dataset.installTab ?? 'script'));
+    });
+  });
+</script>
