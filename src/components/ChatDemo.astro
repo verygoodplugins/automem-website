@@ -13,7 +13,7 @@
 ---
 
 <div class="chat-demo-container font-mono" aria-hidden="true">
-  <div class="chat-window bg-lab-bg border-2 border-lab-text shadow-hard max-w-5xl mx-auto rounded-lg overflow-hidden relative z-10" id="chat-window">
+  <div class="chat-window bg-lab-bg border-2 border-lab-text shadow-hard max-w-5xl mx-auto rounded-lg overflow-hidden relative z-10" id="hero-chat-window">
     <!-- Header (re-chromes ./autojack -> Cursor on the scene cut) -->
     <div class="chat-header bg-lab-surface border-b-2 border-lab-text px-4 py-2 flex items-center gap-4 text-sm">
       <div class="flex items-center gap-3">
@@ -124,7 +124,7 @@
   const LOOP_HOLD = 4200; // dwell on the tagline before restarting
 
   // --- DOM refs ---------------------------------------------------------------
-  const windowEl = document.getElementById('chat-window');
+  const windowEl = document.getElementById('hero-chat-window');
   const container = document.getElementById('chat-container');
   const spacer = document.getElementById('chat-spacer');
   const list = document.getElementById('messages-list');
