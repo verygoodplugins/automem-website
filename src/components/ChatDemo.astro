@@ -1,15 +1,25 @@
 ---
-// Animated chat demo component with MSN Messenger-style bottom-up animation
+// Animated chat demo for the hero. Tells one story in two scenes: AutoJack
+// recalls the user's stack (lead with recall — the payoff lands immediately),
+// then a HARD CUT re-chromes the window to Cursor pulling the *same* memory,
+// closing on "one memory. every tool." The whole thing is decorative
+// (aria-hidden); the real value prop lives in the H1 + subhead beside it.
+//
+// Engine notes: beats are declarative with RELATIVE gaps (`after`), so
+// reordering/cutting a beat needs no timestamp recompute. A single timeline
+// driver owns every timer and cancels them on re-run, so loops never stack.
+// IntersectionObserver + visibilitychange gate playback to "visible & focused",
+// and `prefers-reduced-motion` swaps the loop for a static end-frame.
 ---
 
-<div class="chat-demo-container font-mono">
-  <div class="chat-window bg-lab-bg border-2 border-lab-text shadow-hard max-w-5xl mx-auto rounded-lg overflow-hidden relative z-10">
-    <!-- Header -->
+<div class="chat-demo-container font-mono" aria-hidden="true">
+  <div class="chat-window bg-lab-bg border-2 border-lab-text shadow-hard max-w-5xl mx-auto rounded-lg overflow-hidden relative z-10" id="hero-chat-window">
+    <!-- Header (re-chromes ./autojack -> Cursor on the scene cut) -->
     <div class="chat-header bg-lab-surface border-b-2 border-lab-text px-4 py-2 flex items-center gap-4 text-sm">
       <div class="flex items-center gap-3">
-        <span class="text-lab-accent-text font-bold">./autojack</span>
+        <span class="font-bold text-lab-accent-text transition-colors duration-300" id="chrome-name">./autojack</span>
       </div>
-      <div class="flex-1 text-center text-lab-muted text-xs opacity-50">PID: 8492</div>
+      <div class="flex-1 text-center text-lab-muted text-xs opacity-50" id="chrome-subtitle">PID: 8492</div>
       <div class="flex items-center gap-2">
         <div class="w-2 h-2 bg-lab-success animate-pulse"></div>
         <span class="text-xs text-lab-text uppercase">Active</span>
@@ -17,16 +27,16 @@
     </div>
 
     <!-- Messages Container -->
-    <div class="chat-messages p-6 h-[420px] md:h-[480px] overflow-y-auto bg-lab-bg relative flex flex-col" id="chat-container">
-      
+    <div class="chat-messages p-6 h-[420px] md:h-[520px] overflow-y-auto bg-lab-bg relative flex flex-col" id="chat-container">
+
       <!-- Grid overlay -->
-      <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
-      
-      <!-- Dynamic spacer that shrinks as messages fill -->
+      <div class="absolute inset-0 bg-[radial-gradient(#808080_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
+
+      <!-- Dynamic spacer that shrinks as messages fill (MSN-style bottom-up) -->
       <div class="spacer flex-shrink-0 transition-all duration-300" id="chat-spacer"></div>
-      
-      <!-- Messages will be appended here -->
-      <div class="messages-list flex flex-col space-y-6 relative z-10" id="messages-list"></div>
+
+      <!-- Messages are appended here -->
+      <div class="messages-list flex flex-col space-y-5 relative z-10" id="messages-list"></div>
     </div>
   </div>
 </div>
@@ -34,7 +44,12 @@
 <style>
   .chat-messages {
     scrollbar-width: thin;
-    scrollbar-color: #333 #0A0A0A;
+    scrollbar-color: rgb(128 128 128 / 0.45) transparent;
+    /* Fade the top edge so overflowing messages scroll out gracefully instead of
+       hard-clipping under the header. An alpha mask is theme-agnostic — no color
+       token to keep in sync between dark and light. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 2.5rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 2.5rem);
   }
 
   .chat-messages::-webkit-scrollbar {
@@ -42,16 +57,22 @@
   }
 
   .chat-messages::-webkit-scrollbar-track {
-    background: #0A0A0A;
+    background: transparent;
   }
 
   .chat-messages::-webkit-scrollbar-thumb {
-    background: #333;
+    background: rgb(128 128 128 / 0.45);
     border-radius: 3px;
   }
 
   .message-enter {
     animation: slideUp 0.4s ease-out forwards;
+  }
+
+  /* The "↳ result" line of a recall card reveals just after the call settles,
+     so it reads as "querying → resolved" rather than appearing all at once. */
+  .tool-result {
+    animation: fadeIn 0.45s ease-out 0.4s both;
   }
 
   @keyframes slideUp {
@@ -65,8 +86,14 @@
     }
   }
 
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .message-enter {
+    .message-enter,
+    .tool-result {
       animation: none;
       opacity: 1;
     }
@@ -74,239 +101,215 @@
 </style>
 
 <script>
-  const messageTemplates = [
-    {
-      delay: 0,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border-2 border-lab-text px-4 py-4 rounded-lg max-w-[85%] shadow-hard">
-          <div class="text-lab-muted text-xs font-bold mb-2 uppercase tracking-wider">AutoJack</div>
-          <p class="text-lab-text text-sm">Hi! I'm AutoJack. How can I help you today?</p>
-        </div>
-      </div>`
-    },
-    {
-      delay: 1800,
-      html: `<div class="flex justify-end">
-        <div class="bg-lab-text text-lab-bg px-4 py-3 max-w-[80%] text-sm font-bold border-2 border-lab-text rounded-lg shadow-hard">
-          Hey! I'm starting a new web project.
-        </div>
-      </div>`
-    },
-    {
-      delay: 3600,
-      html: `<div class="flex justify-start">
-        <div class="pl-4 text-lab-muted text-xs animate-pulse">
-          analyzing...
-        </div>
-      </div>`
-    },
-    {
-      delay: 5400,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border border-lab-text px-4 py-3 text-sm w-full md:w-auto">
-          <p class="text-lab-text">> Awesome! Let me check what you usually work with...</p>
-        </div>
-      </div>`
-    },
-    {
-      delay: 7200,
-      html: `<div class="bg-lab-accent/10 border-l-4 border-lab-accent px-4 py-3 text-xs font-mono">
-        <div class="flex items-center gap-2 text-lab-accent-text mb-1.5 font-bold uppercase">
-          <span class="animate-pulse">●</span>
-          <span>PROCESSING...</span>
-        </div>
-        <p class="text-lab-muted">Let me recall their development preferences</p>
-      </div>`
-    },
-    {
-      delay: 9000,
-      html: `<div class="bg-lab-bg border border-lab-muted/30 p-3 text-xs font-mono">
-        <div class="flex items-center gap-2 mb-2 border-b border-lab-muted/20 pb-1">
-          <span class="text-lab-accent-text">> function call:</span>
-        </div>
-        <div class="text-lab-text pl-2">
-          <span class="text-lab-secondary">recall_memory</span>(<span class="text-lab-success">"web development stack"</span>)
-        </div>
-      </div>`
-    },
-    {
-      delay: 11700,
-      html: `<div class="space-y-3 pl-4 border-l-2 border-lab-border">
-        <div class="memory-card bg-lab-surface border border-lab-text p-3 shadow-hard transform transition-transform hover:-translate-y-1">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="px-2 py-0.5 bg-lab-bg border border-lab-text text-xs uppercase font-bold text-lab-text">Preference</span>
-            <span class="text-xs text-lab-muted ml-auto">0x1A4F</span>
-          </div>
-          <div class="text-sm text-lab-text">
-            Prefers <span class="text-lab-secondary">React</span> with <span class="text-lab-secondary">TypeScript</span> for web apps
-          </div>
-        </div>
-        <div class="memory-card bg-lab-secondary/10 border border-lab-secondary p-3 shadow-hard transform transition-transform hover:-translate-y-1">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="px-2 py-0.5 bg-lab-secondary text-lab-bg text-xs uppercase font-bold">Pattern</span>
-            <div class="flex ml-auto gap-0.5">
-              <span class="text-lab-success text-xs">★</span>
-              <span class="text-lab-success text-xs">★</span>
-              <span class="text-lab-success text-xs">★</span>
-            </div>
-          </div>
-          <div class="text-sm text-lab-text">
-            Always uses <span class="text-lab-secondary">Tailwind CSS</span> for styling
-          </div>
-        </div>
-      </div>`
-    },
-    {
-      delay: 14400,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border border-lab-text px-4 py-3 max-w-[85%] shadow-hard">
-          <p class="text-lab-text text-base">Perfect! I remember you like <strong class="text-lab-secondary">React + TypeScript</strong> with <strong class="text-lab-secondary">Tailwind CSS</strong>. Want me to set that up?</p>
-        </div>
-      </div>`
-    },
-    {
-      delay: 17100,
-      html: `<div class="flex justify-end">
-        <div class="bg-lab-text text-lab-bg px-4 py-3 max-w-[80%] text-sm font-bold border-2 border-lab-text rounded-lg shadow-hard">
-          Yes! And use Vite this time.
-        </div>
-      </div>`
-    },
-    {
-      delay: 18900,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border border-lab-text px-4 py-3">
-          <div class="flex gap-1.5">
-            <div class="w-2.5 h-2.5 bg-lab-text rounded-full animate-bounce" style="animation-delay: 0s"></div>
-            <div class="w-2.5 h-2.5 bg-lab-text rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-            <div class="w-2.5 h-2.5 bg-lab-text rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-          </div>
-        </div>
-      </div>`
-    },
-    {
-      delay: 20700,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border border-lab-text px-4 py-3 max-w-[85%] shadow-hard">
-          <p class="text-lab-text text-base">Great choice! Do you want your usual folder structure too?</p>
-        </div>
-      </div>`
-    },
-    {
-      delay: 23400,
-      html: `<div class="flex justify-end">
-        <div class="bg-lab-text text-lab-bg px-4 py-3 max-w-[80%] text-sm font-bold border-2 border-lab-text rounded-lg shadow-hard">
-          Yes please!
-        </div>
-      </div>`
-    },
-    {
-      delay: 27000,
-      html: `<div class="bg-lab-secondary/10 border-l-4 border-lab-secondary px-4 py-3 text-xs font-mono">
-        <div class="flex items-center gap-2 text-lab-secondary mb-1.5 font-bold uppercase">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin">
-            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path>
-          </svg>
-          <span>STORING_NEW_MEMORY...</span>
-        </div>
-        <p class="text-lab-muted text-sm">Vite is new - I should store this preference</p>
-      </div>`
-    },
-    {
-      delay: 29700,
-      html: `<div class="bg-lab-bg border border-lab-success/30 p-3 text-xs font-mono shadow-hard">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-lab-success">> function call:</span>
-          <span class="text-lab-text font-bold">store_memory</span>
-        </div>
-        <div class="text-lab-muted pl-2 border-l border-lab-success/20 ml-1">
-          content: <span class="text-lab-success">"Prefers Vite as build tool"</span><br/>
-          type: <span class="text-lab-secondary">"Preference"</span><br/>
-          importance: <span class="text-lab-accent-text">0.9</span>
-        </div>
-      </div>`
-    },
-    {
-      delay: 36000,
-      html: `<div class="flex justify-start">
-        <div class="bg-lab-surface border border-lab-text px-4 py-3 max-w-[85%] shadow-hard">
-          <p class="text-lab-text text-base">✅ Perfect! Setting up <span class="text-lab-secondary font-mono text-sm">React + TypeScript + Vite + Tailwind</span></p>
-          <div class="mt-2.5 pt-2.5 border-t border-lab-border text-xs text-lab-muted flex items-center gap-2">
-            <span>💾</span> Remembered your Vite preference for next time!
-          </div>
-        </div>
-      </div>`
-    },
-    {
-      delay: 38700,
-      html: `<div class="flex justify-end">
-        <div class="bg-lab-text text-lab-bg px-4 py-3 max-w-[80%] text-sm font-bold border-2 border-lab-text rounded-lg shadow-hard">
-          Perfect, thanks! 🙌
-        </div>
-      </div>`
-    },
-    {
-      delay: 41700,
-      html: `<div class="bg-lab-surface border-2 border-lab-accent p-4 shadow-hard">
-        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-lab-border">
-          <span class="text-lab-accent-text font-bold uppercase text-xs tracking-widest">:: SESSION_LOG</span>
-        </div>
-        <div class="text-sm text-lab-text space-y-2 font-mono">
-          <div class="flex items-center gap-2"><span class="text-lab-success">✔</span> Retrieved 2 existing memories</div>
-          <div class="flex items-center gap-2"><span class="text-lab-secondary">💾</span> Stored 1 new preference</div>
-          <div class="flex items-center gap-2"><span class="text-lab-accent-text">∞</span> Created 1 memory association</div>
-        </div>
-      </div>`
-    }
+  // --- Story (declarative beats; `after` = ms gap BEFORE this beat) -----------
+  // kinds: agent | user | tool | system | tagline | scene
+  const beats = [
+    // Scene 1 — ./autojack
+    { kind: 'agent', text: "Hi! I'm AutoJack. How can I help you today?", after: 400 },
+    { kind: 'user', text: "Hey! I'm starting a new web project.", after: 1600 },
+    { kind: 'tool', arg: '"build tooling, framework prefs"', result: '3 memories found', after: 1400 },
+    { kind: 'agent', html: 'Same stack as always? <strong class="text-lab-secondary">React + TS + Tailwind</strong>, Vite over webpack. I’ve got it from last time.', after: 2400 },
+    { kind: 'user', text: 'Yeah, exactly that.', after: 1900 },
+    { kind: 'agent', text: 'Scaffolding now. ✓', after: 1500 },
+
+    // HARD CUT — re-chrome the window to Cursor
+    { kind: 'scene', name: 'Cursor', subtitle: '~/web-project', accent: 'violet', after: 1500 },
+
+    // Scene 2 — Cursor (a visibly different tool, pulling the SAME memory)
+    { kind: 'system', label: 'Cursor', text: 'Configuring build…', after: 700 },
+    { kind: 'tool', arg: 'via AutoMem', result: 'using Vite (your saved preference)', after: 1400 },
+    { kind: 'tagline', after: 1600 },
   ];
 
+  const LOOP_HOLD = 4200; // dwell on the tagline before restarting
+
+  // --- DOM refs ---------------------------------------------------------------
+  const windowEl = document.getElementById('hero-chat-window');
   const container = document.getElementById('chat-container');
   const spacer = document.getElementById('chat-spacer');
   const list = document.getElementById('messages-list');
+  const nameEl = document.getElementById('chrome-name');
+  const subtitleEl = document.getElementById('chrome-subtitle');
+
+  const prefersReduced =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // --- Renderers (one per kind; reuse the established lab-token vocabulary) ----
+  function renderHTML(beat) {
+    switch (beat.kind) {
+      case 'agent':
+        return `<div class="flex justify-start">
+          <div class="bg-lab-surface border-2 border-lab-text px-4 py-3 rounded-lg max-w-[85%] shadow-hard">
+            <div class="text-lab-muted text-[0.65rem] font-bold mb-1.5 uppercase tracking-wider">AutoJack</div>
+            <p class="text-lab-text text-sm leading-relaxed">${beat.html ?? beat.text}</p>
+          </div>
+        </div>`;
+
+      case 'user':
+        return `<div class="flex justify-end">
+          <div class="bg-lab-text text-lab-bg px-4 py-3 max-w-[80%] text-sm font-bold border-2 border-lab-text rounded-lg shadow-hard">
+            ${beat.text}
+          </div>
+        </div>`;
+
+      // A build-tool log line — deliberately NOT a chat bubble, to read as a
+      // different kind of app. Violet hairline ties it to the re-chromed header.
+      case 'system':
+        return `<div class="flex justify-start">
+          <div class="bg-lab-surface/60 border border-lab-secondary/40 px-4 py-3 rounded-lg max-w-[85%] font-mono text-sm">
+            <div class="text-lab-secondary text-[0.65rem] font-bold mb-1.5 uppercase tracking-wider">${beat.label}</div>
+            <p class="text-lab-text">${beat.text}</p>
+          </div>
+        </div>`;
+
+      // The visible MCP function call — "real plumbing, not vibes."
+      case 'tool':
+        return `<div class="bg-lab-bg border border-lab-muted/30 p-3 text-xs font-mono">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-lab-accent-text">⟳</span>
+            <span class="text-lab-secondary font-bold">recall_memory</span>
+            <span class="text-lab-muted">·</span>
+            <span class="text-lab-success">${beat.arg}</span>
+          </div>
+          <div class="tool-result mt-2 pl-5 flex items-center gap-1.5 text-lab-muted">
+            <span class="text-lab-accent-text">↳</span>
+            <span>${beat.result}</span>
+          </div>
+        </div>`;
+
+      // The punch line. Gold "one memory." + violet "every tool." braids the
+      // two scenes' accents together.
+      case 'tagline':
+        return `<div class="flex justify-center pt-3">
+          <div class="flex items-center gap-2.5 text-base md:text-lg font-bold tracking-tight">
+            <span aria-hidden="true">💾</span>
+            <span class="text-lab-accent-text">one memory. <span class="text-lab-secondary">every tool.</span></span>
+          </div>
+        </div>`;
+
+      default:
+        return '';
+    }
+  }
+
+  // --- Layout helpers ---------------------------------------------------------
+  function resetSpacer() {
+    if (!container || !spacer) return;
+    spacer.style.height = Math.max(0, container.clientHeight - 48) + 'px';
+    container.scrollTop = 0;
+  }
 
   function updateSpacerHeight() {
     if (!container || !spacer || !list) return;
-    const containerHeight = container.clientHeight - 48; // Account for padding
+    const containerHeight = container.clientHeight - 48; // account for padding
     const listHeight = list.scrollHeight;
-    const newSpacerHeight = Math.max(0, containerHeight - listHeight);
-    spacer.style.height = newSpacerHeight + 'px';
-    
-    // If content overflows, scroll to bottom
+    spacer.style.height = Math.max(0, containerHeight - listHeight) + 'px';
     if (listHeight > containerHeight) {
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     }
   }
 
+  function setChrome(name, subtitle, accent) {
+    if (nameEl) {
+      nameEl.textContent = name;
+      nameEl.classList.toggle('text-lab-secondary', accent === 'violet');
+      nameEl.classList.toggle('text-lab-accent-text', accent !== 'violet');
+    }
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+  }
+
   function addMessage(html) {
     if (!list) return;
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message-enter';
-    msgDiv.innerHTML = html;
-    list.appendChild(msgDiv);
-    
-    // Update spacer after message is added
-    requestAnimationFrame(() => {
-      updateSpacerHeight();
-    });
+    const msg = document.createElement('div');
+    msg.className = 'message-enter';
+    msg.innerHTML = html;
+    list.appendChild(msg);
+    requestAnimationFrame(updateSpacerHeight);
   }
 
-  function runAnimation() {
-    // Clear previous messages
+  function resetToScene1() {
     if (list) list.innerHTML = '';
-    if (spacer) spacer.style.height = (container ? container.clientHeight - 48 : 400) + 'px';
-    if (container) container.scrollTop = 0;
-
-    // Schedule each message
-    messageTemplates.forEach((msg) => {
-      setTimeout(() => {
-        addMessage(msg.html);
-      }, msg.delay);
-    });
+    setChrome('./autojack', 'PID: 8492', 'gold');
+    resetSpacer();
   }
 
-  // Initial run
-  setTimeout(runAnimation, 500);
+  function renderBeat(beat) {
+    if (beat.kind === 'scene') {
+      // The cut: re-chrome the header, wipe the transcript, reset the spacer so
+      // Scene 2 also fills bottom-up.
+      setChrome(beat.name, beat.subtitle, beat.accent);
+      if (list) list.innerHTML = '';
+      resetSpacer();
+      return;
+    }
+    addMessage(renderHTML(beat));
+  }
 
-  // Loop every 55 seconds (animation takes ~42s now)
-  setInterval(runAnimation, 55000);
+  // --- Timeline driver (owns every timer; restart-safe) -----------------------
+  let timers = [];
+  let running = false;
+
+  function clearTimers() {
+    timers.forEach((id) => clearTimeout(id));
+    timers = [];
+  }
+
+  function play() {
+    clearTimers();
+    resetToScene1();
+    let t = 0;
+    for (const beat of beats) {
+      t += beat.after;
+      timers.push(setTimeout(() => renderBeat(beat), t));
+    }
+    // Computed loop gap — no magic number to keep in sync with the script length.
+    timers.push(setTimeout(play, t + LOOP_HOLD));
+  }
+
+  // --- Static frame for reduced-motion: the Cursor payoff, no animation -------
+  function renderStaticEndFrame() {
+    setChrome('Cursor', '~/web-project', 'violet');
+    resetSpacer();
+    addMessage(renderHTML({ kind: 'system', label: 'Cursor', text: 'Configuring build…' }));
+    addMessage(renderHTML({ kind: 'tool', arg: 'via AutoMem', result: 'using Vite (your saved preference)' }));
+    addMessage(renderHTML({ kind: 'tagline' }));
+  }
+
+  // --- Playback gating: only run when visible AND the tab is focused -----------
+  let inView = false;
+
+  function sync() {
+    const shouldRun = inView && !document.hidden;
+    if (shouldRun && !running) {
+      running = true;
+      play();
+    } else if (!shouldRun && running) {
+      running = false;
+      clearTimers();
+    }
+  }
+
+  function start() {
+    if (prefersReduced) {
+      renderStaticEndFrame();
+      return;
+    }
+    if (windowEl && typeof IntersectionObserver === 'function') {
+      const io = new IntersectionObserver(
+        (entries) => {
+          inView = entries.some((e) => e.isIntersecting);
+          sync();
+        },
+        { threshold: 0.25 }
+      );
+      io.observe(windowEl);
+    } else {
+      inView = true;
+    }
+    document.addEventListener('visibilitychange', sync);
+    sync();
+  }
+
+  start();
 </script>

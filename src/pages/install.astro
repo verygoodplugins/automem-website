@@ -31,6 +31,29 @@ const paths = [
       'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=existing AUTOMEM_API_URL=https://memory.example sh',
   },
 ];
+
+const installerSteps = [
+  {
+    number: '1',
+    title: 'Detect environment',
+    detail: 'Identifies OS, Docker/K8s, and available resources.',
+  },
+  {
+    number: '2',
+    title: 'Choose deployment',
+    detail: 'You pick Local, Railway, InstaPods, or Existing Endpoint.',
+  },
+  {
+    number: '3',
+    title: 'Provision AutoMem',
+    detail: 'Pulls images, starts services, and runs health checks.',
+  },
+  {
+    number: '4',
+    title: 'Wire MCP clients',
+    detail: 'Generates config and shows you how to connect your agents.',
+  },
+];
 ---
 
 <Layout
@@ -83,6 +106,26 @@ const paths = [
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-surface">
+      <div class="comment-header">:: INSTALL_STEPS</div>
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">What the installer does</h2>
+        <p class="text-lab-muted leading-relaxed max-w-2xl mb-10">
+          Four steps from a single command to connected agents.
+        </p>
+        <div class="grid gap-6 lg:grid-cols-4 lg:gap-0">
+          {installerSteps.map((step, index) => (
+            <div class="relative lg:pr-8">
+              {index < installerSteps.length - 1 && <div class="absolute left-14 right-4 top-5 hidden border-t border-lab-line lg:block"></div>}
+              <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-lab-secondary bg-lab-bg text-lg font-bold text-lab-secondary">{step.number}</div>
+              <h3 class="mt-5 font-bold text-lab-secondary">{step.title}</h3>
+              <p class="mt-2 max-w-[18rem] text-sm leading-5 text-lab-muted">{step.detail}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

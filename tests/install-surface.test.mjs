@@ -7,9 +7,11 @@ const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 test('homepage promotes the install-first path', async () => {
   const homepage = await readSource('../src/pages/index.astro');
 
-  assert.match(homepage, /<h1[^>]*>\s*AutoMem\s*<\/h1>/s);
-  assert.match(homepage, /Persistent memory for\s*every agent you use\./);
-  assert.match(homepage, /Open-source memory layer your agents and MCP tools can/);
+  // Hero manifesto: "Recall is Power." with the install-first subhead.
+  assert.match(homepage, /<h1[^>]*>[\s\S]*?Recall is/);
+  assert.match(homepage, /Power\.<\/span>/);
+  assert.match(homepage, /Deploy once\. Remember everywhere\./);
+  assert.match(homepage, /Universal memory for your AI agent\./);
   assert.match(homepage, /href="\/install"/);
   assert.doesNotMatch(homepage, /AutoMemMark/);
   assert.match(homepage, /\/automem-icon\.svg/);
@@ -32,7 +34,9 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /choose local or cloud/i);
   assert.match(homepage, /provision AutoMem/i);
   assert.match(homepage, /wire MCP clients/i);
-  assert.match(homepage, /What the installer does/);
+  // The 4-step "What the installer does" overview moved off the homepage and
+  // onto /install (asserted in the install-page test below).
+  assert.doesNotMatch(homepage, /What the installer does/);
   assert.match(homepage, /Works where agents already run/);
   assert.match(homepage, /Built on research\. Designed for recall\./);
   assert.match(homepage, /Graph \(FalkorDB\)/);
@@ -45,12 +49,14 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /MCP-compatible/i);
   // concept story restored on top of the install-first page
   assert.match(homepage, /import MemoryHero/);
-  assert.match(homepage, /import MemoryDrive/);
+  assert.match(homepage, /import MemoryNexus/);
   assert.match(homepage, /<MemoryHero/);
-  assert.match(homepage, /<MemoryDrive/);
+  assert.match(homepage, /<MemoryNexus/);
   assert.match(homepage, /From forgetful to brilliant/);
-  assert.match(homepage, /Dreams while you dream/);
-  assert.doesNotMatch(homepage, /comment-header/);
+  assert.match(homepage, /Memories link themselves\./);
+  // Terminal-chrome eyebrows (comment-header) are intentionally restored in the
+  // animated-hero redesign — a deliberate reversal of the earlier strip.
+  assert.match(homepage, /comment-header/);
   assert.doesNotMatch(homepage, /timelineEntries/);
   assert.doesNotMatch(homepage, /MEMORY_STREAM/);
 });
@@ -65,6 +71,8 @@ test('/install page describes local, cloud, and existing endpoint setup', async 
   // Primary command uses the shared widget; path cards get copy buttons.
   assert.match(installPage, /<InstallCommand size="page"/);
   assert.match(installPage, /<CopyButton/);
+  // The 4-step installer overview now lives here (moved off the homepage).
+  assert.match(installPage, /What the installer does/);
   assert.match(installPage, /Local Docker/i);
   assert.match(installPage, /Hosted Cloud/i);
   assert.match(installPage, /Existing Endpoint/i);

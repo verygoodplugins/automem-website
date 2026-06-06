@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, sessionDrivers } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
@@ -21,7 +21,7 @@ export default defineConfig({
   adapter: isBuilding ? cloudflare() : undefined,
   output: 'server',
   devToolbar: { enabled: false },
-  ...(isBuilding ? {} : { session: { driver: 'fs' } }),
+  ...(isBuilding ? {} : { session: { driver: sessionDrivers.fs() } }),
   integrations: [
     mermaid({
       autoTheme: true,
@@ -31,6 +31,8 @@ export default defineConfig({
     }),
     starlight({
       title: 'AutoMem Docs',
+      // Use our custom branded src/pages/404.astro instead of Starlight's injected 404 route
+      disable404Route: true,
       logo: {
         src: './src/assets/robot-icon.svg',
         replacesTitle: false,

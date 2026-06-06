@@ -1,0 +1,809 @@
+---
+// MemoryNexus — an interactive, force-directed sample memory graph.
+//
+// Shows what AutoMem accumulates for an AI coding agent across sessions:
+// the 7 canonical memory types (Decision, Pattern, Preference, Style, Habit,
+// Insight, Context) plus extracted entities (Person, Project, Tool, Concept),
+// wired together with AutoMem's 14 typed relationships. The 3 auto-created
+// edge types (SIMILAR_TO, PRECEDED_BY, DISCOVERED) are drawn as dashed gold
+// links — they're what AutoMem adds on its own while it consolidates.
+//
+// Data is fictional. Vanilla SVG + a small spring layout, no dependencies.
+---
+
+<div class="memory-nexus relative w-full overflow-hidden rounded-lg border border-lab-border/70 bg-lab-surface/60" data-nexus>
+  <!-- Control bar -->
+  <div class="nx-bar flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-lab-border/70 px-3 py-2 text-xs">
+    <span class="flex items-center gap-2 font-bold text-lab-text">
+      <span class="nx-dot"></span>memory nexus
+      <span class="font-medium text-lab-muted">· sample agent graph</span>
+    </span>
+    <span class="flex-1"></span>
+    <label class="nx-toggle">
+      <input type="checkbox" data-consolidation checked />
+      <span>Consolidation layer</span>
+    </label>
+    <span class="nx-slider">
+      imp ≥ <input type="range" data-imp aria-label="Minimum importance" min="0" max="0.8" step="0.05" value="0" /><span data-impval>0.00</span>
+    </span>
+    <span class="nx-zoom">
+      <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+      <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+      <button type="button" data-reset>reset</button>
+    </span>
+  </div>
+
+  <!-- Stage -->
+  <div class="nx-stage relative" data-stage>
+    <svg data-svg></svg>
+    <div class="nx-legend" data-legend></div>
+    <div class="nx-pill">
+      <span><b data-n-nodes>0</b> memories</span>
+      <span><b data-n-edges>0</b> relations</span>
+      <span><span class="nx-auto-key">┄</span> <b data-n-auto>0</b> auto-linked</span>
+    </div>
+    <div class="nx-hint" data-hint>click a node to trace its relationships · dashed gold links are added during consolidation</div>
+    <div class="nx-tip" data-tip></div>
+    <div class="nx-panel" data-panel>
+      <button class="nx-pclose" data-pclose aria-label="Close">×</button>
+      <div data-detail></div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  /* is:global — every rule below is namespaced under .memory-nexus, so it
+     stays effectively scoped. Required because the SVG/legend elements are
+     built at runtime via createElementNS and never receive Astro's scoped
+     data-cid attribute, so a plain scoped <style> would not reach them. */
+  .memory-nexus {
+    /* chrome → lab tokens */
+    --nx-ink: rgb(var(--lab-text));
+    --nx-dim: rgb(var(--lab-muted));
+    --nx-faint: rgb(var(--lab-muted) / 0.65);
+    --nx-line: rgb(var(--lab-line) / 0.55);
+    --nx-panel: rgb(var(--lab-panel) / 0.92);
+    --nx-panel-2: rgb(var(--lab-surface) / 0.9);
+    --nx-accent: rgb(var(--lab-accent));
+    --nx-edge: rgb(var(--lab-line) / 0.7);
+    --nx-edge-core: rgb(var(--lab-line));
+    --nx-bg: rgb(var(--lab-bg));
+
+    /* node-kind palette (dark) — 7 memory types + 4 entity kinds */
+    --k-decision: #ae66ff;
+    --k-pattern: #60a5fa;
+    --k-preference: #2dd4bf;
+    --k-style: #f472b6;
+    --k-habit: #4ade80;
+    --k-insight: #f9cf2c;
+    --k-context: #94a3b8;
+    --k-person: #38bdf8;
+    --k-project: #f59e0b;
+    --k-tool: #818cf8;
+    --k-concept: #a3e635;
+  }
+
+  :global(html.light) .memory-nexus {
+    /* On near-white, the dark-tuned hues wash out — use darker, more
+       saturated variants and visible edges. */
+    --nx-edge: rgb(var(--lab-line) / 0.55);
+    --nx-edge-core: rgb(var(--lab-line) / 0.85);
+    --nx-panel: rgb(255 255 255 / 0.96);
+    --nx-panel-2: rgb(255 255 255 / 0.98);
+    --nx-accent: rgb(var(--lab-accent-text));
+
+    --k-decision: #7c3aed;
+    --k-pattern: #2563eb;
+    --k-preference: #0d9488;
+    --k-style: #db2777;
+    --k-habit: #16a34a;
+    --k-insight: #a16207;
+    --k-context: #475569;
+    --k-person: #0284c7;
+    --k-project: #c2660c;
+    --k-tool: #4f46e5;
+    --k-concept: #4d7c0f;
+  }
+
+  .memory-nexus .nx-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--nx-accent);
+    box-shadow: 0 0 10px var(--nx-accent);
+  }
+
+  /* ── control bar ── */
+  .memory-nexus .nx-toggle,
+  .memory-nexus .nx-slider,
+  .memory-nexus .nx-zoom {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--nx-dim); white-space: nowrap;
+  }
+  .memory-nexus .nx-toggle { cursor: pointer; }
+  .memory-nexus .nx-toggle input,
+  .memory-nexus .nx-slider input[type="range"] { accent-color: var(--nx-accent); }
+  .memory-nexus .nx-slider input[type="range"] { width: 78px; }
+  .memory-nexus .nx-slider [data-impval] { color: var(--nx-ink); min-width: 2.4em; }
+  .memory-nexus .nx-zoom button {
+    border: 1px solid var(--nx-line); background: var(--nx-panel-2);
+    color: var(--nx-dim); border-radius: 6px; padding: 2px 9px; cursor: pointer;
+    font-size: 13px; line-height: 1.2;
+  }
+  .memory-nexus .nx-zoom button:hover { color: var(--nx-ink); border-color: var(--nx-accent); }
+
+  /* ── stage ── */
+  .memory-nexus .nx-stage { height: 520px; }
+  @media (min-width: 640px) { .memory-nexus .nx-stage { height: 600px; } }
+
+  .memory-nexus svg {
+    width: 100%; height: 100%; display: block; cursor: grab;
+    /* pan-y keeps vertical page-scroll working when a touch starts on the graph */
+    touch-action: pan-y;
+  }
+  .memory-nexus svg.nx-panning { cursor: grabbing; }
+
+  .memory-nexus .edge {
+    stroke: var(--nx-edge); stroke-width: 1.1; fill: none;
+    transition: stroke .15s, opacity .15s;
+  }
+  .memory-nexus .edge.core { stroke: var(--nx-edge-core); stroke-width: 1.4; }
+  .memory-nexus .edge.auto {
+    stroke: var(--nx-accent); stroke-dasharray: 4 4; opacity: .8;
+  }
+  .memory-nexus .edge.dim { opacity: .05; }
+  .memory-nexus .edge.hot {
+    stroke: var(--nx-accent); stroke-width: 2.4; opacity: 1;
+    filter: drop-shadow(0 0 5px rgb(var(--lab-accent) / .6));
+  }
+  .memory-nexus .elabel {
+    fill: var(--nx-faint); font-size: 8.5px; letter-spacing: .3px;
+    text-transform: uppercase; pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .memory-nexus .elabel.hot { fill: var(--nx-accent); opacity: 1; }
+
+  .memory-nexus .node { cursor: pointer; }
+  .memory-nexus .node circle.core { stroke-width: 1.7; transition: fill-opacity .15s; }
+  .memory-nexus .node circle.ring { fill: none; transition: opacity .15s; }
+  .memory-nexus .node text.lbl {
+    fill: var(--nx-ink); font-weight: 600; paint-order: stroke;
+    stroke: var(--nx-bg); stroke-width: 3px; pointer-events: none;
+  }
+  .memory-nexus .node.dim { opacity: .12; }
+  .memory-nexus .node.adj circle.core { fill-opacity: .4; }
+  .memory-nexus .node.sel circle.core { stroke: var(--nx-ink); fill-opacity: .5; }
+  .memory-nexus .node.sel circle.ring { opacity: 1; }
+
+  /* ── legend ── */
+  .memory-nexus .nx-legend {
+    position: absolute; left: 12px; top: 12px;
+    display: flex; flex-wrap: wrap; gap: 5px 11px; max-width: 64%;
+    padding: 8px 11px; border: 1px solid var(--nx-line); border-radius: 10px;
+    background: var(--nx-panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .memory-nexus .nx-legend .lg {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; color: var(--nx-dim); cursor: pointer; user-select: none;
+  }
+  .memory-nexus .nx-legend .lg .sw { width: 8px; height: 8px; border-radius: 50%; }
+  .memory-nexus .nx-legend .lg.off { opacity: .32; filter: grayscale(1); }
+  .memory-nexus .nx-legend .lg-div {
+    width: 1px; align-self: stretch; background: var(--nx-line); margin: 0 1px;
+  }
+  .memory-nexus .nx-legend .lg-head {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--nx-faint); width: 100%;
+  }
+
+  /* ── pill + hint ── */
+  .memory-nexus .nx-pill {
+    position: absolute; left: 12px; bottom: 12px; display: flex; gap: 13px; align-items: center;
+    padding: 7px 13px; border: 1px solid var(--nx-line); border-radius: 999px;
+    background: var(--nx-panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    font-size: 11px; color: var(--nx-dim);
+  }
+  .memory-nexus .nx-pill b { color: var(--nx-ink); }
+  .memory-nexus .nx-auto-key { color: var(--nx-accent); font-weight: 700; }
+  .memory-nexus .nx-hint {
+    position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+    padding: 6px 13px; border: 1px solid var(--nx-line); border-radius: 999px;
+    background: var(--nx-panel); font-size: 11px; color: var(--nx-faint);
+    pointer-events: none; transition: opacity .4s; max-width: calc(100% - 24px); text-align: center;
+  }
+
+  /* ── tooltip ── */
+  .memory-nexus .nx-tip {
+    position: absolute; pointer-events: none; z-index: 6; max-width: 240px;
+    padding: 7px 10px; border: 1px solid var(--nx-line); border-radius: 8px;
+    background: var(--nx-panel); color: var(--nx-ink); font-size: 11px;
+    opacity: 0; transition: opacity .12s; box-shadow: 0 8px 24px rgb(0 0 0 / .35);
+  }
+  .memory-nexus .nx-tip .tt { font-weight: 700; margin-bottom: 2px; }
+  .memory-nexus .nx-tip .tm { color: var(--nx-faint); font-size: 10px; }
+
+  /* ── detail panel ── */
+  .memory-nexus .nx-panel {
+    position: absolute; top: 12px; right: 12px; bottom: 12px; width: 320px; max-width: calc(100% - 24px);
+    padding: 16px; border: 1px solid var(--nx-line); border-radius: 13px;
+    background: var(--nx-panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 20px 50px rgb(0 0 0 / .45); overflow: auto;
+    transform: translateX(360px); opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s;
+  }
+  .memory-nexus .nx-panel.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .memory-nexus .nx-pclose {
+    position: absolute; top: 11px; right: 11px; width: 24px; height: 24px;
+    border: 1px solid var(--nx-line); border-radius: 7px; background: var(--nx-panel-2);
+    color: var(--nx-dim); cursor: pointer; font-size: 14px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .memory-nexus .nx-pclose:hover { color: var(--nx-ink); }
+  .memory-nexus .dt-type {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: .6px; font-weight: 700;
+    padding: 4px 8px; border-radius: 6px; border: 1px solid var(--nx-line); background: var(--nx-panel-2);
+  }
+  .memory-nexus .dt-type .sw { width: 8px; height: 8px; border-radius: 50%; }
+  .memory-nexus .dt-chip {
+    font-size: 9.5px; padding: 3px 7px; border-radius: 6px; margin-left: 6px;
+    border: 1px solid var(--nx-line); color: var(--nx-faint); background: var(--nx-panel-2);
+  }
+  .memory-nexus .dt-chip.decay { color: var(--nx-accent); border-color: rgb(var(--lab-accent) / .4); }
+  .memory-nexus h3.dt-title { font-size: 14.5px; margin: 12px 0 2px; line-height: 1.35; color: var(--nx-ink); }
+  .memory-nexus .dt-sub { color: var(--nx-faint); font-size: 11.5px; }
+  .memory-nexus .dt-content {
+    color: var(--nx-ink); font-size: 13px; margin: 10px 0 14px; padding: 11px;
+    border: 1px solid var(--nx-line); border-left: 3px solid var(--nx-accent);
+    border-radius: 8px; background: var(--nx-panel-2);
+  }
+  .memory-nexus .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .memory-nexus .metric { padding: 8px 10px; border: 1px solid var(--nx-line); border-radius: 8px; background: var(--nx-panel-2); }
+  .memory-nexus .metric .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--nx-faint); }
+  .memory-nexus .metric .v { font-size: 17px; font-weight: 700; margin-top: 2px; color: var(--nx-ink); }
+  .memory-nexus .bar { height: 5px; border-radius: 3px; background: rgb(var(--lab-line) / .3); margin-top: 6px; overflow: hidden; }
+  .memory-nexus .bar > i { display: block; height: 100%; border-radius: 3px; }
+  .memory-nexus .sec { font-size: 9.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--nx-faint); margin: 14px 0 7px; }
+  .memory-nexus .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .memory-nexus .tag {
+    font-size: 10.5px; padding: 3px 7px; border-radius: 6px;
+    border: 1px solid var(--nx-line); color: var(--nx-dim); background: var(--nx-panel-2);
+  }
+  .memory-nexus .rel {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 6px 9px;
+    border: 1px solid var(--nx-line); border-radius: 8px; cursor: pointer; transition: .12s;
+  }
+  .memory-nexus .rel:hover { border-color: var(--nx-accent); transform: translateX(2px); }
+  .memory-nexus .rel .rt { font-size: 8.5px; font-weight: 700; letter-spacing: .4px; min-width: 86px; color: var(--nx-faint); }
+  .memory-nexus .rel .rt.auto { color: var(--nx-accent); }
+  .memory-nexus .rel .rn { font-size: 11.5px; color: var(--nx-ink); flex: 1; }
+
+  /* ── mobile: panel docks to the bottom ── */
+  @media (max-width: 700px) {
+    .memory-nexus .nx-panel {
+      top: auto; left: 10px; right: 10px; bottom: 10px; width: auto; max-height: 58%;
+      transform: translateY(115%);
+    }
+    .memory-nexus .nx-panel.open { transform: translateY(0); }
+    .memory-nexus .nx-pill, .memory-nexus .nx-hint { display: none; }
+    .memory-nexus .nx-legend { max-width: calc(100% - 20px); }
+  }
+</style>
+
+<script>
+  type Kind =
+    | 'decision' | 'pattern' | 'preference' | 'style' | 'habit' | 'insight' | 'context'
+    | 'person' | 'project' | 'tool' | 'concept';
+
+  interface NodeDef {
+    id: string; label: string; kind: Kind; sub: string;
+    importance: number; confidence: number; content: string;
+    tags?: string[]; decay?: boolean;
+  }
+  interface EdgeDef { s: string; t: string; type: string; strength: number; }
+  interface SimNode extends NodeDef {
+    x: number; y: number; vx: number; vy: number; fixed?: boolean; visible?: boolean;
+    _ox?: number; _oy?: number;
+  }
+
+  const KIND_COLOR: Record<Kind, string> = {
+    decision: 'var(--k-decision)', pattern: 'var(--k-pattern)', preference: 'var(--k-preference)',
+    style: 'var(--k-style)', habit: 'var(--k-habit)', insight: 'var(--k-insight)', context: 'var(--k-context)',
+    person: 'var(--k-person)', project: 'var(--k-project)', tool: 'var(--k-tool)', concept: 'var(--k-concept)',
+  };
+  const KIND_LABEL: Record<Kind, string> = {
+    decision: 'Decision', pattern: 'Pattern', preference: 'Preference', style: 'Style',
+    habit: 'Habit', insight: 'Insight', context: 'Context',
+    person: 'Person', project: 'Project', tool: 'Tool', concept: 'Concept',
+  };
+  const MEMORY_KINDS: Kind[] = ['decision', 'pattern', 'preference', 'style', 'habit', 'insight', 'context'];
+  const ENTITY_KINDS: Kind[] = ['person', 'project', 'tool', 'concept'];
+  // The 3 relationship types AutoMem creates on its own while consolidating.
+  const AUTO_TYPES = new Set(['SIMILAR_TO', 'PRECEDED_BY', 'DISCOVERED']);
+
+  function n(o: Partial<NodeDef> & { id: string; label: string; kind: Kind; sub: string; content: string }): NodeDef {
+    return { importance: 0.4, confidence: 0.85, tags: [], ...o };
+  }
+  function e(s: string, t: string, type: string, strength = 0.6): EdgeDef { return { s, t, type, strength }; }
+
+  // ── Sample data: an AI agent's memory of building "Helix" (fictional) ──
+  const NODES: NodeDef[] = [
+    // entities
+    n({ id: 'helix', label: 'Helix', kind: 'project', sub: 'the project', importance: 0.95, confidence: 0.95,
+        content: 'Fictional analytics SaaS the agent is building. The hub every memory hangs off of.', tags: ['helix', 'project'] }),
+    n({ id: 'riley', label: 'Riley Okafor', kind: 'person', sub: 'lead engineer', importance: 0.7, confidence: 0.9,
+        content: 'Teammate the agent pairs with. Owns the data layer and review process. (Fictional.)', tags: ['team'] }),
+    n({ id: 'postgres', label: 'PostgreSQL', kind: 'tool', sub: 'primary datastore', importance: 0.62, confidence: 0.95,
+        content: 'Relational store chosen for transactional integrity.', tags: ['db'] }),
+    n({ id: 'mongo', label: 'MongoDB', kind: 'tool', sub: 'evaluated, not chosen', importance: 0.32, confidence: 0.6,
+        content: 'Considered for flexible schema; lost to Postgres on ACID guarantees.', tags: ['db'] }),
+    n({ id: 'redis', label: 'Redis', kind: 'tool', sub: 'cache + queue', importance: 0.5, confidence: 0.9,
+        content: 'Backs the job queue and the dashboard cache.', tags: ['infra'] }),
+    n({ id: 'stripe', label: 'Stripe', kind: 'tool', sub: 'billing', importance: 0.45, confidence: 0.9,
+        content: 'Handles subscriptions and invoicing.', tags: ['billing'] }),
+    n({ id: 'pytest', label: 'pytest', kind: 'tool', sub: 'test runner', importance: 0.42, confidence: 0.9,
+        content: 'The project’s test harness.', tags: ['testing'] }),
+    n({ id: 'acid', label: 'ACID', kind: 'concept', sub: 'transactional guarantees', importance: 0.4, confidence: 0.9,
+        content: 'Atomicity, consistency, isolation, durability — the reason Postgres won.', tags: ['db'] }),
+    n({ id: 'asyncc', label: 'async/await', kind: 'concept', sub: 'concurrency style', importance: 0.4, confidence: 0.9,
+        content: 'Preferred concurrency model across the codebase.', tags: ['python'] }),
+    n({ id: 'callbacks', label: 'callbacks', kind: 'concept', sub: 'older concurrency style', importance: 0.28, confidence: 0.7,
+        content: 'Callback-based async, deprecated in favor of async/await.', tags: ['python'] }),
+    n({ id: 'ratelimit', label: 'rate limiting', kind: 'concept', sub: 'reliability', importance: 0.4, confidence: 0.85,
+        content: 'Protecting endpoints from overload — the fix for the /export incident.', tags: ['reliability'] }),
+    n({ id: 'embeddings', label: 'embeddings', kind: 'concept', sub: 'vector search', importance: 0.42, confidence: 0.9,
+        content: 'Vector representations powering semantic search.', tags: ['ai'] }),
+
+    // decisions
+    n({ id: 'd_db', label: 'Postgres over Mongo', kind: 'decision', sub: 'datastore choice', importance: 0.82, confidence: 0.95,
+        content: 'Chose PostgreSQL over MongoDB for ACID compliance.', tags: ['db', 'architecture'] }),
+    n({ id: 'd_queue', label: 'Redis + RQ queue', kind: 'decision', sub: 'background jobs', importance: 0.6, confidence: 0.9,
+        content: 'Adopted Redis + RQ for the background job queue over a heavier broker.', tags: ['infra'] }),
+    n({ id: 'd_billing', label: 'Buy billing, not build', kind: 'decision', sub: 'billing', importance: 0.55, confidence: 0.9,
+        content: 'Adopted Stripe for billing instead of building invoicing in-house.', tags: ['billing'] }),
+
+    // patterns
+    n({ id: 'p_tests', label: 'Test before deploy', kind: 'pattern', sub: 'recurring practice', importance: 0.6, confidence: 0.9,
+        content: 'Usually write integration tests before deploying.', tags: ['testing', 'process'] }),
+    n({ id: 'p_review', label: 'Review every migration', kind: 'pattern', sub: 'recurring practice', importance: 0.52, confidence: 0.88,
+        content: 'Pair-review every database migration before it merges.', tags: ['db', 'process'] }),
+
+    // preferences
+    n({ id: 'pref_async', label: 'async/await > callbacks', kind: 'preference', sub: 'code style', importance: 0.55, confidence: 0.9,
+        content: 'Prefer async/await over callbacks for clarity.', tags: ['python'] }),
+    n({ id: 'pref_typed', label: 'typed clients > raw SQL', kind: 'preference', sub: 'data access', importance: 0.48, confidence: 0.85,
+        content: 'Prefer typed query clients over raw SQL strings.', tags: ['db'] }),
+
+    // styles
+    n({ id: 's_commit', label: 'Imperative commits', kind: 'style', sub: 'git hygiene', importance: 0.46, confidence: 0.9,
+        content: 'Write commit messages in the imperative mood.', tags: ['git'] }),
+    n({ id: 's_errors', label: 'Plain-language errors', kind: 'style', sub: 'UX writing', importance: 0.44, confidence: 0.85,
+        content: 'Surface errors with actionable, plain-language copy.', tags: ['ux'] }),
+
+    // habits
+    n({ id: 'h_pytest', label: 'Morning pytest', kind: 'habit', sub: 'daily routine', importance: 0.5, confidence: 0.9,
+        content: 'Run pytest every morning before starting work.', tags: ['testing', 'routine'] }),
+    n({ id: 'h_friday', label: 'Friday deploys', kind: 'habit', sub: 'retired routine', importance: 0.3, confidence: 0.3, decay: true,
+        content: 'Used to ship on Fridays — superseded after a bad weekend rollback. Low confidence, decaying.', tags: ['routine'] }),
+
+    // insights
+    n({ id: 'i_batch', label: 'Batch embeddings', kind: 'insight', sub: 'cost win', importance: 0.68, confidence: 0.9,
+        content: 'Realized embedding batching reduces costs by ~40%.', tags: ['ai', 'cost'] }),
+    n({ id: 'i_export', label: '/export 5xx root cause', kind: 'insight', sub: 'incident finding', importance: 0.6, confidence: 0.85,
+        content: 'Most 5xx spikes traced to a missing rate limit on /export.', tags: ['reliability', 'incident'] }),
+    n({ id: 'i_cache', label: 'Cache the dashboard query', kind: 'insight', sub: 'perf win', importance: 0.58, confidence: 0.88,
+        content: 'Caching the dashboard query dropped p95 latency ~6x.', tags: ['perf'] }),
+
+    // context
+    n({ id: 'c_migration', label: 'Q3 migration sprint', kind: 'context', sub: 'situational', importance: 0.45, confidence: 0.85,
+        content: 'During the Q3 database migration sprint.', tags: ['timeline'] }),
+    n({ id: 'c_launch', label: 'Beta launch week', kind: 'context', sub: 'situational', importance: 0.45, confidence: 0.85,
+        content: 'Around the private beta launch week.', tags: ['timeline'] }),
+  ];
+
+  const EDGES: EdgeDef[] = [
+    // PART_OF — hierarchy under the project
+    e('d_db', 'helix', 'PART_OF', 0.9), e('d_queue', 'helix', 'PART_OF', 0.85),
+    e('d_billing', 'helix', 'PART_OF', 0.8), e('i_batch', 'helix', 'PART_OF', 0.75),
+    // RELATES_TO — general links to entities
+    e('d_db', 'postgres', 'RELATES_TO', 0.85), e('d_db', 'acid', 'RELATES_TO', 0.8),
+    e('d_queue', 'redis', 'RELATES_TO', 0.8), e('d_billing', 'stripe', 'RELATES_TO', 0.8),
+    e('i_cache', 'redis', 'RELATES_TO', 0.7), e('i_batch', 'embeddings', 'RELATES_TO', 0.75),
+    e('riley', 'helix', 'RELATES_TO', 0.8), e('p_review', 'riley', 'RELATES_TO', 0.7),
+    e('h_pytest', 'pytest', 'RELATES_TO', 0.75), e('i_export', 'ratelimit', 'RELATES_TO', 0.75),
+    // PREFERS_OVER
+    e('pref_async', 'callbacks', 'PREFERS_OVER', 0.85), e('pref_typed', 'd_db', 'PREFERS_OVER', 0.6),
+    // EXEMPLIFIES — concrete memory exemplifies a pattern
+    e('h_pytest', 'p_tests', 'EXEMPLIFIES', 0.8), e('s_commit', 'p_review', 'EXEMPLIFIES', 0.6),
+    // REINFORCES — supporting evidence
+    e('i_export', 'p_tests', 'REINFORCES', 0.8), e('i_cache', 'p_tests', 'REINFORCES', 0.6),
+    // LEADS_TO — causal
+    e('c_migration', 'i_batch', 'LEADS_TO', 0.75), e('i_export', 'd_queue', 'LEADS_TO', 0.6),
+    // CONTRADICTS + INVALIDATED_BY + EVOLVED_INTO — the supersede chain
+    e('mongo', 'd_db', 'CONTRADICTS', 0.7), e('h_friday', 'p_tests', 'INVALIDATED_BY', 0.8),
+    e('callbacks', 'asyncc', 'EVOLVED_INTO', 0.8),
+    // DERIVED_FROM — source tracking
+    e('i_export', 'c_launch', 'DERIVED_FROM', 0.75), e('pref_async', 'asyncc', 'DERIVED_FROM', 0.7),
+    // OCCURRED_BEFORE — temporal (authored)
+    e('c_migration', 'c_launch', 'OCCURRED_BEFORE', 0.8),
+
+    // ── auto-created during consolidation ──
+    // SIMILAR_TO (enrichment)
+    e('i_cache', 'i_batch', 'SIMILAR_TO', 0.7), e('pref_async', 'pref_typed', 'SIMILAR_TO', 0.6),
+    e('s_commit', 's_errors', 'SIMILAR_TO', 0.55),
+    // PRECEDED_BY (enrichment)
+    e('c_launch', 'c_migration', 'PRECEDED_BY', 0.7), e('d_billing', 'd_db', 'PRECEDED_BY', 0.6),
+    // DISCOVERED (consolidation heuristic)
+    e('i_export', 'i_cache', 'DISCOVERED', 0.65), e('i_batch', 'd_db', 'DISCOVERED', 0.55),
+    e('p_review', 'p_tests', 'DISCOVERED', 0.6),
+  ];
+
+  function init() {
+    const root = document.querySelector<HTMLElement>('[data-nexus]');
+    if (!root) return;
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const svg = root.querySelector<SVGSVGElement>('[data-svg]')!;
+    const stage = root.querySelector<HTMLElement>('[data-stage]')!;
+    const tip = root.querySelector<HTMLElement>('[data-tip]')!;
+    const panel = root.querySelector<HTMLElement>('[data-panel]')!;
+    const detail = root.querySelector<HTMLElement>('[data-detail]')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const nodes = NODES.map((d) => ({ ...d, x: 0, y: 0, vx: 0, vy: 0 })) as SimNode[];
+    const byId: Record<string, SimNode> = Object.fromEntries(nodes.map((nd) => [nd.id, nd]));
+    let W = stage.clientWidth || 900;
+    let H = stage.clientHeight || 560;
+    const view = { x: 0, y: 0, k: 1 };
+    // zoom bounds shared by fit-to-view + manual zoom; floor is low enough to frame
+    // the full graph on a small/mobile stage rather than clamp-clip it
+    const K_MIN = 0.2, K_MAX = 2.4;
+
+    const el = <T extends Element>(t: string, a: Record<string, string | number> = {}): T => {
+      const node = document.createElementNS(SVGNS, t) as unknown as T;
+      for (const k in a) (node as Element).setAttribute(k, String(a[k]));
+      return node;
+    };
+    const rad = (nd: SimNode) => 7 + nd.importance * 20;
+    const col = (nd: SimNode) => KIND_COLOR[nd.kind];
+
+    // arrow markers
+    const defs = el('defs');
+    ([['nx-arrow', 'var(--nx-edge-core)'], ['nx-arrow-hot', 'var(--nx-accent)'], ['nx-arrow-auto', 'var(--nx-accent)']] as const)
+      .forEach(([id, c]) => {
+        const m = el('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' });
+        m.appendChild(el('path', { d: 'M0,0 L10,5 L0,10 z', fill: c }));
+        defs.appendChild(m);
+      });
+    svg.appendChild(defs);
+    const gRoot = el<SVGGElement>('g');
+    const gEdges = el<SVGGElement>('g');
+    const gNodes = el<SVGGElement>('g');
+    gRoot.appendChild(gEdges); gRoot.appendChild(gNodes); svg.appendChild(gRoot);
+
+    // seed positions on a ring, project at center
+    nodes.forEach((nd, i) => {
+      const a = (i / nodes.length) * Math.PI * 2;
+      const R = Math.min(W, H) * 0.4;
+      nd.x = W / 2 + Math.cos(a) * R + (Math.random() - 0.5) * 70;
+      nd.y = H / 2 + Math.sin(a) * R + (Math.random() - 0.5) * 70;
+    });
+    byId.helix.x = W / 2; byId.helix.y = H / 2;
+
+    const edgeEls = EDGES.map((ed) => {
+      const auto = AUTO_TYPES.has(ed.type);
+      const g = el<SVGGElement>('g');
+      const line = el<SVGPathElement>('path', { class: 'edge' + (auto ? ' auto' : ed.strength >= 0.8 ? ' core' : '') });
+      line.setAttribute('marker-end', auto ? 'url(#nx-arrow-auto)' : 'url(#nx-arrow)');
+      const label = el<SVGTextElement>('text', { class: 'elabel' });
+      label.textContent = ed.type.replace(/_/g, ' ');
+      g.appendChild(line); g.appendChild(label); gEdges.appendChild(g);
+      return { ed, g, line, label, auto };
+    });
+
+    const nodeEls = nodes.map((nd) => {
+      const g = el<SVGGElement>('g', { class: 'node' });
+      g.dataset.id = nd.id;
+      const c = col(nd); const r = rad(nd);
+      const ring = el<SVGCircleElement>('circle', { class: 'ring', r: r + 4, stroke: c });
+      ring.setAttribute('stroke-width', (1 + nd.confidence * 2).toFixed(2));
+      ring.setAttribute('opacity', (0.2 + nd.confidence * 0.55).toFixed(2));
+      if (nd.confidence < 0.5) ring.setAttribute('stroke-dasharray', '3 4');
+      const core = el<SVGCircleElement>('circle', { class: 'core', r, fill: c, 'fill-opacity': 0.18, stroke: c });
+      const lbl = el<SVGTextElement>('text', { class: 'lbl', 'text-anchor': 'middle', dy: -(r + 6) });
+      lbl.textContent = nd.label;
+      lbl.setAttribute('font-size', (8.5 + nd.importance * 4).toFixed(1));
+      g.appendChild(ring); g.appendChild(core); g.appendChild(lbl);
+      gNodes.appendChild(g);
+      bindNode(g, nd);
+      return { nd, g };
+    });
+
+    function bindNode(g: SVGGElement, nd: SimNode) {
+      let down: { x: number; y: number } | null = null;
+      let moved = false;
+      g.addEventListener('pointerdown', (ev) => {
+        ev.stopPropagation();
+        down = { x: ev.clientX, y: ev.clientY }; moved = false; nd.fixed = true;
+        g.setPointerCapture(ev.pointerId);
+        const p = toWorld(ev); nd._ox = nd.x - p.x; nd._oy = nd.y - p.y;
+        reheat(0.5);
+      });
+      g.addEventListener('pointermove', (ev) => {
+        if (down) {
+          if (Math.abs(ev.clientX - down.x) + Math.abs(ev.clientY - down.y) > 4) moved = true;
+          if (moved) { const p = toWorld(ev); nd.x = p.x + (nd._ox ?? 0); nd.y = p.y + (nd._oy ?? 0); nd.vx = 0; nd.vy = 0; }
+        }
+        showTip(ev, nd);
+      });
+      g.addEventListener('pointerup', () => { nd.fixed = false; if (down && !moved) select(nd.id); down = null; });
+      g.addEventListener('pointerenter', (ev) => showTip(ev, nd));
+      g.addEventListener('pointerleave', () => (tip.style.opacity = '0'));
+    }
+
+    function showTip(ev: PointerEvent, nd: SimNode) {
+      const r = svg.getBoundingClientRect();
+      tip.innerHTML = `<div class="tt">${nd.label}</div><div class="tm">${KIND_LABEL[nd.kind]} · ${nd.sub} · imp ${nd.importance.toFixed(2)}</div>`;
+      tip.style.left = ev.clientX - r.left + 14 + 'px';
+      tip.style.top = ev.clientY - r.top + 14 + 'px';
+      tip.style.opacity = '1';
+    }
+    function toWorld(ev: PointerEvent) {
+      const r = svg.getBoundingClientRect();
+      return { x: (ev.clientX - r.left - view.x) / view.k, y: (ev.clientY - r.top - view.y) / view.k };
+    }
+
+    // ── force layout (settles to rest, then stops) ──
+    let alpha = 1;
+    let running = false;
+    let started = false;
+    let pendingFit = false;
+    function step() {
+      const act = nodes.filter((nd) => nd.visible !== false);
+      for (let i = 0; i < act.length; i++)
+        for (let j = i + 1; j < act.length; j++) {
+          const a = act[i]; const b = act[j];
+          const dx = b.x - a.x; const dy = b.y - a.y; const d2 = dx * dx + dy * dy || 1; const d = Math.sqrt(d2);
+          const rep = 10000 / d2; const fx = (dx / d) * rep; const fy = (dy / d) * rep;
+          a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
+        }
+      EDGES.forEach((ed) => {
+        const a = byId[ed.s]; const b = byId[ed.t];
+        if (a.visible === false || b.visible === false) return;
+        const dx = b.x - a.x; const dy = b.y - a.y; const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const target = 130 - ed.strength * 40; const k = (d - target) * 0.018;
+        const fx = (dx / d) * k; const fy = (dy / d) * k;
+        a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+      });
+      act.forEach((nd) => {
+        // aspect-aware center gravity: pull harder along the stage's long axis so the
+        // equilibrium blob matches the stage shape (wide-short → flatter blob)
+        const g = 0.0012;
+        nd.vx += (W / 2 - nd.x) * g; nd.vy += (H / 2 - nd.y) * g * (W / H);
+        if (!nd.fixed) { nd.vx *= 0.85; nd.vy *= 0.85; nd.x += nd.vx * alpha * 1.3; nd.y += nd.vy * alpha * 1.3; }
+      });
+      alpha *= 0.985;
+    }
+    function tick() {
+      if (!running) return;
+      step();
+      // While an auto-settle is in flight (initial / reset / resize), re-frame every
+      // frame so the graph stays fitted as the blob expands — no spill-then-snap.
+      // Node drags and filter ticks leave pendingFit false, so they never yank the view.
+      if (pendingFit) fitToView(); else draw();
+      if (alpha < 0.02) { running = false; pendingFit = false; return; } // settle and stop — no perpetual rAF
+      requestAnimationFrame(tick);
+    }
+    function reheat(to = 0.4) {
+      alpha = Math.max(alpha, to);
+      if (!running && !reduceMotion) { running = true; requestAnimationFrame(tick); }
+    }
+    function settleStatic() {
+      // reduced motion / first paint while off-screen: solve without animating
+      alpha = 1;
+      for (let i = 0; i < 320; i++) { step(); }
+      fitToView();
+    }
+
+    function draw() {
+      gRoot.setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`);
+      edgeEls.forEach(({ ed, line, label }) => {
+        const a = byId[ed.s]; const b = byId[ed.t];
+        const ra = rad(a); const rb = rad(b) + 6;
+        const dx = b.x - a.x; const dy = b.y - a.y; const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const ax = a.x + (dx / d) * ra; const ay = a.y + (dy / d) * ra;
+        const bx = b.x - (dx / d) * rb; const by = b.y - (dy / d) * rb;
+        line.setAttribute('d', `M${ax},${ay} L${bx},${by}`);
+        label.setAttribute('x', String((ax + bx) / 2));
+        label.setAttribute('y', String((ay + by) / 2 - 3));
+      });
+      nodeEls.forEach(({ nd, g }) => g.setAttribute('transform', `translate(${nd.x},${nd.y})`));
+    }
+
+    // ── fit-to-viewport: frame all visible nodes inside the stage, below the legend ──
+    function fitToView() {
+      const act = nodes.filter((nd) => nd.visible !== false);
+      if (!act.length) return;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      act.forEach((nd) => {
+        const r = rad(nd) + 6;                       // node + outer ring
+        const labelHead = 14 + nd.importance * 6;    // label sits above the node (dy ≈ -(r+6))
+        minX = Math.min(minX, nd.x - r);
+        maxX = Math.max(maxX, nd.x + r);
+        minY = Math.min(minY, nd.y - r - labelHead);
+        maxY = Math.max(maxY, nd.y + r);
+      });
+      const bw = Math.max(1, maxX - minX);
+      const bh = Math.max(1, maxY - minY);
+      // reserve a top band for the legend (measured live so it adapts when it wraps)
+      const padX = 24, padBottom = 24, gap = 14;
+      const padTop = Math.max(24, legend.offsetTop + legend.offsetHeight + gap);
+      const availW = Math.max(1, W - padX * 2);
+      const availH = Math.max(1, H - padTop - padBottom);
+      const k = Math.min(K_MAX, Math.max(K_MIN, Math.min(availW / bw, availH / bh)));
+      view.k = k;
+      view.x = padX + (availW - bw * k) / 2 - minX * k;
+      view.y = padTop + (availH - bh * k) / 2 - minY * k;
+      draw();
+    }
+
+    // ── pan (drag background) — no wheel hijack of page scroll ──
+    let panning = false; let pstart = { x: 0, y: 0 };
+    svg.addEventListener('pointerdown', (ev) => {
+      if ((ev.target as Element).closest('.node')) return;
+      panning = true; svg.classList.add('nx-panning'); pstart = { x: ev.clientX - view.x, y: ev.clientY - view.y };
+    });
+    window.addEventListener('pointermove', (ev) => { if (panning) { view.x = ev.clientX - pstart.x; view.y = ev.clientY - pstart.y; draw(); } });
+    window.addEventListener('pointerup', () => { panning = false; svg.classList.remove('nx-panning'); });
+    svg.addEventListener('click', (ev) => { if (!(ev.target as Element).closest('.node')) clearSel(); });
+
+    function zoomBy(f: number) {
+      const nk = Math.min(K_MAX, Math.max(K_MIN, view.k * f));
+      const cx = W / 2; const cy = H / 2;
+      view.x = cx - (cx - view.x) * (nk / view.k);
+      view.y = cy - (cy - view.y) * (nk / view.k);
+      view.k = nk; draw();
+    }
+    root.querySelector('[data-zoom="in"]')!.addEventListener('click', () => zoomBy(1.2));
+    root.querySelector('[data-zoom="out"]')!.addEventListener('click', () => zoomBy(0.8));
+    root.querySelector('[data-reset]')!.addEventListener('click', () => {
+      fitToView(); // reframe immediately so it never flashes the clipped view
+      if (!reduceMotion) { pendingFit = true; reheat(0.5); } // re-fit after the re-settle
+    });
+
+    // ── selection / neighbor tracing ──
+    let selected: string | null = null;
+    function neighbors(id: string) {
+      const set = new Set<string>([id]); const es = new Set<number>();
+      EDGES.forEach((ed, i) => { if (ed.s === id || ed.t === id) { set.add(ed.s); set.add(ed.t); es.add(i); } });
+      return { set, es };
+    }
+    function select(id: string) {
+      selected = id; const { set, es } = neighbors(id);
+      nodeEls.forEach(({ nd, g }) => {
+        g.classList.toggle('dim', !set.has(nd.id));
+        g.classList.toggle('adj', set.has(nd.id) && nd.id !== id);
+        g.classList.toggle('sel', nd.id === id);
+      });
+      edgeEls.forEach(({ line, label, auto }, i) => {
+        const hot = es.has(i);
+        line.classList.toggle('hot', hot); line.classList.toggle('dim', !hot);
+        label.classList.toggle('hot', hot);
+        line.setAttribute('marker-end', hot ? 'url(#nx-arrow-hot)' : auto ? 'url(#nx-arrow-auto)' : 'url(#nx-arrow)');
+      });
+      renderDetail(byId[id]); panel.classList.add('open'); hint.style.opacity = '0';
+    }
+    function clearSel() {
+      selected = null;
+      nodeEls.forEach(({ g }) => g.classList.remove('dim', 'adj', 'sel'));
+      edgeEls.forEach(({ line, label, auto }) => {
+        line.classList.remove('hot', 'dim'); label.classList.remove('hot');
+        line.setAttribute('marker-end', auto ? 'url(#nx-arrow-auto)' : 'url(#nx-arrow)');
+      });
+      panel.classList.remove('open');
+    }
+    root.querySelector('[data-pclose]')!.addEventListener('click', clearSel);
+
+    function renderDetail(nd: SimNode) {
+      const c = col(nd);
+      const isEntity = ENTITY_KINDS.includes(nd.kind);
+      const rels = EDGES.filter((ed) => ed.s === nd.id || ed.t === nd.id).map((ed) => {
+        const out = ed.s === nd.id; const other = byId[out ? ed.t : ed.s]; const ar = out ? '→' : '←';
+        const auto = AUTO_TYPES.has(ed.type);
+        return `<div class="rel" data-go="${other.id}" role="button" tabindex="0"><span class="rt ${auto ? 'auto' : ''}">${ed.type.replace(/_/g, ' ')}</span><span class="rn">${ar} ${other.label}</span></div>`;
+      }).join('');
+      const tags = (nd.tags || []).map((t) => `<span class="tag">${t}</span>`).join('');
+      const kindChip = isEntity
+        ? '<span class="dt-chip">extracted entity</span>'
+        : '<span class="dt-chip">stored memory</span>';
+      const decayChip = nd.decay ? '<span class="dt-chip decay">decay candidate</span>' : '';
+      detail.innerHTML = `
+        <span class="dt-type"><span class="sw" style="background:${c}"></span>${KIND_LABEL[nd.kind]}</span>${kindChip}${decayChip}
+        <h3 class="dt-title">${nd.label}</h3><div class="dt-sub">${nd.sub}</div>
+        <div class="dt-content">${nd.content}</div>
+        <div class="metrics">
+          <div class="metric"><div class="k">Importance</div><div class="v">${nd.importance.toFixed(2)}</div><div class="bar"><i style="width:${nd.importance * 100}%;background:${c}"></i></div></div>
+          <div class="metric"><div class="k">Confidence</div><div class="v">${nd.confidence.toFixed(2)}</div><div class="bar"><i style="width:${nd.confidence * 100}%;background:${nd.confidence < 0.5 ? 'rgb(var(--lab-error))' : c}"></i></div></div>
+        </div>
+        ${tags ? `<div class="sec">Tags</div><div class="tags">${tags}</div>` : ''}
+        <div class="sec">Relations (${EDGES.filter((ed) => ed.s === nd.id || ed.t === nd.id).length})</div>${rels}`;
+      detail.querySelectorAll<HTMLElement>('.rel[data-go]').forEach((r) => {
+        const go = () => select(r.dataset.go!);
+        r.onclick = go;
+        r.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+      });
+    }
+
+    // ── legend (kind filter) ──
+    const legend = root.querySelector<HTMLElement>('[data-legend]')!;
+    const kindState: Record<string, boolean> = {};
+    [...MEMORY_KINDS, ...ENTITY_KINDS].forEach((k) => (kindState[k] = true));
+    function addLegendGroup(head: string, kinds: Kind[]) {
+      const h = document.createElement('span'); h.className = 'lg-head'; h.textContent = head; legend.appendChild(h);
+      kinds.forEach((k) => {
+        const s = document.createElement('span'); s.className = 'lg';
+        s.setAttribute('role', 'button'); s.tabIndex = 0; s.setAttribute('aria-pressed', 'true');
+        s.innerHTML = `<span class="sw" style="background:${KIND_COLOR[k]}"></span>${KIND_LABEL[k]}`;
+        const toggle = () => { kindState[k] = !kindState[k]; s.classList.toggle('off', !kindState[k]); s.setAttribute('aria-pressed', String(kindState[k])); applyFilters(); };
+        s.addEventListener('click', toggle);
+        s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+        legend.appendChild(s);
+      });
+    }
+    addLegendGroup('Memories', MEMORY_KINDS);
+    addLegendGroup('Entities', ENTITY_KINDS);
+
+    // ── filters ──
+    const impRange = root.querySelector<HTMLInputElement>('[data-imp]')!;
+    const impVal = root.querySelector<HTMLElement>('[data-impval]')!;
+    const consolidation = root.querySelector<HTMLInputElement>('[data-consolidation]')!;
+    impRange.addEventListener('input', () => { impVal.textContent = (+impRange.value).toFixed(2); applyFilters(); });
+    consolidation.addEventListener('change', applyFilters);
+
+    function applyFilters() {
+      const minImp = +impRange.value; const showAuto = consolidation.checked;
+      nodes.forEach((nd, i) => {
+        const vis = kindState[nd.kind] && nd.importance >= minImp;
+        nd.visible = vis; nodeEls[i].g.style.display = vis ? '' : 'none';
+      });
+      edgeEls.forEach(({ ed, g, auto }) => {
+        const vis = byId[ed.s].visible !== false && byId[ed.t].visible !== false && (!auto || showAuto);
+        g.style.display = vis ? '' : 'none';
+      });
+      updateStats(); reheat(0.45);
+    }
+    function updateStats() {
+      const showAuto = consolidation.checked;
+      const vis = nodes.filter((nd) => nd.visible !== false);
+      const ve = EDGES.filter((ed) => byId[ed.s].visible !== false && byId[ed.t].visible !== false);
+      const memCount = vis.filter((nd) => MEMORY_KINDS.includes(nd.kind)).length;
+      const autoCount = ve.filter((ed) => AUTO_TYPES.has(ed.type) && showAuto).length;
+      root.querySelector('[data-n-nodes]')!.textContent = String(memCount);
+      root.querySelector('[data-n-edges]')!.textContent = String(showAuto ? ve.length : ve.filter((ed) => !AUTO_TYPES.has(ed.type)).length);
+      root.querySelector('[data-n-auto]')!.textContent = String(autoCount);
+    }
+
+    window.addEventListener('resize', () => {
+      W = stage.clientWidth || W; H = stage.clientHeight || H;
+      if (reduceMotion) { fitToView(); } else { pendingFit = true; reheat(0.3); }
+    });
+
+    // initial solve + visibility-gated animation
+    nodes.forEach((nd) => (nd.visible = true));
+    if (reduceMotion) {
+      settleStatic();
+    } else {
+      // settle quietly off-screen; animate the first time it scrolls into view
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+          if (en.isIntersecting && !started) { started = true; pendingFit = true; reheat(0.7); io.disconnect(); }
+        });
+      }, { threshold: 0.15 });
+      io.observe(stage);
+      // pre-solve a little so the first paint is already framed (no clipped ring flash)
+      for (let i = 0; i < 60; i++) step();
+      fitToView();
+    }
+    updateStats();
+    setTimeout(() => { if (!selected) hint.style.opacity = '0'; }, 7000);
+  }
+
+  init();
+</script>
