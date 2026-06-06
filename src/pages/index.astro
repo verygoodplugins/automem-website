@@ -5,12 +5,14 @@ import Navigation from '../components/Navigation.astro';
 import MemoryHero from '../components/MemoryHero.astro';
 import MemoryDrive from '../components/MemoryDrive.astro';
 import OrganizationSchema from '../components/schemas/OrganizationSchema.astro';
+import InstallCommand from '../components/InstallCommand.astro';
+import CopyButton from '../components/CopyButton.astro';
+import { INSTALL_COMMANDS } from '../lib/install-commands';
 
 const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
 const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
 const RAILWAY_DEPLOY_URL =
   'https://railway.com/deploy/automem-ai-memory-service?referralCode=VuFE6g&utm_medium=integration&utm_source=template&utm_campaign=generic';
-const INSTALL_COMMAND = 'curl -fsSL https://automem.ai/install.sh | sh';
 const SKILL_URL = 'https://automem.ai/skill.md';
 const homepageDescription =
   'AutoMem gives Claude, Cursor, Copilot, Codex, ChatGPT, and MCP-compatible AI tools persistent memory through MCP and Streamable HTTP.';
@@ -126,9 +128,7 @@ const extendedClients =
                 </div>
               </div>
               <div class="p-5 sm:p-7">
-                <a href="/install" class="block max-w-full break-all text-[13px] font-medium leading-6 text-lab-text no-underline [overflow-wrap:anywhere] sm:text-2xl sm:leading-normal">
-                  <span>curl -fsSL </span><span class="text-lab-accent-text">https://automem.ai/install.sh</span><span> | sh</span>
-                </a>
+                <InstallCommand size="hero" />
                 <div class="mt-5 rounded border border-lab-border bg-lab-bg/70 p-4">
                   {terminalChecks.map((check) => (
                     <div class="grid grid-cols-[1rem_minmax(0,1fr)_1.5rem] items-center gap-2 py-1 text-xs min-[380px]:text-sm sm:gap-3">
@@ -148,26 +148,18 @@ const extendedClients =
               <span class="block text-lab-muted">Point your agent at</span>
               <span class="mt-1 block break-all text-base font-bold text-lab-secondary">{SKILL_URL}</span>
             </a>
-            <button
-              type="button"
-              data-copy-skill-url={SKILL_URL}
+            <CopyButton
+              text={SKILL_URL}
+              label="Copy skill URL"
               class="flex items-center justify-center p-4 text-lab-muted transition-colors hover:text-lab-accent-text"
-              aria-label="Copy skill URL"
-            >
-              <svg class="copy-icon h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M7 7h8v8H7zM5 13H3V3h10v2" stroke="currentColor" stroke-width="1.5" />
-              </svg>
-              <svg class="copy-check hidden h-5 w-5 text-lab-success" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M4 10.5 8 14.5 16 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
+            />
           </div>
 
           <div class="mt-5 flex flex-col gap-4 sm:flex-row">
             <a href="/install" class="btn-lab-accent w-full sm:w-auto">
               <span>›</span>
               <span class="ml-2 sm:hidden">Install AutoMem</span>
-              <span class="ml-2 hidden sm:inline">{INSTALL_COMMAND}</span>
+              <span class="ml-2 hidden sm:inline">{INSTALL_COMMANDS.script}</span>
             </a>
             <a href="/install" class="btn-lab w-full sm:w-auto">
               <span>Open install guide</span>
@@ -434,30 +426,4 @@ SEARCH "install script errors WSL" LIMIT 20;</code></pre>
       border-color: rgb(var(--lab-accent) / 0.65);
     }
   </style>
-
-  <script>
-    const copyButton = document.querySelector<HTMLButtonElement>('[data-copy-skill-url]');
-    if (copyButton) {
-      const url = copyButton.dataset.copySkillUrl ?? '';
-      const icon = copyButton.querySelector('.copy-icon');
-      const check = copyButton.querySelector('.copy-check');
-      let resetTimer: ReturnType<typeof setTimeout> | undefined;
-      copyButton.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(url);
-          icon?.classList.add('hidden');
-          check?.classList.remove('hidden');
-          copyButton.setAttribute('aria-label', 'Copied skill URL');
-          clearTimeout(resetTimer);
-          resetTimer = setTimeout(() => {
-            check?.classList.add('hidden');
-            icon?.classList.remove('hidden');
-            copyButton.setAttribute('aria-label', 'Copy skill URL');
-          }, 2000);
-        } catch {
-          /* Clipboard API unavailable (insecure context / denied) — leave the URL visible to copy manually. */
-        }
-      });
-    }
-  </script>
 </Layout>

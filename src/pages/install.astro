@@ -3,8 +3,9 @@ export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
+import InstallCommand from '../components/InstallCommand.astro';
+import CopyButton from '../components/CopyButton.astro';
 
-const installCommand = 'curl -fsSL https://automem.ai/install.sh | sh';
 const clients = ['codex', 'claude-code', 'cursor', 'openclaw', 'hermes'];
 const paths = [
   {
@@ -66,7 +67,7 @@ const paths = [
             <span class="text-xs text-lab-muted">launcher</span>
           </div>
           <div class="p-5">
-            <pre class="bg-lab-bg border border-lab-border rounded p-4 overflow-x-auto text-sm text-lab-accent-text"><code>{installCommand}</code></pre>
+            <InstallCommand size="page" />
             <div class="grid sm:grid-cols-3 gap-3 mt-5 text-xs">
               <div class="border border-lab-border rounded p-3">
                 <div class="font-bold text-lab-text">Detects</div>
@@ -97,7 +98,14 @@ const paths = [
               </div>
               <h2 class="text-2xl font-bold mb-3">{pathOption.title}</h2>
               <p class="text-sm text-lab-muted leading-relaxed min-h-[88px]">{pathOption.detail}</p>
-              <pre class="mt-5 bg-lab-surface border border-lab-border rounded p-3 overflow-x-auto text-[11px] text-lab-accent-text"><code>{pathOption.command}</code></pre>
+              <div class="relative mt-5">
+                <pre class="bg-lab-surface border border-lab-border rounded p-3 pr-10 overflow-x-auto text-[11px] text-lab-accent-text"><code>{pathOption.command}</code></pre>
+                <CopyButton
+                  text={pathOption.command}
+                  label={`Copy ${pathOption.title} command`}
+                  class="absolute top-2 right-2 rounded p-1.5 text-lab-muted transition-colors hover:text-lab-accent-text bg-lab-surface/80"
+                />
+              </div>
             </div>
           ))}
         </div>

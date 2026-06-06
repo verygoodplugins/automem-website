@@ -13,7 +13,10 @@ test('homepage promotes the install-first path', async () => {
   assert.match(homepage, /href="\/install"/);
   assert.doesNotMatch(homepage, /AutoMemMark/);
   assert.match(homepage, /\/automem-icon\.svg/);
-  assert.match(homepage, /curl -fsSL https:\/\/automem\.ai\/install\.sh \| sh/);
+  // The install command now lives in the shared InstallCommand widget (single
+  // source of truth in src/lib/install-commands.ts), not inline on the page.
+  assert.match(homepage, /import InstallCommand from/);
+  assert.match(homepage, /<InstallCommand size="hero"/);
   assert.match(homepage, /https:\/\/automem\.ai\/skill\.md/);
   assert.match(homepage, /AGENT CLIENTS/);
   assert.match(homepage, /Model Context Protocol/);
@@ -59,6 +62,9 @@ test('/install page describes local, cloud, and existing endpoint setup', async 
   // the _worker.js routes (scripts/bundle-worker.mjs) would otherwise 404 it.
   assert.match(installPage, /export const prerender = true/);
   assert.match(installPage, /INSTALL_AUTOMEM\.sh/);
+  // Primary command uses the shared widget; path cards get copy buttons.
+  assert.match(installPage, /<InstallCommand size="page"/);
+  assert.match(installPage, /<CopyButton/);
   assert.match(installPage, /Local Docker/i);
   assert.match(installPage, /Hosted Cloud/i);
   assert.match(installPage, /Existing Endpoint/i);
@@ -68,6 +74,26 @@ test('/install page describes local, cloud, and existing endpoint setup', async 
   assert.match(installPage, /cursor/);
   assert.match(installPage, /openclaw/);
   assert.match(installPage, /hermes/);
+});
+
+test('install command widget centralizes commands and exposes copy + toggle', async () => {
+  const commands = await readSource('../src/lib/install-commands.ts');
+  const widget = await readSource('../src/components/InstallCommand.astro');
+  const copyButton = await readSource('../src/components/CopyButton.astro');
+
+  // Single source of truth: both the curl launcher and the npm command.
+  assert.match(commands, /curl -fsSL https:\/\/automem\.ai\/install\.sh \| sh/);
+  assert.match(commands, /npx @verygoodplugins\/mcp-automem setup/);
+
+  // Script ⇄ npm toggle and one-line (non-wrapping) presentation.
+  assert.match(widget, /data-install-tab="script"/);
+  assert.match(widget, /data-install-tab="npm"/);
+  assert.match(widget, /whitespace-nowrap/);
+  assert.doesNotMatch(widget, /break-all/);
+
+  // Copy affordance is the shared data-copy-text button.
+  assert.match(copyButton, /data-copy-text/);
+  assert.match(copyButton, /navigator\.clipboard\.writeText/);
 });
 
 test('public install.sh is a thin launcher for mcp-automem install', async () => {
