@@ -154,7 +154,7 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Always `"queued"` |
-| `count` | integer | Number of UUIDs submitted (equals `len(ids)` from the request; not a success/failure count) |
+| `count` | integer | Number of UUIDs in the submitted `ids` array; not a success/failure count |
 | `ids` | array[string] | Memory UUIDs that were queued, sorted lexicographically |
 
 ```json
