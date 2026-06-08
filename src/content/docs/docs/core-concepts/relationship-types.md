@@ -7,12 +7,12 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants; relationship type definitions and validation
-- `automem/enrichment/runtime_worker.py` — Automatic relationship creation
-- `automem/utils/entity_extraction.py` — Entity extraction for pattern linking
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/stores/graph_store.py) — Cypher query construction
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — `_expand_related_memories` function
-- [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_api_endpoints.py#L939-L1004) — Relationship type tests
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants; relationship type definitions and validation
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_worker.py) — Automatic relationship creation
+- [automem/utils/entity_extraction.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/entity_extraction.py) — Entity extraction for pattern linking
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Cypher query construction
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `_expand_related_memories` function
+- [tests/test_api_endpoints.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_api_endpoints.py) — Relationship type tests
 :::
 
 This page documents the 14 typed relationship edges (11 authorable + 3 system-generated) that AutoMem uses to connect Memory nodes in the FalkorDB graph database. These relationships enable multi-hop reasoning, knowledge graph traversal, and semantic connections between memories.
@@ -282,9 +282,9 @@ graph TB
 The enrichment worker creates `PRECEDED_BY` relationships to recent memories within a time window:
 
 - **Trigger:** Every enriched memory
-- **Target:** Memories from the last 24 hours (configurable)
+- **Target:** Memories from the last 7 days
 - **Direction:** New memory → Older memory
-- **Properties:** `time_gap` (seconds between memories)
+- **Properties:** `count` (incremented each time the edge is updated), `updated_at` (ISO timestamp)
 
 **Purpose:** Maintains conversation flow and temporal context for recall.
 
@@ -470,10 +470,10 @@ Higher-strength relationships and more diverse relationship types boost memory r
 
 ### Core Modules
 
-- **Configuration:** [automem/config.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/config.py) — Defines `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
-- **API Endpoint:** [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/memory.py) — `POST /associate` handler (inside `create_memory_blueprint_full()`)
-- **Graph Store:** [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/stores/graph_store.py) — Cypher query construction for relationship creation
-- **Recall Expansion:** [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/automem/api/recall.py) — `_expand_related_memories` function
+- **Configuration:** [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — Defines `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
+- **API Endpoint:** [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py) — `POST /associate` handler (inside `create_memory_blueprint_full()`)
+- **Graph Store:** [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Cypher query construction for relationship creation
+- **Recall Expansion:** [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `_expand_related_memories` function
 
 ### Enrichment Pipeline
 
@@ -483,5 +483,5 @@ Higher-strength relationships and more diverse relationship types boost memory r
 
 ### Testing
 
-- **Relationship Tests:** [tests/test_api_endpoints.py#L939-L1004](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_api_endpoints.py#L939-L1004) — Tests all 14 relationship types
-- **Integration Tests:** [tests/test_integration.py](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_integration.py) — End-to-end relationship creation and querying
+- **Relationship Tests:** [tests/test_api_endpoints.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_api_endpoints.py) — Tests all 14 relationship types
+- **Integration Tests:** [tests/test_integration.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_integration.py) — End-to-end relationship creation and querying
