@@ -1,7 +1,8 @@
 /* Shared */
 :root {
-  /* Typography - Blend of Clarity (Inter) and Tech (JetBrains Mono) */
-  --sl-font: "JetBrains Mono", system-ui, -apple-system, monospace;
+  /* Typography - Blend of Clarity (Inter) and Tech (JetBrains Mono).
+     Body prose is Inter for readability; headings and code stay mono. */
+  --sl-font: "Inter", system-ui, -apple-system, sans-serif;
   --sl-font-mono: "JetBrains Mono", monospace;
 
   /* Layout */
@@ -93,17 +94,36 @@ body {
   margin-bottom: 1.5rem;
 }
 
+/* Explicit scale below h1 — Starlight only sized h1, so h2–h4 collapsed
+   toward body size and flattened the hierarchy. */
+.content-panel h2 {
+  font-size: 1.75rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.content-panel h3 {
+  font-size: 1.35rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.content-panel h4 {
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .content-panel p {
   line-height: 1.7; /* Improved readability */
   font-size: 0.9rem;
 }
 
-/* Code Blocks - "AutoMem" Tech Style */
-.expressive-code .frame {
-  border: 1px solid var(--sl-color-hairline-light) !important;
-  background: rgb(var(--lab-panel)) !important;
-  box-shadow: 4px 4px 0px 0px var(--shadow-color);
-}
+/* Code Blocks - "AutoMem" Tech Style.
+   Surface/border/radius/shadow are owned by the Expressive Code config in
+   astro.config.mjs (dark-always). The previous `.expressive-code .frame`
+   !important override lived here; it flipped to the light --lab-panel in light
+   mode (the washout) and beat EC's own CSS, so it was removed. */
 
 /* Inline Code */
 :not(pre) > code {

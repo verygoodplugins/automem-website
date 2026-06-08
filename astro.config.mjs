@@ -16,6 +16,78 @@ const isBuilding = process.argv.includes('build');
 const enableEmdash = true;
 const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
 
+// "Memory Lab" syntax theme — maps the brand palette (already used by the
+// marketing ChatDemo/InstallCommand: violet identifiers, green strings/values,
+// gold commands/keywords, gray comments) onto code-token scopes so docs syntax
+// reads on-brand instead of generic Expressive Code blue/gray. Dark values only:
+// docs code is "dark always" (single theme, see expressiveCode below), so these
+// fixed hexes apply in both light and dark site themes. Default text stays
+// off-white so blocks read as terminal output, not a rainbow.
+const memoryLabSyntaxTheme = {
+  name: 'memory-lab',
+  type: 'dark',
+  colors: {
+    'editor.background': '#0F161E',           // --lab-panel (dark)
+    'editor.foreground': '#EFF4F9',           // --lab-text (dark)
+    'editor.selectionBackground': '#AE66FF40',
+    'editorLineNumber.foreground': '#465260', // --lab-line (dark)
+  },
+  tokenColors: [
+    {
+      scope: ['comment', 'punctuation.definition.comment', 'string.comment'],
+      settings: { foreground: '#9EA9B8', fontStyle: 'italic' }, // --lab-muted
+    },
+    {
+      scope: [
+        'string', 'string.quoted', 'string.template',
+        'constant.other.symbol', 'meta.attribute-selector',
+      ],
+      settings: { foreground: '#4FDF69' }, // --lab-success (green)
+    },
+    {
+      scope: [
+        'constant.numeric', 'constant.language', 'constant.language.boolean',
+        'constant.language.null', 'constant.language.undefined',
+        'support.constant',
+      ],
+      settings: { foreground: '#4FDF69' }, // values read green like strings
+    },
+    {
+      scope: [
+        'entity.name.function', 'support.function', 'meta.function-call.generic',
+        'variable.function', 'entity.name.tag', 'support.type.property-name.json',
+        'meta.object-literal.key', 'entity.name.type', 'support.type',
+        'support.class', 'entity.name.class',
+      ],
+      settings: { foreground: '#AE66FF' }, // --lab-secondary (violet) — named things
+    },
+    {
+      scope: [
+        'keyword', 'keyword.control', 'keyword.operator', 'storage',
+        'storage.type', 'storage.modifier', 'variable.language',
+        'constant.other.option', 'punctuation.definition.parameters',
+        'support.type.property-name', 'keyword.other',
+      ],
+      settings: { foreground: '#F9CF2C' }, // --lab-accent (gold) — commands/keywords/flags
+    },
+    {
+      scope: [
+        'variable', 'variable.other', 'variable.parameter',
+        'meta.definition.variable', 'entity.name.variable',
+      ],
+      settings: { foreground: '#EFF4F9' }, // default off-white
+    },
+    {
+      scope: ['punctuation', 'meta.brace', 'meta.delimiter'],
+      settings: { foreground: '#C7D0DB' }, // slightly dimmed text for structure
+    },
+    {
+      scope: ['invalid', 'invalid.illegal'],
+      settings: { foreground: '#EF4444' }, // --lab-error
+    },
+  ],
+};
+
 export default defineConfig({
   site: 'https://automem.ai',
   adapter: isBuilding ? cloudflare() : undefined,
@@ -41,6 +113,29 @@ export default defineConfig({
         { icon: 'github', label: 'GitHub', href: 'https://github.com/verygoodplugins/automem' },
       ],
       customCss: ['./src/styles/global.css', './src/styles/starlight-custom.css'],
+      // "Dark always" code blocks: a single dark theme means Expressive Code
+      // applies it in both site themes and emits no theme-switch CSS, so docs
+      // code stays on the brand terminal surface in light AND dark mode. All
+      // surface values are FIXED hex (not --lab-* tokens, which flip in light
+      // mode and would recreate the washout). Owns surface/border/radius/shadow
+      // — the old `.expressive-code .frame` !important override was removed.
+      expressiveCode: {
+        themes: [memoryLabSyntaxTheme],
+        useStarlightDarkModeSwitch: false,
+        styleOverrides: {
+          borderRadius: '8px',
+          borderColor: '#2D3744',        // brand --lab-border (dark)
+          codeBackground: '#0F161E',     // brand --lab-panel (dark)
+          frames: {
+            editorBackground: '#0F161E',
+            terminalBackground: '#0F161E',
+            editorTabBarBackground: '#0B1016',       // brand --lab-surface (dark)
+            editorActiveTabBackground: '#0F161E',
+            terminalTitlebarBackground: '#0B1016',
+            frameBoxShadowCssValue: '4px 4px 0 0 rgba(0, 0, 0, 0.85)', // brand hard shadow
+          },
+        },
+      },
       components: {
         Header: './src/components/starlight/Header.astro',
         ThemeProvider: './src/components/starlight/ThemeProvider.astro',
