@@ -324,8 +324,8 @@ Entity expansion follows entity tags to find related memories. This enables quer
 **How it works:**
 
 1. Execute initial recall to get seed results
-2. For each seed result, extract entities using `extract_entities()`
-3. Convert extracted entities to `entity:<type>:<slug>` tags
+2. For each seed result, extract entity names from existing `entity:*` tags using `_extract_entities_from_results()`
+3. Convert extracted entity names to `entity:<type>:<slug>` search tags
 4. Query FalkorDB/Qdrant for memories with matching entity tags
 5. Merge entity-expanded results with seed results
 6. Apply expansion limits and filters
