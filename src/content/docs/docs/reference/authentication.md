@@ -96,7 +96,7 @@ Query parameters may be logged by proxies, load balancers, and web servers. Use 
 
 ## Full Token Validation Flow
 
-This diagram shows how requests flow through both the MCP SSE server and the Flask API:
+This diagram shows how requests flow through the Flask API authentication layer:
 
 ```mermaid
 graph LR
@@ -106,31 +106,21 @@ graph LR
         QueryParam["?api_key=TOKEN"]
     end
 
-    subgraph "mcp-sse-server :8080"
-        GetAuthToken["getAuthToken(req)"]
-        ValidateToken["Compare vs<br/>AUTOMEM_API_TOKEN"]
-        AddAuthHeader["Add Authorization:<br/>Bearer header"]
-    end
-
     subgraph "Flask API :8001"
-        RequireAPIToken["@require_api_token"]
-        ExtractToken["extract_token(request)<br/>multiple sources"]
+        RequireAPIToken["require_api_token()"]
+        ExtractToken["extract_api_token(request_obj,<br/>configured_api_token)<br/>Bearer / X-API-Key / ?api_key"]
         CheckLevel["Check endpoint<br/>requires ADMIN?"]
         ValidateAdmin["Validate<br/>ADMIN_API_TOKEN"]
         ProcessRequest["Route to handler"]
     end
 
-    BearerHeader --> GetAuthToken
-    APIKeyHeader --> GetAuthToken
-    QueryParam --> GetAuthToken
+    BearerHeader --> RequireAPIToken
+    APIKeyHeader --> RequireAPIToken
+    QueryParam --> RequireAPIToken
 
-    GetAuthToken --> ValidateToken
-    ValidateToken -->|Valid| AddAuthHeader
-    ValidateToken -->|Invalid| Reject401["401 Unauthorized"]
-
-    AddAuthHeader --> RequireAPIToken
     RequireAPIToken --> ExtractToken
-    ExtractToken --> CheckLevel
+    ExtractToken -->|Token valid| CheckLevel
+    ExtractToken -->|Token missing/invalid| Reject401["401 Unauthorized"]
 
     CheckLevel -->|Standard| ProcessRequest
     CheckLevel -->|Admin endpoint| ValidateAdmin
