@@ -257,7 +257,7 @@ graph TB
         IncrCount["processed_count += batch_size"]
     end
 
-    Response["Return summary:<br/>status, processed, failed,<br/>total, batch_size,<br/>metadata_preserved"]
+    Response["Return summary:<br/>status, processed, failed,<br/>total, batch_size,<br/>metadata_preserved<br/>[failed_ids if failed&gt;0]"]
 
     Request-->Auth
     Auth-->Init
@@ -280,6 +280,7 @@ graph TB
 | `total` | integer | Total memory count in database at operation start |
 | `batch_size` | integer | Batch size used (from request or default 32) |
 | `metadata_preserved` | boolean | Whether existing metadata was preserved during re-embedding |
+| `failed_ids` | array[string] | *(Conditional)* Up to 10 memory IDs that failed re-embedding; only present when `failed > 0` |
 
 ```json
 {
@@ -342,7 +343,7 @@ The operation continues even if individual batches fail:
 |-------|-------|----------|
 | OpenAI API rate limit | Exceeded quota | Retries with exponential backoff (handled by OpenAI SDK) |
 | Missing memory content | Deleted between enumeration and fetch | Logged, skipped, processing continues |
-| Qdrant connection failure | Network issue or Qdrant down | Logged, FalkorDB still updated (graceful degradation) |
+| Qdrant connection failure | Network issue or Qdrant down | Logged; embedding writes are skipped for this batch and the operation continues with remaining batches (FalkorDB is never modified by this operation) |
 | Invalid content format | Null or non-string content | Logged, skipped |
 
 All errors are logged with structured context:
