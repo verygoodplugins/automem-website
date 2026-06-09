@@ -108,7 +108,8 @@ graph LR
 
     subgraph "Flask API :8001"
         RequireAPIToken["require_api_token()"]
-        ExtractToken["extract_api_token(request_obj,<br/>configured_api_token)<br/>Bearer / X-API-Key / ?api_key"]
+        ExtractToken["extract_api_token(request_obj,<br/>configured_api_token)<br/>→ token string or None"]
+        ValidateToken["Compare extracted token<br/>vs AUTOMEM_API_TOKEN"]
         CheckLevel["Check endpoint<br/>requires ADMIN?"]
         ValidateAdmin["Validate<br/>ADMIN_API_TOKEN"]
         ProcessRequest["Route to handler"]
@@ -119,8 +120,9 @@ graph LR
     QueryParam --> RequireAPIToken
 
     RequireAPIToken --> ExtractToken
-    ExtractToken -->|Token valid| CheckLevel
-    ExtractToken -->|Token missing/invalid| Reject401["401 Unauthorized"]
+    ExtractToken --> ValidateToken
+    ValidateToken -->|Valid| CheckLevel
+    ValidateToken -->|Token missing/invalid| Reject401["401 Unauthorized"]
 
     CheckLevel -->|Standard| ProcessRequest
     CheckLevel -->|Admin endpoint| ValidateAdmin
