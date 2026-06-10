@@ -10,7 +10,7 @@ Key implementation files:
 - `automem/utils/validation.py` — Vector dimension validation
 - `automem/classification/memory_classifier.py` — Classification system
 - `automem/api/memory.py` — Memory lifecycle and storage
-- [consolidation.py#L65-L77](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py#L65-L77) — MemoryRow dataclass (normalized memory representation used by consolidation engine)
+- [consolidation.py#L48-L53](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L48-L53) — MemoryRow dataclass (normalized memory representation used by consolidation engine)
 :::
 
 This page describes the complete data model for memories in AutoMem, including their structure, properties, classification taxonomy, and storage representation. For information about how memories relate to each other, see [Relationship Types](/docs/core-concepts/relationship-types/). For details on how memories are searched and retrieved, see [Hybrid Search](/docs/core-concepts/hybrid-search/).
