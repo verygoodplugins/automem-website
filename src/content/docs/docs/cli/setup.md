@@ -144,7 +144,7 @@ Before installation, determine where these files will be located:
 - AutoMem service deployed (local, InstaPods, Railway, or self-hosted)
 - Service is running and accessible
 - Health endpoint responds: `curl http://your-endpoint/health`
-- Note your `AUTOMEM_ENDPOINT` URL
+- Note your `AUTOMEM_API_URL` URL
 - Note your `AUTOMEM_API_KEY` (if using authentication)
 
 **Network Connectivity**
