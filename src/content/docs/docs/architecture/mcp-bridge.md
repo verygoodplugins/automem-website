@@ -65,7 +65,7 @@ graph TB
 | Component | File Location | Purpose |
 |---|---|---|
 | Express app | [server.js:543-1010](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L543-L1010) | HTTP server with endpoint routing |
-| `AutoMemClient` | [server.js:240-306](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L240-L306) | HTTP client for AutoMem API |
+| `AutoMemClient` | [server.js:162-231](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L162-L231) | HTTP client for AutoMem API |
 | `buildMcpServer()` | [server.js:365-511](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L365-L511) | MCP server factory with tool handlers |
 | `InMemoryEventStore` | [server.js:202-237](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L202-L237) | Event buffering for stream resumption |
 | Session management | [server.js:532-554](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/mcp-sse-server/server.js#L532-L554) | Map-based session tracking with TTL |
@@ -82,15 +82,15 @@ The `mcp-automem` npm package operates as a local MCP server using stdio transpo
 graph LR
     START["npx @verygoodplugins/mcp-automem"]
 
-    subgraph Detection["Mode Detection<br/>src/index.ts:40-46"]
+    subgraph Detection["Mode Detection<br/>src/index.ts:57-58"]
         CHECK{"process.argv[2]<br/>exists?"}
     end
 
     subgraph Server_Mode["Server Mode"]
-        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:76-85"]
-        MCP_SERVER["new Server()<br/>src/index.ts:277-280"]
+        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:105-113"]
+        MCP_SERVER["new Server()<br/>src/index.ts:230-232"]
         STDIO_TRANSPORT["StdioServerTransport<br/>stdin/stdout"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:540-757"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:540-720"]
     end
 
     subgraph CLI_Mode["CLI Mode"]
