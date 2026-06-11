@@ -6,12 +6,12 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py#L506](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/api/memory.py#L506) — Flask blueprint `/associate` endpoint
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/7bd06aa389a64de5f6937a2883ed9b7175073c2c/automem/stores/graph_store.py) — FalkorDB edge operations
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP `associate_memories` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) — HTTP client
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) — Relationship type definitions
+- [automem/api/memory.py#L617](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py#L617) — Flask blueprint `/associate` endpoint
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — FalkorDB edge operations
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `associate_memories` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — Relationship type definitions
 :::
 
 The `/associate` endpoint creates typed relationships between memories to build a knowledge graph in FalkorDB. These associations enable graph traversal during recall, allowing multi-hop reasoning and discovery of related context beyond direct semantic similarity.
@@ -52,7 +52,6 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 | `memory2_id` | string | Yes | Target memory UUID |
 | `type` | string | Yes | Relationship type (must be in `AUTHORABLE_RELATIONS`) |
 | `strength` | float | No | Edge weight 0.0–1.0 (default: 0.5) |
-| `properties` | object | No | Additional edge metadata (stored in graph) |
 
 ### Basic Request
 
@@ -218,7 +217,7 @@ flowchart TD
 ```json
 {
   "status": "success",
-  "message": "Association created successfully",
+  "message": "Association created between a1b2c3d4-e5f6-7890-abcd-ef1234567890 and b2c3d4e5-f6a7-8901-bcde-f12345678901",
   "relation_type": "LEADS_TO",
   "strength": 0.9
 }
