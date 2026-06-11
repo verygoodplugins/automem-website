@@ -67,24 +67,6 @@ curl -X POST https://your-automem-instance/associate \
   }'
 ```
 
-### Request with Additional Properties
-
-```bash
-curl -X POST https://your-automem-instance/associate \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "memory1_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "memory2_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    "type": "PREFERS_OVER",
-    "strength": 0.9,
-    "properties": {
-      "reason": "ACID compliance required",
-      "context": "transaction-heavy workload"
-    }
-  }'
-```
-
 ---
 
 ## Relationship Types
