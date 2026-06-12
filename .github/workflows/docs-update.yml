@@ -100,6 +100,7 @@ jobs:
             Head SHA: ${{ github.event.client_payload.head_sha || steps.resolve.outputs.source_sha }}
             Changed files: ${{ toJSON(github.event.client_payload.changed_files) || 'See reason below' }}
             Affected doc pages: ${{ toJSON(github.event.client_payload.affected_docs) || 'Determine from file-doc-map.json and reason' }}
+            Mapping status: ${{ github.event.client_payload.mapping_status || 'matched' }}
             Commit URL: ${{ github.event.client_payload.commit_url || 'N/A' }}
             Compare URL: ${{ github.event.client_payload.compare_url || 'N/A' }}
             Reason: ${{ steps.resolve.outputs.reason }}
