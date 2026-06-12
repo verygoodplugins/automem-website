@@ -207,9 +207,7 @@ sequenceDiagram
     activate EmW
     EmW->>EmW: Enter infinite loop
 
-    Flask->>CS: Initialize ConsolidationScheduler
-    Flask->>CS: scheduler.add_job(...) for each task
-    Flask->>CS: scheduler.start()
+    Flask->>CS: init_consolidation_scheduler()
     activate CS
     CS->>CS: Begin periodic checks
 
@@ -317,7 +315,7 @@ AutoMem implements two-tier authorization with multiple token extraction methods
 
 ### Token Extraction Methods
 
-The `_extract_api_token()` function ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/auth_helpers.py)) tries three methods in order:
+The `extract_api_token()` function ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/auth_helpers.py)) tries three methods in order:
 
 1. **Bearer token** (recommended): `Authorization: Bearer {token}`
 2. **Custom header**: `X-API-Key: {token}`
@@ -325,7 +323,7 @@ The `_extract_api_token()` function ([automem/api/auth_helpers.py](https://githu
 
 ### Admin Endpoints
 
-Admin operations require a separate token checked by `_require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/main/automem/api/auth_helpers.py)):
+Admin operations require a separate token checked by `require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/auth_helpers.py)):
 
 | Endpoint | Purpose | Admin Token Required |
 |---|---|---|
@@ -335,8 +333,8 @@ Admin operations require a separate token checked by `_require_admin_token()` ([
 | `POST /consolidate` | Trigger consolidation | No |
 
 **Configuration:**
-- `AUTOMEM_API_TOKEN` — Standard API access ([automem/config.py:124](https://github.com/verygoodplugins/automem/blob/main/automem/config.py#L124))
-- `ADMIN_API_TOKEN` — Admin operations ([automem/config.py:123](https://github.com/verygoodplugins/automem/blob/main/automem/config.py#L123))
+- `AUTOMEM_API_TOKEN` — Standard API access ([automem/config.py:622](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L622))
+- `ADMIN_API_TOKEN` — Admin operations ([automem/config.py:623](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L623))
 
 ---
 
