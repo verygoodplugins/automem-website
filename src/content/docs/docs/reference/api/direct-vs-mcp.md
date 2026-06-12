@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) — MCP server, tool definitions, and request handlers
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/server.json) — MCP server manifest
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP server, tool definitions, and request handlers
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/server.json) — MCP server manifest
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -352,7 +352,7 @@ curl -X POST https://your-automem-instance/associate \
 | `content` | string | No | — | New content (replaces existing) |
 | `tags` | array[string] | No | — | New tags (replaces existing) |
 | `importance` | number | No | 0–1 | New importance score |
-| `metadata` | object | No | — | Metadata (merged with existing) |
+| `metadata` | object | No | — | Metadata (replaces existing) |
 | `timestamp` | string | No | ISO format | Override creation timestamp |
 | `updated_at` | string | No | ISO format | Explicit update timestamp |
 | `last_accessed` | string | No | ISO format | Last access timestamp |
@@ -477,8 +477,8 @@ AI platforms using the MCP protocol get automatic tool discovery, schema validat
 
 The `mcp-automem` server registers tools via the MCP SDK's schema-based routing:
 
-**`ListToolsRequestSchema` handler (lines 622–624):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
+**`ListToolsRequestSchema` handler (line 669):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
 
-**`CallToolRequestSchema` handler (lines 626–783):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
+**`CallToolRequestSchema` handler (lines 671–826):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
 
-The `tools` array (lines 178–620) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
+The `tools` array (lines 177–667) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
