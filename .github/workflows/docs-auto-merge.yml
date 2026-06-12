@@ -16,25 +16,30 @@ jobs:
         github.event.pull_request.base.ref == 'main' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
         startsWith(github.event.pull_request.head.ref, 'docs/audit-') &&
-        startsWith(github.event.pull_request.title, 'docs:')
+        startsWith(github.event.pull_request.title, 'docs:') &&
+        !github.event.pull_request.draft
       }}
     runs-on: ubuntu-latest
     concurrency:
       group: docs-auto-merge-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - name: Mark eligible docs PR ready
+      - name: Check for unresolved audit notes
+        id: guard
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          if [ "$(gh pr view "$PR_URL" --json isDraft --jq '.isDraft')" = "true" ]; then
-            gh pr ready "$PR_URL"
-          else
-            echo "PR is already ready for review."
+          BODY="$(gh pr view "$PR_URL" --json body --jq '.body // ""')"
+          if echo "$BODY" | grep -Eiq 'follow-up questions|open question|not addressed|maintainer input|needs maintainer|unresolved'; then
+            echo "PR body contains unresolved audit language; leaving it for maintainer review."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
 
       - name: Enable auto-merge for eligible docs PR
+        if: steps.guard.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
