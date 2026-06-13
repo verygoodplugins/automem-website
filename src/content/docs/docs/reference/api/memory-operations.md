@@ -186,9 +186,8 @@ Tags support hierarchical structure using `:` or `/` delimiters. The system comp
 This enables prefix matching queries like `tags=slack` to match `slack:channel:general`, `slack:user:U123`, etc.
 
 **Implementation functions:**
-- `_normalize_tag_list()`: Parse comma-separated or array tags
-- `_expand_tag_prefixes()`: Split on `:` or `/` and generate cumulative prefixes
-- `_compute_tag_prefixes()`: Deduplicate and lowercase all prefixes
+- `normalize_tags()` / `normalize_tag_list()`: Parse comma-separated or array tags
+- `compute_tag_prefixes()`: Split on `:` or `/`, generate cumulative prefixes, deduplicate and lowercase
 
 **Tagging Conventions (from platform templates):**
 
@@ -233,11 +232,19 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
 
 ```json
 {
+  "status": "success",
   "memory_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "stored_at": "2025-01-15T10:30:00Z",
   "type": "Decision",
   "confidence": 0.9,
+  "qdrant": "ok",
+  "embedding_status": "queued",
   "enrichment": "queued",
-  "embedding": "queued"
+  "metadata": {},
+  "timestamp": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z",
+  "last_accessed": "2025-01-15T10:30:00Z",
+  "query_time_ms": 12.5
 }
 ```
 
@@ -393,17 +400,20 @@ curl "https://your-automem-instance/memory/abc-123-def-456" \
 
 ```json
 {
-  "id": "abc-123-def-456",
-  "content": "Chose PostgreSQL over MongoDB. Need ACID guarantees for transactions.",
-  "type": "Decision",
-  "tags": ["project-alpha", "database"],
-  "importance": 0.9,
-  "confidence": 0.9,
-  "timestamp": "2025-01-15T10:30:00Z",
-  "updated_at": "2025-01-15T10:30:00Z",
-  "last_accessed": "2025-01-16T08:00:00Z",
-  "metadata": {},
-  "relations": []
+  "status": "success",
+  "memory": {
+    "id": "abc-123-def-456",
+    "content": "Chose PostgreSQL over MongoDB. Need ACID guarantees for transactions.",
+    "type": "Decision",
+    "tags": ["project-alpha", "database"],
+    "importance": 0.9,
+    "confidence": 0.9,
+    "timestamp": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-15T10:30:00Z",
+    "last_accessed": "2025-01-16T08:00:00Z",
+    "metadata": {},
+    "relations": []
+  }
 }
 ```
 
@@ -488,11 +498,11 @@ sequenceDiagram
 5. **Qdrant Sync**: Update payload fields (non-blocking failure)
 6. **Refresh**: Fetch updated node and return to client
 
-### Metadata Merge Behavior
+### Metadata Replace Behavior
 
-The `metadata` field uses merge semantics, not replacement. Given existing metadata `{"key1": "val1"}` and an update with `{"key2": "val2"}`, the result is `{"key1": "val1", "key2": "val2"}`.
+The `metadata` field uses **replacement** semantics — the supplied object replaces the entire existing metadata. Given existing metadata `{"key1": "val1"}` and an update with `{"key2": "val2"}`, the result is `{"key2": "val2"}`.
 
-To remove a metadata field, explicitly set it to `null`.
+To preserve existing fields, read the current value first and include all desired keys in the update payload.
 
 ### Example Request
 
