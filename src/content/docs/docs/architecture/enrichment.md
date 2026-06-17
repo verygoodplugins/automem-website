@@ -7,14 +7,14 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/enrichment.py) — `/enrichment/status` and `/enrichment/reprocess` route handlers
-- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
-- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
-- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
-- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_queue_bindings.py) — Queue management
-- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/service_state.py) — EnrichmentJob dataclass
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Graph write operations for enrichment
-- [.env.example](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/.env.example) — Enrichment configuration variables
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/enrichment.py) — `/enrichment/status` and `/enrichment/reprocess` route handlers
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
+- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
+- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_queue_bindings.py) — Queue management
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py) — EnrichmentJob dataclass
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/stores/graph_store.py) — Graph write operations for enrichment
+- [.env.example](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/.env.example) — Enrichment configuration variables
 :::
 
 The Enrichment Pipeline is a background worker system that automatically enhances stored memories with extracted entities, relationships, summaries, and pattern associations. This page documents the queue-based architecture, processing stages, entity extraction techniques, and relationship creation mechanisms.
@@ -75,7 +75,7 @@ Fields:
 - `attempt` — Retry counter (0-indexed), incremented on each failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
-([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/service_state.py))
+([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py))
 
 ---
 
@@ -326,7 +326,7 @@ When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment
 | Scenario | Behavior | Recovery |
 |---|---|---|
 | spaCy model unavailable | Log warning, use regex fallbacks | Graceful degradation |
-| FalkorDB write failure | Retry with exponential backoff | Max 3 attempts |
+| FalkorDB write failure | Retry with flat backoff | Max 3 attempts |
 | Qdrant unavailable | Skip semantic linking, log warning | Continue enrichment |
 | Invalid memory ID | Log error, record failure | No retry |
 | Extraction exception | Catch, log, retry | Max 3 attempts |
