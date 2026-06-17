@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — Score weight configuration
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/config.py) — Score weight configuration
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `recall_memory` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client and response normalization
 :::
