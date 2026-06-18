@@ -281,12 +281,12 @@ curl http://localhost:8001/health
 
 | Field | Type | Description |
 |---|---|---|
-| `status` | string | Overall health: `"healthy"` or `"unhealthy"` |
-| `falkordb` | string | FalkorDB connection: `"connected"` or error message |
-| `qdrant` | string | Qdrant connection: `"connected"`, `"unavailable"`, or `"not configured"` |
+| `status` | string | Overall health: `"healthy"`, `"degraded"`, or `"unknown"` |
+| `falkordb` | string | FalkorDB connection: `"connected"` or `"disconnected"` |
+| `qdrant` | string | Qdrant connection: `"connected"` or `"disconnected"` |
 | `memory_count` | integer | Total memories in graph |
 | `enrichment.status` | string | Worker thread state: `"running"` or `"stopped"` |
-| `enrichment.queue_depth` | integer | Pending enrichment jobs |
+| `enrichment.queue_depth` | integer | Total enrichment jobs in queue (pending + inflight) |
 | `graph` | string | FalkorDB graph name (default: `memories`) |
 
 ```mermaid
@@ -446,7 +446,7 @@ To make Claude use AutoMem without being prompted every time, add the starter me
 
 Copy the template from the mcp-automem repo:
 
-- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/7757b80f4957310075852feff9e3cfa3ac3e2b20/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
 
 The template assumes your MCP server key is `memory`. If your config uses `mcp-automem` or another key, update tool names in the pasted preferences to match Claude Desktop's prefix.
 
