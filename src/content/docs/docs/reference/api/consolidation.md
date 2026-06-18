@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/consolidation.py) — Consolidation API endpoints
-- [consolidation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py) — Consolidation engine implementation
+- [automem/api/consolidation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/consolidation.py) — Consolidation API endpoints
+- [consolidation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/consolidation.py) — Consolidation engine implementation
 :::
 
 This page documents the HTTP API endpoints for triggering and monitoring memory consolidation tasks. Consolidation is AutoMem's background maintenance system that mimics biological memory processes — decay, creative association, clustering, and forgetting.
@@ -148,7 +148,8 @@ For `mode="full"`, the `consolidation` object contains combined metrics from all
 
 ```json
 {
-  "error": "Consolidation task 'decay' failed: Connection refused"
+  "error": "Consolidation failed",
+  "details": "Connection refused"
 }
 ```
 
