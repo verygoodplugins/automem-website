@@ -97,10 +97,7 @@ The health endpoint provides real-time service status, database connectivity che
     "pending": 2,
     "inflight": 0,
     "processed": 1247,
-    "failed": 0,
-    "last_success": "2025-10-20T14:29:45Z",
-    "last_error": null,
-    "worker_active": true
+    "failed": 0
   }
 }
 ```
@@ -109,9 +106,9 @@ The health endpoint provides real-time service status, database connectivity che
 
 | Field | Type | Description |
 |---|---|---|
-| `status` | string | Overall health: `"healthy"` or `"degraded"` |
-| `falkordb` | string | FalkorDB status: `"connected"`, `"unknown"`, or `"error: ..."` |
-| `qdrant` | string | Qdrant status: `"connected"`, `"disconnected"`, or `"error: ..."` |
+| `status` | string | Overall health: `"healthy"`, `"degraded"`, or `"unknown"` |
+| `falkordb` | string | FalkorDB status: `"connected"` or `"disconnected"` |
+| `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer\|null | Total memories in FalkorDB (null if query fails) |
 | `vector_count` | integer\|null | Total points in Qdrant collection (null if unavailable) |
 | `enrichment` | object | Enrichment queue metrics (see below) |
@@ -124,22 +121,19 @@ The `enrichment` object provides visibility into the background enrichment pipel
 
 | Field | Type | Description |
 |---|---|---|
-| `status` | string | Worker state: `"running"`, `"idle"`, or `"stopped"` |
+| `status` | string | Worker state: `"running"` or `"stopped"` |
 | `queue_depth` | integer | Total jobs in queue (pending + inflight) |
 | `pending` | integer | Jobs waiting to be processed |
 | `inflight` | integer | Jobs currently being processed |
 | `processed` | integer | Total jobs completed since service start |
 | `failed` | integer | Total jobs that failed permanently |
-| `last_success` | string\|null | Timestamp of most recent successful enrichment |
-| `last_error` | string\|null | Most recent error message (if any) |
-| `worker_active` | boolean | Whether enrichment worker thread is alive |
 
 #### Status Values
 
 | Field | Possible Values | Meaning |
 |---|---|---|
-| `status` | `healthy`, `degraded`, `unhealthy` | Overall service status |
-| `falkordb` | `connected`, `disconnected`, `error` | FalkorDB connection state |
+| `status` | `healthy`, `degraded`, `unknown` | Overall service status |
+| `falkordb` | `connected`, `disconnected` | FalkorDB connection state |
 | `qdrant` | `connected`, `disconnected` | Qdrant connection state (optional service) |
 | `enrichment.status` | `running`, `stopped` | Background enrichment worker state |
 
