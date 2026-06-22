@@ -75,8 +75,11 @@ See [Authentication](/docs/reference/authentication/) for token generation and u
 | `OPENAI_API_KEY` | No | _unset_ | OpenAI (or compatible provider) API key |
 | `OPENAI_BASE_URL` | No | _unset_ | Custom base URL for OpenAI-compatible APIs (OpenRouter, LiteLLM, vLLM) |
 | `VOYAGE_API_KEY` | No | _unset_ | Voyage AI API key |
+| `VOYAGE_MODEL` | No | `voyage-4` | Voyage AI embedding model (also: `voyage-4-large`, `voyage-4-lite`) |
 | `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server endpoint |
 | `OLLAMA_MODEL` | No | `nomic-embed-text` | Ollama embedding model |
+| `OLLAMA_TIMEOUT` | No | `30` | Ollama request timeout in seconds |
+| `OLLAMA_MAX_RETRIES` | No | `2` | Retry attempts on Ollama connection failure |
 | `EMBEDDING_BATCH_SIZE` | No | `20` | Items per batch API call (reduces costs 40–50%) |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | No | `2.0` | Max wait before flushing a partial batch |
 
