@@ -439,7 +439,7 @@ Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. 
 | `content` | Triggers re-embedding if changed |
 | `tags` | Recomputes `tag_prefixes` automatically |
 | `importance`, `confidence`, `type` | Update directly |
-| `metadata` | Merged with existing metadata (not replaced) |
+| `metadata` | Replaces existing metadata entirely (read current value first to preserve keys) |
 | `t_valid`, `t_invalid` | Update temporal bounds |
 | `timestamp` | Override original creation time |
 
@@ -540,7 +540,7 @@ The `update_memory` MCP tool corresponds to `PATCH /memory/:id`.
 | `content` | string | No | — | New content (replaces existing) |
 | `tags` | array[string] | No | — | New tags (replaces existing) |
 | `importance` | number | No | 0–1 | New importance score |
-| `metadata` | object | No | — | Metadata (merged with existing) |
+| `metadata` | object | No | — | Metadata (replaces existing entirely) |
 | `timestamp` | string | No | ISO format | Override creation timestamp |
 | `updated_at` | string | No | ISO format | Explicit update timestamp |
 | `last_accessed` | string | No | ISO format | Last access timestamp |

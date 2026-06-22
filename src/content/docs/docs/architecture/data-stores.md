@@ -118,7 +118,7 @@ The `/associate` endpoint creates typed edges between memory nodes ([automem/api
 
 **Keyword Search**
 
-The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py)).
+Keyword search helpers perform content and tag matching using Cypher queries ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_recall_helpers.py)).
 
 ---
 
@@ -197,7 +197,7 @@ Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR
 
 ### Vector Search Implementation
 
-The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/vector_store.py)).
+Vector search helpers perform similarity queries against the Qdrant collection ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_recall_helpers.py)).
 
 ---
 
