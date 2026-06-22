@@ -1,0 +1,50 @@
+---
+/**
+ * Renders the `figureSvg` Portable Text block.
+ *
+ * The SVG is rendered through an <img> data-URI — the browser's "secure static
+ * mode". SVGs loaded as images cannot execute scripts, inline event handlers
+ * (onload/onclick…), or <foreignObject>/external content, so this fully closes
+ * the stored-XSS surface that inlining author SVG via set:html would open. No
+ * sanitizer (regex or DOMPurify) is on the trust boundary; it stays SSR (no
+ * flash, works without JS) and workerd-safe (no jsdom).
+ *
+ * Tradeoff: figures must be self-contained — internal <style>, embedded data,
+ * no external CSS/fonts/refs and no page-CSS theming. That's the normal shape
+ * for hand-built figures like the release charts.
+ */
+const { node } = Astro.props;
+const raw = (node?.svg ?? '').toString().trim();
+// Only accept genuine SVG markup; ignore anything before the root <svg>.
+const start = raw.indexOf('<svg');
+const svg = start === -1 ? '' : raw.slice(start);
+const caption = node?.caption ?? '';
+const alt = node?.alt ?? caption ?? '';
+// encodeURIComponent escapes #, <, >, ", and unicode, so the data-URI is safe
+// inside the attribute and parses back to the exact SVG document.
+const dataUri = svg ? `data:image/svg+xml,${encodeURIComponent(svg)}` : '';
+---
+
+{dataUri ? (
+  <figure class="emdash-figure emdash-svg">
+    <img class="emdash-svg__img" src={dataUri} alt={alt} loading="lazy" decoding="async" />
+    {caption && <figcaption>{caption}</figcaption>}
+  </figure>
+) : null}
+
+<style>
+  .emdash-svg {
+    margin: 2rem auto;
+    text-align: center;
+  }
+  .emdash-svg__img {
+    max-width: 100%;
+    height: auto;
+  }
+  .emdash-svg figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+</style>
