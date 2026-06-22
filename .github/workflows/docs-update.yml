@@ -95,9 +95,12 @@ jobs:
             Read the file .github/prompts/update-docs.md for full instructions.
 
             Source repo: ${{ steps.resolve.outputs.source_repo }}
+            Source SHA: ${{ steps.resolve.outputs.source_sha }}
+            Base SHA: ${{ github.event.client_payload.base_sha || 'N/A' }}
+            Head SHA: ${{ github.event.client_payload.head_sha || steps.resolve.outputs.source_sha }}
             Changed files: ${{ toJSON(github.event.client_payload.changed_files) || 'See reason below' }}
             Affected doc pages: ${{ toJSON(github.event.client_payload.affected_docs) || 'Determine from file-doc-map.json and reason' }}
-            Commit: ${{ steps.resolve.outputs.source_sha }}
+            Commit URL: ${{ github.event.client_payload.commit_url || 'N/A' }}
             Compare URL: ${{ github.event.client_payload.compare_url || 'N/A' }}
             Reason: ${{ steps.resolve.outputs.reason }}
 
