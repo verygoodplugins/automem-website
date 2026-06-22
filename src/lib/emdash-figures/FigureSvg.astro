@@ -2,41 +2,32 @@
 /**
  * Renders the `figureSvg` Portable Text block.
  *
- * SSR-inlines admin-authored SVG markup after a conservative sanitization pass
- * (drops <script>/<foreignObject>, on* handlers, and javascript: URLs). EmDash
- * content authors are authenticated admins, so this is defense-in-depth on
- * already-trusted input — and it stays SSR (no flash, works without JS) and
- * dependency-free, which matters because production runs on workerd (no jsdom
- * for a server-side DOMPurify). For untrusted authors, swap in client-side
- * DOMPurify with the SVG profile.
+ * The SVG is rendered through an <img> data-URI — the browser's "secure static
+ * mode". SVGs loaded as images cannot execute scripts, inline event handlers
+ * (onload/onclick…), or <foreignObject>/external content, so this fully closes
+ * the stored-XSS surface that inlining author SVG via set:html would open. No
+ * sanitizer (regex or DOMPurify) is on the trust boundary; it stays SSR (no
+ * flash, works without JS) and workerd-safe (no jsdom).
+ *
+ * Tradeoff: figures must be self-contained — internal <style>, embedded data,
+ * no external CSS/fonts/refs and no page-CSS theming. That's the normal shape
+ * for hand-built figures like the release charts.
  */
 const { node } = Astro.props;
-const raw = (node?.svg ?? '').toString();
+const raw = (node?.svg ?? '').toString().trim();
+// Only accept genuine SVG markup; ignore anything before the root <svg>.
+const start = raw.indexOf('<svg');
+const svg = start === -1 ? '' : raw.slice(start);
 const caption = node?.caption ?? '';
 const alt = node?.alt ?? caption ?? '';
-
-function sanitizeSvg(input: string): string {
-  let s = input.trim();
-  const start = s.indexOf('<svg');
-  if (start === -1) return '';
-  s = s.slice(start);
-  // Drop executable / HTML-embedding elements entirely
-  s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
-  s = s.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
-  // Strip inline event handlers (onload, onclick, …)
-  s = s.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '');
-  s = s.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '');
-  // Neutralize javascript: URLs in href / xlink:href
-  s = s.replace(/(href|xlink:href)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
-  return s;
-}
-
-const safe = sanitizeSvg(raw);
+// encodeURIComponent escapes #, <, >, ", and unicode, so the data-URI is safe
+// inside the attribute and parses back to the exact SVG document.
+const dataUri = svg ? `data:image/svg+xml,${encodeURIComponent(svg)}` : '';
 ---
 
-{safe ? (
-  <figure class="emdash-figure emdash-svg" role="img" aria-label={alt}>
-    <div class="emdash-svg__out" set:html={safe} />
+{dataUri ? (
+  <figure class="emdash-figure emdash-svg">
+    <img class="emdash-svg__img" src={dataUri} alt={alt} loading="lazy" decoding="async" />
     {caption && <figcaption>{caption}</figcaption>}
   </figure>
 ) : null}
@@ -46,7 +37,7 @@ const safe = sanitizeSvg(raw);
     margin: 2rem auto;
     text-align: center;
   }
-  .emdash-svg__out :global(svg) {
+  .emdash-svg__img {
     max-width: 100%;
     height: auto;
   }
