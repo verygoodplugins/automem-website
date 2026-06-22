@@ -4,13 +4,15 @@ name: Docs Auto-Merge
 # The auditing agent ends every PR body with a confidence marker:
 #   <!-- DOCS-AUDIT: CLEAR --> -> agent verified everything; mark ready + auto-merge.
 #   <!-- DOCS-AUDIT: HOLD -->  -> agent flagged open questions; leave as a draft.
-# Fail-safe: a HOLD marker OR no marker at all keeps the PR a draft for a human.
-# To ship a HELD PR, a maintainer replaces the marker with CLEAR (or merges by hand);
-# marking it "ready" alone will not auto-merge while the body still says HOLD.
+# Fail-safe: a HOLD marker OR no marker at all keeps the PR a draft for a human,
+# and proactively cancels any auto-merge a prior CLEAR run may have enabled.
+# To ship a HELD PR, a maintainer edits the body to replace HOLD with CLEAR (the
+# `edited` trigger re-runs this guard) or merges by hand; marking it "ready"
+# alone will not auto-merge while the body still says HOLD.
 
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review, edited]
 
 permissions:
   contents: write
@@ -53,6 +55,24 @@ jobs:
           # No marker => fail safe to human review.
           echo "PR has no docs-audit confidence marker; defaulting to HOLD (draft)."
           echo "eligible=false" >> "$GITHUB_OUTPUT"
+
+      - name: Cancel stale auto-merge when held
+        if: steps.guard.outputs.eligible != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # GitHub only auto-cancels auto-merge when a user WITHOUT write access
+          # pushes. Same-repo docs/audit- bot pushes keep a prior CLEAR run's
+          # auto-merge alive, so a CLEAR->HOLD flip would still merge after CI.
+          # Make the guard authoritative: tear down any active request on HOLD.
+          AUTO_MERGE_ENABLED="$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')"
+          if [ "$AUTO_MERGE_ENABLED" = "true" ]; then
+            echo "Marker is HOLD/absent but auto-merge was enabled; disabling it."
+            gh pr merge "$PR_URL" --disable-auto
+          else
+            echo "No active auto-merge request to disable."
+          fi
 
       - name: Mark ready and enable auto-merge
         if: steps.guard.outputs.eligible == 'true'
