@@ -7,16 +7,16 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
-- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/provider.py) — Abstract provider base class
-- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/voyage.py) — Voyage AI provider
-- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/openai.py) — OpenAI provider
-- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/fastembed.py) — FastEmbed local provider
-- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/ollama.py) — Ollama local provider
-- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/placeholder.py) — Deterministic fallback provider
-- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/validation.py) — Dimension validation
-- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_embedding_providers.py) — Provider tests
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/provider.py) — Abstract provider base class
+- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/voyage.py) — Voyage AI provider
+- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/openai.py) — OpenAI provider
+- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/fastembed.py) — FastEmbed local provider
+- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/ollama.py) — Ollama local provider
+- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/placeholder.py) — Deterministic fallback provider
+- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/validation.py) — Dimension validation
+- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_embedding_providers.py) — Provider tests
 :::
 
 The embedding generation subsystem handles asynchronous vector embedding creation for memories using multiple backend providers. The system implements batching optimization to reduce API costs by 40-50%, improves `/memory` endpoint latency by 60% through non-blocking queue-based processing, and provides automatic provider selection with graceful fallback.
@@ -110,7 +110,7 @@ flowchart TD
 The system validates embedding dimensions against the configured `VECTOR_SIZE` at two checkpoints — provider initialization and every write to Qdrant:
 
 - **At init:** when the provider chain resolves, the selected provider's declared dimension is compared to the Qdrant collection's actual `VECTOR_SIZE`. A mismatch aborts startup with a clear error instead of silently truncating or padding vectors at query time.
-- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/validation.py) re-checks every embedding before `upsert`.
+- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/validation.py) re-checks every embedding before `upsert`.
 - Mismatches raise `ValueError` with the observed and expected dimensions in the message.
 - Prevents Qdrant collection corruption from mixed dimensions when switching providers.
 - FalkorDB writes always succeed regardless of embedding status — the graph never depends on a healthy vector path.
@@ -123,7 +123,7 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` a
 
 **Configuration:**
 - `VOYAGE_API_KEY` — Required
-- Model defaults to `voyage-4`; also supports `voyage-4-large` and `voyage-4-lite`. Not configurable via environment variable — set in the provider constructor at initialization.
+- Model defaults to `voyage-4`; also supports `voyage-4-large` and `voyage-4-lite`. Configurable via `VOYAGE_MODEL` env var.
 
 **Voyage-specific features:**
 - Shared embedding space across voyage-4 family models
@@ -373,6 +373,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | Variable | Type | Required For | Description |
 |---|---|---|---|
 | `VOYAGE_API_KEY` | str | Voyage | Voyage AI API key |
+| `VOYAGE_MODEL` | str | Voyage | Voyage model name (default: `voyage-4`; also: `voyage-4-large`, `voyage-4-lite`) |
 | `OPENAI_API_KEY` | str | OpenAI | OpenAI or compatible provider API key |
 | `OPENAI_BASE_URL` | str | OpenAI | Custom endpoint (OpenRouter, LiteLLM, vLLM) |
 | `EMBEDDING_MODEL` | str | OpenAI | Model: `text-embedding-3-small`, `text-embedding-3-large` |
@@ -432,7 +433,7 @@ The embedding worker runs in a dedicated thread started during application initi
 
 ### Memory Storage Integration
 
-The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py).
+The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py).
 
 ### Enrichment Pipeline Coordination
 
