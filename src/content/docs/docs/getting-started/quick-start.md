@@ -281,7 +281,7 @@ curl http://localhost:8001/health
 
 | Field | Type | Description |
 |---|---|---|
-| `status` | string | Overall health: `"healthy"`, `"degraded"`, or `"unknown"` |
+| `status` | string | Overall health: `"healthy"` or `"degraded"` |
 | `falkordb` | string | FalkorDB connection: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant connection: `"connected"` or `"disconnected"` |
 | `memory_count` | integer | Total memories in graph |
