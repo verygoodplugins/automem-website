@@ -1,8 +1,18 @@
 name: Docs Auto-Merge
 
+# Autonomous merge for the docs-audit bot (.github/workflows/docs-update.yml).
+# The auditing agent ends every PR body with a confidence marker:
+#   <!-- DOCS-AUDIT: CLEAR --> -> agent verified everything; mark ready + auto-merge.
+#   <!-- DOCS-AUDIT: HOLD -->  -> agent flagged open questions; leave as a draft.
+# Fail-safe: a HOLD marker OR no marker at all keeps the PR a draft for a human,
+# and proactively cancels any auto-merge a prior CLEAR run may have enabled.
+# To ship a HELD PR, a maintainer edits the body to replace HOLD with CLEAR (the
+# `edited` trigger re-runs this guard) or merges by hand; marking it "ready"
+# alone will not auto-merge while the body still says HOLD.
+
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review, edited]
 
 permissions:
   contents: write
@@ -16,29 +26,55 @@ jobs:
         github.event.pull_request.base.ref == 'main' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
         startsWith(github.event.pull_request.head.ref, 'docs/audit-') &&
-        startsWith(github.event.pull_request.title, 'docs:') &&
-        !github.event.pull_request.draft
+        startsWith(github.event.pull_request.title, 'docs:')
       }}
     runs-on: ubuntu-latest
     concurrency:
       group: docs-auto-merge-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - name: Check for unresolved audit notes
+      - name: Check docs-audit confidence marker
         id: guard
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           BODY="$(gh pr view "$PR_URL" --json body --jq '.body // ""')"
-          if printf '%s\n' "$BODY" | grep -Eiq 'follow-up questions|open question|not addressed|maintainer input|needs maintainer|unresolved'; then
-            echo "PR body contains unresolved audit language; leaving it for maintainer review."
+          # HOLD always wins: the agent flagged something for a human to decide.
+          if printf '%s' "$BODY" | grep -Eiq '<!--[[:space:]]*docs-audit:[[:space:]]*hold[[:space:]]*-->'; then
+            echo "PR is marked HOLD; leaving it as a draft for maintainer review."
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "eligible=true" >> "$GITHUB_OUTPUT"
+          # CLEAR is the only state that auto-merges.
+          if printf '%s' "$BODY" | grep -Eiq '<!--[[:space:]]*docs-audit:[[:space:]]*clear[[:space:]]*-->'; then
+            echo "PR is marked CLEAR; eligible for ready + auto-merge."
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # No marker => fail safe to human review.
+          echo "PR has no docs-audit confidence marker; defaulting to HOLD (draft)."
+          echo "eligible=false" >> "$GITHUB_OUTPUT"
 
-      - name: Enable auto-merge for eligible docs PR
+      - name: Cancel stale auto-merge when held
+        if: steps.guard.outputs.eligible != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # GitHub only auto-cancels auto-merge when a user WITHOUT write access
+          # pushes. Same-repo docs/audit- bot pushes keep a prior CLEAR run's
+          # auto-merge alive, so a CLEAR->HOLD flip would still merge after CI.
+          # Make the guard authoritative: tear down any active request on HOLD.
+          AUTO_MERGE_ENABLED="$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')"
+          if [ "$AUTO_MERGE_ENABLED" = "true" ]; then
+            echo "Marker is HOLD/absent but auto-merge was enabled; disabling it."
+            gh pr merge "$PR_URL" --disable-auto
+          else
+            echo "No active auto-merge request to disable."
+          fi
+
+      - name: Mark ready and enable auto-merge
         if: steps.guard.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
@@ -48,14 +84,14 @@ jobs:
           PR_JSON="$(gh pr view "$PR_URL" --json state,isDraft,autoMergeRequest)"
           PR_STATE="$(echo "$PR_JSON" | jq -r '.state')"
           if [ "$PR_STATE" != "OPEN" ]; then
-            echo "PR is $PR_STATE; auto-merge is no longer needed."
+            echo "PR is $PR_STATE; nothing to do."
             exit 0
           fi
 
           IS_DRAFT="$(echo "$PR_JSON" | jq -r '.isDraft')"
           if [ "$IS_DRAFT" = "true" ]; then
-            echo "PR is still a draft; skipping auto-merge (the ready_for_review event will handle it)."
-            exit 0
+            echo "Marking draft PR ready for review."
+            gh pr ready "$PR_URL"
           fi
 
           AUTO_MERGE_ENABLED="$(echo "$PR_JSON" | jq -r '.autoMergeRequest != null')"

@@ -35,6 +35,30 @@ The documentation covers three repositories:
 See `scripts/file-doc-map.json` for the complete source-file-to-doc-page mapping.
 The map covers all three repos with exact paths and `/**` subtree patterns.
 
+## PR description and confidence marker (REQUIRED)
+
+Write the PR description as a concise audit summary:
+
+- A `## Fixes` table (Claim | Current state | Fix) for every change you made,
+  citing the source SHA you verified against.
+- An optional `## Open questions` or `## Follow-ups` section for anything you
+  could NOT confirm from the source, anything that needs a human decision, or
+  drift you noticed but did not fix.
+
+End the description with EXACTLY ONE confidence marker on its own line. This
+marker controls whether the PR auto-merges, so it is mandatory:
+
+- `<!-- DOCS-AUDIT: CLEAR -->` — every edit is verified against the source at a
+  named SHA and you have NO open questions, unverifiable claims, or follow-ups.
+  The PR is marked ready for review and auto-merged once CI passes.
+- `<!-- DOCS-AUDIT: HOLD -->` — you have one or more open questions, claims you
+  could not confirm, or follow-up items. The PR stays a draft for a maintainer.
+
+Decision rule: if you wrote anything under an "Open questions", "Follow-ups", or
+"could not confirm" heading, you MUST use HOLD. When genuinely unsure, choose
+HOLD — a held PR costs a maintainer one glance, but a wrongly auto-merged guess
+ships incorrect documentation. A missing marker is treated as HOLD.
+
 ## Commit message format
 
 Use: `docs: update [page-names] to reflect [source-repo]@[short-sha]`
