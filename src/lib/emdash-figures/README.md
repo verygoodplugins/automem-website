@@ -9,7 +9,7 @@ covered it (the official `@emdash-cms/plugin-embeds` does YouTube/Vimeo/Twitter/
 | `_type`     | Editor label          | Fields                          | Renders as |
 | ----------- | --------------------- | ------------------------------- | ---------- |
 | `mermaid`   | Mermaid Diagram       | `code` (multiline), `caption`   | Client-rendered Mermaid SVG (flowchart, pie, sequence, xychart…) |
-| `figureSvg` | Inline SVG / Figure   | `svg` (multiline), `alt`, `caption` | SSR-inlined, sanitized SVG |
+| `figureSvg` | Inline SVG / Figure   | `svg` (multiline), `alt`, `caption` | SSR `<img>` data-URI (secure static mode) |
 
 ## How it's wired (this repo)
 
@@ -36,10 +36,11 @@ emdash({
 
 - **Native plugin only.** PT blocks ship build-time components, so this can't be sandboxed or
   published as a one-click marketplace install — it's a code-install plugin like `plugin-embeds`.
-- **SVG sanitization is conservative + SSR.** Production runs on workerd (no jsdom for server
-  DOMPurify), and content authors are authenticated admins, so `FigureSvg.astro` does a
-  defense-in-depth regex strip of `<script>`/`<foreignObject>`/`on*`/`javascript:`. If untrusted
-  authors ever get write access, swap in client-side DOMPurify with the SVG profile.
+- **SVG renders via an `<img>` data-URI (secure static mode).** Browsers disable scripts,
+  event handlers, `<foreignObject>`, and external refs for image-loaded SVG, so there's no
+  inlining sink to sanitize — no regex, no DOMPurify, no stored-XSS surface. Tradeoff: figures
+  must be self-contained, valid-XML SVG (internal `<style>`, no external CSS/fonts/refs, no
+  page-CSS theming) — the normal shape for hand-built figures.
 - **Mermaid weight:** loaded via dynamic `import('mermaid')` only on pages that contain a diagram.
 
 ## Extracting to a standalone npm package later
