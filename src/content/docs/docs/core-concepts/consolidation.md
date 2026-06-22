@@ -7,16 +7,16 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [consolidation.py#L118](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L118) — `MemoryConsolidator` class
-- [consolidation.py#L1090](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L1090) — `ConsolidationScheduler` class
-- [consolidation.py#L280-L339](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L280-L339) — Relevance score calculation (decay task)
-- [consolidation.py#L341-L478](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L341-L478) — Creative association discovery
-- [consolidation.py#L480-L622](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L480-L622) — Clustering algorithm
-- [consolidation.py#L624-L790](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L624-L790) — Forgetting/archiving
+- [consolidation.py#L100](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L100) — `MemoryConsolidator` class
+- [consolidation.py#L1091](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L1091) — `ConsolidationScheduler` class
+- [consolidation.py#L270-L363](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L270-L363) — Relevance score calculation (decay task)
+- [consolidation.py#L365-L463](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L365-L463) — Creative association discovery
+- [consolidation.py#L464-L605](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L464-L605) — Clustering algorithm
+- [consolidation.py#L606](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L606) — Forgetting/archiving
 - `automem/consolidation/runtime_scheduler.py` — Scheduler initialization
 - `automem/consolidation/runtime_bindings.py` — Background thread startup
 - `automem/api/consolidation.py` — Manual trigger endpoint
-- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_consolidation_engine.py) — Test coverage
+- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_consolidation_engine.py) — Test coverage
 :::
 
 The Consolidation Engine maintains and optimizes the memory graph through scheduled background processing inspired by biological memory consolidation. It applies exponential decay, discovers non-obvious associations, clusters similar memories, and implements controlled forgetting to prevent unbounded memory growth.
