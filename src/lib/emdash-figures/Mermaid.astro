@@ -5,65 +5,80 @@
  * Mermaid runs in the browser, so the diagram is rendered client-side via
  * mermaid.render() (scoped — never touches astro-mermaid's markdown pipeline).
  * Mermaid is dynamically imported so it stays out of the page bundle on posts
- * that don't use a diagram. Theme follows the site's .light / dark mode.
+ * that don't use a diagram. Theme follows the site's .light / dark mode, and
+ * re-renders when the user toggles the theme at runtime (ThemeToggle flips
+ * html.light with no event, so a MutationObserver watches the class).
  */
 const { node } = Astro.props;
 const code = (node?.code ?? '').toString();
 const caption = node?.caption ?? '';
 ---
 
-<figure class="emdash-figure emdash-mermaid" data-rendered="false">
+<figure class="emdash-figure emdash-mermaid">
   <pre class="emdash-mermaid__src" hidden>{code}</pre>
   <div class="emdash-mermaid__out" role="img" aria-label={caption || 'Mermaid diagram'}></div>
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 
 <script>
-  const figures = document.querySelectorAll('.emdash-mermaid[data-rendered="false"]');
+  const figures = document.querySelectorAll('.emdash-mermaid');
   if (figures.length) {
     const { default: mermaid } = await import('mermaid');
-    const light = document.documentElement.classList.contains('light');
-    const ink = light ? '#0F161E' : '#E6EDF3';
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      theme: 'base',
-      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      themeVariables: {
-        darkMode: !light,
-        background: 'transparent',
+
+    const renderAll = async () => {
+      const light = document.documentElement.classList.contains('light');
+      const ink = light ? '#0F161E' : '#E6EDF3';
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        primaryColor: '#F9CF2C',
-        primaryTextColor: '#060A0E',
-        primaryBorderColor: '#465260',
-        secondaryColor: '#AE66FF',
-        lineColor: '#AE66FF',
-        textColor: ink,
-        // pie palette → lab gold / violet / mint / coral
-        pie1: '#F9CF2C', pie2: '#AE66FF', pie3: '#5ED3A0', pie4: '#FF8A5B',
-        pieStrokeColor: '#060A0E', pieOuterStrokeColor: '#465260',
-        pieSectionTextColor: '#060A0E',
-        pieTitleTextColor: ink,
-        pieLegendTextColor: ink,
-      },
-    });
-    for (const fig of figures) {
-      const src = fig.querySelector('.emdash-mermaid__src')?.textContent ?? '';
-      const out = fig.querySelector('.emdash-mermaid__out');
-      if (!src.trim() || !out) {
-        fig.setAttribute('data-rendered', 'true');
-        continue;
+        themeVariables: {
+          darkMode: !light,
+          background: 'transparent',
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          primaryColor: '#F9CF2C',
+          primaryTextColor: '#060A0E',
+          primaryBorderColor: '#465260',
+          secondaryColor: '#AE66FF',
+          lineColor: '#AE66FF',
+          textColor: ink,
+          // pie palette → lab gold / violet / mint / coral
+          pie1: '#F9CF2C', pie2: '#AE66FF', pie3: '#5ED3A0', pie4: '#FF8A5B',
+          pieStrokeColor: '#060A0E', pieOuterStrokeColor: '#465260',
+          pieSectionTextColor: '#060A0E',
+          pieTitleTextColor: ink,
+          pieLegendTextColor: ink,
+        },
+      });
+      for (const fig of figures) {
+        const src = fig.querySelector('.emdash-mermaid__src')?.textContent ?? '';
+        const out = fig.querySelector('.emdash-mermaid__out');
+        if (!src.trim() || !out) continue;
+        try {
+          const id = 'mmd-' + Math.random().toString(36).slice(2);
+          const { svg } = await mermaid.render(id, src);
+          out.innerHTML = svg;
+          out.classList.remove('emdash-mermaid__error');
+        } catch (err) {
+          out.classList.add('emdash-mermaid__error');
+          out.textContent =
+            'Mermaid render error: ' + (err && err.message ? err.message : String(err));
+        }
       }
-      try {
-        const id = 'mmd-' + Math.random().toString(36).slice(2);
-        const { svg } = await mermaid.render(id, src);
-        out.innerHTML = svg;
-      } catch (err) {
-        out.classList.add('emdash-mermaid__error');
-        out.textContent = 'Mermaid render error: ' + (err && err.message ? err.message : String(err));
+    };
+
+    await renderAll();
+
+    // Re-theme on runtime theme toggle (ThemeToggle flips html.light, no event).
+    let lastLight = document.documentElement.classList.contains('light');
+    new MutationObserver(() => {
+      const nowLight = document.documentElement.classList.contains('light');
+      if (nowLight !== lastLight) {
+        lastLight = nowLight;
+        renderAll();
       }
-      fig.setAttribute('data-rendered', 'true');
-    }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   }
 </script>
 
