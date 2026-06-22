@@ -1,0 +1,59 @@
+---
+/**
+ * Renders the `figureSvg` Portable Text block.
+ *
+ * SSR-inlines admin-authored SVG markup after a conservative sanitization pass
+ * (drops <script>/<foreignObject>, on* handlers, and javascript: URLs). EmDash
+ * content authors are authenticated admins, so this is defense-in-depth on
+ * already-trusted input — and it stays SSR (no flash, works without JS) and
+ * dependency-free, which matters because production runs on workerd (no jsdom
+ * for a server-side DOMPurify). For untrusted authors, swap in client-side
+ * DOMPurify with the SVG profile.
+ */
+const { node } = Astro.props;
+const raw = (node?.svg ?? '').toString();
+const caption = node?.caption ?? '';
+const alt = node?.alt ?? caption ?? '';
+
+function sanitizeSvg(input: string): string {
+  let s = input.trim();
+  const start = s.indexOf('<svg');
+  if (start === -1) return '';
+  s = s.slice(start);
+  // Drop executable / HTML-embedding elements entirely
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+  s = s.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
+  // Strip inline event handlers (onload, onclick, …)
+  s = s.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '');
+  s = s.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '');
+  // Neutralize javascript: URLs in href / xlink:href
+  s = s.replace(/(href|xlink:href)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
+  return s;
+}
+
+const safe = sanitizeSvg(raw);
+---
+
+{safe ? (
+  <figure class="emdash-figure emdash-svg" role="img" aria-label={alt}>
+    <div class="emdash-svg__out" set:html={safe} />
+    {caption && <figcaption>{caption}</figcaption>}
+  </figure>
+) : null}
+
+<style>
+  .emdash-svg {
+    margin: 2rem auto;
+    text-align: center;
+  }
+  .emdash-svg__out :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  .emdash-svg figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+</style>

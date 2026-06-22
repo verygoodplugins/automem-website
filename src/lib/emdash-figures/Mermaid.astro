@@ -1,0 +1,91 @@
+---
+/**
+ * Renders the `mermaid` Portable Text block.
+ *
+ * Mermaid runs in the browser, so the diagram is rendered client-side via
+ * mermaid.render() (scoped — never touches astro-mermaid's markdown pipeline).
+ * Mermaid is dynamically imported so it stays out of the page bundle on posts
+ * that don't use a diagram. Theme follows the site's .light / dark mode.
+ */
+const { node } = Astro.props;
+const code = (node?.code ?? '').toString();
+const caption = node?.caption ?? '';
+---
+
+<figure class="emdash-figure emdash-mermaid" data-rendered="false">
+  <pre class="emdash-mermaid__src" hidden>{code}</pre>
+  <div class="emdash-mermaid__out" role="img" aria-label={caption || 'Mermaid diagram'}></div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  const figures = document.querySelectorAll('.emdash-mermaid[data-rendered="false"]');
+  if (figures.length) {
+    const { default: mermaid } = await import('mermaid');
+    const light = document.documentElement.classList.contains('light');
+    const ink = light ? '#0F161E' : '#E6EDF3';
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      themeVariables: {
+        darkMode: !light,
+        background: 'transparent',
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        primaryColor: '#F9CF2C',
+        primaryTextColor: '#060A0E',
+        primaryBorderColor: '#465260',
+        secondaryColor: '#AE66FF',
+        lineColor: '#AE66FF',
+        textColor: ink,
+        // pie palette → lab gold / violet / mint / coral
+        pie1: '#F9CF2C', pie2: '#AE66FF', pie3: '#5ED3A0', pie4: '#FF8A5B',
+        pieStrokeColor: '#060A0E', pieOuterStrokeColor: '#465260',
+        pieSectionTextColor: '#060A0E',
+        pieTitleTextColor: ink,
+        pieLegendTextColor: ink,
+      },
+    });
+    for (const fig of figures) {
+      const src = fig.querySelector('.emdash-mermaid__src')?.textContent ?? '';
+      const out = fig.querySelector('.emdash-mermaid__out');
+      if (!src.trim() || !out) {
+        fig.setAttribute('data-rendered', 'true');
+        continue;
+      }
+      try {
+        const id = 'mmd-' + Math.random().toString(36).slice(2);
+        const { svg } = await mermaid.render(id, src);
+        out.innerHTML = svg;
+      } catch (err) {
+        out.classList.add('emdash-mermaid__error');
+        out.textContent = 'Mermaid render error: ' + (err && err.message ? err.message : String(err));
+      }
+      fig.setAttribute('data-rendered', 'true');
+    }
+  }
+</script>
+
+<style>
+  .emdash-mermaid {
+    margin: 2rem auto;
+    text-align: center;
+  }
+  .emdash-mermaid__out :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  .emdash-mermaid figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .emdash-mermaid__error {
+    color: #ff6b6b;
+    font-family: ui-monospace, monospace;
+    white-space: pre-wrap;
+    text-align: left;
+  }
+</style>

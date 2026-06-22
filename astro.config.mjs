@@ -15,6 +15,8 @@ import { fileURLToPath } from 'node:url';
 const isBuilding = process.argv.includes('build');
 const enableEmdash = true;
 const resendEmailPlugin = fileURLToPath(new URL('./src/lib/emdash-resend-email.ts', import.meta.url));
+const figuresPlugin = fileURLToPath(new URL('./src/lib/emdash-figures/plugin.ts', import.meta.url));
+const figuresComponents = fileURLToPath(new URL('./src/lib/emdash-figures/block-components.ts', import.meta.url));
 
 // "Memory Lab" syntax theme — maps the brand palette (already used by the
 // marketing ChatDemo/InstallCommand: violet identifiers, green strings/values,
@@ -317,6 +319,11 @@ export default defineConfig({
             id: 'automem-resend-email',
             version: '1.0.0',
             entrypoint: resendEmailPlugin,
+          }, {
+            id: 'emdash-plugin-figures',
+            version: '0.1.0',
+            entrypoint: figuresPlugin,
+            componentsEntry: figuresComponents,
           }],
         })]
       : []),
