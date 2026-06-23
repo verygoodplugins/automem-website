@@ -512,10 +512,7 @@ curl -X PATCH https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef123
   -H "Content-Type: application/json" \
   -d '{
     "importance": 0.95,
-    "tags": ["project-alpha", "database", "architecture", "reviewed"],
-    "metadata": {
-      "reviewed_at": "2025-02-01T10:00:00Z"
-    }
+    "tags": ["project-alpha", "database", "architecture", "reviewed"]
   }'
 ```
 
