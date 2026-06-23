@@ -9,6 +9,7 @@ sidebar:
 Key GitHub sources:
 - [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
 - [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
+- [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/provider_init.py) — Provider factory and auto-selection logic
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/provider.py) — Abstract provider base class
 - [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/voyage.py) — Voyage AI provider
 - [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/openai.py) — OpenAI provider
@@ -64,7 +65,7 @@ flowchart TD
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
     Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1536d native<br/>truncated to VECTOR_SIZE via Matryoshka"]
-    Try2 -->|No| Try3{"Ollama<br/>running?"}
+    Try2 -->|No| Try3{"OLLAMA_BASE_URL<br/>or OLLAMA_MODEL<br/>set?"}
 
     Try3 -->|Yes| Ollama["OllamaEmbeddingProvider<br/>Local server"]
     Try3 -->|No| Try4{"FastEmbed<br/>available?"}
@@ -101,7 +102,7 @@ flowchart TD
 
 1. **Voyage first:** Best quality embeddings, generous free tier, shared embedding space across model sizes
 2. **OpenAI second:** High quality, widely available, compatible with OpenRouter/LiteLLM
-3. **Ollama third:** Local inference, flexible models, requires Ollama server running
+3. **Ollama third:** Local inference, flexible models, selected when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is configured (server reachability is not checked at selection time — connectivity errors surface only during provider initialization)
 4. **FastEmbed fourth:** Local ONNX inference, no API costs, good quality for 768d
 5. **Placeholder last:** Deterministic fallback, no semantic meaning but consistent
 
@@ -156,7 +157,7 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` a
 
 **Configuration:**
 - `EMBEDDING_PROVIDER=local` (explicit) or auto-detected when no API keys present
-- Models cached in `~/.config/automem/models/`
+- Models cached in `~/.config/automem/models/` (override with `AUTOMEM_MODELS_DIR` env var)
 
 **Model selection by dimension:**
 
@@ -379,6 +380,9 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_MODEL` | str | OpenAI | Model: `text-embedding-3-small`, `text-embedding-3-large` |
 | `OLLAMA_BASE_URL` | str | Ollama | Ollama server URL (default: `http://localhost:11434`) |
 | `OLLAMA_MODEL` | str | Ollama | Ollama embedding model (default: `nomic-embed-text`) |
+| `OLLAMA_TIMEOUT` | int | Ollama | Request timeout in seconds (default: `30`) |
+| `OLLAMA_MAX_RETRIES` | int | Ollama | Maximum retry attempts on failure (default: `2`) |
+| `AUTOMEM_MODELS_DIR` | str | FastEmbed | Local model cache directory (default: `~/.config/automem/models/`) |
 
 ### Storage Configuration
 
