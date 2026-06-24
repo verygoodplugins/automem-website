@@ -94,7 +94,7 @@ graph TB
 
 ### The AutoMem Server
 
-The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
+The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~631-line orchestration file that imports from the package rather than a monolithic application. It provides:
 
 - A REST API for storing, recalling, updating, and deleting memories
 - A FalkorDB graph database for canonical memory records and relationship traversal
@@ -165,7 +165,7 @@ When an AI assistant calls `store_memory`:
 6. Qdrant stores the vector for semantic search (if available)
 7. Background enrichment is queued via `ServiceState.enrichment_queue`
 
-When an AI assistant calls `recall_memory`, the system runs hybrid search: parallel queries against both the semantic vector store and the graph database, then merges and re-ranks results using a 9-component relevance score.
+When an AI assistant calls `recall_memory`, the system runs hybrid search: parallel queries against both the semantic vector store and the graph database, then merges and re-ranks results using a 10-component relevance score.
 
 :::note
 The `recall_memory` tool selects one of three mutually exclusive retrieval modes: ID fetch (`GET /memory/{id}`), tag enumeration (`GET /memory/by-tag`, when `exhaustive: true`), or ranked hybrid search (`GET /recall`, the default). Only one endpoint is called per request.
