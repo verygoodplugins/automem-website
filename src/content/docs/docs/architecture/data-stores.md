@@ -7,12 +7,12 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/runtime_clients.py) — Connection init (init_falkordb, init_qdrant, ensure_qdrant_collection)
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — FalkorDB abstraction
-- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/vector_store.py) — Qdrant abstraction
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/embedding/provider.py) — Embedding provider abstraction
-- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/validation.py) — Dimension validation
-- [.env.example](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/.env.example) — Configuration reference
+- [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/runtime_clients.py) — Connection init (init_falkordb, init_qdrant, ensure_qdrant_collection)
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py) — FalkorDB abstraction
+- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/vector_store.py) — Qdrant abstraction
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/embedding/provider.py) — Embedding provider abstraction
+- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/validation.py) — Dimension validation
+- [.env.example](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/.env.example) — Configuration reference
 :::
 
 AutoMem uses two specialized databases that serve complementary purposes:
@@ -95,7 +95,7 @@ FalkorDB is a Redis-compatible graph database that stores memories as nodes with
 | `FALKORDB_PASSWORD` | _(none)_ | Authentication password |
 | `FALKORDB_GRAPH` | `memories` | Graph database name |
 
-**Connection Initialization:** The Flask app establishes the connection at startup via `init_falkordb()` ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/runtime_clients.py)).
+**Connection Initialization:** The Flask app establishes the connection at startup via `init_falkordb()` ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/runtime_clients.py)).
 
 ### Persistence Configuration
 
@@ -110,15 +110,15 @@ FalkorDB uses Redis AOF (Append-Only File) and RDB snapshots for durability. Con
 
 **Memory Node Creation**
 
-Memories are created via `MERGE` to ensure idempotency ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py)).
+Memories are created via `MERGE` to ensure idempotency ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
 
 **Relationship Creation**
 
-The `/associate` endpoint creates typed edges between memory nodes ([automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py)).
+The `/associate` endpoint creates typed edges between memory nodes ([automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/memory.py)).
 
 **Keyword Search**
 
-The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py)).
+The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
 
 ---
 
@@ -148,7 +148,7 @@ Qdrant is optional. If unavailable, AutoMem falls back to keyword-based search i
 
 **Dimension Validation**
 
-AutoMem validates vector dimensions against the configured `VECTOR_SIZE` before writing to Qdrant. Mismatches raise a `ValueError` with a clear message, preventing Qdrant collection corruption from mixed dimensions ([automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/validation.py)).
+AutoMem validates vector dimensions against the configured `VECTOR_SIZE` before writing to Qdrant. Mismatches raise a `ValueError` with a clear message, preventing Qdrant collection corruption from mixed dimensions ([automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/validation.py)).
 
 :::caution[Migration Note]
 Existing deployments using 768-dimensional embeddings should keep `VECTOR_SIZE=768` and `EMBEDDING_MODEL=text-embedding-3-small` until re-embedding via `scripts/reembed_embeddings.py`.
@@ -162,7 +162,7 @@ AutoMem uses a provider-based embedding system with automatic fallback. The defa
 
 1. Voyage AI (if `VOYAGE_API_KEY` set)
 2. OpenAI (if `OPENAI_API_KEY` set)
-3. Ollama (local server, if running)
+3. Ollama (if `OLLAMA_BASE_URL` or `OLLAMA_MODEL` set)
 4. FastEmbed (local ONNX, if installed)
 5. Placeholder (hash-based, always available)
 
@@ -197,7 +197,7 @@ Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR
 
 ### Vector Search Implementation
 
-The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/vector_store.py)).
+The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/vector_store.py)).
 
 ---
 
@@ -218,7 +218,7 @@ The `/recall` endpoint combines results from both databases:
 1. If Qdrant is available: execute vector similarity search
 2. Execute FalkorDB keyword/graph search
 3. Merge results using deduplication (`seen_ids` set)
-4. Apply 9-component hybrid scoring
+4. Apply 10-component hybrid scoring
 5. Sort and return top results
 
 For details on the scoring formula, see [Hybrid Search](/docs/core-concepts/hybrid-search/).
@@ -249,8 +249,8 @@ The `/health` endpoint reports both database states:
 
 | Database | States | Meaning |
 |---|---|---|
-| FalkorDB | `connected`, `error` | Always required, error halts startup |
-| Qdrant | `connected`, `not_configured`, `error` | Optional, errors logged but not fatal |
+| FalkorDB | `connected`, `disconnected` | Always required, disconnection is fatal |
+| Qdrant | `connected`, `disconnected` | Optional, errors logged but not fatal |
 
 ---
 
