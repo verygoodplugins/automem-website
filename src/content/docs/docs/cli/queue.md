@@ -54,7 +54,7 @@ The `update_memory` tool accepts the following parameters (defined in [`src/type
 | `content` | `string` | No | New content (replaces existing) |
 | `tags` | `string[]` | No | New tags (replaces existing array) |
 | `importance` | `number` (0-1) | No | New importance score |
-| `metadata` | `object` | No | New metadata (merged with existing) |
+| `metadata` | `object` | No | New metadata (replaces existing entirely) |
 | `timestamp` | `string` (ISO) | No | Override creation timestamp |
 | `updated_at` | `string` (ISO) | No | Explicit update timestamp |
 | `last_accessed` | `string` (ISO) | No | Last access timestamp |
