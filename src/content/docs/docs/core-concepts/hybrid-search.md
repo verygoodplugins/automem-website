@@ -7,15 +7,15 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
-- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_keywords.py) — Keyword matching logic
-- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/search/runtime_relations.py) — Relationship expansion
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L389-L397](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L389-L397) — Search weight configuration
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/graph.py) — Graph traversal utilities
-- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/time.py) — Temporal expression parsing
-- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/tags.py) — Tag prefix utilities
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
+- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/search/runtime_keywords.py) — Keyword matching logic
+- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/search/runtime_relations.py) — Relationship expansion
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/recall.py) — Recall endpoint orchestration
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py) — Search weight configuration
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/scoring.py) — Score computation
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/time.py) — Temporal expression parsing
+- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/tags.py) — Tag prefix utilities
 :::
 
 This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the publication bundle and methodology links.
@@ -187,9 +187,9 @@ Three metadata fields contribute to the final score: importance, confidence, and
 
 ---
 
-## 9-Component Scoring System
+## 10-Component Scoring System
 
-The final score for each memory result combines nine weighted components. The weights are configurable via environment variables.
+The final score for each memory result combines ten weighted components. The weights are configurable via environment variables.
 
 ### Scoring Formula
 
@@ -197,6 +197,7 @@ The final score for each memory result combines nine weighted components. The we
 final_score =
     vector_similarity    × SEARCH_WEIGHT_VECTOR       (default: 0.35)
   + keyword_score        × SEARCH_WEIGHT_KEYWORD      (default: 0.35)
+  + metadata_score       × SEARCH_WEIGHT_METADATA     (default: 0.35)
   + tag_match_score      × SEARCH_WEIGHT_TAG          (default: 0.20)
   + importance           × SEARCH_WEIGHT_IMPORTANCE   (default: 0.10)
   + confidence           × SEARCH_WEIGHT_CONFIDENCE   (default: 0.05)
@@ -206,7 +207,7 @@ final_score =
   + context_bonus        × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
 ```
 
-**Note:** Component weights are relative contributions that sum to 1.60. Raw combined scores are normalized to the range [0.0, 1.0] during final ranking.
+**Note:** Component weights are relative contributions that sum to 1.95. Raw combined scores are normalized to the range [0.0, 1.0] during final ranking.
 
 ### Component Weights
 
@@ -214,6 +215,7 @@ final_score =
 |---|---|---|---|
 | Vector | 35% | `SEARCH_WEIGHT_VECTOR` | Semantic similarity from Qdrant |
 | Keyword | 35% | `SEARCH_WEIGHT_KEYWORD` | Lexical matching score |
+| Metadata | 35% | `SEARCH_WEIGHT_METADATA` | Structured metadata field match score |
 | Tag | 20% | `SEARCH_WEIGHT_TAG` | Tag filter matching |
 | Importance | 10% | `SEARCH_WEIGHT_IMPORTANCE` | User-assigned priority |
 | Confidence | 5% | `SEARCH_WEIGHT_CONFIDENCE` | Classification certainty |
@@ -222,7 +224,7 @@ final_score =
 | Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
 | Context | 0% | `SEARCH_WEIGHT_RELEVANCE` | Context profile scoring bonus |
 
-> **Note:** Weights are relative contributions (sum = 1.60) normalized to [0.0, 1.0] during score computation.
+> **Note:** Weights are relative contributions (sum = 1.95) normalized to [0.0, 1.0] during score computation.
 
 ### Score Combination Flow
 
@@ -231,6 +233,7 @@ flowchart TD
     subgraph sources ["Data Source Scores"]
         VS["Vector Search<br/>Qdrant similarity<br/>0.0 - 1.0"]
         KS["Keyword Search<br/>TF-IDF score<br/>Normalized"]
+        MetaSrc["Metadata Search<br/>Structured field match<br/>Normalized"]
         GS["Graph Score<br/>Importance fallback"]
     end
 
@@ -245,6 +248,7 @@ flowchart TD
     subgraph weights ["Weight Application"]
         VW["× SEARCH_WEIGHT_VECTOR<br/>0.35"]
         KW["× SEARCH_WEIGHT_KEYWORD<br/>0.35"]
+        MetaW["× SEARCH_WEIGHT_METADATA<br/>0.35"]
         TagW["× SEARCH_WEIGHT_TAG<br/>0.20"]
         IW["× SEARCH_WEIGHT_IMPORTANCE<br/>0.10"]
         ConfW["× SEARCH_WEIGHT_CONFIDENCE<br/>0.05"]
@@ -269,6 +273,7 @@ flowchart TD
 
     VS --> VW
     KS --> KW
+    MetaSrc --> MetaW
     TagSrc --> TagW
     ImpSrc --> IW
     ConfSrc --> ConfW
@@ -279,6 +284,7 @@ flowchart TD
 
     VW --> Sum
     KW --> Sum
+    MetaW --> Sum
     TagW --> Sum
     IW --> Sum
     ConfW --> Sum
@@ -368,6 +374,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 |---|---|---|
 | `SEARCH_WEIGHT_VECTOR` | 0.35 | Vector similarity contribution |
 | `SEARCH_WEIGHT_KEYWORD` | 0.35 | Keyword match contribution |
+| `SEARCH_WEIGHT_METADATA` | 0.35 | Structured metadata field match contribution |
 | `SEARCH_WEIGHT_TAG` | 0.20 | Tag match contribution |
 | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 | Importance field contribution |
 | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 | Confidence field contribution |
@@ -376,7 +383,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
 | `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Context profile scoring bonus |
 
-**Note on weight configuration:** Default weights are relative contributions that sum to 1.60. Final scores are normalized to [0.0, 1.0] during ranking. To customize, maintain relative proportions.
+**Note on weight configuration:** Default weights are relative contributions that sum to 1.95. Final scores are normalized to [0.0, 1.0] during ranking. To customize, maintain relative proportions.
 
 ### Expansion and Limit Configuration
 
