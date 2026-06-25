@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -251,13 +251,13 @@ curl "https://your-automem-instance/analyze" \
 
 | Use Case | Relevant Fields |
 |----------|-----------------|
-| Identify memory class imbalance | `memories_by_type` |
-| Find frequently discussed projects or tools | `top_entities` |
+| Identify memory class imbalance | `memory_types` |
+| Find frequently discussed projects or tools | `entity_frequency` |
 | Assess overall memory quality | `confidence_distribution` |
-| Understand when memories are most created | `activity_by_hour` |
-| Audit tagging consistency | `top_tags` |
-| Verify enrichment pipeline results | `relationships["SIMILAR_TO"]`, `relationships["EXEMPLIFIES"]` |
-| Detect temporal validity issues | `relationships["INVALIDATED_BY"]`, `relationships["EVOLVED_INTO"]` |
+| Understand when memories are most created | `temporal_insights` |
+| Audit tagging consistency | `memory_types` |
+| Verify enrichment pipeline results | `patterns` |
+| Detect temporal validity issues | `preferences` |
 
 ---
 
@@ -358,10 +358,12 @@ The startup recall endpoint is designed for session initialization. A typical MC
 ```python
 # At session start, load context memories
 response = requests.get(f"{AUTOMEM_URL}/startup-recall")
-memories = response.json()["memories"]
+data = response.json()
+lessons = data["critical_lessons"]   # high-importance / tagged 'critical'/'lesson'
+system_rules = data["system_rules"]  # tagged 'system'/'memory-recall'
 
 # Inject into system prompt
-context_block = "\n".join([f"- {m['content']}" for m in memories])
+context_block = "\n".join([f"- {m['content']}" for m in lessons + system_rules])
 system_prompt = f"Known context:\n{context_block}\n\n{base_prompt}"
 ```
 
