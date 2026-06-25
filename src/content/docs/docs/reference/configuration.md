@@ -525,11 +525,11 @@ The health endpoint at `GET /health` reflects connection status and can be used 
 }
 ```
 
-When Qdrant is unavailable (expected in graph-only mode):
+When Qdrant is unavailable (graph-only mode):
 
 ```json
 {
-  "status": "healthy",
+  "status": "degraded",
   "falkordb": "connected",
   "qdrant": "disconnected",
   "memory_count": 142
