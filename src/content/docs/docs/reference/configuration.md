@@ -233,6 +233,7 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 |----------|------|----------|---------|-------------|
 | `SEARCH_WEIGHT_VECTOR` | float | No | `0.35` | Vector similarity component |
 | `SEARCH_WEIGHT_KEYWORD` | float | No | `0.35` | Keyword/TF-IDF matching |
+| `SEARCH_WEIGHT_METADATA` | float | No | `0.35` | Metadata sidecar match score |
 | `SEARCH_WEIGHT_TAG` | float | No | `0.20` | Tag overlap score |
 | `SEARCH_WEIGHT_IMPORTANCE` | float | No | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_RECENCY` | float | No | `0.10` | Freshness boost |
@@ -311,7 +312,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/classification/memory_classifier.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/classification/memory_classifier.py).
 
 ### Memory Content Governance
 
@@ -530,7 +531,7 @@ When Qdrant is unavailable (expected in graph-only mode):
 {
   "status": "healthy",
   "falkordb": "connected",
-  "qdrant": "unavailable",
+  "qdrant": "disconnected",
   "memory_count": 142
 }
 ```
