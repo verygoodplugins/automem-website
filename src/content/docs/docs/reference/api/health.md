@@ -255,9 +255,6 @@ curl "https://your-automem-instance/analyze" \
 | Find frequently discussed projects or tools | `entity_frequency` |
 | Assess overall memory quality | `confidence_distribution` |
 | Understand when memories are most created | `temporal_insights` |
-| Audit tagging consistency | `memory_types` |
-| Verify enrichment pipeline results | `patterns` |
-| Detect temporal validity issues | `preferences` |
 
 ---
 
