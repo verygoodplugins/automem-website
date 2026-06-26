@@ -19,7 +19,13 @@ const canonicalClaims = benchmarkData.canonicalClaims;
 const canaryClaims = benchmarkData.canaryClaims;
 const supplementalClaims = benchmarkData.supplementalClaims;
 const amb = benchmarkData.ambSubmission;
-const notYetRunClaims = benchmarkData.notYetRun.filter((item) => item !== 'Memora/FAMA');
+// 'BEAM official 1M/10M' is covered by the AMB BEAM scaling section above (shown
+// with its submitted/not-yet-canonical status), so listing it here too reads as a
+// contradiction. Filter it (and the de-scoped Memora/FAMA) from the "Not yet
+// canonical" box. Both still arrive from the synced manifest's notYetRun.
+const notYetRunClaims = benchmarkData.notYetRun.filter(
+  (item) => item !== 'Memora/FAMA' && item !== 'BEAM official 1M/10M',
+);
 
 const ambAsOf = formatGeneratedDate(amb?.asOf ?? benchmarkData.generatedAt);
 const beam10m = amb?.beam?.rows?.find((row) => row.tier === '10M');
