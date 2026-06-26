@@ -51,6 +51,7 @@ graph TB
         direction TB
 
         subgraph bridge["MCP Bridge Layer"]
+            StdioBridge["mcp-automem<br/>Local stdio process<br/>Protocol Translation"]
             MCPBridge["mcp-sse-server<br/>Node.js :8080<br/>Protocol Translation"]
         end
 
@@ -71,10 +72,11 @@ graph TB
         end
     end
 
-    AITools -->|"MCP Protocol"| FlaskAPI
-    CloudAI -->|"SSE/HTTP"| MCPBridge
+    AITools -->|"MCP stdio"| StdioBridge
+    CloudAI -->|"Remote MCP<br/>SSE/HTTP"| MCPBridge
     DirectAPI -->|"HTTP REST"| FlaskAPI
 
+    StdioBridge -->|"HTTP REST"| FlaskAPI
     MCPBridge -->|"Internal HTTP"| FlaskAPI
 
     FlaskAPI -->|"Graph Queries"| FalkorDB
