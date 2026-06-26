@@ -90,7 +90,9 @@ test('install command widget centralizes commands and exposes copy + toggle', as
   const copyButton = await readSource('../src/components/CopyButton.astro');
 
   // Single source of truth: both the curl launcher and the npm command.
-  assert.match(commands, /curl -fsSL https:\/\/automem\.ai\/install\.sh \| sh/);
+  // The launcher uses the short, standardized URL (get.automem.ai → install.sh worker).
+  assert.match(commands, /curl -fsSL get\.automem\.ai \| sh/);
+  assert.doesNotMatch(commands, /automem\.ai\/install\.sh/);
   assert.match(commands, /npx @verygoodplugins\/mcp-automem setup/);
 
   // Script ⇄ npm toggle and one-line (non-wrapping) presentation.

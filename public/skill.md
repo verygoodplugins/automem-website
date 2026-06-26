@@ -23,7 +23,7 @@ editor, or MCP-compatible client.
 ## Primary Installer
 
 ```sh
-curl -fsSL https://automem.ai/install.sh | sh
+curl -fsSL get.automem.ai | sh
 ```
 
 ## Setup Flow

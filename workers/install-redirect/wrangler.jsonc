@@ -1,0 +1,9 @@
+{
+  "name": "automem-install-redirect",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-04",
+  "account_id": "2cc725912d479c0bd6c08fc24931a478",
+  "workers_dev": false,
+  "routes": [{ "pattern": "get.automem.ai", "custom_domain": true }],
+  "observability": { "enabled": true }
+}
