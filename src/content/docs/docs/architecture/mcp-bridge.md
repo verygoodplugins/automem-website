@@ -39,7 +39,7 @@ graph TB
     subgraph "MCP Bridge (mcp-sse-server)"
         Express["Express App<br/>:8080"]
         AutoMemClientSSE["AutoMemClient<br/>(HTTP)"]
-        Sessions["Session Map<br/>+ InMemoryEventStore"]
+        Sessions["Legacy SSE Session Map"]
     end
 
     subgraph "MCP Bridge (mcp-automem package)"
@@ -65,10 +65,10 @@ graph TB
 | Component | File Location | Purpose |
 |---|---|---|
 | Express app | [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) | HTTP server with endpoint routing |
-| `AutoMemClient` | [server.js:178-267](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L178-L267) | HTTP client for AutoMem API |
-| `buildMcpServer()` | [server.js:270-493](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L270-L493) | MCP server factory with tool handlers |
-| `InMemoryEventStore` | [server.js:134-175](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L134-L175) | Event buffering for stream resumption |
-| Session management | [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) | Map-based session tracking with TTL |
+| `AutoMemClient` | [server.js:244-346](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L244-L346) | HTTP client for AutoMem API |
+| `buildMcpServer()` | [server.js:425-685](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L425-L685) | MCP server factory with tool handlers |
+| `InMemoryEventStore` | [server.js:202-241](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L202-L241) | Dormant event-buffer helper; not wired into the current `/mcp` handler |
+| Session management | [server.js:705-729](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L705-L729) | Legacy SSE session tracking with TTL sweep |
 
 ---
 
@@ -173,20 +173,19 @@ The mcp-sse-server bridge supports two MCP transport protocols with different ch
 
 **Implementation Details:**
 
-- **Session initialization**: [server.js:648-668](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L648-L668) — Checks `isInitializeRequest()` and `req.method === 'POST'`
-- **Session reuse**: [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Validates existing sessions and updates `lastAccess`
-- **Event storage**: [server.js:134-175](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L134-L175) — Stores up to 1000 events per stream
-- **Session cleanup**: [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Sweeps every 5 minutes, 1-hour TTL
-- **Resumability**: [server.js:134-175](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L134-L175) — `replayEventsAfter()` for `Last-Event-ID` support
+- **Request handling**: [server.js:987-1038](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L987-L1038) — Handles all `/mcp` methods through a fresh server/transport per request
+- **Session header**: [server.js:993-1002](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L993-L1002) — Logs and ignores any incoming `Mcp-Session-Id`
+- **Transport setup**: [server.js:1010-1022](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1010-L1022) — Creates `StreamableHTTPServerTransport` with `sessionIdGenerator: undefined`
+- **Session persistence**: Not implemented in the current handler; no streamable session map, event store, or TTL cleanup is used
 
 ### SSE Transport (2024-11-05, Deprecated)
 
 **Implementation Details:**
 
-- **Stream setup**: [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623) — Creates `SSEServerTransport` with `/mcp/messages` endpoint
-- **Heartbeat**: [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623) — Sends `: ping\n\n` every 20 seconds
-- **Message handling**: [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623) — Routes POST to `handlePostMessage()`
-- **Cleanup**: [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623) — `res.on('close')` clears heartbeat and session
+- **Stream setup**: [server.js:1041-1072](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1041-L1072) — Creates `SSEServerTransport` with `/mcp/messages` endpoint
+- **Heartbeat**: [server.js:1056-1059](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1056-L1059) — Sends `: ping\n\n` every 20 seconds
+- **Message handling**: [server.js:1075-1089](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1075-L1089) — Routes POST to `handlePostMessage()`
+- **Cleanup**: [server.js:1060-1064](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1060-L1064) — `res.on('close')` clears heartbeat and session
 
 ### Transport Comparison
 
@@ -194,10 +193,10 @@ The mcp-sse-server bridge supports two MCP transport protocols with different ch
 |---|---|---|
 | Protocol version | 2025-03-26 | 2024-11-05 |
 | Initialization | Single endpoint (`POST /mcp`) | Separate endpoints (`GET /mcp/sse`, `POST /mcp/messages`) |
-| Session ID | `Mcp-Session-Id` header | Query param in POST URL |
-| Resumability | `Last-Event-ID` header | None |
-| Event buffering | `InMemoryEventStore` (1000 events) | None |
-| Connection style | Stateful sessions with TTL | Long-lived SSE stream |
+| Session ID | None; `Mcp-Session-Id` is ignored | Query param in POST URL |
+| Resumability | Not implemented in current handler | None |
+| Event buffering | Not wired in current handler | None |
+| Connection style | Request-scoped, fresh transport per request | Long-lived SSE stream |
 | Heartbeat | Not needed (stateless requests) | 20-second ping interval |
 
 ---
@@ -289,7 +288,7 @@ sequenceDiagram
 | `deleteMemory()` | DELETE | `/memory/{id}` | ID in URL |
 | `checkHealth()` | GET | `/health` | No body |
 
-**Error Handling:** [server.js:178-267](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L178-L267) wraps fetch failures and non-OK responses into Error objects.
+**Error Handling:** [server.js:107-199](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L107-L199) wraps fetch failures and non-OK responses into Error objects.
 
 ---
 
@@ -353,7 +352,7 @@ Both bridge implementations expose six MCP tools with JSON schemas for validatio
 
 ### Detailed Tool Specifications
 
-**`store_memory`** — [server.js:312-333](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L312-L333)
+**`store_memory`** — [server.js:437-461](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L437-L461)
 
 | Parameter | Type | Required | Constraints | Description |
 |---|---|---|---|---|
@@ -366,7 +365,7 @@ Both bridge implementations expose six MCP tools with JSON schemas for validatio
 | `type` | string | No | — | Memory classification |
 | `confidence` | number | No | 0.0-1.0 | Classification confidence |
 
-**`recall_memory`** — [server.js:335-385](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L335-L385)
+**`recall_memory`** — [server.js:462-509](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L462-L509)
 
 Advanced recall parameters:
 - `expand_relations` (boolean): Enable graph traversal
@@ -385,7 +384,7 @@ Context hints:
 - `context_types` (string[]): Priority memory types
 - `priority_ids` (string[]): Specific IDs to boost
 
-**Output Formats** ([server.js:270-493](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L270-L493)):
+**Output Formats** ([server.js:351-422](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L351-L422)):
 - `text` (default): Single-block text with all results
 - `items`: One MCP content item per memory
 - `detailed`: Items with timestamps, relations, scores
@@ -395,36 +394,36 @@ Context hints:
 
 **`formatRecallAsItems()` Function:**
 
-[server.js:99-131](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L99-L131) transforms AutoMem API responses into MCP content items.
+[server.js:351-422](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L351-L422) transforms AutoMem API responses into MCP content items.
 
-**Relation Summarization:** [server.js:99-131](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L99-L131) — Shows up to 5 relations with type, strength, and source ID.
+**Relation Summarization:** [server.js:407-418](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L407-L418) — Shows up to 5 relations with type, strength, and source ID.
 
 ---
 
 ## Session Management (mcp-sse-server)
 
-The mcp-sse-server bridge maintains stateful sessions for both transport protocols with different lifecycle strategies.
+The mcp-sse-server bridge maintains stateful sessions for the legacy SSE transport only. The Streamable HTTP endpoint is request-scoped at `ebcf5f16`: it ignores incoming session IDs and creates a fresh MCP server/transport per request.
 
 ### Session State Structure
 
 **Session Creation:**
 
-Streamable HTTP — [server.js:648-668](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L648-L668)
+Streamable HTTP — [server.js:987-1038](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L987-L1038) (fresh request-scoped transport; no stored session)
 
-SSE — [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623)
+SSE — [server.js:1041-1072](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1041-L1072)
 
 **Session Cleanup:**
 
 | Transport | Cleanup Strategy | TTL | Implementation |
 |---|---|---|---|
-| Streamable HTTP | Sweep interval | 1 hour idle | [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — 5 minute sweeps |
-| SSE | Connection close | Until disconnect | [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L595-L623) — `res.on('close')` |
+| Streamable HTTP | Response close closes the per-request transport | Request lifetime | [server.js:1017-1022](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1017-L1022) |
+| SSE | Connection close plus stale-session sweep | Until disconnect; 1 hour idle sweep | [server.js:705-729](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L705-L729), [server.js:1060-1064](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L1060-L1064) |
 
 ### Event Store Implementation
 
-**Purpose:** Enable session resumption with `Last-Event-ID` header for Streamable HTTP transport.
+**Purpose:** Provide event buffering primitives for resumable streams. At `ebcf5f16`, the class is present but not instantiated by the current Streamable HTTP or SSE handlers.
 
-[server.js:134-175](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L134-L175) `InMemoryEventStore` class:
+[server.js:202-241](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L202-L241) `InMemoryEventStore` class:
 
 | Method | Parameters | Return | Description |
 |---|---|---|---|
@@ -433,9 +432,9 @@ SSE — [server.js:595-623](https://github.com/verygoodplugins/automem/blob/ebcf
 | `removeStream()` | streamId | void | Delete all events for stream |
 | `stopCleanup()` | — | void | Stop TTL sweep timer |
 
-**Event ID Format:** [server.js:134-175](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L134-L175) — `${streamId}-${Date.now()}-${randomUUID().slice(0, 8)}`
+**Event ID Format:** [server.js:222-223](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L222-L223) — `${streamId}-${Date.now()}-${randomUUID().slice(0, 8)}`
 
-**TTL Sweep:** [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Runs every 5 minutes (default), removes streams idle > 1 hour.
+**TTL Sweep:** [server.js:203-214](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L203-L214) — Runs every 5 minutes by default and removes streams idle > 1 hour when the helper is instantiated.
 
 ---
 
@@ -449,11 +448,11 @@ The bridge includes a custom Alexa skill endpoint separate from MCP protocol han
 
 | Component | File Location | Purpose |
 |---|---|---|
-| Endpoint handler | [server.js:535-596](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L535-L596) | Routes Alexa JSON to AutoMem API |
-| `speech()` helper | [server.js:496-507](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L496-L507) | Builds Alexa response JSON |
-| `getSlot()` | [server.js:510-513](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L510-L513) | Extracts intent slot values |
-| `buildAlexaTags()` | [server.js:516-523](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L516-L523) | Adds `alexa`, `user:{id}`, `device:{id}` tags |
-| `formatRecallSpeech()` | [server.js:626-639](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L626-L639) | Converts memories to spoken text (240 char limit) |
+| Endpoint handler | [server.js:907-985](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L907-L985) | Routes Alexa JSON to AutoMem API |
+| `speech()` helper | [server.js:859-870](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L859-L870) | Builds Alexa response JSON |
+| `getSlot()` | [server.js:875-878](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L875-L878) | Extracts intent slot values |
+| `buildAlexaTags()` | [server.js:883-890](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L883-L890) | Adds `alexa`, `user:{id}`, `device:{id}` tags |
+| `formatRecallSpeech()` | [server.js:895-904](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L895-L904) | Converts memories to spoken text (240 char limit) |
 
 **Supported Intents:**
 
@@ -464,11 +463,11 @@ The bridge includes a custom Alexa skill endpoint separate from MCP protocol han
 | `AMAZON.HelpIntent` | — | — | Usage instructions |
 | `LaunchRequest` | — | — | Welcome message |
 
-**Tag Scoping:** [server.js:535-596](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L535-L596) — Recall tries user-specific tags first, falls back to unscoped search.
+**Tag Scoping:** [server.js:954-973](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L954-L973) — Recall tries user-specific tags first, falls back to unscoped search.
 
 ### Health Endpoint
 
-**Route:** `GET /health` — [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js)
+**Route:** `GET /health` — [server.js:806-822](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L806-L822)
 
 **Purpose:** Railway health checks, monitoring systems, and client capability detection.
 
