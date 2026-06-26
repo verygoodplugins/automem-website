@@ -161,7 +161,7 @@ Temporal scoring boosts memories that align with time-based query constraints. T
 
 Tag filters support both exact matching and prefix matching for hierarchical tag namespaces. The system normalizes tags to lowercase and computes prefixes for efficient filtering.
 
-**Tag prefix system:** AutoMem automatically computes tag prefixes for efficient hierarchical filtering. For example, the tag `"entity:person:sarah"` generates prefixes: `["entity", "entity:person", "entity:person:sarah"]`.
+**Tag prefix system:** AutoMem automatically computes tag prefixes for efficient hierarchical filtering. For example, the tag `"entity:people:sarah"` generates prefixes: `["entity", "entity:people", "entity:people:sarah"]`.
 
 **Example queries:**
 
@@ -169,8 +169,8 @@ Tag filters support both exact matching and prefix matching for hierarchical tag
 tags=slack&tag_match=prefix
   → Matches: slack:*, slack:U123:*, slack:channel-ops
 
-tags=entity:person&tag_match=prefix&tag_mode=all
-  → Matches: entity:person:*, entity:person:sarah, entity:person:john
+tags=entity:people&tag_match=prefix&tag_mode=all
+  → Matches: entity:people:*, entity:people:sarah, entity:people:john
 
 tags=project&tags=decision&tag_mode=all
   → Matches: Memories tagged with both "project" AND "decision"
@@ -347,11 +347,11 @@ Entity expansion follows entity tags to find related memories. This enables quer
 
 **Entity types extracted:**
 
-- `entity:person:<name>` — People mentioned
-- `entity:tool:<name>` — Tools and technologies
-- `entity:project:<name>` — Projects and repositories
-- `entity:concept:<name>` — Concepts and ideas
-- `entity:organization:<name>` — Organizations
+- `entity:people:<name>` — People mentioned
+- `entity:tools:<name>` — Tools and technologies
+- `entity:projects:<name>` — Projects and repositories
+- `entity:concepts:<name>` — Concepts and ideas
+- `entity:organizations:<name>` — Organizations
 
 ---
 
