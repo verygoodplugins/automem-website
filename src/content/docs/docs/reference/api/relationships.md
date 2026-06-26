@@ -6,9 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py#L617](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py#L617) — Flask blueprint `/associate` endpoint
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — FalkorDB edge operations
+- [automem/api/memory.py#L995-L1078](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L995-L1078) — Flask blueprint `/associate` endpoint
+- [automem/api/memory.py#L157-L255](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L157-L255) — Batch `/associate` helper
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/stores/graph_store.py) — FalkorDB edge operations
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `associate_memories` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — Relationship type definitions

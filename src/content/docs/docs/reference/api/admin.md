@@ -6,8 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
