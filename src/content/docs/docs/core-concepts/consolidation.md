@@ -7,19 +7,21 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [consolidation.py#L118](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L118) — `MemoryConsolidator` class
-- [consolidation.py#L1090](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L1090) — `ConsolidationScheduler` class
-- [consolidation.py#L280-L339](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L280-L339) — Relevance score calculation (decay task)
-- [consolidation.py#L341-L478](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L341-L478) — Creative association discovery
-- [consolidation.py#L480-L622](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L480-L622) — Clustering algorithm
-- [consolidation.py#L624-L790](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/consolidation.py#L624-L790) — Forgetting/archiving
-- `automem/consolidation/runtime_scheduler.py` — Scheduler initialization
-- `automem/consolidation/runtime_bindings.py` — Background thread startup
+- [consolidation.py#L100](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L100) — `MemoryConsolidator` class
+- [consolidation.py#L1091](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L1091) — `ConsolidationScheduler` class
+- [consolidation.py#L270-L363](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L270-L363) — Relevance score calculation (decay task)
+- [consolidation.py#L365-L463](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L365-L463) — Creative association discovery
+- [consolidation.py#L464-L605](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L464-L605) — Clustering algorithm
+- [consolidation.py#L606](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L606) — Forgetting/archiving
+- [consolidation.py#L978-L1004](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L978-L1004) — Optional identity consolidation
+- [automem/consolidation/runtime_helpers.py#L59-L80](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_helpers.py#L59-L80) — Runtime schedule overrides
+- [automem/consolidation/runtime_scheduler.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_scheduler.py) — Scheduler initialization
+- [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_bindings.py) — Background thread startup
 - `automem/api/consolidation.py` — Manual trigger endpoint
-- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_consolidation_engine.py) — Test coverage
+- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_consolidation_engine.py) — Test coverage
 :::
 
-The Consolidation Engine maintains and optimizes the memory graph through scheduled background processing inspired by biological memory consolidation. It applies exponential decay, discovers non-obvious associations, clusters similar memories, and implements controlled forgetting to prevent unbounded memory growth.
+The Consolidation Engine maintains and optimizes the memory graph through scheduled background processing inspired by biological memory consolidation. It applies exponential decay, discovers non-obvious associations, clusters similar memories, optionally synthesizes entity identity records, and implements controlled forgetting to prevent unbounded memory growth.
 
 This page covers the `MemoryConsolidator` and `ConsolidationScheduler` classes and their integration with the Flask API. For the enrichment pipeline that processes new memories, see [Enrichment Pipeline](/docs/architecture/enrichment/). For the overall background processing architecture, see [Background Processing](/docs/architecture/background-processing/).
 
@@ -45,6 +47,7 @@ graph TB
         Decay["Decay Task<br/>calculate_relevance_score()"]
         Creative["Creative Task<br/>discover_creative_associations()"]
         Cluster["Cluster Task<br/>cluster_similar_memories()"]
+        Identity["Identity Task<br/>entity dedup + synthesis"]
         Forget["Forget Task<br/>apply_controlled_forgetting()"]
     end
 
@@ -58,11 +61,13 @@ graph TB
     Sched -->|"Daily"| Decay
     Sched -->|"Weekly"| Creative
     Sched -->|"Monthly"| Cluster
+    Sched -->|"Disabled by default"| Identity
     Sched -->|"Disabled"| Forget
 
     Decay -->|"Update scores"| Falkor
     Creative -->|"Create typed edges"| Falkor
     Cluster -->|"Create MetaMemory nodes"| Falkor
+    Identity -->|"Merge/synthesize identities"| Falkor
     Forget -->|"Archive/delete"| Falkor
     Forget -->|"Delete vectors"| Qdrant
 ```
@@ -73,7 +78,7 @@ graph TB
 
 ### MemoryConsolidator Class
 
-The `MemoryConsolidator` class implements the four consolidation tasks. It depends on a graph store (FalkorDB) and optionally a vector store (Qdrant) for deletions during forgetting.
+The `MemoryConsolidator` class implements the four core consolidation tasks plus an optional identity synthesis task. It depends on a graph store (FalkorDB) and optionally a vector store (Qdrant) for deletions during forgetting.
 
 **Key Parameters:**
 
@@ -87,9 +92,13 @@ The `MemoryConsolidator` class implements the four consolidation tasks. It depen
 | `archive_threshold` | 0.0 | Archive below this relevance (disabled by default) |
 | `delete_threshold` | 0.0 | Delete below this relevance (disabled by default) |
 
+The raw Python constructor still has nonzero fallback values for `archive_threshold` and `delete_threshold`, but the application runtime builds the consolidator from `automem/config.py` and passes the configured values. The effective deployed defaults are therefore `0.0` for both thresholds.
+
 ### ConsolidationScheduler Class
 
 The `ConsolidationScheduler` manages when each consolidation task runs based on configured intervals.
+
+The scheduler constructor defines fallback intervals, then `automem/consolidation/runtime_helpers.py` overrides them with environment-derived values during application startup. This is why `CONSOLIDATION_FORGET_INTERVAL_SECONDS=0` disables scheduled forgetting even though the bare scheduler fallback is 90 days.
 
 **Default Schedule Configuration:**
 
@@ -99,6 +108,7 @@ The `ConsolidationScheduler` manages when each consolidation task runs based on 
 | `creative` | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 (1 week) |
 | `cluster` | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 (1 month) |
 | `forget` | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 (disabled) |
+| `identity` | `CONSOLIDATION_IDENTITY_INTERVAL_SECONDS` | 0 (disabled; 604800 when `IDENTITY_SYNTHESIS_ENABLED=true`) |
 
 ---
 
@@ -399,11 +409,11 @@ POST /consolidate
 Authorization: Bearer <admin_token>
 
 {
-  "task": "decay"   // Optional: run specific task only
+  "mode": "decay"   // Optional: run a specific task only
 }
 ```
 
-If no `task` is specified, all four tasks run sequentially.
+If no `mode` is specified, `full` runs the core tasks sequentially. Identity synthesis is included only when `IDENTITY_SYNTHESIS_ENABLED=true`; otherwise the `identity` step is reported as skipped.
 
 ### Consolidation Control Node
 
@@ -412,24 +422,23 @@ Consolidation state is persisted in a `ConsolidationControl` node in FalkorDB:
 **Node Creation:**
 
 ```cypher
-MERGE (c:ConsolidationControl {id: 'singleton'})
-ON CREATE SET
-    c.last_decay = null,
-    c.last_creative = null,
-    c.last_cluster = null,
-    c.last_forget = null,
-    c.history = '[]'
+MERGE (c:ConsolidationControl {id: 'global'})
+SET c.decay_last_run = coalesce(c.decay_last_run, $now),
+    c.creative_last_run = coalesce(c.creative_last_run, $now),
+    c.cluster_last_run = coalesce(c.cluster_last_run, $now),
+    c.forget_last_run = coalesce(c.forget_last_run, $now),
+    c.identity_last_run = coalesce(c.identity_last_run, $now),
+    c.full_last_run = coalesce(c.full_last_run, $now)
 ```
 
 **Update After Task:**
 
 ```cypher
-MATCH (c:ConsolidationControl {id: 'singleton'})
-SET c.last_decay = $now,
-    c.history = $updated_history
+MERGE (c:ConsolidationControl {id: 'global'})
+SET c.decay_last_run = $timestamp
 ```
 
-This allows the `/consolidate/status` endpoint to report when each task last ran and its result.
+Each execution is also recorded as a separate `ConsolidationRun` node, which allows the `/consolidate/status` endpoint to report scheduler timing and recent run history.
 
 ---
 
@@ -444,6 +453,8 @@ This allows the `/consolidate/status` endpoint to report when each task last ran
 | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | How often creative task runs (1 week) |
 | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | How often cluster task runs (1 month) |
 | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | How often forget task runs (0 = disabled) |
+| `IDENTITY_SYNTHESIS_ENABLED` | false | Enables identity synthesis during full and scheduled identity consolidation |
+| `CONSOLIDATION_IDENTITY_INTERVAL_SECONDS` | 0 | How often identity synthesis runs (0 = disabled; defaults to 604800 when identity synthesis is enabled) |
 | `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Optional: Only decay memories with importance >= threshold |
 | `CONSOLIDATION_HISTORY_LIMIT` | 20 | Max consolidation runs to keep in history |
 | `CONSOLIDATION_PROTECTED_TYPES` | `"Decision,Insight"` | Comma-separated memory types never archived or deleted |
@@ -525,26 +536,33 @@ The consolidation engine has comprehensive test coverage in `tests/test_consolid
 - `FakeVectorStore`: Simulates Qdrant for deletion tracking
 - `freeze_time`: Freezes datetime for deterministic decay calculations
 
-Tests cover all four tasks, edge cases (empty graph, single memory, max thresholds), and the scheduler timing logic.
+Tests cover all four core tasks, edge cases (empty graph, single memory, max thresholds), and the scheduler timing logic.
 
 ### Monitoring Endpoints
 
-**GET /consolidate/status** (Admin token required):
+**GET /consolidate/status**:
 
 ```json
 {
-  "last_decay": "2025-01-15T10:00:00Z",
-  "last_creative": "2025-01-15T10:00:00Z",
-  "last_cluster": "2025-01-15T06:00:00Z",
-  "last_forget": "2025-01-15T00:00:00Z",
+  "status": "success",
+  "next_runs": {
+    "decay": "In 23 hour(s)",
+    "creative": "In 6 day(s)",
+    "cluster": "In 29 day(s)",
+    "forget": "Disabled",
+    "identity": "Disabled"
+  },
   "history": [
     {
+      "mode": "decay",
       "task": "decay",
-      "ran_at": "2025-01-15T10:00:00Z",
-      "memories_processed": 1542,
-      "duration_seconds": 0.8
+      "success": true,
+      "started_at": "2025-01-15T10:00:00Z",
+      "completed_at": "2025-01-15T10:00:01Z"
     }
-  ]
+  ],
+  "thread_alive": true,
+  "tick_seconds": 60
 }
 ```
 
