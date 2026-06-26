@@ -13,14 +13,14 @@ const paths = [
     label: 'recommended',
     detail:
       'Deploy on InstaPods or Railway, paste the generated HTTPS endpoint and token, then let the wizard wire your local agents.',
-    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
+    command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=cloud sh',
   },
   {
     title: 'Local Docker',
     label: 'private',
     detail:
       'Clone AutoMem into ~/.automem/server, generate local tokens, start Docker Compose, verify /health, then install agent rules.',
-    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=local sh',
+    command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=local sh',
   },
   {
     title: 'Existing Endpoint',
@@ -28,7 +28,7 @@ const paths = [
     detail:
       'Use a running AutoMem instance you already control. The wizard verifies it before touching agent configuration.',
     command:
-      'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=existing AUTOMEM_API_URL=https://memory.example sh',
+      'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=existing AUTOMEM_API_URL=https://memory.example sh',
   },
 ];
 
@@ -86,7 +86,7 @@ const installerSteps = [
 
         <div id="run" class="bg-lab-surface border-2 border-lab-text rounded-lg shadow-hard overflow-hidden">
           <div class="border-b-2 border-lab-text px-4 py-3 flex items-center justify-between gap-4">
-            <span class="font-bold text-lab-accent-text">automem.ai/install.sh</span>
+            <span class="font-bold text-lab-accent-text">get.automem.ai</span>
             <span class="text-xs text-lab-muted">launcher</span>
           </div>
           <div class="p-5">

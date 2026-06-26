@@ -41,7 +41,7 @@ const setupPaths = [
     icon: '▱',
     detail: 'Run everything on your machine.',
     bullets: ['Full control, no external deps', 'Data stays local', 'Works offline'],
-    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=local sh',
+    command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=local sh',
   },
   {
     title: 'Railway',
@@ -49,7 +49,7 @@ const setupPaths = [
     icon: '▤',
     detail: 'Managed cloud in minutes.',
     bullets: ['One-command deploy', 'Auto updates & backups', 'Global availability'],
-    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
+    command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=cloud sh',
     href: RAILWAY_DEPLOY_URL,
   },
   {
@@ -58,7 +58,7 @@ const setupPaths = [
     icon: '⬡',
     detail: 'Self-hosted cloud in your infra.',
     bullets: ['Your VPC, your data', 'K8s native', 'Enterprise ready'],
-    command: 'curl -fsSL https://automem.ai/install.sh | AUTOMEM_INSTALL_TARGET=cloud sh',
+    command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=cloud sh',
     href: INSTAPODS_REFERRAL_URL,
   },
 ];
