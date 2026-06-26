@@ -6,9 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/enrichment.py) — Enrichment endpoints
-- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/backup.py#L29-L100) — `/backup` export endpoint
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -84,7 +84,8 @@ graph TB
   "pending": 2,
   "inflight": 1,
   "max_attempts": 3,
-  "stats": {}
+  "stats": {},
+  "classification": {}
 }
 ```
 
@@ -98,6 +99,7 @@ graph TB
 | `inflight` | integer | Count of memories currently being processed |
 | `max_attempts` | integer | Maximum retry attempts per memory before marking failed (from `ENRICHMENT_MAX_ATTEMPTS`) |
 | `stats` | object | Lifetime enrichment statistics (nested object with processing counters) |
+| `classification` | object | Classification service counters (LLM vs regex usage statistics) |
 
 ### Example Usage
 
