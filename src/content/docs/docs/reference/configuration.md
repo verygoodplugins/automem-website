@@ -233,6 +233,7 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 |----------|------|----------|---------|-------------|
 | `SEARCH_WEIGHT_VECTOR` | float | No | `0.35` | Vector similarity component |
 | `SEARCH_WEIGHT_KEYWORD` | float | No | `0.35` | Keyword/TF-IDF matching |
+| `SEARCH_WEIGHT_METADATA` | float | No | `0.35` | Structured metadata field match contribution |
 | `SEARCH_WEIGHT_TAG` | float | No | `0.20` | Tag overlap score |
 | `SEARCH_WEIGHT_IMPORTANCE` | float | No | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_RECENCY` | float | No | `0.10` | Freshness boost |

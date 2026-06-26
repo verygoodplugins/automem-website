@@ -78,7 +78,7 @@ Time queries are parsed by `_parse_time_expression()` from `automem/utils/time.p
 | `context_types` | array[string] | — | Memory types to prioritize |
 | `priority_ids` | array[string] | — | Memory IDs to boost during scoring |
 
-Context hints influence the 9-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
+Context hints influence the 10-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
 
 :::note[`priority_ids` semantics]
 `priority_ids` adds a relevance boost to matching memories during scoring — it does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints, it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
@@ -150,7 +150,7 @@ graph LR
 
 ## Hybrid Scoring System
 
-### 9-Component Score Calculation
+### 10-Component Score Calculation
 
 ```mermaid
 graph TB
@@ -163,6 +163,10 @@ graph TB
     subgraph KeywordSearch["Keyword Search (FalkorDB)"]
         KeywordComp["Keyword Component<br/>Weight: SEARCH_WEIGHT_KEYWORD<br/>TF-IDF + phrase matching"]
         ExactComp["Exact Component<br/>Weight: SEARCH_WEIGHT_EXACT<br/>Direct content overlap"]
+    end
+
+    subgraph MetadataSearch["Metadata Search"]
+        MetadataMatchComp["Metadata Match Component<br/>Weight: SEARCH_WEIGHT_METADATA<br/>Structured metadata field match"]
     end
 
     subgraph MetadataScoring["Metadata Scoring"]
@@ -181,12 +185,14 @@ graph TB
 
     Query --> VectorSearch
     Query --> KeywordSearch
+    Query --> MetadataSearch
     Query --> MetadataScoring
     Query --> ContextScoring
 
     VectorComp --> FinalScore
     KeywordComp --> FinalScore
     ExactComp --> FinalScore
+    MetadataMatchComp --> FinalScore
     ImportanceComp --> FinalScore
     ConfidenceComp --> FinalScore
     RecencyComp --> FinalScore
@@ -201,6 +207,7 @@ The formula:
 final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
               (keyword_score × SEARCH_WEIGHT_KEYWORD) +
               (exact_match_score × SEARCH_WEIGHT_EXACT) +
+              (metadata_score × SEARCH_WEIGHT_METADATA) +
               (importance × SEARCH_WEIGHT_IMPORTANCE) +
               (confidence × SEARCH_WEIGHT_CONFIDENCE) +
               (recency_score × SEARCH_WEIGHT_RECENCY) +
@@ -216,6 +223,7 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
 | Vector | `SEARCH_WEIGHT_VECTOR` | 0.35 |
 | Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.35 |
 | Exact | `SEARCH_WEIGHT_EXACT` | 0.20 |
+| Metadata Match | `SEARCH_WEIGHT_METADATA` | 0.35 |
 | Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 |
 | Confidence | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 |
 | Recency | `SEARCH_WEIGHT_RECENCY` | 0.10 |
@@ -239,6 +247,10 @@ Implemented in `_graph_keyword_search()` using Cypher queries:
 - Content match: 2 points per keyword
 - Tag match: 1 point per keyword
 - Exact phrase bonus: +2 (content) or +1 (tag)
+
+**Metadata Match Component:**
+
+Uses the structured metadata match score when a result is admitted through metadata search; otherwise the component contributes `0.0`.
 
 **Metadata Components:**
 
@@ -537,7 +549,7 @@ curl "https://your-automem-instance/recall?query=Sarah%27s+sister%27s+job&expand
 
 ### Score-Based Sorting (Default)
 
-When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 9 components optimized for relevance.
+When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 10 components optimized for relevance.
 
 ### Time-Based Sorting
 
