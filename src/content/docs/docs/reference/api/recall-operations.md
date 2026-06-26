@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/config.py) — Score weight configuration
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/config.py) — Score weight configuration
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `recall_memory` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client and response normalization
 :::
@@ -96,6 +96,47 @@ Context hints influence the 9-component scoring system but do not filter results
 | `expand_min_strength` | float | 0.0 | Minimum relation strength to traverse |
 
 Graph expansion operates in two phases: seed results from hybrid search, then expansion via graph traversal. Expansion filtering parameters only apply to expanded memories, never to seed results.
+
+### State Filtering Parameters
+
+State filtering is the largest behavior change in 0.16: **recall now returns current state only by default.** Expired, not-yet-valid, archived, and invalidated/evolved memories are suppressed unless you explicitly ask for history. Supersession chains resolve to their head — if memory A was superseded by B and B by C (`INVALIDATED_BY` / `EVOLVED_INTO`), a recall that would surface A returns C instead. Resolution is bounded at 5 hops and is cycle-safe.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `state_mode` | string | `current` | `current` returns active memories only; `history` returns the full set including superseded/expired/archived memories |
+| `current_only` | boolean | — | Legacy flag. `true` == `state_mode=current`, `false` == `state_mode=history`. When both are set and resolve, `current_only` **wins** |
+| `state_debug` | boolean | false | Adds suppression and replacement detail (which memories were hidden and what replaced them) under a `state_filter` object in the response |
+
+:::note[Default changed in 0.16]
+Before 0.16, recall returned every matching memory regardless of lifecycle state. As of 0.16 the default is `state_mode=current` — to retrieve superseded, expired, or archived memories you must pass `state_mode=history` (or the legacy `current_only=false`).
+:::
+
+### Metadata Sidecar Search
+
+Text queries can admit a bounded set of additional candidates when the query strongly matches whitelisted metadata values (the metadata "sidecar"). This is enabled by default and controlled by the `RECALL_METADATA_SEARCH_ENABLED` environment variable — there is **no request parameter**.
+
+### Relative-Recency Bias
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `recency_bias` | string | from `RECALL_RECENCY_BIAS` (ships `off`) | `off`, `on`, or `auto`. Re-ranks score order toward more recent memories. `auto` activates only on temporal-intent queries |
+
+When the recency re-rank activates, the response echoes the applied `recency_bias` value.
+
+### Scoped Fallback
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `scope_fallback` | boolean | false | When tag-scoped results fall short of `limit` and a `query` is present, fill the remaining slots from an unscoped vector search |
+
+Fallback fills are appended **after** the scoped results, and each carries `outside_tag_scope: true`. The `exclude_tags`, time-window, `min_score`, and current-state filters still apply to fallback candidates.
+
+### Weak-Result Gating
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `min_score` | float | from `RECALL_MIN_SCORE` | Minimum final score for a result to be returned |
+| `adaptive_floor` | boolean | from `RECALL_ADAPTIVE_FLOOR` | Adjusts the minimum score floor based on overall result quality, dropping weak outliers |
 
 ---
 
@@ -531,6 +572,20 @@ curl "https://your-automem-instance/recall?query=Sarah%27s+sister%27s+job&expand
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
+### Current-State Recall (Default)
+
+```bash
+# Default: only current memories — superseded/expired/archived are suppressed
+curl "https://your-automem-instance/recall?query=database+choice" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Opt into the full history, including superseded and archived memories
+curl "https://your-automem-instance/recall?query=database+choice&state_mode=history&state_debug=true" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+The first call resolves supersession chains to their head and hides invalidated memories. The second returns the full lifecycle and, with `state_debug=true`, reports what was suppressed and what replaced it under `state_filter`.
+
 ---
 
 ## Sorting Modes
@@ -579,6 +634,13 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 | `context_types` | array[string] | No | — | Priority memory types to boost |
 | `priority_ids` | array[string] | No | — | Memory IDs to boost during scoring (does not bypass filters) |
 | `auto_decompose` | boolean | No | — | Auto-extract entities from query for parallel searches |
+| `state_mode` | string | No | `"current"` or `"history"` | Lifecycle filter; default `current` (current-state only) |
+| `current_only` | boolean | No | — | Legacy lifecycle flag; wins over `state_mode` when both resolve |
+| `state_debug` | boolean | No | — | Include suppression/replacement detail in `state_filter` |
+| `recency_bias` | string | No | `"off"`, `"on"`, or `"auto"` | Relative-recency re-rank; default from `RECALL_RECENCY_BIAS` |
+| `scope_fallback` | boolean | No | — | Fill short tag-scoped results from an unscoped vector search |
+| `min_score` | number | No | — | Minimum final score gate for returned results |
+| `adaptive_floor` | boolean | No | — | Adaptive score-floor gating based on result quality |
 
 **Output schema:**
 

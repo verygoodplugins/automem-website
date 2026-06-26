@@ -78,6 +78,15 @@
     overflow-x: hidden;
   }
 
+  /* Keyboard focus is visible everywhere; pointer focus stays quiet.
+     Components may set focus:outline-none for the mouse path, but the
+     keyboard ring below always wins for :focus-visible. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--lab-accent));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
   body {
     @apply antialiased bg-lab-bg text-lab-text font-mono;
     overflow-x: hidden;

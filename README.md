@@ -27,7 +27,7 @@ Three runtimes share this project:
 ```bash
 npm install
 
-npm run dev          # Astro dev server on http://localhost:5000 (host 0.0.0.0)
+npm run dev          # Astro dev server on http://localhost:4321 (host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs
 npm run preview      # Preview production build
 npm run check-links  # Linkinator broken-link check (run AFTER npm run build)

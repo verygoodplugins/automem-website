@@ -36,9 +36,9 @@ export const benchmarkComparisonRows = [
     note: "Benchmarks are not apples-to-apples unless dataset version, extraction policy, answer model, judge, context budget, and scale are aligned.",
   },
   {
-    label: "BEAM and LongMemEval-V2",
-    status: "not yet canonical",
-    note: "Tracked as future comparison surfaces until the main repo promotes AutoMem-controlled runs.",
+    label: "BEAM (neutral harness)",
+    status: "apples-to-apples",
+    note: "The one axis where AutoMem and published competitors ran the same benchmark under the same neutral harness. AutoMem is #2 — above Honcho at every tier, below Hindsight. LongMemEval-V2 is still tracked as a future surface.",
   },
 ];
 
@@ -62,6 +62,12 @@ export const benchmarkTimeline = [
     date: "May 2026",
     title: "Full-run verification",
     summary: "Verified full LongMemEval and LoCoMo runs and promoted only publishable claims.",
+  },
+  {
+    date: "Jun 2026",
+    title: "Neutral AMB submission",
+    summary:
+      "Submitted to the neutral Agent Memory Benchmark — same answerer and judge as everyone else. A clear #2 on BEAM scaling, with the conversational-recall gap named openly.",
   },
 ];
 

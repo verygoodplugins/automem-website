@@ -6,9 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py#L617](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py#L617) — Flask blueprint `/associate` endpoint
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — FalkorDB edge operations
+- [automem/api/memory.py#L995-L1078](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L995-L1078) — Flask blueprint `/associate` endpoint
+- [automem/api/memory.py#L157-L255](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L157-L255) — Batch `/associate` helper
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/stores/graph_store.py) — FalkorDB edge operations
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `associate_memories` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — Relationship type definitions
@@ -66,6 +67,77 @@ curl -X POST https://your-automem-instance/associate \
     "strength": 0.9
   }'
 ```
+
+---
+
+## Batch Associations
+
+The `/associate` endpoint also accepts a batch body that creates many relationships in a single request. Send an `associations` array instead of the single-pair fields; each item uses the same `memory1_id` / `memory2_id` / `type` / `strength` shape. A maximum of **500** associations is allowed per request.
+
+### Batch Request
+
+```bash
+curl -X POST https://your-automem-instance/associate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "associations": [
+      {
+        "memory1_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "memory2_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "type": "LEADS_TO",
+        "strength": 0.9
+      },
+      {
+        "memory1_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "memory2_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+        "type": "RELATES_TO",
+        "strength": 0.8
+      }
+    ]
+  }'
+```
+
+### Batch Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `success` when every item succeeds, `partial_success` when one or more fail |
+| `created_count` | integer | Number of associations created |
+| `failed_count` | integer | Number of associations that failed |
+| `succeeded` | array | The associations that were created |
+| `failed` | array | The associations that failed, with their errors |
+| `summary` | string | Human-readable count, e.g. `"C/M associations created successfully"` |
+
+### Batch Response (201 Created — all items succeeded)
+
+```json
+{
+  "status": "success",
+  "created_count": 2,
+  "failed_count": 0,
+  "succeeded": [ /* ... */ ],
+  "failed": [],
+  "summary": "2/2 associations created successfully"
+}
+```
+
+### Batch Response (207 Multi-Status — some items failed)
+
+```json
+{
+  "status": "partial_success",
+  "created_count": 1,
+  "failed_count": 1,
+  "succeeded": [ /* ... */ ],
+  "failed": [ /* items that failed validation or referenced missing memories */ ],
+  "summary": "1/2 associations created successfully"
+}
+```
+
+:::note[201 vs 207]
+Batch requests return **`201 Created`** when *every* item succeeds, and **`207 Multi-Status`** when one or more items fail validation or reference missing memories. Inspect `failed_count` and the `failed` array to see which associations did not land. Single-pair requests are unchanged and continue to return the single-association success/error responses documented above.
+:::
 
 ---
 
@@ -416,6 +488,10 @@ The following 3 types are **system-generated** and cannot be created via `associ
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.
+:::
+
+:::note[Batch mode]
+The `associate_memories` tool also accepts an `associations` array (up to 500 items, same `memory1_id` / `memory2_id` / `type` / `strength` shape) to create many relationships in one call — mirroring the [batch `/associate` body](#batch-associations). Omit `associations` to use the single-pair form documented above.
 :::
 
 ### Output Schema

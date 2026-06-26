@@ -6,8 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -350,6 +351,41 @@ All errors are logged with structured context:
 ```python
 logger.exception("Failed to generate embeddings for batch", extra={"batch_ids": ids})
 ```
+
+---
+
+## GET /backup
+
+**Authentication:** Admin token only
+
+**Purpose:** Export a restore-compatible snapshot of FalkorDB and/or Qdrant as a single gzipped archive. Useful for scheduled backups and pre-migration safety snapshots.
+
+Unlike the other admin endpoints, `/backup` is admin-only and does **not** accept the regular `AUTOMEM_API_TOKEN` by itself — it requires `X-Admin-Token` (or `X-Admin-Api-Key`).
+
+### Request Schema
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `include` | string (query) | No | Comma-separated stores to export: `falkordb,qdrant`. Defaults to both. Use `include=falkordb` or `include=qdrant` for a partial export |
+
+### Example Request
+
+```bash
+curl -H "X-Admin-Token: $ADMIN_API_TOKEN" \
+  "https://your-automem-instance/backup?include=falkordb,qdrant" \
+  -o automem-backup.tar.gz
+```
+
+### Response
+
+Returns a binary `application/gzip` attachment named `automem-backup-<timestamp>.tar.gz`. The archive is restore-compatible and contains:
+
+- `falkordb/falkordb_<timestamp>.json.gz` (when FalkorDB is included)
+- `qdrant/qdrant_<timestamp>.json.gz` (when Qdrant is included)
+
+:::tip[Restore]
+The archive layout matches what the restore tooling expects, so a `/backup` export can be fed directly into a restore without repackaging.
+:::
 
 ---
 

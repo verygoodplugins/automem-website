@@ -7,13 +7,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Astro dev server on http://localhost:5000 (host 0.0.0.0)
+npm run dev          # Astro dev server on http://localhost:4321 (host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs (NOT plain astro build)
 npm run preview      # Preview production build
 npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
 ```
 
 `npm run dev` runs without the Cloudflare adapter (workerd can't load Node DB drivers locally) and uses libsql + filesystem sessions; `npm run build` swaps the adapter in and uses D1.
+
+**Local preview & link-checking notes:**
+- `npm run dev` runs on port 4321. **Never use port 5000 — it is reserved on this system.** If another process already holds 4321, Astro silently bumps to 4322+. For the Claude Code preview tool, use the `.claude/launch.json` `automem-web` config (it runs `astro dev` on `0.0.0.0:4321` — binding `0.0.0.0` avoids the macOS `localhost`→IPv6 `::1` resolution that breaks readiness checks on a 127.0.0.1-only bind).
+- `npm run check-links` boots `wrangler pages dev` against the built `_worker.js`. In restricted/sandboxed environments where wrangler can't serve, it returns 404 for *every* asset (favicon, JS bundles, all routes) — these are false negatives, not broken links. Verify links with an `npm run dev` crawl instead.
+- The blog index (`src/pages/blog/index.astro`) merges EmDash CMS posts with file-based markdown posts, deduped by public slug. A new markdown post under `src/content/blog/NN-slug/` shows up automatically; no CMS entry needed.
 
 ## Stack
 

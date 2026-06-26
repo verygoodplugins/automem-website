@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 470" width="100%" role="img"
+     aria-label="BEAM 100K: identical AutoMem answers score 82.0% under a gpt-5-mini judge and 70.25% under a gpt-5 judge, a roughly 12-point swing from judge strictness alone.">
+  <defs>
+    <style>
+      .panel { fill: #ffffff; stroke: #d3dae4; stroke-width: 1; }
+      .title { fill: #0e141c; font: 700 22px ui-sans-serif, system-ui, sans-serif; }
+      .subtitle { fill: #556274; font: 400 13px ui-sans-serif, system-ui, sans-serif; }
+      .axis { fill: #7c8696; font: 400 13px ui-sans-serif, system-ui, sans-serif; }
+      .grid { stroke: #e3e8ef; stroke-width: 1; }
+      .baseline { stroke: #aab4c2; stroke-width: 1.5; }
+      .value { fill: #0e141c; font: 700 21px ui-sans-serif, system-ui, sans-serif; }
+      .barlabel { fill: #3a4858; font: 600 15px ui-sans-serif, system-ui, sans-serif; }
+      .caption { fill: #7c8696; font: 400 13px ui-sans-serif, system-ui, sans-serif; }
+      .bar-gold { fill: #e8b212; }
+      .bar-violet { fill: #743ac6; }
+      @media (prefers-color-scheme: dark) {
+        .panel { fill: #0F161E; stroke: #465260; }
+        .title { fill: #E6EDF3; }
+        .subtitle { fill: #9FB0C0; }
+        .axis { fill: #8A97A6; }
+        .grid { stroke: #243140; }
+        .baseline { stroke: #465260; }
+        .value { fill: #E6EDF3; }
+        .barlabel { fill: #C7D2DD; }
+        .caption { fill: #8A97A6; }
+        .bar-gold { fill: #F9CF2C; }
+        .bar-violet { fill: #AE66FF; }
+      }
+    </style>
+  </defs>
+
+  <rect class="panel" x="6" y="6" width="788" height="458" rx="12"/>
+
+  <text class="title" x="40" y="46">Same answers, two judges — a ~12-point swing</text>
+  <text class="subtitle" x="40" y="68">BEAM 100K · identical AutoMem answers, scored by two graders</text>
+
+  <!-- gridlines + y-axis labels (0–100%) -->
+  <g>
+    <line class="grid" x1="90" y1="380" x2="740" y2="380"/>
+    <line class="grid" x1="90" y1="305" x2="740" y2="305"/>
+    <line class="grid" x1="90" y1="230" x2="740" y2="230"/>
+    <line class="grid" x1="90" y1="155" x2="740" y2="155"/>
+    <line class="grid" x1="90" y1="80"  x2="740" y2="80"/>
+    <text class="axis" x="78" y="384" text-anchor="end">0</text>
+    <text class="axis" x="78" y="309" text-anchor="end">25</text>
+    <text class="axis" x="78" y="234" text-anchor="end">50</text>
+    <text class="axis" x="78" y="159" text-anchor="end">75</text>
+    <text class="axis" x="78" y="84"  text-anchor="end">100</text>
+  </g>
+
+  <line class="baseline" x1="90" y1="380" x2="740" y2="380"/>
+
+  <!-- Bar 1: gpt-5-mini judge = 82.0% (gold) -->
+  <rect class="bar-gold" x="205" y="134" width="150" height="246" rx="4"/>
+  <text class="value" x="280" y="124" text-anchor="middle">82.0%</text>
+  <text class="barlabel" x="280" y="404" text-anchor="middle">gpt-5-mini judge</text>
+
+  <!-- Bar 2: gpt-5 judge = 70.25% (violet) -->
+  <rect class="bar-violet" x="465" y="169" width="150" height="211" rx="4"/>
+  <text class="value" x="540" y="159" text-anchor="middle">70.25%</text>
+  <text class="barlabel" x="540" y="404" text-anchor="middle">gpt-5 judge</text>
+
+  <text class="caption" x="40" y="446">82.0% vs 70.25% = an 11.75-point gap from grader strictness alone — no memory or retrieval change.</text>
+</svg>

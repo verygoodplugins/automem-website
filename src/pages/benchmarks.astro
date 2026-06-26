@@ -18,11 +18,18 @@ import {
 const canonicalClaims = benchmarkData.canonicalClaims;
 const canaryClaims = benchmarkData.canaryClaims;
 const supplementalClaims = benchmarkData.supplementalClaims;
-const notYetRunClaims = benchmarkData.notYetRun.filter((item) => item !== 'Memora/FAMA');
-const updatedDate = formatGeneratedDate(benchmarkData.generatedAt);
+const amb = benchmarkData.ambSubmission;
+// 'BEAM official 1M/10M' is covered by the AMB BEAM scaling section above (shown
+// with its submitted/not-yet-canonical status), so listing it here too reads as a
+// contradiction. Filter it (and the de-scoped Memora/FAMA) from the "Not yet
+// canonical" box. Both still arrive from the synced manifest's notYetRun.
+const notYetRunClaims = benchmarkData.notYetRun.filter(
+  (item) => item !== 'Memora/FAMA' && item !== 'BEAM official 1M/10M',
+);
 
-const longMemEval = canonicalClaims.find((claim) => claim.benchmark === 'LongMemEval');
-const locomo = canonicalClaims.find((claim) => claim.benchmark === 'LoCoMo');
+const ambAsOf = formatGeneratedDate(amb?.asOf ?? benchmarkData.generatedAt);
+const beam10m = amb?.beam?.rows?.find((row) => row.tier === '10M');
+const LAUNCH_POST_URL = '/blog/automem-amb-neutral-numbers';
 
 function toneClasses(status) {
   const tone = statusTone(status);
@@ -53,50 +60,234 @@ function toneClasses(status) {
             <span class="text-lab-accent-text">under pressure.</span>
           </h1>
           <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl">
-            AutoMem measures whether a memory system can retrieve the right evidence and support correct answers across long histories.
-            The page separates official reruns from external context, canary checks, and exploratory evals so the numbers stay useful without over-claiming.
+            AutoMem's primary numbers now come from the <span class="text-lab-text">neutral Agent Memory Benchmark</span> —
+            the standardized answerer, judge, and grader the harness ran for AutoMem. <span class="text-lab-text">BEAM</span> is
+            the one same-harness, apples-to-apples axis against published competitors, and there AutoMem is a clear
+            <span class="text-lab-text">#2</span>: ahead of Honcho at every scale, with the lead widening to +16.8pp at
+            10M. Competitor figures elsewhere are their own published / self-reported numbers, and the conversational-recall
+            gap behind Hindsight is named here too, not hidden.
           </p>
           <div class="mt-8 flex flex-wrap gap-4">
-            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab-accent">
-              Benchmark Artifacts
+            <a href={LAUNCH_POST_URL} class="btn-lab-accent">
+              Read the AMB results →
             </a>
-            <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">
-              Experiment Log
+            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab">
+              Benchmark Artifacts
             </a>
           </div>
         </div>
 
-        <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
-          <div class="flex items-center justify-between gap-4 border-b border-lab-border pb-4 mb-5">
-            <span class="font-mono text-xs uppercase tracking-widest text-lab-muted">Canonical current</span>
-            <span class="font-mono text-xs text-lab-accent-text">{updatedDate}</span>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            {longMemEval && (
+        {amb && (
+          <div class="border-2 border-lab-text bg-lab-surface rounded-lg shadow-hard p-6">
+            <div class="flex items-center justify-between gap-4 border-b border-lab-border pb-4 mb-5">
+              <span class="inline-flex border border-lab-secondary text-lab-secondary bg-lab-secondary/10 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
+                {amb.statusLabel}
+              </span>
+              <span class="font-mono text-xs text-lab-accent-text">{ambAsOf}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
               <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
-                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LongMemEval</div>
-                <div class="text-4xl font-bold text-lab-accent-text">{primaryPercent(longMemEval.score)}</div>
-                <div class="text-xs text-lab-muted mt-2">{longMemEval.score}</div>
-                <div class="text-xs text-lab-success mt-1">{longMemEval.retrieval}</div>
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">BEAM @ 10M</div>
+                <div class="text-4xl font-bold text-lab-accent-text">{beam10m?.automem ?? '57.4%'}</div>
+                <div class="text-xs text-lab-muted mt-2">vs Honcho {beam10m?.honcho ?? '40.6%'}</div>
+                <div class="text-xs text-lab-success mt-1">{beam10m?.deltaVsHoncho ?? '+16.8'}pp at the hardest tier</div>
               </div>
-            )}
-            {locomo && (
               <div class="bg-lab-bg border border-lab-border rounded-lg p-4">
-                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">LoCoMo</div>
-                <div class="text-4xl font-bold text-lab-accent-text">{primaryPercent(locomo.score)}</div>
-                <div class="text-xs text-lab-muted mt-2">{locomo.score}</div>
-                <div class="text-xs text-lab-success mt-1">pinned judge, full run</div>
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">Context / answer</div>
+                <div class="text-4xl font-bold text-lab-accent-text">{amb.efficiency.automemRange}</div>
+                <div class="text-xs text-lab-muted mt-2">board leader {amb.efficiency.boardLeaderRange}</div>
+                <div class="text-xs text-lab-success mt-1">flat across every scale</div>
               </div>
-            )}
+            </div>
+            <p class="mt-5 text-xs leading-relaxed text-lab-muted">
+              Neutral harness — every provider feeds the same answerer and judge, so the score measures retrieval, not
+              grader mood. BEAM is the only apples-to-apples axis; AutoMem is #2 behind Hindsight. A reproducibility and
+              scaling claim, not a state-of-the-art one.
+            </p>
           </div>
-          <p class="mt-5 text-xs leading-relaxed text-lab-muted">
-            Source: {benchmarkData.sourceRepo}@{benchmarkData.sourceSha.slice(0, 7)}.
-            This is a reproducibility and systems claim, not a state-of-the-art claim.
+        )}
+      </div>
+      <div class="absolute inset-0 bg-[radial-gradient(rgb(var(--lab-line))_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
+    </section>
+
+    {amb && (
+      <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-surface">
+        <div class="comment-header">:: AMB_NEUTRAL_HARNESS</div>
+        <div class="max-w-6xl mx-auto">
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <span class="inline-flex border border-lab-secondary text-lab-secondary bg-lab-secondary/10 px-2 py-1 rounded text-xs font-bold uppercase tracking-widest">
+              {amb.statusLabel}
+            </span>
+            <span class="text-xs text-lab-muted uppercase tracking-widest">{amb.version}</span>
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold tracking-normal mb-4">
+            Primary claim set: the neutral Agent Memory Benchmark
+          </h2>
+          <p class="text-lab-muted leading-relaxed max-w-4xl">
+            AutoMem's current primary numbers come from the neutral {amb.harness}, run in {amb.mode} mode with a
+            {' '}{amb.answerModel} answerer and {amb.judgeModel} judge. The provider self-spins its full stack
+            ({amb.providerConfig}). The single biggest reason to trust these: you can run them yourself.
+          </p>
+          <div class="mt-4 border border-lab-border bg-lab-bg rounded-lg p-5 text-sm text-lab-muted leading-relaxed max-w-4xl">
+            <span class="text-lab-text font-bold">Status:</span> {amb.statusNote}
+          </div>
+
+          <div class="mt-10">
+            <h3 class="text-2xl font-bold tracking-normal">Core-3 (single-query / RAG)</h3>
+            <p class="mt-2 text-lab-muted max-w-4xl text-sm leading-relaxed">{amb.core3Caveat}</p>
+            <div class="mt-6 grid md:grid-cols-3 gap-4">
+              {amb.core3.map((row) => (
+                <article class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-5">
+                  <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">{row.benchmark}</div>
+                  <div class="flex items-end gap-2">
+                    <span class="text-4xl font-bold text-lab-accent-text">{row.score}</span>
+                    <span class="pb-1 text-xs text-lab-muted">{row.ci}</span>
+                  </div>
+                  <div class="text-xs text-lab-muted mt-1">{row.scope} - n={row.questions}</div>
+                  <dl class="mt-4 space-y-1 text-xs border-t border-lab-border pt-3">
+                    <div class="flex justify-between gap-3">
+                      <dt class="text-lab-muted uppercase tracking-widest">Hindsight (AMB)</dt>
+                      <dd class="text-lab-text font-bold">{row.hindsight}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                      <dt class="text-lab-muted uppercase tracking-widest">Honcho (self-rep.)</dt>
+                      <dd class="text-lab-text font-bold">{row.honcho ?? 'n/a'}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                      <dt class="text-lab-muted uppercase tracking-widest">Mean ctx tokens</dt>
+                      <dd class="text-lab-success font-bold">{row.contextTokens}</dd>
+                    </div>
+                  </dl>
+                  <p class="mt-3 text-xs leading-relaxed text-lab-muted border-t border-lab-border pt-3">{row.comparable}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div class="mt-12">
+            <h3 class="text-2xl font-bold tracking-normal">BEAM scaling (apples-to-apples)</h3>
+            <p class="mt-2 text-lab-muted max-w-4xl text-sm leading-relaxed">{amb.beam.note}</p>
+            <p class="mt-1 text-xs text-lab-muted max-w-4xl">Scores are {amb.beam.scale}.</p>
+            <figure class="mt-6">
+              <div class="overflow-hidden rounded-lg shadow-hard">
+                <img
+                  src="/img/blog/automem-amb-beam-scaling.svg"
+                  alt="BEAM scaling: AutoMem holds 67.5% at 100k and degrades gracefully to 57.4% at 10M, while Honcho stays flat near 63% through 1M then collapses to 40.6% at 10M; Hindsight holds a ~73-64% band across the curve."
+                  loading="lazy"
+                  decoding="async"
+                  class="block h-auto w-full"
+                />
+              </div>
+              <figcaption class="mt-2 text-xs text-lab-muted">
+                BEAM rubric-mean accuracy as the haystack grows 100x. Neutral AMB, single-query mode. Hindsight band is approximate.
+              </figcaption>
+            </figure>
+            <div class="mt-6 overflow-x-auto border-2 border-lab-text rounded-lg bg-lab-bg shadow-hard">
+              <table class="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr class="border-b-2 border-lab-text text-left text-lab-muted">
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">Scale</th>
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">AutoMem</th>
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">Honcho</th>
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">Hindsight</th>
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">vs Honcho (pp)</th>
+                    <th class="p-4 font-normal uppercase tracking-widest text-xs">Mean ctx tokens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {amb.beam.rows.map((row) => (
+                    <tr class="border-b border-lab-border/60 last:border-b-0 align-top">
+                      <td class="p-4 font-bold whitespace-nowrap">{row.tier}</td>
+                      <td class="p-4 text-lab-accent-text font-bold whitespace-nowrap">
+                        {row.automem}
+                        <div class="text-xs text-lab-muted font-normal">{row.automemDetail}</div>
+                      </td>
+                      <td class="p-4 whitespace-nowrap">{row.honcho}</td>
+                      <td class="p-4 text-lab-muted whitespace-nowrap">{row.hindsight}</td>
+                      <td class="p-4 text-lab-success font-bold whitespace-nowrap">{row.deltaVsHoncho}</td>
+                      <td class="p-4 text-lab-muted whitespace-nowrap">{row.contextTokens}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-6 grid md:grid-cols-2 gap-4">
+              <div class="border border-lab-border bg-lab-bg rounded-lg p-5 text-sm text-lab-muted leading-relaxed">
+                <div class="text-xs uppercase tracking-widest text-lab-accent-text mb-2">Graceful vs collapse</div>
+                {amb.beam.scalingStory}
+              </div>
+              <div class="border border-lab-border bg-lab-bg rounded-lg p-5 text-sm text-lab-muted leading-relaxed">
+                <div class="text-xs uppercase tracking-widest text-lab-accent-text mb-2">The 10M centerpiece</div>
+                {amb.beam.headline10m}
+              </div>
+            </div>
+
+            <div class="mt-6 border-2 border-lab-secondary bg-lab-bg rounded-lg shadow-hard p-6 md:p-8">
+              <div class="flex flex-wrap items-baseline justify-between gap-3 border-b border-lab-border pb-4 mb-6">
+                <div class="font-mono text-xs uppercase tracking-widest text-lab-secondary">// what does 10M tokens actually mean?</div>
+                <div class="font-mono text-xs text-lab-muted">plain-English scale check</div>
+              </div>
+              <div class="grid md:grid-cols-[0.75fr_1.25fr] gap-6 md:gap-10 items-center">
+                <div>
+                  <div class="text-xs text-lab-muted uppercase tracking-widest mb-2">The haystack</div>
+                  <div class="text-5xl md:text-6xl font-bold text-lab-accent-text leading-none">7.5M</div>
+                  <div class="mt-2 text-lab-muted">words held in memory</div>
+                </div>
+                <div class="space-y-4 text-sm md:text-base leading-relaxed text-lab-muted">
+                  <p>
+                    Ten million tokens is about <span class="text-lab-text font-bold">7.5 million words</span> — the complete
+                    works of Shakespeare roughly <span class="text-lab-text">eight times over</span>, or the entire seven-book
+                    Harry Potter series read <span class="text-lab-text">seven times through</span>. One unbroken haystack.
+                  </p>
+                  <p>
+                    Ask a single question against a memory store that size, and AutoMem returns just the part you needed —
+                    about <span class="text-lab-text font-bold">3,900 tokens</span> of context, call it 3,000 words, in roughly
+                    <span class="text-lab-text font-bold">1.7 seconds</span> (median, on our own hardware). Not the whole library.
+                    The page you were looking for.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-12 border-y border-lab-border py-8">
+            <h3 class="text-2xl font-bold tracking-normal">Context-token efficiency</h3>
+            <div class="mt-4 flex flex-wrap items-end gap-8">
+              <div>
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-1">AutoMem</div>
+                <div class="text-4xl font-bold text-lab-accent-text">{amb.efficiency.automemRange}</div>
+              </div>
+              <div>
+                <div class="text-xs text-lab-muted uppercase tracking-widest mb-1">Board leader</div>
+                <div class="text-4xl font-bold text-lab-muted">{amb.efficiency.boardLeaderRange}</div>
+              </div>
+            </div>
+            <p class="mt-4 text-sm text-lab-muted leading-relaxed max-w-4xl">
+              {amb.efficiency.note} Reported as the {amb.efficiency.metric}.
+            </p>
+            <figure class="mt-6">
+              <div class="overflow-hidden rounded-lg shadow-hard">
+                <img
+                  src="/img/blog/automem-amb-efficiency.svg"
+                  alt="Context-token efficiency: AutoMem feeds the answerer a flat ~3.9k context tokens across BEAM tiers while the board leader feeds 17-27k for its scores."
+                  loading="lazy"
+                  decoding="async"
+                  class="block h-auto w-full"
+                />
+              </div>
+              <figcaption class="mt-2 text-xs text-lab-muted">
+                Mean context tokens fed to the answerer at each BEAM tier — AutoMem stays flat while the haystack grows.
+              </figcaption>
+            </figure>
+          </div>
+
+          <p class="mt-8 text-xs leading-relaxed text-lab-muted max-w-4xl">
+            {amb.competitorNote} Reproduce with the public image <code>{amb.image}</code> and
+            {' '}<code>{amb.reproduceDoc}</code> (one command per split, no embedding API keys).
           </p>
         </div>
-      </div>
-      <div class="absolute inset-0 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none"></div>
-    </section>
+      </section>
+    )}
 
     <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-surface">
       <div class="comment-header">:: WHAT_THE_SCORES_MEAN</div>
@@ -213,9 +404,19 @@ function toneClasses(status) {
     </section>
 
     <section class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg">
-      <div class="comment-header">:: CANONICAL_RESULTS</div>
-      <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8">
-        {canonicalClaims.map((claim) => (
+      <div class="comment-header">:: INTERNAL_RUNS</div>
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold tracking-normal mb-4">Internal runs (own judge — directional)</h2>
+        <p class="text-lab-muted leading-relaxed max-w-3xl">
+          These full LongMemEval and LoCoMo runs use AutoMem's own answerer and judge, so they are <span class="text-lab-text">not</span> comparable
+          to other systems' published numbers. The same answers scored 82.0% under a gpt-5-mini judge and 70.25% under a gpt-5 judge — a
+          ~12-point swing from grader strictness alone. Read these as directional; the neutral AMB numbers above are the comparable ones.
+        </p>
+        <a href="/blog/automem-016-correctness-over-knobs" class="mt-3 inline-flex font-bold text-lab-accent-text hover:underline">
+          Why these aren't a leaderboard claim →
+        </a>
+        <div class="mt-8 grid lg:grid-cols-2 gap-8">
+          {canonicalClaims.map((claim) => (
           <article class="border-2 border-lab-text bg-lab-bg rounded-lg shadow-hard p-6 flex flex-col gap-6">
             <div>
               <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -304,7 +505,8 @@ function toneClasses(status) {
               )}
             </div>
           </article>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
 
