@@ -9,6 +9,12 @@ const BUNDLE_PATH = "benchmarks/publication/2026-05-arxiv";
 const MANIFEST_PATH = `${BUNDLE_PATH}/artifact-manifest.json`;
 const SOURCE_REPO = "verygoodplugins/automem";
 
+// Top-level keys in the generated data file that are hand-curated rather than
+// derived from the source manifest. syncBenchmarks() carries these forward so a
+// re-sync never silently drops them (e.g. the neutral AMB submission dataset
+// the benchmarks page renders).
+const PRESERVED_KEYS = ["ambSubmission"];
+
 const STATUS_LABELS = {
   canonical: "Canonical",
   representative_canary: "Representative canary",
@@ -141,6 +147,39 @@ export function buildBenchmarkData(manifest, options = {}) {
   };
 }
 
+async function readPreservedFields(outFile) {
+  try {
+    const existing = JSON.parse(await readFile(outFile, "utf8"));
+    const preserved = {};
+    for (const key of PRESERVED_KEYS) {
+      if (existing[key] !== undefined) preserved[key] = existing[key];
+    }
+    return preserved;
+  } catch {
+    // No existing file (or unparseable) — nothing to preserve.
+    return {};
+  }
+}
+
+function mergePreserved(data, preserved) {
+  if (Object.keys(preserved).length === 0) return data;
+
+  // Re-insert preserved keys right after the manifest header (judgePolicy) so
+  // the file stays diff-stable with the hand-authored layout instead of
+  // appending them at the end on every re-sync.
+  const out = {};
+  let inserted = false;
+  for (const [key, value] of Object.entries(data)) {
+    out[key] = value;
+    if (key === "judgePolicy") {
+      Object.assign(out, preserved);
+      inserted = true;
+    }
+  }
+  if (!inserted) Object.assign(out, preserved);
+  return out;
+}
+
 export async function syncBenchmarks({ source = DEFAULT_SOURCE, outFile = DEFAULT_OUT_FILE } = {}) {
   const manifestFile = resolve(source, MANIFEST_PATH);
   const raw = await readFile(manifestFile, "utf8");
@@ -148,10 +187,16 @@ export async function syncBenchmarks({ source = DEFAULT_SOURCE, outFile = DEFAUL
   const data = buildBenchmarkData(manifest);
   const resolvedOutFile = resolve(outFile);
 
-  await mkdir(dirname(resolvedOutFile), { recursive: true });
-  await writeFile(resolvedOutFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  // The neutral AMB submission block is hand-curated and not derived from the
+  // source manifest. Carry preserved keys forward so a `sync-benchmarks` run
+  // never silently drops the AMB dataset the site renders.
+  const preserved = await readPreservedFields(resolvedOutFile);
+  const merged = mergePreserved(data, preserved);
 
-  return data;
+  await mkdir(dirname(resolvedOutFile), { recursive: true });
+  await writeFile(resolvedOutFile, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
+
+  return merged;
 }
 
 function parseArgs(argv) {

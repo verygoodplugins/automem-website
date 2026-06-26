@@ -114,6 +114,44 @@ test("syncBenchmarks writes stable generated data from a source checkout", async
   }
 });
 
+test("syncBenchmarks preserves hand-curated ambSubmission across a re-sync", async () => {
+  const tempRoot = await mkdtemp(join(tmpdir(), "automem-benchmarks-"));
+  const source = join(tempRoot, "automem");
+  const outFile = join(tempRoot, "benchmarks.json");
+  const bundleDir = join(source, "benchmarks/publication/2026-05-arxiv");
+
+  await import("node:fs/promises").then(({ mkdir }) => mkdir(bundleDir, { recursive: true }));
+  await writeFile(join(bundleDir, "artifact-manifest.json"), JSON.stringify(manifest), "utf8");
+
+  // Pre-seed the out file with a hand-curated AMB block (as ships in src/data).
+  await writeFile(
+    outFile,
+    JSON.stringify({
+      generatedAt: "old",
+      ambSubmission: { status: "submitted_pr_under_review", version: "AMB v1" },
+    }),
+    "utf8",
+  );
+
+  try {
+    const data = await syncBenchmarks({ source, outFile });
+
+    // Manifest-derived fields are regenerated...
+    assert.equal(data.generatedAt, "2026-05-18T06:20:58Z");
+    assert.equal(data.canonicalClaims.length, 2);
+    // ...and the hand-curated AMB block survives the sync.
+    assert.equal(data.ambSubmission.version, "AMB v1");
+
+    const generated = JSON.parse(await readFile(outFile, "utf8"));
+    assert.equal(generated.ambSubmission.status, "submitted_pr_under_review");
+    // Preserved key is re-inserted right after the manifest header.
+    const keys = Object.keys(generated);
+    assert.equal(keys[keys.indexOf("judgePolicy") + 1], "ambSubmission");
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("buildBenchmarkData rejects unpublishable canonical LongMemEval claims", () => {
   const badManifest = structuredClone(manifest);
   badManifest.claims[0].publishable = false;
