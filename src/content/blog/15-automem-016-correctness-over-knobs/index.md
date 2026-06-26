@@ -90,7 +90,7 @@ Same AutoMem. Same answers. Same BEAM 100K question set. Scored by two different
 
 That's the whole reason my own-harness, own-judge numbers aren't comparable to anyone else's — Hindsight publishes ~73–75% at the 100K tier, mem0 and Zep publish their own, and every one of those is entangled with whatever judge they ran. AutoMem's native runner beats my mem0-shim baseline at the same model (82.0% vs 76.25%, both gpt-5-mini) — a real ~6-point edge from AutoMem's own chunking and `/recall` over the mem0 wire contract — but I can't put that on a leaderboard and expect it to mean anything.
 
-So the next step wasn't a config change. It was submitting AutoMem to the **neutral Agent Memory Benchmark** — standardized Gemini answerer, standardized Gemini judge, results by PR. Same grader as everyone else. That run is done now, and the numbers from it are the ones I actually stand behind: [the neutral AMB results are here](/blog/16-automem-amb-neutral-numbers).
+So the next step wasn't a config change. It was submitting AutoMem to the **neutral Agent Memory Benchmark** — standardized Gemini answerer, standardized Gemini judge, results by PR. Same grader as everyone else. That run is done now, and the numbers from it are the ones I actually stand behind: [the neutral AMB results are here](/blog/automem-amb-neutral-numbers).
 
 ## Where the real bottleneck turned out to be
 
@@ -114,7 +114,7 @@ pie showData
 
 **Not working yet:** preference and temporal-conflict reasoning. Retrieval finds the fact; the answer step fumbles it.
 
-**Next:** the neutral AMB run landed — [real comparable numbers are in the results post](/blog/16-automem-amb-neutral-numbers) — and 0.17 is aimed squarely at the retrieved-but-wrong failure mode.
+**Next:** the neutral AMB run landed — [real comparable numbers are in the results post](/blog/automem-amb-neutral-numbers) — and 0.17 is aimed squarely at the retrieved-but-wrong failure mode.
 
 ## Caveats, up front
 
