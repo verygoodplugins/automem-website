@@ -6,8 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [app.py#L266-L280](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/app.py#L266-L280) — app-level API token guard
+- [automem/api/auth_helpers.py#L45-L58](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/auth_helpers.py#L45-L58) — `/health` auth exemption
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -22,7 +24,7 @@ For administrative operations like reprocessing, see [Admin Operations](/docs/re
 |----------|---------------|---------|
 | `GET /health` | None | Service health check with database connectivity and queue status |
 | `GET /analyze` | API Token | Comprehensive memory graph statistics and patterns |
-| `GET /startup-recall` | None | Retrieve high-importance memories for initialization context |
+| `GET /startup-recall` | API Token | Retrieve high-importance memories for initialization context |
 
 ---
 
@@ -151,7 +153,7 @@ Compare `memory_count` (FalkorDB) against `vector_count` (Qdrant) to detect data
 
 ## GET /analyze
 
-The analyze endpoint provides comprehensive statistics about the memory graph, including type distributions, entity frequencies, temporal patterns, and relationship counts. Useful for understanding memory characteristics and identifying patterns in stored data.
+The analyze endpoint provides comprehensive statistics about the memory graph, including type distributions, entity frequencies, temporal patterns, and preference relationships. Useful for understanding memory characteristics and identifying patterns in stored data.
 
 **Authentication:** Required (`Authorization: Bearer <token>`, `X-API-Key: <token>`, or `?api_key=<token>`)
 
@@ -162,17 +164,16 @@ The analyze endpoint provides comprehensive statistics about the memory graph, i
 ```mermaid
 graph TB
     Client[/"GET /analyze<br/>(with API token)"/]
-    Auth["_authorize_request()<br/>Validate token"]
-    Connect["_get_or_create_graph()<br/>FalkorDB connection"]
+    Auth["require_api_token()<br/>Validate token"]
+    Connect["get_memory_graph()<br/>FalkorDB connection"]
 
     subgraph "Cypher Queries"
-        Q1["Query 1:<br/>Total count"]
-        Q2["Query 2:<br/>Type distribution"]
-        Q3["Query 3:<br/>Entity frequency"]
-        Q4["Query 4:<br/>Confidence buckets"]
-        Q5["Query 5:<br/>Activity by hour"]
-        Q6["Query 6:<br/>Tag frequency"]
-        Q7["Query 7:<br/>Relationship counts"]
+        Q1["Query 1:<br/>Memory types"]
+        Q2["Query 2:<br/>High-confidence patterns"]
+        Q3["Query 3:<br/>Preference relationships"]
+        Q4["Query 4:<br/>Temporal activity"]
+        Q5["Query 5:<br/>Entity frequency"]
+        Q6["Query 6:<br/>Confidence distribution"]
     end
 
     Aggregate["Aggregate results<br/>into JSON response"]
@@ -189,8 +190,7 @@ graph TB
     Q3-->Q4
     Q4-->Q5
     Q5-->Q6
-    Q6-->Q7
-    Q7-->Aggregate
+    Q6-->Aggregate
     Aggregate-->Response
 ```
 
@@ -207,7 +207,7 @@ The `/analyze` endpoint executes 6 Cypher queries against FalkorDB:
 | 5 | Entity Frequency | `MATCH (m:Memory) WHERE m.metadata IS NOT NULL RETURN m.metadata LIMIT 200` | Extracts `entities`/`keywords`/`topics` from metadata JSON; top 50 by count |
 | 6 | Confidence Distribution | `MATCH (m:Memory) WHERE m.confidence IS NOT NULL RETURN m.confidence LIMIT 500` | Buckets: `low` (< 0.4), `medium` (0.4–0.7), `high` (≥ 0.7) |
 
-Each query is wrapped in a try-except block. If a query fails, the corresponding field is set to `null`, `{}`, or `[]` depending on expected type — partial failures do not prevent a response.
+The temporal activity query is guarded separately and may fail without aborting the whole response. The other analytics queries run inside the endpoint's main error handler; if one of them fails, the endpoint returns HTTP 500 with an error JSON response.
 
 ### Response Schema
 
@@ -251,13 +251,12 @@ curl "https://your-automem-instance/analyze" \
 
 | Use Case | Relevant Fields |
 |----------|-----------------|
-| Identify memory class imbalance | `memories_by_type` |
-| Find frequently discussed projects or tools | `top_entities` |
+| Identify memory class imbalance | `memory_types` |
+| Find frequently discussed projects or tools | `entity_frequency` |
+| Review learned recurring patterns | `patterns` |
+| Inspect explicit preference relationships | `preferences` |
 | Assess overall memory quality | `confidence_distribution` |
-| Understand when memories are most created | `activity_by_hour` |
-| Audit tagging consistency | `top_tags` |
-| Verify enrichment pipeline results | `relationships["SIMILAR_TO"]`, `relationships["EXEMPLIFIES"]` |
-| Detect temporal validity issues | `relationships["INVALIDATED_BY"]`, `relationships["EVOLVED_INTO"]` |
+| Understand when memories are most created | `temporal_insights` |
 
 ---
 
@@ -265,7 +264,7 @@ curl "https://your-automem-instance/analyze" \
 
 The startup recall endpoint returns a curated set of memories suitable for initializing AI agent context at session start. It prioritizes high-importance memories and falls back to recent memories to ensure the agent always has relevant context.
 
-**Authentication:** None required
+**Authentication:** Required when `API_TOKEN` is configured (`Authorization: Bearer <token>`, `X-API-Key: <token>`, or `?api_key=<token>`)
 
 **Query Parameters:** None
 
@@ -348,7 +347,8 @@ Returns system-level rules and memory-recall directives.
 ### Example Request
 
 ```bash
-curl https://your-automem-instance/startup-recall
+curl https://your-automem-instance/startup-recall \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ### Integration with AI Agents
@@ -357,11 +357,16 @@ The startup recall endpoint is designed for session initialization. A typical MC
 
 ```python
 # At session start, load context memories
-response = requests.get(f"{AUTOMEM_URL}/startup-recall")
-memories = response.json()["memories"]
+response = requests.get(
+    f"{AUTOMEM_URL}/startup-recall",
+    headers={"Authorization": f"Bearer {AUTOMEM_API_TOKEN}"},
+)
+data = response.json()
+lessons = data["critical_lessons"]   # high-importance / tagged 'critical'/'lesson'
+system_rules = data["system_rules"]  # tagged 'system'/'memory-recall'
 
 # Inject into system prompt
-context_block = "\n".join([f"- {m['content']}" for m in memories])
+context_block = "\n".join([f"- {m['content']}" for m in lessons + system_rules])
 system_prompt = f"Known context:\n{context_block}\n\n{base_prompt}"
 ```
 
