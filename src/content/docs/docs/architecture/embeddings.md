@@ -102,7 +102,7 @@ flowchart TD
 
 1. **Voyage first:** Best quality embeddings, generous free tier, shared embedding space across model sizes
 2. **OpenAI second:** High quality, widely available, compatible with OpenRouter/LiteLLM
-3. **Ollama third:** Local inference, flexible models, selected when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is configured (server reachability is not checked at selection time — connectivity errors surface only during provider initialization)
+3. **Ollama third:** Local inference, flexible models, selected when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is configured (server reachability is not checked at selection time — connectivity errors surface only when embeddings are actually generated, during background worker jobs)
 4. **FastEmbed fourth:** Local ONNX inference, no API costs, good quality for 768d
 5. **Placeholder last:** Deterministic fallback, no semantic meaning but consistent
 
