@@ -332,7 +332,9 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    port: 5000,
+    // Single source of truth for the local dev/preview port. Do NOT use 5000 —
+    // it is reserved on this machine (AutoHub's Vite chat UI binds 5000).
+    port: 4321,
     allowedHosts: true,
   },
   vite: {

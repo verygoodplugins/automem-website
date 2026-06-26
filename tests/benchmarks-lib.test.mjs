@@ -58,7 +58,7 @@ test("benchmark context keeps interpretation and comparison guardrails explicit"
 
 test("benchmark timeline summarizes the release path without overemphasizing publication", () => {
   assert.equal(benchmarkTimeline.at(0)?.date, "Feb 2026");
-  assert.equal(benchmarkTimeline.at(-1)?.date, "May 2026");
+  assert.equal(benchmarkTimeline.at(-1)?.date, "Jun 2026");
   assert.doesNotMatch(benchmarkTimeline.at(-1)?.summary ?? "", /publication bundle/i);
 });
 

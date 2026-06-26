@@ -9,11 +9,16 @@ AutoMem.AI marketing and documentation website.
 ## Commands
 
 ```bash
-npm run dev          # Astro dev server (localhost:5000, --host 0.0.0.0)
+npm run dev          # Astro dev server (localhost:4321, --host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs (NOT plain astro build)
 npm run preview      # Preview production build
 npm run check-links  # Broken link checker (requires build first)
 ```
+
+**Local preview & link-checking notes:**
+- `npm run dev` runs on port 4321. **Never use port 5000 — it is reserved on this system.** If another process already holds 4321, Astro silently bumps to 4322+. For the Claude Code preview tool, use the `.claude/launch.json` `automem-web` config (`astro dev` on `0.0.0.0:4321`; binding `0.0.0.0` avoids the macOS `localhost`→IPv6 `::1` resolution that breaks readiness checks on a 127.0.0.1-only bind).
+- `npm run check-links` boots `wrangler pages dev` against the built `_worker.js`. In restricted/sandboxed environments where wrangler can't serve, it returns 404 for *every* asset (favicon, JS bundles, all routes) — false negatives, not broken links. Verify links with an `npm run dev` crawl instead.
+- The blog index (`src/pages/blog/index.astro`) merges EmDash CMS posts with file-based markdown posts, deduped by public slug — a new `src/content/blog/NN-slug/` post shows up automatically, no CMS entry needed.
 
 ## Architecture & Key Directories
 

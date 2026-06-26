@@ -353,6 +353,41 @@ logger.exception("Failed to generate embeddings for batch", extra={"batch_ids": 
 
 ---
 
+## GET /backup
+
+**Authentication:** Admin token only
+
+**Purpose:** Export a restore-compatible snapshot of FalkorDB and/or Qdrant as a single gzipped archive. Useful for scheduled backups and pre-migration safety snapshots.
+
+Unlike the other admin endpoints, `/backup` is admin-only and does **not** accept the regular `AUTOMEM_API_TOKEN` by itself — it requires `X-Admin-Token` (or `X-Admin-Api-Key`).
+
+### Request Schema
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `include` | string (query) | No | Comma-separated stores to export: `falkordb,qdrant`. Defaults to both. Use `include=falkordb` or `include=qdrant` for a partial export |
+
+### Example Request
+
+```bash
+curl -H "X-Admin-Token: $ADMIN_API_TOKEN" \
+  "https://your-automem-instance/backup?include=falkordb,qdrant" \
+  -o automem-backup.tar.gz
+```
+
+### Response
+
+Returns a binary `application/gzip` attachment named `automem-backup-<timestamp>.tar.gz`. The archive is restore-compatible and contains:
+
+- `falkordb/falkordb_<timestamp>.json.gz` (when FalkorDB is included)
+- `qdrant/qdrant_<timestamp>.json.gz` (when Qdrant is included)
+
+:::tip[Restore]
+The archive layout matches what the restore tooling expects, so a `/backup` export can be fed directly into a restore without repackaging.
+:::
+
+---
+
 ## POST /admin/sync
 
 **Authentication:** API token + Admin token

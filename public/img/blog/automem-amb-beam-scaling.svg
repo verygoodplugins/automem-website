@@ -1,0 +1,138 @@
+<svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-labelledby="beamTitle beamDesc">
+  <title id="beamTitle">BEAM scaling: graceful decline vs collapse</title>
+  <desc id="beamDesc">Line chart of BEAM rubric-mean accuracy across context tiers 100k, 500k, 1M, and 10M tokens for three memory systems on the neutral Agent Memory Benchmark. AutoMem declines gracefully from 67.5 percent to 57.4 percent. Honcho holds flat near 63 to 65 percent through 1M then collapses to 40.6 percent at 10M. Hindsight, an approximate reference band and the benchmark leader, holds roughly 73 percent down to 64 percent. At the 10M tier AutoMem reaches 57.4 percent while Honcho falls to 40.6 percent, a gap of about 17 percentage points.</desc>
+  <defs>
+    <style>
+      .bg { fill: #ffffff; stroke: #d3dae4; stroke-width: 1; }
+      .ink { fill: #0e141c; }
+      .sub { fill: #556274; }
+      .faint { fill: #8a93a2; }
+      .grid { stroke: #e7eaf0; stroke-width: 1; }
+      .baseline { stroke: #aab4c2; stroke-width: 1.2; }
+      .axis { fill: #7c8696; }
+      .am-line { fill: none; stroke: #0f7a50; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+      .am-dot { fill: #ffffff; stroke: #0f7a50; stroke-width: 3; }
+      .am-val { fill: #0c5e44; }
+      .ho-line { fill: none; stroke: #c85a2a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .ho-dot { fill: #ffffff; stroke: #c85a2a; stroke-width: 2.5; }
+      .ho-val { fill: #a8460f; }
+      .hi-line { fill: none; stroke: #6b5fc0; stroke-width: 2; stroke-dasharray: 2 5; stroke-linecap: round; stroke-linejoin: round; }
+      .hi-dot { fill: #6b5fc0; }
+      .hi-val { fill: #5b4fb0; }
+      .gap { stroke: #8a93a2; stroke-width: 1.2; fill: none; }
+      @media (prefers-color-scheme: dark) {
+        .bg { fill: #0f161e; stroke: #465260; }
+        .ink { fill: #eff4f9; }
+        .sub { fill: #9ea9b8; }
+        .faint { fill: #6f7b8a; }
+        .grid { stroke: #243140; }
+        .baseline { stroke: #465260; }
+        .axis { fill: #9ea9b8; }
+        .am-line { stroke: #4fdf69; }
+        .am-dot { fill: #0f161e; stroke: #4fdf69; }
+        .am-val { fill: #7ceb90; }
+        .ho-line { stroke: #e0a45a; }
+        .ho-dot { fill: #0f161e; stroke: #e0a45a; }
+        .ho-val { fill: #eab977; }
+        .hi-line { stroke: #b89bff; }
+        .hi-dot { fill: #b89bff; }
+        .hi-val { fill: #c9b6ff; }
+        .gap { stroke: #6f7b8a; }
+      }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="758" height="468" rx="10"/>
+
+  <text class="ink" x="40" y="44" font-size="22" font-weight="700">BEAM scaling: graceful vs collapse</text>
+  <text class="sub" x="40" y="68" font-size="13.5">Rubric-mean accuracy as the haystack grows 100x. AutoMem holds where Honcho falls off at 10M.</text>
+
+  <!-- gridlines + y labels (35%..75%) -->
+  <g font-size="12">
+    <line class="grid" x1="90" y1="110" x2="700" y2="110"/>
+    <text class="axis" x="78" y="114" text-anchor="end">75%</text>
+    <line class="grid" x1="90" y1="172.5" x2="700" y2="172.5"/>
+    <text class="axis" x="78" y="176.5" text-anchor="end">65%</text>
+    <line class="grid" x1="90" y1="235" x2="700" y2="235"/>
+    <text class="axis" x="78" y="239" text-anchor="end">55%</text>
+    <line class="grid" x1="90" y1="297.5" x2="700" y2="297.5"/>
+    <text class="axis" x="78" y="301.5" text-anchor="end">45%</text>
+    <line class="baseline" x1="90" y1="360" x2="700" y2="360"/>
+    <text class="axis" x="78" y="364" text-anchor="end">35%</text>
+  </g>
+
+  <!-- x tier labels -->
+  <g class="axis" font-size="13.5" text-anchor="middle">
+    <text x="160" y="384">100k</text>
+    <text x="330" y="384">500k</text>
+    <text x="500" y="384">1M</text>
+    <text x="640" y="384">10M</text>
+  </g>
+  <text class="faint" x="395" y="406" font-size="12.5" text-anchor="middle">context tokens (haystack size)</text>
+
+  <!-- Hindsight reference (approx leader) -->
+  <polyline class="hi-line" points="160,122.5 330,141.25 500,166.25 640,178.75"/>
+  <g class="hi-dot">
+    <circle cx="160" cy="122.5" r="3"/>
+    <circle cx="330" cy="141.25" r="3"/>
+    <circle cx="500" cy="166.25" r="3"/>
+    <circle cx="640" cy="178.75" r="3"/>
+  </g>
+  <text class="hi-val" x="160" y="113" font-size="11.5" text-anchor="middle">~73</text>
+  <text class="hi-val" x="664" y="178" font-size="11.5" text-anchor="start">~64</text>
+
+  <!-- Honcho (collapse) -->
+  <polyline class="ho-line" points="160,185 330,173.1 500,184.4 640,325"/>
+  <g class="ho-dot">
+    <circle cx="160" cy="185" r="4.5"/>
+    <circle cx="330" cy="173.1" r="4.5"/>
+    <circle cx="500" cy="184.4" r="4.5"/>
+  </g>
+  <circle class="ho-dot" cx="640" cy="325" r="6"/>
+  <g class="ho-val" font-size="11.5" text-anchor="middle">
+    <text x="150" y="203">63.0</text>
+    <text x="330" y="191">64.9</text>
+    <text x="500" y="202">63.1</text>
+  </g>
+  <text class="ho-val" x="640" y="346" font-size="13" font-weight="700" text-anchor="middle">40.6</text>
+
+  <!-- AutoMem (dominant) -->
+  <polyline class="am-line" points="160,156.9 330,168.75 500,180 640,220"/>
+  <g class="am-dot">
+    <circle cx="160" cy="156.9" r="6"/>
+    <circle cx="330" cy="168.75" r="6"/>
+    <circle cx="500" cy="180" r="6"/>
+    <circle cx="640" cy="220" r="7"/>
+  </g>
+  <g class="am-val" font-size="13" font-weight="700" text-anchor="middle">
+    <text x="160" y="145">67.5</text>
+    <text x="330" y="157">65.6</text>
+    <text x="500" y="168">63.8</text>
+    <text x="600" y="216">57.4</text>
+  </g>
+
+  <!-- 10M gap annotation: AutoMem 57.4 (y=220) vs Honcho 40.6 (y=325) -->
+  <g class="gap">
+    <line x1="668" y1="220" x2="690" y2="220"/>
+    <line x1="668" y1="325" x2="690" y2="325"/>
+    <line x1="690" y1="220" x2="690" y2="325"/>
+  </g>
+  <text class="ink" x="698" y="268" font-size="13" font-weight="700">+16.8 pp</text>
+  <text class="faint" x="698" y="285" font-size="11" >at 10M</text>
+
+  <!-- Legend -->
+  <g font-size="13.5">
+    <line class="am-line" x1="90" y1="438" x2="118" y2="438"/>
+    <circle class="am-dot" cx="104" cy="438" r="4.5"/>
+    <text class="ink" x="126" y="442.5" font-weight="700">AutoMem</text>
+
+    <line class="ho-line" x1="234" y1="438" x2="262" y2="438"/>
+    <circle class="ho-dot" cx="248" cy="438" r="3.5"/>
+    <text class="sub" x="270" y="442.5">Honcho</text>
+
+    <line class="hi-line" x1="356" y1="438" x2="384" y2="438"/>
+    <text class="sub" x="392" y="442.5">Hindsight (approx. reference leader)</text>
+  </g>
+
+  <text class="faint" x="40" y="462" font-size="10.5">Agent Memory Benchmark (AMB), single-query mode. BEAM rubric-mean (0 / 0.5 / 1 per item). Hindsight band is approximate.</text>
+</svg>

@@ -19,19 +19,28 @@ if (error) {
 }
 
 const contentPosts = await getCollection('blog', ({ data }) => !data.draft);
-const fallbackPosts = contentPosts
-  .map((entry) => ({
-    slug: publicBlogSlug(entry),
-    data: {
-      title: entry.data.title,
-      description: entry.data.description,
-      publishedAt: entry.data.date,
-      createdAt: entry.data.date,
-      tags: entry.data.tags ?? [],
-    },
-  }))
-  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
-const displayPosts = posts.length > 0 ? posts : fallbackPosts;
+const fallbackPosts = contentPosts.map((entry) => ({
+  slug: publicBlogSlug(entry),
+  data: {
+    title: entry.data.title,
+    description: entry.data.description,
+    publishedAt: entry.data.date,
+    createdAt: entry.data.date,
+    tags: entry.data.tags ?? [],
+  },
+}));
+
+// Merge CMS posts with file-based posts, deduped by public slug, so markdown-only
+// entries (e.g. release posts not yet migrated into emdash) still show on the index
+// instead of being dropped whenever emdash returns any posts. emdash wins on collision.
+const emdashSlugs = new Set(posts.map((post) => post.slug ?? post.id));
+const displayPosts = [...posts, ...fallbackPosts.filter((post) => !emdashSlugs.has(post.slug))].sort(
+  (a, b) => {
+    const da = a.data.publishedAt ?? a.data.createdAt;
+    const db = b.data.publishedAt ?? b.data.createdAt;
+    return (db?.getTime?.() ?? 0) - (da?.getTime?.() ?? 0);
+  }
+);
 
 // Group posts by year
 type Post = (typeof displayPosts)[number];

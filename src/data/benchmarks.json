@@ -6,6 +6,108 @@
   "publicationBundlePath": "benchmarks/publication/2026-05-arxiv",
   "officialClaimSource": "benchmarks/EXPERIMENT_LOG.md",
   "judgePolicy": "docs/BENCHMARK_JUDGE_POLICY.md",
+  "ambSubmission": {
+    "status": "submitted_pr_under_review",
+    "statusLabel": "Submitted - PR under review",
+    "asOf": "2026-06-26T00:00:00Z",
+    "version": "AMB v1",
+    "harness": "Agent Memory Benchmark (AMB / vectorize-io), neutral harness",
+    "mode": "single-query / RAG",
+    "answerModel": "gemini-3.1-pro-preview",
+    "judgeModel": "gemini-2.5-flash-lite",
+    "providerConfig": "Self-spinning Docker (FalkorDB + Qdrant), FastEmbed-local bge-base-en-v1.5 (768d), no embedding API keys, lean enrichment (ENRICHMENT_ENABLED=false). Run name automem-sub.",
+    "embedding": "FastEmbed bge-base-en-v1.5 (768d)",
+    "statusNote": "Submitted to the neutral board; vectorize-io provider PR is under review. Not live/official on the leaderboard yet.",
+    "competitorNote": "Competitor numbers come from AMB external_results.json (published / self-reported with source attribution), not re-run through the AMB Gemini harness. BEAM is the only same-benchmark, same-harness, apples-to-apples axis vs published competitors.",
+    "image": "ghcr.io/verygoodplugins/automem:amb-v1",
+    "reproduceDoc": "AUTOMEM_REPRODUCE.md",
+    "core3": [
+      {
+        "benchmark": "LoCoMo",
+        "scope": "locomo10",
+        "score": "85.1%",
+        "ci": "+/-1.8",
+        "questions": 1540,
+        "contextTokens": "4,768",
+        "honcho": "89.9%",
+        "hindsight": "92%",
+        "comparable": "Hindsight (also AMB, clean comparison) is the proper yardstick; AutoMem trails it 85.1% vs 92%. Honcho's 89.9% is self-reported on its own harness (directional only)."
+      },
+      {
+        "benchmark": "LongMemEval",
+        "scope": "longmemeval/s",
+        "score": "74.4%",
+        "ci": "+/-3.8",
+        "questions": 500,
+        "contextTokens": "3,756",
+        "honcho": "90.4%",
+        "hindsight": "94.6%",
+        "comparable": "AutoMem trails Hindsight 74.4% vs 94.6% on the clean AMB comparison. Honcho's 90.4% is self-reported on its own harness (directional only)."
+      },
+      {
+        "benchmark": "PersonaMem",
+        "scope": "personamem/32k",
+        "score": "76.1%",
+        "ci": "+/-3.4",
+        "questions": 589,
+        "contextTokens": "2,588",
+        "honcho": null,
+        "hindsight": "86.6%",
+        "comparable": "AutoMem trails Hindsight 76.1% vs 86.6% on the clean AMB comparison. Honcho does not report PersonaMem."
+      }
+    ],
+    "core3Caveat": "On conversational Core-3, AutoMem trails the AMB leader Hindsight on all three (locomo 85.1 vs 92, longmemeval 74.4 vs 94.6, personamem 76.1 vs 86.6). The strength is large-context BEAM scaling and context-token efficiency, not verbatim conversational recall.",
+    "beam": {
+      "scale": "rubric-mean (0 / 0.5 / 1 per item, averaged) - a different scale than pass/fail benchmarks",
+      "note": "BEAM is the only same-benchmark, same-harness, apples-to-apples axis vs published competitors. AutoMem beats Honcho at every tier; the margin grows with scale. AutoMem is a clear #2 behind Hindsight (vectorize's own reference system).",
+      "rows": [
+        {
+          "tier": "100K",
+          "automem": "67.5%",
+          "automemDetail": "x3 repro, spread 1.8pp",
+          "honcho": "63.0%",
+          "hindsight": "~73%",
+          "deltaVsHoncho": "+4.5",
+          "contextTokens": "3,842"
+        },
+        {
+          "tier": "500K",
+          "automem": "65.6%",
+          "automemDetail": "+/-2.8 (n=700)",
+          "honcho": "64.9%",
+          "hindsight": "band",
+          "deltaVsHoncho": "+0.7",
+          "contextTokens": "3,929"
+        },
+        {
+          "tier": "1M",
+          "automem": "63.8%",
+          "automemDetail": "+/-2.7 (n=700)",
+          "honcho": "63.1%",
+          "hindsight": "band",
+          "deltaVsHoncho": "+0.7",
+          "contextTokens": "3,900"
+        },
+        {
+          "tier": "10M",
+          "automem": "57.4%",
+          "automemDetail": "+/-5.5 (n=200)",
+          "honcho": "40.6%",
+          "hindsight": "~64%",
+          "deltaVsHoncho": "+16.8",
+          "contextTokens": "3,932"
+        }
+      ],
+      "scalingStory": "AutoMem degrades gracefully (67.5% -> 57.4%, -10pp) across a 100x haystack increase. Honcho collapses over the same range (63.0% -> 40.6%, -22pp): flat through 1M then a cliff at 10M. Hindsight holds ~73-64% across the curve.",
+      "headline10m": "At 10M tokens, context-stuffing is physically impossible, so the score reflects retrieval architecture, not context window. AutoMem holds ~57% where the well-marketed #2 (Honcho) breaks to ~41%."
+    },
+    "efficiency": {
+      "automemRange": "~2.6-4.8k",
+      "boardLeaderRange": "17-27k",
+      "metric": "mean context tokens fed to the answerer (matches the board's avg_context_tokens metric)",
+      "note": "AutoMem feeds ~2.6-4.8k context tokens at every scale; the board's leader feeds 17-27k on BEAM. This is architectural, not hardware-dependent."
+    }
+  },
   "canonicalClaims": [
     {
       "status": "canonical",

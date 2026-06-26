@@ -119,6 +119,8 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `CONSOLIDATION_IMPORTANCE_FLOOR_FACTOR` | No | `0.3` | Minimum importance fraction after decay |
 | `CONSOLIDATION_HISTORY_LIMIT` | No | `20` | Max consolidation run records retained in the graph |
 | `CONSOLIDATION_CONTROL_NODE_ID` | No | `global` | ID of the consolidation control node in the graph |
+| `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD` | No | `0.75` | Min cosine similarity for cluster membership (0–1) |
+| `CONSOLIDATION_MIN_CLUSTER_SIZE` | No | `3` | Min memories required to form a cluster |
 
 ### Search and Recall
 
@@ -138,6 +140,12 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
 | `RECALL_ADAPTIVE_FLOOR` | No | `true` | Dynamically adjust score floor based on result set |
 | `RECALL_MAX_LIMIT` | No | `100` | Hard cap on the number of results `/recall` can return |
+| `SEARCH_RECENCY_WINDOW_DAYS` | No | `180` | Recency decay window in days (shapes `SEARCH_WEIGHT_RECENCY`, not a weight) |
+| `SEARCH_RECENCY_CURVE` | No | `linear` | Recency decay curve: `linear` (reaches 0 at the window) or `exp` (window acts as half-life); invalid falls back to `linear` |
+| `SEARCH_WEIGHT_TEMPORAL` | No | `0.1` | Relative-recency re-rank bonus; only applied when the `recency_bias` re-rank runs. Inert by default |
+| `RECALL_METADATA_SEARCH_ENABLED` | No | `true` | Enable bounded metadata sidecar recall candidates (on by default; no request parameter) |
+| `RECALL_RECENCY_BIAS` | No | `off` | Default relative-recency re-rank mode: `off`, `on`, or `auto` (temporal-intent queries only). Per-request override via the `recency_bias` query param |
+| `RECALL_RELEVANCE_GATE` | No | `0.0` | Within-pool relevance gate; ramps down query-independent score components for low-evidence results. `0.0` = disabled |
 
 ### Sync Worker
 
