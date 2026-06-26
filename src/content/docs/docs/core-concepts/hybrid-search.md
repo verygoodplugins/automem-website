@@ -11,7 +11,7 @@ Key implementation files:
 - [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/search/runtime_keywords.py) — Keyword matching logic
 - [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/search/runtime_relations.py) — Relationship expansion
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L389-L397](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py#L389-L397) — Search weight configuration
+- [automem/config.py#L454-L464](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py#L454-L464) — Search weight configuration
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/scoring.py) — Score computation
 - [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/graph.py) — Graph traversal utilities
 - [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/time.py) — Temporal expression parsing
@@ -71,6 +71,8 @@ graph TB
     subgraph "Search Strategies"
         Vector["Vector Similarity<br/>Qdrant cosine search<br/>Weight: 0.35"]
         Keyword["Keyword Match<br/>FalkorDB text search<br/>Weight: 0.35"]
+        Metadata["Metadata Sidecar Match<br/>match_score evidence<br/>Weight: 0.35"]
+        Relation["Relation Match<br/>Graph relationship strength<br/>Weight: 0.25"]
         Tag["Tag Overlap<br/>Prefix/exact matching<br/>Weight: 0.20"]
         Importance["Importance Score<br/>User-assigned value<br/>Weight: 0.10"]
         Confidence["Confidence Score<br/>Classification confidence<br/>Weight: 0.05"]
@@ -82,6 +84,8 @@ graph TB
 
     Query --> Vector
     Query --> Keyword
+    Query --> Metadata
+    Query --> Relation
     Query --> Tag
     Query --> Importance
     Query --> Confidence
@@ -90,6 +94,8 @@ graph TB
 
     Vector --> Result
     Keyword --> Result
+    Metadata --> Result
+    Relation --> Result
     Tag --> Result
     Importance --> Result
     Confidence --> Result
@@ -233,20 +239,23 @@ flowchart TD
     subgraph sources ["Data Source Scores"]
         VS["Vector Search<br/>Qdrant similarity<br/>0.0 - 1.0"]
         KS["Keyword Search<br/>TF-IDF score<br/>Normalized"]
-        GS["Graph Score<br/>Importance fallback"]
+        RelSrc["Relation Match<br/>relation_score or match_score"]
     end
 
     subgraph metadata ["Metadata Sources"]
+        MetaSrc["Metadata sidecar<br/>match_score"]
         TagSrc["Query tags vs<br/>memory tags"]
         ImpSrc["memory.importance<br/>field"]
         ConfSrc["memory.confidence<br/>field"]
         RecSrc["memory.timestamp /<br/>last_accessed"]
         ExSrc["Query phrase vs<br/>memory content"]
+        ContextSrc["context_tags vs<br/>context profile"]
     end
 
     subgraph weights ["Weight Application"]
         VW["× SEARCH_WEIGHT_VECTOR<br/>0.35"]
         KW["× SEARCH_WEIGHT_KEYWORD<br/>0.35"]
+        MetaW["× SEARCH_WEIGHT_METADATA<br/>0.35"]
         TagW["× SEARCH_WEIGHT_TAG<br/>0.20"]
         IW["× SEARCH_WEIGHT_IMPORTANCE<br/>0.10"]
         ConfW["× SEARCH_WEIGHT_CONFIDENCE<br/>0.05"]
@@ -271,16 +280,18 @@ flowchart TD
 
     VS --> VW
     KS --> KW
+    MetaSrc --> MetaW
     TagSrc --> TagW
     ImpSrc --> IW
     ConfSrc --> ConfW
     RecSrc --> RecW
     ExSrc --> ExW
-    GS --> RW
-    GS --> CtxW
+    RelSrc --> RW
+    ContextSrc --> CtxW
 
     VW --> Sum
     KW --> Sum
+    MetaW --> Sum
     TagW --> Sum
     IW --> Sum
     ConfW --> Sum
