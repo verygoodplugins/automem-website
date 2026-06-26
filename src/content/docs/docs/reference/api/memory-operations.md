@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py) — Flask API endpoints
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py) — Flask API endpoints
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP tool definitions and handlers
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP transport layer
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — TypeScript type definitions
@@ -122,7 +122,7 @@ The system uses `MemoryClassifier` to automatically determine memory type when n
 **Memory Type Reference:**
 
 | Type | Typical Importance | Use Cases |
-|------|-------------------|-----------|
+|------|-------------------|----------|
 | `Decision` | 0.9–1.0 | Architecture choices, library selections, pattern decisions |
 | `Pattern` | 0.7–0.9 | Code patterns, architectural patterns, reusable solutions |
 | `Insight` | 0.7–0.9 | Root cause discoveries, realizations, aha moments |
@@ -192,7 +192,7 @@ This enables prefix matching queries like `tags=slack` to match `slack:channel:g
 **Tagging Conventions (from platform templates):**
 
 | Memory Type | Tag Pattern | Example |
-|-------------|-------------|---------|
+|-------------|-------------|--------|
 | Project Decision | `[project, platform, date, decision]` | `["ecommerce", "cursor", "2025-01", "decision"]` |
 | Bug Fix | `[project, platform, date, bug-fix, component]` | `["api-gateway", "codex", "2025-01", "bug-fix", "auth"]` |
 | Code Pattern | `[project, platform, date, pattern, component]` | `["frontend", "cursor", "2025-01", "pattern", "react"]` |
@@ -221,7 +221,7 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
 ### Importance Scoring Guidelines
 
 | Range | Category | Examples |
-|-------|----------|---------|
+|-------|----------|--------|
 | 0.9–1.0 | Critical | User preferences, major architecture decisions, breaking changes, corrections to AI outputs |
 | 0.7–0.9 | Important | Patterns discovered, bug fixes with root cause, significant features |
 | 0.5–0.7 | Standard | Minor decisions, helpful context, tool selections, configuration notes |
@@ -439,7 +439,7 @@ Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. 
 | `content` | Triggers re-embedding if changed |
 | `tags` | Recomputes `tag_prefixes` automatically |
 | `importance`, `confidence`, `type` | Update directly |
-| `metadata` | Merged with existing metadata (not replaced) |
+| `metadata` | Replaces existing metadata entirely (not merged) |
 | `t_valid`, `t_invalid` | Update temporal bounds |
 | `timestamp` | Override original creation time |
 
@@ -512,10 +512,7 @@ curl -X PATCH https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef123
   -H "Content-Type: application/json" \
   -d '{
     "importance": 0.95,
-    "tags": ["project-alpha", "database", "architecture", "reviewed"],
-    "metadata": {
-      "reviewed_at": "2025-02-01T10:00:00Z"
-    }
+    "tags": ["project-alpha", "database", "architecture", "reviewed"]
   }'
 ```
 
@@ -540,7 +537,7 @@ The `update_memory` MCP tool corresponds to `PATCH /memory/:id`.
 | `content` | string | No | — | New content (replaces existing) |
 | `tags` | array[string] | No | — | New tags (replaces existing) |
 | `importance` | number | No | 0–1 | New importance score |
-| `metadata` | object | No | — | Metadata (merged with existing) |
+| `metadata` | object | No | — | Metadata (replaces existing; omit to preserve current value) |
 | `timestamp` | string | No | ISO format | Override creation timestamp |
 | `updated_at` | string | No | ISO format | Explicit update timestamp |
 | `last_accessed` | string | No | ISO format | Last access timestamp |
@@ -626,7 +623,7 @@ Retrieves memories filtered by tags, ordered by importance and recency. More per
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
+|-----------|------|-------------|--------|
 | `tags` | string[] | Tag filters (multiple values supported) | Required |
 | `limit` | integer | Max results per page (1–200) | `20` |
 | `offset` | integer | Number of results to skip for pagination | `0` |
@@ -676,7 +673,7 @@ This endpoint removes memories in bulk with no confirmation step. Run a `GET /me
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
+|-----------|------|-------------|--------|
 | `tags` | string[] | Tag filters (multiple values; matches any) | Required |
 
 ### Example Request
@@ -717,7 +714,7 @@ All endpoints follow consistent error formatting:
 Validation errors include specific field names and expected formats to aid debugging.
 
 | Status Code | Meaning |
-|-------------|---------|
+|-------------|--------|
 | 400 Bad Request | Invalid or missing required fields |
 | 401 Unauthorized | Missing or invalid API token |
 | 404 Not Found | Memory ID does not exist |
@@ -748,7 +745,7 @@ Hierarchical tags precompute all prefixes and store them in `tag_prefixes` array
 After storing certain memory types, create associations to build the knowledge graph:
 
 | After Storing | Search For | Association Type |
-|---------------|-----------|-----------------|
+|---------------|-----------|----------------|
 | User correction | What's being corrected | `INVALIDATED_BY` |
 | Bug fix | Original bug discovery | `DERIVED_FROM` |
 | Decision | Alternatives considered | `PREFERS_OVER` |
