@@ -7,6 +7,12 @@ sidebar:
 
 This page covers installing the `@verygoodplugins/mcp-automem` package and running the setup wizard to configure your connection to the AutoMem service. For information about deploying the AutoMem backend service itself, see [Prerequisites](#prerequisites). For detailed configuration options and environment variable resolution, see [Configuration Tools](/docs/cli/config-tools/).
 
+:::tip[The guided installer does all of this for you]
+`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. The [Quick Start](/docs/getting-started/quick-start/) walks through it prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces.
+
+The two commands differ in scope: **`install`** is the full guided wizard (backend + agents); **`setup`** (below) is the lighter wizard that only writes a `.env` against an endpoint you already have.
+:::
+
 ## Prerequisites
 
 The mcp-automem package is a **bridge component** that translates Model Context Protocol (MCP) calls into AutoMem HTTP API requests. It does not store memories itself — it requires a separate AutoMem backend service that handles memory storage, retrieval, and graph operations.

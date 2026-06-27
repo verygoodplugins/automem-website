@@ -7,6 +7,16 @@ sidebar:
 
 AutoMem gives AI assistants persistent memory that survives across sessions, devices, and platforms. When you tell Claude Desktop something important, AutoMem stores it. When you open Cursor the next day, that memory is still there — retrieved automatically and woven into context before your AI assistant even responds.
 
+:::tip[Just want to install it?]
+One guided command sets up the backend and wires it into your agents:
+
+```bash
+curl -fsSL get.automem.ai | sh
+```
+
+See the [Quick Start](/docs/getting-started/quick-start/) for the full walk-through.
+:::
+
 ## What AutoMem Is
 
 AutoMem is a self-hosted memory backend for AI assistants. It stores, enriches, and retrieves memories using a combination of graph and vector databases, enabling AI tools to remember facts, decisions, preferences, and patterns across any number of sessions or platforms.
@@ -119,6 +129,7 @@ graph TB
         COD["OpenAI Codex"]
         WARP["Warp Terminal"]
         OC["OpenClaw"]
+        HERM["Hermes"]
     end
 
     subgraph "THIS PACKAGE: @verygoodplugins/mcp-automem"
@@ -232,12 +243,13 @@ The MCP client supports the following AI platforms via stdio:
 - OpenAI Codex
 - Warp Terminal
 - OpenClaw
+- [Hermes](/docs/platforms/hermes/) (Nous Research terminal agent — MCP tools, native memory provider, or both)
 
 Cloud AI platforms (ChatGPT, Claude Web/Mobile, ElevenLabs) connect via a Remote MCP sidecar deployed alongside the AutoMem server on Railway.
 
 ## Next Steps
 
-- **Deploy and connect**: See [Quick Start](/docs/getting-started/quick-start/) to deploy the server and connect your first platform in 5 minutes.
+- **Install in one command**: See [Quick Start](/docs/getting-started/quick-start/) — `curl -fsSL get.automem.ai | sh` sets up the server and connects your first agent.
 - **Platform-specific setup**: See the Platform Integrations section for Claude Desktop, Cursor, Claude Code, and others.
 - **Understand the memory model**: See Core Concepts for memory types, relationships, and hybrid search.
 - **API reference**: See the API Reference section for complete endpoint documentation.

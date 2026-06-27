@@ -183,6 +183,10 @@ export default defineConfig({
           slug: 'docs/overview',
         },
         {
+          label: "What's New",
+          slug: 'docs/whats-new',
+        },
+        {
           label: 'Getting Started',
           items: [
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
@@ -205,6 +209,7 @@ export default defineConfig({
             { label: 'ElevenLabs Agents', slug: 'docs/platforms/elevenlabs' },
             { label: 'Alexa', slug: 'docs/platforms/alexa' },
             { label: 'OpenClaw', slug: 'docs/platforms/openclaw' },
+            { label: 'Hermes', slug: 'docs/platforms/hermes' },
             { label: 'Google AntiGravity', slug: 'docs/platforms/antigravity' },
           ],
         },
@@ -245,6 +250,7 @@ export default defineConfig({
           items: [
             { label: 'Setup & Installation', slug: 'docs/cli/setup' },
             { label: 'Platform Installers', slug: 'docs/cli/platform-installers' },
+            { label: 'Guided Cloud Setup', slug: 'docs/cli/guided-cloud-setup' },
             { label: 'Queue Management', slug: 'docs/cli/queue' },
             { label: 'Configuration Tools', slug: 'docs/cli/config-tools' },
           ],

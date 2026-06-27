@@ -7,22 +7,23 @@ sidebar:
 
 Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. The `claude-code` CLI installer sets up hook scripts that run at key events (session start, build, test, deployment) to capture context automatically. CLAUDE.md rules guide Claude's judgment for manual memory operations.
 
-:::caution[Claude Code plugin is deprecated]
-The standalone Claude Code **plugin** (Method 1 below) is deprecated and will be removed in an upcoming release. The integration itself is not going away — only the plugin packaging. Use the CLI installer (`npx @verygoodplugins/mcp-automem claude-code`) as the canonical install path. See the upstream [DEPRECATION.md](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md) for migration steps.
+:::tip[Plugin is the recommended path again]
+The v0.14 deprecation of the Claude Code **plugin** was **reversed** in June 2026 — the plugin is once again the recommended install path (enable-time config prompts, automatic marketplace updates, atomic uninstall). The `npx @verygoodplugins/mcp-automem claude-code` CLI installer is the supported **settings-level** alternative and the migration/cleanup path for older installs. Nothing is scheduled for removal. See the upstream [DEPRECATION.md](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md).
 :::
 
 **Two installation paths:**
-1. **CLI installation** (recommended) — `npx @verygoodplugins/mcp-automem claude-code`
-2. **Plugin installation** (deprecated) — native Claude Code plugin via `/plugin install`
+1. **Plugin installation** (recommended) — native Claude Code plugin via `/plugin marketplace add` + `/plugin install`
+2. **CLI installation** (settings-level alternative) — `npx @verygoodplugins/mcp-automem claude-code`
 
 ---
 
 ## Installation
 
-### Method 1: Plugin Installation (Deprecated)
+### Method 1: Plugin Installation (Recommended)
 
 ```bash
-/plugin install @verygoodplugins/automem
+/plugin marketplace add verygoodplugins/mcp-automem
+/plugin install automem@verygoodplugins-mcp-automem
 ```
 
 This installs the plugin to `~/.claude/plugins/automem@marketplace-name/` with the following structure:
@@ -49,10 +50,10 @@ This installs the plugin to `~/.claude/plugins/automem@marketplace-name/` with t
 The plugin registers three slash commands and configures the MCP server automatically.
 
 :::note
-New installs should use the CLI method below instead. Existing plugin users should follow the [migration guide](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md#migration-for-existing-plugin-users): remove the plugin, run `npx @verygoodplugins/mcp-automem claude-code`, then restart Claude Code.
+The plugin bundles the MCP server, hooks, and skill and **auto-updates** through the marketplace. Prefer to manage `~/.claude/settings.json` yourself? Use the CLI installer in Method 2. To move an existing settings-level install onto the plugin, see the [migration guide](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md).
 :::
 
-### Method 2: CLI Installation (Recommended)
+### Method 2: CLI Installation (settings-level alternative)
 
 **Step 1: Register the MCP server**
 
