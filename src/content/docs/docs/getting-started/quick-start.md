@@ -83,7 +83,7 @@ Choosing **Hosted Cloud** asks how to stand it up:
    Other — I already have a URL + key   already deployed somewhere; just paste your endpoint + token
 ```
 
-- **InstaPods** — opens the InstaPods setup page (it deploys AutoMem and emails your API URL + key, Grow plan ~$15/mo flat), then you paste them back.
+- **InstaPods** — opens the [InstaPods setup page](https://instapods.com/apps/automem/?ref=jack) (it deploys AutoMem and emails your API URL + key, Grow plan ~$15/mo flat), then you paste them back.
 - **Railway (guided)** — signs in via the `railway` CLI and deploys the AutoMem template straight from the terminal (usage-based, ~$1–5/mo), auto-capturing the endpoint + token. Falls back to a browser deploy if the CLI can't finish.
 - **Other** — you already have an endpoint; paste the URL + token and skip provisioning.
 
