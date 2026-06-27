@@ -19,6 +19,7 @@ Each platform installer generates and installs appropriate configuration files f
 | `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
+| `hermes` | `mcp_servers.automem` and/or `memory.provider` in `config.yaml`, rules in `AGENTS.md`; provider plugin + `.env` (provider/both modes) | `~/.hermes/` (automatic) |
 
 ## Claude Desktop
 
@@ -196,6 +197,31 @@ What each mode installs:
 - **Skill**: Creates `<workspace>/skills/automem/SKILL.md` with curl-based API reference
 
 All modes automatically update `~/.openclaw/openclaw.json`. See the [OpenClaw platform guide](/docs/platforms/openclaw/) for full details on each mode.
+
+## Hermes
+
+The `hermes` command installs AutoMem into the [Hermes terminal agent](/docs/platforms/hermes/) in one of three modes. The default is MCP-only.
+
+### Installation
+
+```bash
+# MCP tools only (default)
+npx @verygoodplugins/mcp-automem hermes --mode mcp
+
+# Native memory provider — ambient recall via memory.provider
+npx @verygoodplugins/mcp-automem hermes --mode provider
+
+# Both — ambient recall plus explicit MCP tools
+npx @verygoodplugins/mcp-automem hermes --mode both
+```
+
+What each mode installs:
+
+- **MCP**: Registers `mcp_servers.automem` in `~/.hermes/config.yaml` (five `mcp_automem_*` tools; `delete_memory` excluded by default)
+- **Provider**: Sets `memory.provider: automem`, installs the provider plugin in `~/.hermes/plugins/automem/`, and writes `~/.hermes/.env`
+- **Both**: MCP server + provider, with duplicate provider tools disabled (`AUTOMEM_HERMES_PROVIDER_TOOLS=false`)
+
+All modes also write an AutoMem rules block to `~/.hermes/AGENTS.md`. See the [Hermes platform guide](/docs/platforms/hermes/) for verification, recall behavior, and troubleshooting.
 
 ## Remote MCP (Cloud Platforms)
 

@@ -45,3 +45,6 @@ uploads/
 # DeepWiki scraped content (temp)
 .deepwiki-raw/
 DOCS_TASK.md
+
+# VHS screenshot capture output (raw frames/gifs; final PNGs live in public/img/docs)
+scripts/tapes/out/

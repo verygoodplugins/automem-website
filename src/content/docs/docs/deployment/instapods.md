@@ -11,6 +11,10 @@ InstaPods is the fastest hosted deployment path for AutoMem. Use it when you wan
   Deploy AutoMem on InstaPods
 </a>
 
+:::tip[Prefer the guided installer?]
+`curl -fsSL get.automem.ai | sh` can drive this InstaPods flow and wire your agents in one pass — see [Guided Cloud Setup](/docs/cli/guided-cloud-setup/).
+:::
+
 ## When to Use InstaPods
 
 Choose InstaPods when you want:

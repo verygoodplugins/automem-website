@@ -7,7 +7,7 @@ sidebar:
 
 This page provides step-by-step instructions for deploying AutoMem on Railway, including service configuration, internal networking setup, and troubleshooting. Railway is a Platform-as-a-Service (PaaS) that provides containerized deployments with persistent volumes and internal service discovery.
 
-For the fastest hosted setup with generated MCP config, see [InstaPods Deployment](/docs/deployment/instapods/). For local development setup, see the [Development Guide](https://github.com/verygoodplugins/automem/blob/main/INSTALLATION.md). For backup configuration and monitoring, see [Backup & Recovery](/docs/operations/backup/) and [Health Monitoring](/docs/operations/health/). For MCP bridge setup specifically, see the [MCP Integration guide](https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md).
+For the fastest hosted setup with generated MCP config, see [InstaPods Deployment](/docs/deployment/instapods/). To let the installer deploy this template and capture the endpoint + token for you, see [Guided Cloud Setup](/docs/cli/guided-cloud-setup/). For local development setup, see the [Development Guide](https://github.com/verygoodplugins/automem/blob/main/INSTALLATION.md). For backup configuration and monitoring, see [Backup & Recovery](/docs/operations/backup/) and [Health Monitoring](/docs/operations/health/). For MCP bridge setup specifically, see the [MCP Integration guide](https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md).
 
 ## Overview
 
