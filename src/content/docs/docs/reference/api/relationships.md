@@ -39,7 +39,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 - Stores relationships as graph edges, not separate nodes
 - Accepts 11 authorable semantic relationship types
 - Optional strength score (0.0–1.0) for weighting connections
-- System-generated relations (`SIMILAR_TO`, `PRECEDED_BY`) can appear in recall and graph results but are not valid inputs to this endpoint; `DISCOVERED` is system-internal (`public_visible=False`) and is not returned in external API responses
+- System-generated relations (`SIMILAR_TO`, `PRECEDED_BY`) can appear in recall and graph results but are not valid inputs to this endpoint; `DISCOVERED` is system-internal (`public_visible=False`) — excluded from recall results and the `/graph/relations` type list, but may still appear in raw graph traversal responses (`/graph/snapshot`, `/graph/neighbors`)
 
 ---
 
@@ -205,7 +205,7 @@ graph TB
 | `PART_OF` | B → A (Hierarchical) | Component → Container | User story → Epic |
 | `SIMILAR_TO` | Bidirectional | Semantically similar memories (auto-created) | Two related bug reports |
 | `PRECEDED_BY` | A → B (Temporal) | Temporal predecessor (auto-created) | Current sprint → Previous sprint |
-| `DISCOVERED` | Varies | System-internal heuristic edge created by consolidation (`public_visible=False` — not returned in external API responses; has `kind` property with values derived from `LEGACY_DISCOVERED_RELATIONS`) | Root cause → Observed symptom |
+| `DISCOVERED` | Varies | System-internal heuristic edge created by consolidation (`public_visible=False` — excluded from recall results and the `/graph/relations` type list; may still appear in `/graph/snapshot` and `/graph/neighbors` responses; has `kind` property) | Root cause → Observed symptom |
 
 :::tip[Directionality note]
 Although all relationships are stored as directed edges in FalkorDB (`memory1_id` → `memory2_id`), some types have semantic bidirectionality (e.g., `RELATES_TO`, `CONTRADICTS`). Graph traversal during recall expansion follows edges in both directions by default.
@@ -481,10 +481,10 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 10. `DERIVED_FROM` — Implementation of decision
 11. `PART_OF` — Component of larger effort
 
-The following types are **system-generated** and cannot be created via `associate_memories`. `SIMILAR_TO` and `PRECEDED_BY` appear in recall results and can be filtered/expanded. `DISCOVERED` is system-internal and is not returned in external API responses:
+The following types are **system-generated** and cannot be created via `associate_memories`. `SIMILAR_TO` and `PRECEDED_BY` appear in recall results and can be filtered/expanded. `DISCOVERED` is system-internal (`public_visible=False`) — excluded from recall results and the `/graph/relations` type list, but may still appear in raw graph traversal responses:
 - `SIMILAR_TO` — Semantically similar (created by enrichment)
 - `PRECEDED_BY` — Temporal predecessor (created by enrichment)
-- `DISCOVERED` — System-internal heuristic edge with `kind` property (created by consolidation; not visible in recall or graph results)
+- `DISCOVERED` — System-internal heuristic edge with `kind` property (created by consolidation; excluded from recall but may appear in `/graph/snapshot` and `/graph/neighbors`)
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.
