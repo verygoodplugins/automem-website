@@ -148,7 +148,7 @@ Qdrant is optional. If unavailable, AutoMem falls back to keyword-based search i
 
 **Dimension Validation**
 
-AutoMem validates vector dimensions against the configured `VECTOR_SIZE` before writing to Qdrant. Mismatches raise a `ValueError` with a clear message, preventing Qdrant collection corruption from mixed dimensions ([automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/validation.py)).
+AutoMem checks vector dimensions against the configured `VECTOR_SIZE` before writing to Qdrant. By default (`VECTOR_SIZE_AUTODETECT=true`), a dimension mismatch logs a warning and adopts the existing collection's dimension rather than raising an error — the legacy `validate_vector_dimensions()` function is kept for backwards compatibility but no longer enforces strict rejection. Set `VECTOR_SIZE_AUTODETECT=false` to enable strict enforcement via `VectorDimensionMismatchError` instead ([automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/validation.py)).
 
 :::caution[Migration Note]
 Existing deployments using 768-dimensional embeddings should keep `VECTOR_SIZE=768` and `EMBEDDING_MODEL=text-embedding-3-small` until re-embedding via `scripts/reembed_embeddings.py`.
