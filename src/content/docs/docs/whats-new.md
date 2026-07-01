@@ -18,9 +18,9 @@ For the complete commit-level history, see the [Changelog](/docs/development/cha
 The ranking release reworks how recall scores and orders results — the theme is *correctness over knobs*: fewer hand-tuned weights, more principled scoring.
 
 - **Date-aware ranking & latest-fact selection** — recent facts are prioritized while older context stays reachable, and superseded facts give way to the latest answer. See [Recall Operations](/docs/reference/api/recall-operations/) and [Hybrid Search](/docs/core-concepts/hybrid-search/).
-- **Configurable recency** — the recency decay window and curve are now tunable. See [Hybrid Search](/docs/core-concepts/hybrid-search/) and [Configuration Reference](/docs/reference/configuration/).
-- **Tag-score cap** — the tag-score denominator is capped to remove query-length bias.
-- **Relevance gate** — query-independent scoring is gated on topical evidence within the tag scope, cutting low-signal matches.
+- **Configurable recency** — the recency decay window and curve are now tunable, alongside an optional relative-recency re-rank. See the [Recall Tuning](/docs/core-concepts/recall-tuning/) guide.
+- **Tag-score cap** — the tag-score denominator can be capped to remove query-length bias (opt-in). See [Recall Tuning](/docs/core-concepts/recall-tuning/).
+- **Relevance gate** — query-independent scoring is gated on topical evidence within the tag scope, cutting low-signal matches. See [Recall Tuning](/docs/core-concepts/recall-tuning/).
 - **`state_mode=current|history`** — recall can now return only current memories or include superseded/invalidated ones for audit timelines. See [Recall Operations](/docs/reference/api/recall-operations/).
 - **Metadata sidecar search** and metadata + `updated_at` surfaced in the detailed recall format.
 
