@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py#L995-L1078](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L995-L1078) — Flask blueprint `/associate` endpoint
-- [automem/api/memory.py#L157-L255](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/memory.py#L157-L255) — Batch `/associate` helper
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/stores/graph_store.py) — FalkorDB edge operations
+- [automem/api/memory.py#L664-L743](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/memory.py#L664-L743) — Flask blueprint `/associate` endpoint
+- [automem/api/memory.py#L244-L365](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/memory.py#L244-L365) — Batch `/associate` helper (`_create_association_batch`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py) — FalkorDB edge operations
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `associate_memories` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — Relationship type definitions
@@ -39,7 +39,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 - Stores relationships as graph edges, not separate nodes
 - Accepts 11 authorable semantic relationship types
 - Optional strength score (0.0–1.0) for weighting connections
-- System-generated relations (`SIMILAR_TO`, `PRECEDED_BY`, `DISCOVERED`) can appear in recall and graph results but are not valid inputs to this endpoint
+- System-generated relations (`SIMILAR_TO`, `PRECEDED_BY`) can appear in recall and graph results but are not valid inputs to this endpoint; `DISCOVERED` is system-internal (`public_visible=False`) — excluded from recall results and the `/graph/relations` type list, but may still appear in raw graph traversal responses (`/graph/snapshot`, `/graph/neighbors`)
 
 ---
 
@@ -205,7 +205,7 @@ graph TB
 | `PART_OF` | B → A (Hierarchical) | Component → Container | User story → Epic |
 | `SIMILAR_TO` | Bidirectional | Semantically similar memories (auto-created) | Two related bug reports |
 | `PRECEDED_BY` | A → B (Temporal) | Temporal predecessor (auto-created) | Current sprint → Previous sprint |
-| `DISCOVERED` | Varies | Heuristic edge inferred by consolidation (auto-created, `kind=explains\|shares_theme\|parallel_context`) | Root cause → Observed symptom |
+| `DISCOVERED` | Varies | System-internal heuristic edge created by consolidation (`public_visible=False` — excluded from recall results and the `/graph/relations` type list; may still appear in `/graph/snapshot` and `/graph/neighbors` responses; has `kind` property) | Root cause → Observed symptom |
 
 :::tip[Directionality note]
 Although all relationships are stored as directed edges in FalkorDB (`memory1_id` → `memory2_id`), some types have semantic bidirectionality (e.g., `RELATES_TO`, `CONTRADICTS`). Graph traversal during recall expansion follows edges in both directions by default.
@@ -481,18 +481,15 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 10. `DERIVED_FROM` — Implementation of decision
 11. `PART_OF` — Component of larger effort
 
-The following 3 types are **system-generated** and cannot be created via `associate_memories`. They appear in recall results and can be filtered/expanded but are not valid enum values for this tool:
+The following types are **system-generated** and cannot be created via `associate_memories`. `SIMILAR_TO` and `PRECEDED_BY` appear in recall results and can be filtered/expanded. `DISCOVERED` is system-internal (`public_visible=False`) — excluded from recall results and the `/graph/relations` type list, but may still appear in raw graph traversal responses:
 - `SIMILAR_TO` — Semantically similar (created by enrichment)
 - `PRECEDED_BY` — Temporal predecessor (created by enrichment)
-- `DISCOVERED` — Heuristic edge with `kind` property (created by consolidation)
+- `DISCOVERED` — System-internal heuristic edge with `kind` property (created by consolidation; excluded from recall but may appear in `/graph/snapshot` and `/graph/neighbors`)
 
 :::note[Validation at MCP layer]
 The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.
 :::
 
-:::note[Batch mode]
-The `associate_memories` tool also accepts an `associations` array (up to 500 items, same `memory1_id` / `memory2_id` / `type` / `strength` shape) to create many relationships in one call — mirroring the [batch `/associate` body](#batch-associations). Omit `associations` to use the single-pair form documented above.
-:::
 
 ### Output Schema
 
