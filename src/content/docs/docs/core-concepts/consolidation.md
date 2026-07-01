@@ -87,8 +87,8 @@ The `MemoryConsolidator` class implements the four core consolidation tasks plus
 | `base_decay_rate` | 0.01 | Daily exponential decay rate |
 | `reinforcement_bonus` | 0.2 | Strength added when memory accessed |
 | `relationship_preservation` | 0.3 | Extra weight for connected memories |
-| `min_cluster_size` | 5 | Minimum memories per cluster to create MetaMemory |
-| `similarity_threshold` | 0.75 | Cosine similarity for clustering |
+| `min_cluster_size` | 3 | Minimum memories per cluster to create MetaMemory (`CONSOLIDATION_MIN_CLUSTER_SIZE`) |
+| `similarity_threshold` | 0.75 | Cosine similarity for clustering (`CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD`) |
 | `archive_threshold` | 0.0 | Archive below this relevance (disabled by default) |
 | `delete_threshold` | 0.0 | Delete below this relevance (disabled by default) |
 
@@ -287,8 +287,8 @@ graph TB
 
 **Clustering Parameters:**
 
-- **Similarity threshold:** 0.75 (configurable via `self.similarity_threshold`)
-- **Minimum cluster size:** 5 memories (configurable via `self.min_cluster_size`) — clusters with fewer members do not create MetaMemory nodes
+- **Similarity threshold:** 0.75 (configurable via `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD`)
+- **Minimum cluster size:** 3 memories (configurable via `CONSOLIDATION_MIN_CLUSTER_SIZE`) — clusters with fewer members do not create MetaMemory nodes
 - **Relevance filter:** Only clusters memories with `relevance_score > 0.3`
 
 The primary clustering path in `v0.15.1` loads memory metadata from FalkorDB and scrolls vectors from Qdrant. Reading `m.embeddings` from graph nodes remains a legacy/test fallback when no vector store is available.
