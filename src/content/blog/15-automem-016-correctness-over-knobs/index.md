@@ -1,6 +1,6 @@
 ---
 title: "AutoMem 0.16: Correctness Over Knobs"
-description: "What shipped in 0.16, the four recall-tuning knobs I built and deliberately left off, and why my benchmark numbers aren't comparable to anyone else's yet."
+description: "What shipped in 0.16, the four recall-tuning knobs built and deliberately left off, and why the internal benchmark numbers aren't comparable to anyone else's yet."
 date: "2026-06-22"
 draft: false
 tags:
@@ -9,7 +9,7 @@ tags:
   - technical
 ---
 
-I shipped AutoMem 0.16 this week. 63 commits and about 5,000 lines of server code since 0.15.2 — and the most interesting decision in the whole release was the half I *didn't* turn on.
+AutoMem 0.16 shipped this week — 63 commits and about 5,000 lines of server code since 0.15.2. The most interesting decision in the release was the half that stayed turned off.
 
 ## The short version
 
@@ -17,7 +17,7 @@ I shipped AutoMem 0.16 this week. 63 commits and about 5,000 lines of server cod
 - **A new retrieval channel** (metadata sidecar) that's on out of the box.
 - **A stack of scoring correctness fixes** — keyword normalization, summary hydration, an embedding bug that was quietly storing garbage vectors.
 - **Bulk associations and an admin backup endpoint** — new API surface.
-- **Four recall-tuning knobs that I built, measured, and left OFF** — because the data said to.
+- **Four recall-tuning knobs built, measured, and left OFF** — because the data said to.
 
 That last one is the real story. These aren't half-finished features. **They're finished features that lost their A/B.**
 
@@ -25,9 +25,9 @@ That last one is the real story. These aren't half-finished features. **They're 
 
 0.15 got AutoMem to "good enough to trust." 0.16 was supposed to be the recall-quality release — tighten ranking, stop stale results from winning, make the newest version of a fact beat the stale one.
 
-Some of that shipped and is live. Some of it I chased, measured, and walked away from. Both halves are below, with the numbers behind each.
+Some of that shipped and is live. Some of it got chased, measured, and abandoned. Both halves are below, with the numbers behind each.
 
-First, an honest caveat that shapes everything: there's **no clean "0.15 → 0.16 = +X%" number** in this post. The recall A/B lab had a config-plumbing bug for most of its life — the env overrides never reached the container, so every "comparison" was secretly comparing two identical configs. I rebuilt it. The comparisons below are from the rebuilt lab; the historical ones, I threw out. Owning that is cheaper than quoting a number I don't believe.
+First, a caveat that shapes everything: there's **no clean "0.15 → 0.16 = +X%" number** here. The recall A/B lab had a config-plumbing bug for most of its life — the env overrides never reached the container, so every "comparison" was secretly comparing two identical configs. It's been rebuilt. The comparisons below come from the rebuilt lab; the historical ones were thrown out. Stating that is cheaper than quoting a number that doesn't hold up.
 
 ## What's live by default
 
@@ -58,7 +58,7 @@ No A/B for these — they're bugs, validated by the test suite, not preferences 
 - **Admin backup endpoint** — `/backup` plus a real backup module behind an admin token.
 - **`state_mode=current|history`** recall alias, **configurable recency decay window/curve**, **cluster threshold/size env vars**, and the MCP detailed-recall format now surfaces stored metadata and `updated_at`.
 
-## The knobs I built and left off
+## The knobs built and left off
 
 Here's where the testing earned its keep. Four levers got built, measured on a 10,107-memory production clone and a judged BEAM 100K run, and shipped **inert**:
 
@@ -77,7 +77,7 @@ So `recency_bias=auto` stays in the box as a per-request option and a benchmark 
 
 ## The methodology problem behind the numbers
 
-Here's the number that changed how I think about all of this.
+Here's the number that reframes all of this.
 
 Same AutoMem. Same answers. Same BEAM 100K question set. Scored by two different judges:
 
@@ -88,13 +88,13 @@ Same AutoMem. Same answers. Same BEAM 100K question set. Scored by two different
 
 ![BEAM 100K: identical AutoMem answers score 82.0% under a gpt-5-mini judge and 70.25% under a gpt-5 judge — a ~12-point swing from judge strictness alone.](/img/blog/automem-016-judge-swing.svg)
 
-That's the whole reason my own-harness, own-judge numbers aren't comparable to anyone else's — Hindsight publishes ~73–75% at the 100K tier, mem0 and Zep publish their own, and every one of those is entangled with whatever judge they ran. AutoMem's native runner beats my mem0-shim baseline at the same model (82.0% vs 76.25%, both gpt-5-mini) — a real ~6-point edge from AutoMem's own chunking and `/recall` over the mem0 wire contract — but I can't put that on a leaderboard and expect it to mean anything.
+That's the whole reason own-harness, own-judge numbers aren't comparable to anyone else's — Hindsight publishes ~73–75% at the 100K tier, mem0 and Zep publish their own, and every one of those is entangled with whatever judge they ran. AutoMem's native runner beats the mem0-shim baseline at the same model (82.0% vs 76.25%, both gpt-5-mini) — a ~6-point edge from AutoMem's own chunking and `/recall` over the mem0 wire contract — but that number can't go on a leaderboard and mean anything.
 
-So the next step wasn't a config change. It was submitting AutoMem to the **neutral Agent Memory Benchmark** — standardized Gemini answerer, standardized Gemini judge, results by PR. Same grader as everyone else. That run is done now, and the numbers from it are the ones I actually stand behind: [the neutral AMB results are here](/blog/automem-amb-neutral-numbers).
+So the next step wasn't a config change. It was submitting AutoMem to the **neutral Agent Memory Benchmark** — standardized Gemini answerer, standardized Gemini judge, results by PR. Same grader as everyone else. That run is done, and its numbers are the ones worth standing behind: [the neutral AMB results are here](/blog/automem-amb-neutral-numbers).
 
 ## Where the real bottleneck turned out to be
 
-One more finding from a 500-question LongMemEval pass that reframed my roadmap. Overall: ~87% answer accuracy, ~97% recall@5. Break the 65 wrong answers down by cause:
+One more finding from a 500-question LongMemEval pass reframed the roadmap. Overall: ~87% answer accuracy, ~97% recall@5. Break the 65 wrong answers down by cause:
 
 - **54** had the right session retrieved at recall@5 — and still got answered wrong.
 - **11** were actual retrieval misses.
@@ -110,7 +110,7 @@ pie showData
 
 ## What's working, what isn't, what's next
 
-**Working:** state-aware recall, the new metadata channel, the correctness fixes. AutoMem at its all-off defaults scores 82.0% on judged BEAM 100K — but that's under my own gpt-5-mini judge, so read it as directional: above my mem0 shim, in the neighborhood of Hindsight's published 100K tier, not a leaderboard claim. The defaults are good; that's why I'm not touching them.
+**Working:** state-aware recall, the new metadata channel, the correctness fixes. AutoMem at its all-off defaults scores 82.0% on judged BEAM 100K — but that's under an in-house gpt-5-mini judge, so read it as directional: above the mem0 shim, in the neighborhood of Hindsight's published 100K tier, not a leaderboard claim. The defaults are good, and they stay untouched.
 
 **Not working yet:** preference and temporal-conflict reasoning. Retrieval finds the fact; the answer step fumbles it.
 
@@ -118,10 +118,8 @@ pie showData
 
 ## Caveats, up front
 
-- No clean 0.15→0.16 delta — the old A/B lab was a no-op, and I'd rather say so than fabricate one.
-- The internal benchmark numbers above use my own judge. Treat them as directional until the neutral-harness run lands.
+- No clean 0.15→0.16 delta — the old A/B lab was a no-op, stated plainly rather than fabricated.
+- The internal benchmark numbers above use an in-house judge. Treat them as directional until the neutral-harness run lands.
 - BEAM 100K is an easier tier than mem0's published 1M/10M settings. Different tier, different number.
 
 0.16 is mostly correctness and capability, with a deliberate decision to leave the tuning alone until the evidence shows up. That's not the flashy version of a release. It's the honest one.
-
-— Jack
