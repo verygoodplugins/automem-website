@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` require a valid API token when `AUTOMEM_API_TOKEN` is configured.
+AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` and `/backup` require a valid API token when `AUTOMEM_API_TOKEN` is configured. The `/backup` endpoint bypasses the API token guard and is protected by the admin token only.
 
 For deployment-specific token generation on Railway, see [Railway Deployment](/docs/deployment/railway/). For complete endpoint documentation with authentication requirements, see [Memory Operations](/docs/reference/api/memory-operations/).
 
@@ -15,7 +15,7 @@ For deployment-specific token generation on Railway, see [Railway Deployment](/d
 
 | Token Type | Environment Variable | Required For | Purpose |
 |------------|---------------------|-------------|---------|
-| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` | Standard memory operations (store, recall, update, delete) |
+| **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health` and `/backup` | Standard memory operations (store, recall, update, delete) |
 | **Admin Token** | `ADMIN_API_TOKEN` | Admin and enrichment endpoints | Privileged operations (reprocessing, re-embedding, bulk operations) |
 
 ---
@@ -134,7 +134,7 @@ graph LR
 
 ## Admin Authentication
 
-Admin endpoints require **both** the API token and an additional admin token. The admin token is provided in a separate `X-Admin-Token` header:
+Most admin endpoints require **both** the API token and an additional admin token. The admin token is provided in a separate `X-Admin-Token` header:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_TOKEN" \
@@ -144,13 +144,14 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 
 ### Admin-Protected Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/admin/reembed` | POST | Regenerate embeddings in batches |
-| `/admin/sync` | POST | Non-destructive drift repair |
-| `/enrichment/reprocess` | POST | Re-queue memories for enrichment |
+| Endpoint | Method | Purpose | API Token | Admin Token |
+|----------|--------|---------|-----------|-------------|
+| `/admin/reembed` | POST | Regenerate embeddings in batches | Yes | Yes |
+| `/admin/sync` | POST | Non-destructive drift repair | Yes | Yes |
+| `/enrichment/reprocess` | POST | Re-queue memories for enrichment | Yes | Yes |
+| `/backup` | GET | Export restore-compatible backup archive | **No** | Yes |
 
-Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is configured — only `/health` is unconditionally public.
+Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is configured — only `/health` requires no authentication at all. The `/backup` endpoint also bypasses the API token guard but is protected by the admin token.
 
 ---
 
@@ -174,10 +175,14 @@ graph TB
         EnrichStatus["/enrichment/status<br/>GET"]
     end
 
-    subgraph "Admin Token Required"
+    subgraph "API Token + Admin Token Required"
         Reembed["/admin/reembed<br/>POST"]
         Sync["/admin/sync<br/>POST"]
         Reprocess["/enrichment/reprocess<br/>POST"]
+    end
+
+    subgraph "Admin Token Only (no API token)"
+        Backup["/backup<br/>GET"]
     end
 
     style Health fill:#90EE90
@@ -193,6 +198,7 @@ graph TB
     style Reembed fill:#FF6B6B
     style Sync fill:#FF6B6B
     style Reprocess fill:#FF6B6B
+    style Backup fill:#FF6B6B
 ```
 
 | Category | Endpoints | API Token | Admin Token |
@@ -200,6 +206,7 @@ graph TB
 | **Public** | `/health` | No | No |
 | **Standard** | `/memory`, `/recall`, `/associate`, `/memory/by-tag`, `/consolidate`, `/consolidate/status`, `/analyze`, `/startup-recall`, `/enrichment/status` | Yes | No |
 | **Admin** | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess` | Yes | Yes |
+| **Admin-only** | `/backup` | No | Yes |
 
 ---
 
