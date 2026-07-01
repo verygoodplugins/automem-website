@@ -128,6 +128,7 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 |----------|----------|---------|-------------|
 | `SEARCH_WEIGHT_VECTOR` | No | `0.35` | Vector similarity weight |
 | `SEARCH_WEIGHT_KEYWORD` | No | `0.35` | Keyword/TF-IDF matching weight |
+| `SEARCH_WEIGHT_METADATA` | No | `0.35` | Structured metadata field match weight |
 | `SEARCH_WEIGHT_TAG` | No | `0.20` | Tag overlap weight |
 | `SEARCH_WEIGHT_IMPORTANCE` | No | `0.10` | User-assigned importance weight |
 | `SEARCH_WEIGHT_RECENCY` | No | `0.10` | Freshness boost weight |
@@ -146,6 +147,9 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `RECALL_METADATA_SEARCH_ENABLED` | No | `true` | Enable bounded metadata sidecar recall candidates (on by default; no request parameter) |
 | `RECALL_RECENCY_BIAS` | No | `off` | Default relative-recency re-rank mode: `off`, `on`, or `auto` (temporal-intent queries only). Per-request override via the `recency_bias` query param |
 | `RECALL_RELEVANCE_GATE` | No | `0.0` | Within-pool relevance gate; ramps down query-independent score components for low-evidence results. `0.0` = disabled |
+| `SEARCH_TAG_SCORE_TOKEN_CAP` | No | `0` | Caps the tag-score normalization denominator; `0` = legacy behavior (raising it is opt-in — it regressed Recall@5 in testing) |
+
+For guidance on *when* to tune these ranking knobs, see the [Recall Tuning](/docs/core-concepts/recall-tuning/) guide.
 
 ### Sync Worker
 

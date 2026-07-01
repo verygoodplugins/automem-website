@@ -205,6 +205,8 @@ Controls background memory maintenance cycles:
 | `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | float | No | `0.3` | Min importance to process in decay |
 | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | int | No | `604800` | Creative cycle frequency (1 week) |
 | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | int | No | `2592000` | Cluster cycle frequency (1 month) |
+| `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD` | float | No | `0.75` | Min cosine similarity for a memory to join a cluster |
+| `CONSOLIDATION_MIN_CLUSTER_SIZE` | int | No | `3` | Min members before a cluster is formed |
 | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | int | No | `0` | Forget cycle frequency (disabled by default) |
 | `CONSOLIDATION_ARCHIVE_THRESHOLD` | float | No | `0.0` | Relevance threshold for archiving (0.0 = disabled) |
 | `CONSOLIDATION_DELETE_THRESHOLD` | float | No | `0.0` | Relevance threshold for deletion (0.0 = disabled) |
@@ -241,6 +243,7 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 | `SEARCH_WEIGHT_EXACT` | float | No | `0.20` | Content token overlap |
 | `SEARCH_WEIGHT_RELATION` | float | No | `0.25` | Graph relation proximity boost |
 | `SEARCH_WEIGHT_RELEVANCE` | float | No | `0.0` | LLM-scored relevance (disabled by default) |
+| `SEARCH_WEIGHT_TEMPORAL` | float | No | `0.10` | Relative-recency re-rank bonus (inert unless `RECALL_RECENCY_BIAS` is active) |
 
 Adjust weights to favor specific signals for your use case.
 
@@ -255,6 +258,19 @@ Controls query result expansion and limits:
 | `RECALL_EXPANSION_LIMIT` | int | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | float | No | `0.0` | Minimum score threshold for returned results |
 | `RECALL_ADAPTIVE_FLOOR` | bool | No | `true` | Dynamically adjust score floor based on result set |
+
+### Recall Ranking
+
+Ranking-behavior knobs introduced in **v0.16.0**. All default to no behavior change; see the [Recall Tuning](/docs/core-concepts/recall-tuning/) guide for when and how to use each.
+
+| Variable | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `SEARCH_RECENCY_WINDOW_DAYS` | float | No | `180` | Age-decay window. Non-positive values fall back to 180. |
+| `SEARCH_RECENCY_CURVE` | string | No | `linear` | `linear` (score hits 0 at window edge) or `exp` (window = half-life). Invalid → `linear`. |
+| `RECALL_RECENCY_BIAS` | string | No | `off` | Relative-recency re-rank mode: `off`, `on`, or `auto` (only on temporally-intended queries). Per-request override via the `recency_bias` param. |
+| `RECALL_RELEVANCE_GATE` | float | No | `0.0` | Within-pool gate (issue #130). When >0, query-independent components are dampened for results whose topical evidence falls below the threshold. Clamped to `[0.0, 1.0]`; `0.0` = disabled. |
+| `SEARCH_TAG_SCORE_TOKEN_CAP` | int | No | `0` | Caps the tag-score normalization denominator. `0` = legacy behavior; raising it regressed Recall@5 in testing, so it is opt-in. |
+| `RECALL_METADATA_SEARCH_ENABLED` | bool | No | `true` | Admit bounded metadata-sidecar candidates during recall. No request parameter. |
 
 ### Sync Worker (Drift Repair)
 

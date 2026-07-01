@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Maps source file patterns to doc page slugs. Use exact paths or '/**' suffix for subtrees.",
-    "last_updated": "2026-06-27",
+    "last_updated": "2026-07-02",
     "automem_repo": "verygoodplugins/automem",
     "mcp_repo": "verygoodplugins/mcp-automem",
     "graph_viewer_repo": "verygoodplugins/automem-graph-viewer"
@@ -9,7 +9,7 @@
   "automem": {
     "app.py": ["architecture/overview", "getting-started/introduction"],
     "automem/__init__.py": ["architecture/overview"],
-    "automem/config.py": ["reference/configuration", "getting-started/environment-variables"],
+    "automem/config.py": ["reference/configuration", "getting-started/environment-variables", "core-concepts/recall-tuning"],
     "automem/service_state.py": ["architecture/overview"],
     "automem/service_runtime.py": ["architecture/overview", "architecture/background-processing"],
     "automem/service_runtime_bindings.py": ["architecture/overview", "architecture/background-processing"],
@@ -53,7 +53,7 @@
 
     "automem/enrichment/**": ["architecture/enrichment", "architecture/background-processing"],
 
-    "automem/search/**": ["core-concepts/hybrid-search", "reference/api/recall-operations"],
+    "automem/search/**": ["core-concepts/hybrid-search", "reference/api/recall-operations", "core-concepts/recall-tuning"],
 
     "automem/stores/graph_store.py": ["architecture/data-stores"],
     "automem/stores/vector_store.py": ["architecture/data-stores", "core-concepts/hybrid-search"],
@@ -62,7 +62,7 @@
     "automem/sync/**": ["architecture/background-processing", "operations/health"],
 
     "automem/utils/entity_extraction.py": ["architecture/enrichment"],
-    "automem/utils/scoring.py": ["core-concepts/hybrid-search"],
+    "automem/utils/scoring.py": ["core-concepts/hybrid-search", "core-concepts/recall-tuning"],
     "automem/utils/tags.py": ["core-concepts/memory-model"],
     "automem/utils/validation.py": ["reference/api/memory-operations"],
     "automem/utils/time.py": ["core-concepts/memory-model"],
