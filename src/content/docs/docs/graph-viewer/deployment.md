@@ -65,26 +65,41 @@ docker run -p 3000:3000 \
 
 ## Railway
 
-The viewer deploys to Railway using the included `railway.toml`:
+**Recommended: deploy the published image.** Point your Railway service at the public GHCR image instead of building from source:
+
+```
+ghcr.io/verygoodplugins/automem-graph-viewer:stable
+```
+
+This avoids spending Railway compute rebuilding the frontend on every deploy. After the viewer's domain is created, set these variables on the `automem` API service (not the viewer service) so browser traffic can reach it:
+
+```bash
+GRAPH_VIEWER_URL=https://<viewer-domain>
+VIEWER_ALLOWED_ORIGINS=https://<viewer-domain>
+```
+
+Browser-to-API traffic must use the API's public domain — Railway private domains aren't reachable from user browsers. The viewer itself typically needs no custom environment variables in production; it stores only browser-side config (server URL, token) and should never receive database credentials.
+
+**Source-linked deploys.** The repository's `railway.toml` is kept for preview/source deployments and mirrors the Dockerfile used to publish the GHCR image:
 
 ```toml
 [build]
-builder = "RAILPACK"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
+healthcheckPath = "/"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
 ```
 
-Railway auto-detects the Node.js project, runs the Dockerfile build, and exposes the service. The `PORT` environment variable is set automatically by Railway.
-
-To deploy:
+To deploy from source:
 
 1. Push the repository to GitHub
 2. Connect it to a Railway project
-3. Railway builds and deploys automatically on push
+3. Railway builds the Dockerfile and deploys automatically on push
 
-No additional environment variables are required for Railway — the viewer defaults to relative API URLs. Configure the API server URL via the viewer's settings UI or `localStorage` after deployment.
+The `PORT` environment variable is set automatically by Railway. Configure the API server URL via the viewer's settings UI or `localStorage` after deployment.
 
 ---
 
