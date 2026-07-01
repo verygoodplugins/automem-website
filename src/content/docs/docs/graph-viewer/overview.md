@@ -36,9 +36,8 @@ Click any node to open the Inspector, which shows full memory details: content, 
 
 ### Search & Filtering
 
-- **SearchBar** — Full-text search across memory content with instant highlighting
-- **FilterPanel** — Filter by memory type, tags, importance range, date range, and relationship types
-- **FilterChips** — Active filters displayed as dismissible chips
+- **SearchBar** — Debounced search box; client-side filtering over the loaded graph for tag-only queries, plus whole-store semantic search via the `/recall` API endpoint when a text query is active
+- **SearchResultsList** — Ranked results from `/recall`, with client-side filtering by type and sorting by relevance, recency, or importance; clicking a result navigates to an in-graph node or loads an off-graph one
 - **TagCloud** — Visual tag frequency display; click tags to filter
 
 ### Timeline & Time Travel
@@ -61,10 +60,6 @@ Full keyboard navigation support via `useKeyboardNavigation`:
 - Enter to select/inspect
 - `/` to focus search
 - `?` to show the keyboard shortcuts help overlay
-
-### Bookmarks
-
-Save and recall specific graph views (camera position, selected nodes, active filters) via the **BookmarksPanel**.
 
 ### Experimental: Hand Tracking Controls
 
@@ -89,14 +84,14 @@ src/
 ├── components/                # UI components
 │   ├── GraphCanvas.tsx        # 3D force graph renderer
 │   ├── Inspector.tsx          # Node detail panel
-│   ├── SearchBar.tsx          # Full-text search
-│   ├── FilterPanel.tsx        # Type/tag/date filters
+│   ├── SearchBar.tsx          # Search box (in-graph filter + /recall search)
+│   ├── SearchResultsList.tsx  # Ranked /recall results
 │   ├── TimelineBar.tsx        # Temporal scrubber
 │   ├── PathfindingOverlay.tsx # Shortest-path visualization
-│   ├── BookmarksPanel.tsx     # Saved views
+│   ├── ClusterBoundaries.tsx  # Cluster boundary rendering
 │   ├── StatsBar.tsx           # Graph statistics
 │   ├── MiniMap.tsx            # Overview minimap
-│   ├── RadialMenu.tsx         # Context menu
+│   ├── TokenPrompt.tsx        # API token entry UI
 │   └── settings/              # Force/display/cluster config
 ├── hooks/                     # React hooks (data, navigation, gestures)
 │   ├── useGraphData.ts        # Fetches graph snapshots from API
