@@ -34,7 +34,7 @@ graph TB
     MCP_CLIENT -->|"JSON-RPC via stdio"| STDIO
     STDIO --> TOOLS
     TOOLS --> CLIENT
-    CLIENT -->|"HTTP — AUTOMEM_ENDPOINT"| API
+    CLIENT -->|"HTTP — AUTOMEM_API_URL"| API
     API --> FALKOR
     API --> QDRANT
 ```
@@ -76,7 +76,7 @@ Edit (or create) the Claude Desktop config file for your platform:
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-automem-service.up.railway.app",
+        "AUTOMEM_API_URL": "https://your-automem-service.up.railway.app",
         "AUTOMEM_API_KEY": "your-api-token-here"
       }
     }
@@ -93,7 +93,7 @@ Edit (or create) the Claude Desktop config file for your platform:
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
       }
     }
   }
@@ -109,7 +109,7 @@ Edit (or create) the Claude Desktop config file for your platform:
       "command": "node",
       "args": ["/path/to/mcp-automem/dist/index.js"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
       }
     }
   }
@@ -130,13 +130,13 @@ You can run multiple AutoMem servers with different endpoints — for example, t
     "memory-personal": {
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
-      "env": { "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001" }
+      "env": { "AUTOMEM_API_URL": "http://127.0.0.1:8001" }
     },
     "memory-work": {
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://work-automem.example.com",
+        "AUTOMEM_API_URL": "https://work-automem.example.com",
         "AUTOMEM_API_KEY": "work-token"
       }
     }
@@ -220,7 +220,7 @@ Recommended importance thresholds:
 
 | Variable | Required | Purpose | Example |
 |----------|---------|---------|---------|
-| `AUTOMEM_ENDPOINT` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
+| `AUTOMEM_API_URL` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
 | `AUTOMEM_API_KEY` | No* | API authentication token | `your-token-here` |
 
 \*Required for Railway/cloud deployments. Optional for local development.
@@ -252,7 +252,7 @@ Expected response includes:
 ### Tools not appearing in Claude Desktop
 
 1. Verify `claude_desktop_config.json` is valid JSON (no trailing commas)
-2. Check that `AUTOMEM_ENDPOINT` is reachable from your machine
+2. Check that `AUTOMEM_API_URL` is reachable from your machine
 3. Restart Claude Desktop completely (quit from menu, not just close window)
 4. Check Claude Desktop logs for MCP server startup errors
 

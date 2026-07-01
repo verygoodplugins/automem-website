@@ -40,7 +40,7 @@ graph TB
     MCP_CLIENT -->|"JSON-RPC via stdio"| STDIO
     STDIO --> TOOLS
     TOOLS --> CLIENT
-    CLIENT -->|"HTTP — AUTOMEM_ENDPOINT"| API
+    CLIENT -->|"HTTP — AUTOMEM_API_URL"| API
     API --> FALKOR
     API --> QDRANT
 ```
@@ -68,7 +68,7 @@ AntiGravity spawns the AutoMem MCP server as a child process and communicates ov
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-automem-service.up.railway.app",
+        "AUTOMEM_API_URL": "https://your-automem-service.up.railway.app",
         "AUTOMEM_API_KEY": "your-api-token-here"
       }
     }
@@ -85,7 +85,7 @@ AntiGravity spawns the AutoMem MCP server as a child process and communicates ov
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
       }
     }
   }
@@ -101,7 +101,7 @@ AntiGravity spawns the AutoMem MCP server as a child process and communicates ov
       "command": "node",
       "args": ["/path/to/mcp-automem/dist/index.js"],
       "env": {
-        "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
       }
     }
   }
@@ -141,13 +141,13 @@ Run separate AutoMem instances for different contexts — personal vs. work memo
     "memory-personal": {
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
-      "env": { "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001" }
+      "env": { "AUTOMEM_API_URL": "http://127.0.0.1:8001" }
     },
     "memory-work": {
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://work-automem.example.com",
+        "AUTOMEM_API_URL": "https://work-automem.example.com",
         "AUTOMEM_API_KEY": "work-token"
       }
     }
@@ -204,7 +204,7 @@ AntiGravity's AI agent benefits from explicit instructions on when and how to us
 
 | Variable | Required | Purpose | Example |
 |----------|---------|---------|---------|
-| `AUTOMEM_ENDPOINT` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
+| `AUTOMEM_API_URL` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
 | `AUTOMEM_API_KEY` | No* | API authentication token | `your-token-here` |
 
 \*Required for Railway/cloud deployments. Optional for local development.
@@ -231,7 +231,7 @@ Expected response includes:
 ### Tools not appearing in AntiGravity
 
 1. Verify `mcp_config.json` is valid JSON (no trailing commas)
-2. Check that `AUTOMEM_ENDPOINT` is reachable from your machine
+2. Check that `AUTOMEM_API_URL` is reachable from your machine
 3. Restart AntiGravity completely
 4. Re-open the MCP Store panel and confirm the server appears in the list
 

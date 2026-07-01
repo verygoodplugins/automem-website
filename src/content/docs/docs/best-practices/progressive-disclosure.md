@@ -193,7 +193,7 @@ Support multiple configuration sources in priority order:
 3. Configuration files (`.env`, platform-specific)
 4. Defaults (lowest priority)
 
-Use environment variables for credentials (`AUTOMEM_ENDPOINT`, `AUTOMEM_API_KEY`). Never hardcode API keys.
+Use environment variables for credentials (`AUTOMEM_API_URL`, `AUTOMEM_API_KEY`). Never hardcode API keys.
 
 ### 2. Error Handling
 
@@ -319,7 +319,7 @@ If migrating from a different MCP memory implementation:
 
 | Issue | Symptoms | Solution |
 |---|---|---|
-| **Server not starting** | Platform shows "MCP server failed to start" | Check `AUTOMEM_ENDPOINT` in server env config. Verify no CLI arguments passed (would trigger CLI mode). |
+| **Server not starting** | Platform shows "MCP server failed to start" | Check `AUTOMEM_API_URL` in server env config. Verify no CLI arguments passed (would trigger CLI mode). |
 | **Tools not appearing** | Platform doesn't list memory tools | Verify server name in platform config. Check if platform requires tool allowlist. Restart platform after config changes. |
 | **Authentication failures** | 401/403 errors | Set `AUTOMEM_API_KEY` in server environment variables, not client-side. Verify API key format matches backend requirements. |
 | **Recall returns empty** | Queries return 0 results despite stored memories | Check tags match exactly. Verify time filters aren't too restrictive. Try query without tags first. Check backend health. |

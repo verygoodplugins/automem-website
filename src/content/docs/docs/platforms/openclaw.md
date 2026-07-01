@@ -183,7 +183,7 @@ In MCP and skill modes, the installer writes to `skills.entries.automem` instead
       "automem": {
         "enabled": true,
         "env": {
-          "AUTOMEM_ENDPOINT": "http://127.0.0.1:8001",
+          "AUTOMEM_API_URL": "http://127.0.0.1:8001",
           "AUTOMEM_API_KEY": "your-token-here"
         }
       }
@@ -222,7 +222,7 @@ In legacy skill mode, the bot constructs curl commands directly:
 **Store a memory:**
 
 ```bash
-curl -s -X POST "$AUTOMEM_ENDPOINT/memory" \
+curl -s -X POST "$AUTOMEM_API_URL/memory" \
   -H "Content-Type: application/json" \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"} \
   -d '{
@@ -237,13 +237,13 @@ curl -s -X POST "$AUTOMEM_ENDPOINT/memory" \
 ```bash
 curl -s \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"} \
-  "$AUTOMEM_ENDPOINT/recall?query=your+search+query&limit=5"
+  "$AUTOMEM_API_URL/recall?query=your+search+query&limit=5"
 ```
 
 **Update a memory:**
 
 ```bash
-curl -s -X PATCH "$AUTOMEM_ENDPOINT/memory/MEMORY_ID" \
+curl -s -X PATCH "$AUTOMEM_API_URL/memory/MEMORY_ID" \
   -H "Content-Type: application/json" \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"} \
   -d '{"content":"Updated context."}'
@@ -252,7 +252,7 @@ curl -s -X PATCH "$AUTOMEM_ENDPOINT/memory/MEMORY_ID" \
 **Delete a memory:**
 
 ```bash
-curl -s -X DELETE "$AUTOMEM_ENDPOINT/memory/MEMORY_ID" \
+curl -s -X DELETE "$AUTOMEM_API_URL/memory/MEMORY_ID" \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"}
 ```
 
@@ -325,11 +325,11 @@ OpenClaw uses four complementary memory layers:
 
 1. Run `mcporter list` — verify `automem` server appears
 2. Check `<workspace>/config/mcporter.json` contains the `automem` server
-3. Confirm `skills.entries.automem.env.AUTOMEM_ENDPOINT` is set in `~/.openclaw/openclaw.json`
+3. Confirm `skills.entries.automem.env.AUTOMEM_API_URL` is set in `~/.openclaw/openclaw.json`
 
 ### Legacy skill not connecting
 
-1. Verify endpoint: `curl "$AUTOMEM_ENDPOINT/health"`
+1. Verify endpoint: `curl "$AUTOMEM_API_URL/health"`
 2. Check API key if using an authenticated instance
 3. Check firewall/VPN for Railway endpoints
 4. Consider switching to `plugin` or `mcp` mode for a better experience

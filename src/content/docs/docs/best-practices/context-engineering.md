@@ -300,7 +300,7 @@ Environment variables are resolved in this order:
 4. `.env` file in home directory
 
 **Environment variables**:
-- `AUTOMEM_ENDPOINT` — AutoMem service URL
+- `AUTOMEM_API_URL` — AutoMem service URL
 - `AUTOMEM_API_KEY` or `AUTOMEM_API_TOKEN` — Authentication token (both accepted)
 
 **Platform-specific config locations**:
@@ -446,7 +446,7 @@ If migrating from a different MCP memory implementation:
 
 | Issue | Symptoms | Solution |
 |---|---|---|
-| **Server not starting** | Platform shows "MCP server failed to start" | Check `AUTOMEM_ENDPOINT` in server env config. Verify no CLI arguments passed (would trigger CLI mode instead of server mode). |
+| **Server not starting** | Platform shows "MCP server failed to start" | Check `AUTOMEM_API_URL` in server env config. Verify no CLI arguments passed (would trigger CLI mode instead of server mode). |
 | **Tools not appearing** | Platform doesn't list memory tools | Verify server name in platform config. Check if platform requires tool allowlist. Restart platform after config changes. |
 | **Authentication failures** | 401/403 errors | Set `AUTOMEM_API_KEY` in server environment variables, not client-side. Verify API key format matches backend requirements. |
 | **Recall returns empty** | Queries return 0 results despite stored memories | Check tags match exactly. Verify time filters aren't too restrictive. Try query without tags first. Check backend health. |
@@ -464,7 +464,7 @@ DEBUG=automem:* npx @verygoodplugins/mcp-automem
 **Test backend directly:**
 
 ```bash
-curl -H "Authorization: Bearer $AUTOMEM_API_KEY" "$AUTOMEM_ENDPOINT/health"
+curl -H "Authorization: Bearer $AUTOMEM_API_KEY" "$AUTOMEM_API_URL/health"
 ```
 
 **Verify template variable substitution:**

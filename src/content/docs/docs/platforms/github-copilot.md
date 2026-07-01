@@ -52,7 +52,7 @@ Add the MCP server configuration through the GitHub.com repository settings inte
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_ENDPOINT": "https://your-automem-service.up.railway.app",
+        "AUTOMEM_API_URL": "https://your-automem-service.up.railway.app",
         "AUTOMEM_API_KEY": "your-api-token-here"
       }
     }
@@ -61,7 +61,7 @@ Add the MCP server configuration through the GitHub.com repository settings inte
 ```
 
 :::caution
-GitHub Copilot Coding Agent runs in a GitHub-hosted environment. `localhost` or `127.0.0.1` URLs will not work. You must provide a publicly accessible `AUTOMEM_ENDPOINT` (Railway, Docker, or other cloud deployment).
+GitHub Copilot Coding Agent runs in a GitHub-hosted environment. `localhost` or `127.0.0.1` URLs will not work. You must provide a publicly accessible `AUTOMEM_API_URL` (Railway, Docker, or other cloud deployment).
 :::
 
 ### Using Remote MCP (HTTP/SSE)
@@ -158,7 +158,7 @@ Memories stored by GitHub Copilot are accessible from any other AutoMem-connecte
 
 | Variable | Required | Purpose |
 |----------|---------|---------|
-| `AUTOMEM_ENDPOINT` | Yes | AutoMem service URL (must be public) |
+| `AUTOMEM_API_URL` | Yes | AutoMem service URL (must be public) |
 | `AUTOMEM_API_KEY` | Yes* | API authentication token |
 
 \*Required for cloud deployments. Not needed for local AutoMem (but Copilot agent can't reach localhost anyway).
@@ -170,7 +170,7 @@ Memories stored by GitHub Copilot are accessible from any other AutoMem-connecte
 ### MCP tools not appearing in Copilot
 
 1. Verify the MCP configuration is saved correctly in GitHub.com settings
-2. Check that `AUTOMEM_ENDPOINT` is publicly accessible
+2. Check that `AUTOMEM_API_URL` is publicly accessible
 3. Test the endpoint: `curl https://your-automem.example.com/health`
 4. Ensure the AutoMem service has a valid API token configured
 

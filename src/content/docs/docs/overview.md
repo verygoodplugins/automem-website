@@ -529,7 +529,7 @@ The MCP bridge requires two additional environment variables:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `AUTOMEM_ENDPOINT` | AutoMem service URL | `http://127.0.0.1:8001` |
+| `AUTOMEM_API_URL` | AutoMem service URL | `http://127.0.0.1:8001` |
 | `AUTOMEM_API_KEY` | API key for authenticated instances | _optional_ |
 
 :::caution
