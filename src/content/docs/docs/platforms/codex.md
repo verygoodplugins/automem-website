@@ -32,7 +32,7 @@ graph TB
     subgraph "Configuration Layer"
         TOML["~/.codex/config.toml — MCP server definition"]
         AGENTS["AGENTS.md — Memory rules template"]
-        ENV["Environment Variables — AUTOMEM_ENDPOINT / AUTOMEM_API_KEY"]
+        ENV["Environment Variables — AUTOMEM_API_URL / AUTOMEM_API_KEY"]
     end
 
     subgraph "MCP Server Process"
@@ -106,7 +106,7 @@ command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
 [mcp_servers.memory.env]
-AUTOMEM_ENDPOINT = "http://127.0.0.1:8001"
+AUTOMEM_API_URL = "http://127.0.0.1:8001"
 # AUTOMEM_API_KEY = "your-token-here"  # Required for cloud deployments
 ```
 
@@ -118,7 +118,7 @@ command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
 [mcp_servers.memory.env]
-AUTOMEM_ENDPOINT = "https://your-automem-service.up.railway.app"
+AUTOMEM_API_URL = "https://your-automem-service.up.railway.app"
 AUTOMEM_API_KEY = "your-api-token-here"
 ```
 
@@ -130,7 +130,7 @@ command = "node"
 args = ["/path/to/mcp-automem/dist/index.js"]
 
 [mcp_servers.memory.env]
-AUTOMEM_ENDPOINT = "http://127.0.0.1:8001"
+AUTOMEM_API_URL = "http://127.0.0.1:8001"
 ```
 
 :::note
@@ -171,7 +171,7 @@ graph TB
         CMD["command = 'npx'"]
         ARGS["args = ['-y', '@verygoodplugins/mcp-automem']"]
         ENV_SECTION["[mcp_servers.memory.env] — Environment variables"]
-        ENDPOINT["AUTOMEM_ENDPOINT = 'http://...'"]
+        ENDPOINT["AUTOMEM_API_URL = 'http://...'"]
         KEY["AUTOMEM_API_KEY = '...'"]
     end
 
@@ -319,7 +319,7 @@ recall_memory(
 ### Cloud Agent Mode
 
 :::caution
-The cloud agent runs in a GitHub-hosted environment. `localhost` URLs will not work. You must provide a publicly accessible `AUTOMEM_ENDPOINT` (Railway, Docker, etc.).
+The cloud agent runs in a GitHub-hosted environment. `localhost` URLs will not work. You must provide a publicly accessible `AUTOMEM_API_URL` (Railway, Docker, etc.).
 :::
 
 Memories persist across all three modes — store in CLI, recall in IDE, or vice versa.
@@ -407,7 +407,7 @@ curl http://127.0.0.1:8001/health
 curl -H "Authorization: Bearer $KEY" https://your-automem.up.railway.app/health
 ```
 
-For cloud agent mode, ensure `AUTOMEM_ENDPOINT` points to a publicly accessible URL.
+For cloud agent mode, ensure `AUTOMEM_API_URL` points to a publicly accessible URL.
 
 ### AGENTS.md rules not followed
 

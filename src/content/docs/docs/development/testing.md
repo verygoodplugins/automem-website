@@ -430,7 +430,7 @@ const mockRecallResponse = {
 Integration tests require a live AutoMem service. Set the following environment variables before running:
 
 ```bash
-AUTOMEM_ENDPOINT=http://localhost:8001
+AUTOMEM_API_URL=http://localhost:8001
 AUTOMEM_API_KEY=your-test-token
 ```
 
