@@ -51,8 +51,8 @@ Copy `.env.example` to `.env` and configure:
 
 The graph viewer needs an API token to authenticate with your AutoMem instance. Tokens can be provided in several ways (checked in priority order):
 
-1. **URL query parameter** — `?token=your-token`
-2. **URL hash** — `#token=your-token` (stays client-side, never sent to server)
+1. **URL query parameter** — `?token=your-token` (also accepts `?api_token=your-token` as an alias)
+2. **URL hash** — `#token=your-token` (also accepts `#api_token=your-token`; stays client-side, never sent to server)
 3. **localStorage** — The viewer stores the token in `automem_token` after first entry via the **TokenPrompt** UI
 
 ### Embedded Mode
@@ -78,6 +78,7 @@ The viewer consumes these AutoMem API endpoints:
 | `GET /graph/snapshot` | Full graph data (nodes + edges) |
 | `GET /graph/neighbors/:id` | Neighbors of a specific node |
 | `GET /graph/stats` | Graph statistics (counts, types) |
+| `GET /recall` | Whole-store semantic search, used by the search box to surface off-graph results |
 | `GET /health` | Service health check |
 
 All requests (except `/health`) require the `X-API-Key: <token>` header.
