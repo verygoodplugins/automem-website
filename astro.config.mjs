@@ -219,6 +219,7 @@ export default defineConfig({
             { label: 'Memory Model', slug: 'docs/core-concepts/memory-model' },
             { label: 'Relationship Types', slug: 'docs/core-concepts/relationship-types' },
             { label: 'Hybrid Search', slug: 'docs/core-concepts/hybrid-search' },
+            { label: 'Recall Tuning', slug: 'docs/core-concepts/recall-tuning' },
             { label: 'Consolidation & Decay', slug: 'docs/core-concepts/consolidation' },
           ],
         },
