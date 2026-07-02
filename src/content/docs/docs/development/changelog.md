@@ -7,6 +7,20 @@ All notable releases for **AutoMem** (the memory server) and **MCP AutoMem** (th
 
 ---
 
+## June 2026
+
+### 0.16.0 · Recall Ranking Overhaul
+**2026-06-26**
+
+A recall-ranking overhaul reworks how results are scored and ordered — the theme is *correctness over knobs*. Date-aware ranking prioritizes recent facts while keeping older context reachable, and latest-fact selection lets superseded memories give way to the current answer. The recency decay window and curve are now tunable, alongside an optional relative-recency re-rank, a relevance gate that requires topical evidence within the tag scope before applying query-independent scoring, and an opt-in tag-score cap that removes query-length bias. Recall gained `state_mode=current|history` to return only current memories or include superseded/invalidated ones for audit timelines, plus metadata sidecar search with metadata and `updated_at` surfaced in the detailed format. A single API call can now create or update many memory associations at once, a new admin endpoint exports memories for backup, and consolidation gained entity deduplication and identity synthesis with configurable cluster thresholds. `/enrichment/status` exposes the classification fallback-rate, and a new Recall Quality Lab harness tunes scoring against a clone of real data. See the [Recall Tuning](/docs/core-concepts/recall-tuning/) guide.
+
+### MCP 0.15.0 · Hermes, Guided Cloud & API-URL Rename
+**2026-06-26**
+
+Two new install paths: AutoMem now installs into the Hermes terminal agent, and a guided cloud installer can stand up a hosted backend (InstaPods or Railway) and capture the endpoint and token for you. `claude-code` installs as an auto-updating Claude Code plugin that bundles the MCP server and hooks, replacing manual settings-level wiring. The endpoint variable `AUTOMEM_ENDPOINT` was renamed to `AUTOMEM_API_URL` (the old name still works as a fallback). The Stop hook now uses an LLM-judged storage nudge instead of mechanically capturing build/test/deploy output, `store_memory` can supersede an existing memory in one step, and recall responses are summary-first and token-budgeted to stay under the response-size cap. The installer's permission scope was narrowed to the six `mcp__memory__*` entries. See [What's New](/docs/whats-new/).
+
+---
+
 ## April 2026
 
 ### 0.15.2 · Recall Quality & Tag Ops
