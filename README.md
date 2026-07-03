@@ -9,7 +9,7 @@ Marketing site, blog, and product documentation for [AutoMem](https://automem.ai
 - **Framework**: Astro 6.1 with React 19 islands
 - **Styling**: Tailwind CSS v4 (Vite plugin, not PostCSS)
 - **Docs**: Starlight at `/docs/*`
-- **Content**: Custom blog collection (`src/content/blog/NN-slug/index.md`) + Starlight docs + EmDash CMS
+- **Content**: EmDash CMS posts/pages + Starlight docs
 - **Hosting**: Cloudflare Pages with Pages Functions, D1 databases, and KV
 
 ## Architecture
@@ -31,9 +31,14 @@ npm run dev          # Astro dev server on http://localhost:4321 (host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs
 npm run preview      # Preview production build
 npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
+npm run cms:seed:validate
+npm run cms:seed:apply
+npm run cms:migrate-blog
 ```
 
 > Always use `npm run build`, never `astro build` directly — the build pipeline does extra work (see below).
+
+Blog content is CMS-first. `src/content/blog` is migration input only; runtime blog routes and RSS must not read markdown files or use `getCollection('blog')`. Local EmDash commands explicitly target `data/emdash.db`.
 
 ## Build Pipeline
 
@@ -53,9 +58,8 @@ automem-website/
 ├── src/
 │   ├── components/         # Astro + React components (mascot, hero, EmailSignup, SEO schemas)
 │   ├── content/
-│   │   ├── blog/           # Blog posts: NN-slug/index.md
 │   │   └── docs/           # Starlight documentation
-│   ├── content.config.ts   # Content collection definitions (blog + docs)
+│   ├── content.config.ts   # Content collection definitions (docs only)
 │   ├── layouts/            # Layout.astro (single base layout)
 │   ├── lib/                # Shared utilities (blog helpers, emdash email plugin)
 │   ├── live.config.ts      # EmDash live preview config (dev)
@@ -73,7 +77,10 @@ automem-website/
 │   ├── build-pages.mjs     # Build orchestrator (use via npm run build)
 │   ├── bundle-worker.mjs   # esbuild worker bundling
 │   ├── check-links.js      # Linkinator wrapper
+│   ├── migrate-blog-to-emdash.mjs # One-way markdown-to-CMS migration
 │   └── file-doc-map.json   # Source-to-doc mapping for /update-docs workflow
+├── seed/
+│   └── seed.json           # EmDash schema, menus, widgets, settings, byline
 ├── schema/                 # D1 schemas (waitlist, etc.)
 ├── public/                 # Static assets
 ├── patches/                # patch-package patches

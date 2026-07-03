@@ -1,17 +1,56 @@
 ---
 import AutoJack from './AutoJack.astro';
+import type { ChromeLink } from '../lib/cms-chrome';
+
+interface Props {
+  menuItems?: ChromeLink[];
+}
 
 const INSTAPODS_REFERRAL_URL = 'https://instapods.com/apps/automem/?ref=jack';
+const fallbackLinks: ChromeLink[] = [
+  {
+    href: 'https://github.com/verygoodplugins/automem/blob/main/LICENSE',
+    label: 'MIT License',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  },
+  {
+    href: 'https://github.com/verygoodplugins/automem',
+    label: 'GitHub',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  },
+  {
+    href: 'https://automem.ai/discord',
+    label: 'Discord',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  },
+  {
+    href: INSTAPODS_REFERRAL_URL,
+    label: 'InstaPods',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  },
+];
+
+const { menuItems = fallbackLinks } = Astro.props;
 ---
 
 <footer class="border-t border-lab-border/80 px-4 py-8 text-xs text-lab-muted sm:px-7 lg:px-10">
   <div class="mx-auto flex max-w-[1440px] flex-col gap-5 md:flex-row md:items-center md:justify-between">
     <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
       <span>© 2026 AutoMem</span>
-      <a href="https://github.com/verygoodplugins/automem/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="no-underline transition-colors hover:text-lab-accent-text">MIT License</a>
-      <a href="https://github.com/verygoodplugins/automem" target="_blank" rel="noopener noreferrer" class="no-underline transition-colors hover:text-lab-accent-text">GitHub</a>
-      <a href="https://automem.ai/discord" target="_blank" rel="noopener noreferrer" class="no-underline transition-colors hover:text-lab-accent-text">Discord</a>
-      <a href={INSTAPODS_REFERRAL_URL} target="_blank" rel="noopener noreferrer" class="no-underline transition-colors hover:text-lab-accent-text">InstaPods</a>
+      {menuItems.map((item) => (
+        <a
+          href={item.href}
+          target={item.target}
+          rel={item.rel}
+          class="no-underline transition-colors hover:text-lab-accent-text"
+        >
+          {item.label}
+        </a>
+      ))}
     </div>
 
     <div class="flex items-center gap-2">

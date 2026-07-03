@@ -13,25 +13,28 @@ npm run dev          # Astro dev server (localhost:4321, --host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs (NOT plain astro build)
 npm run preview      # Preview production build
 npm run check-links  # Broken link checker (requires build first)
+npm run cms:seed:validate # Validate seed/seed.json against data/emdash.db
+npm run cms:seed:apply    # Apply/update EmDash schema, menus, widgets, settings
+npm run cms:migrate-blog  # Import old src/content/blog markdown into EmDash
 ```
 
 **Local preview & link-checking notes:**
 - `npm run dev` runs on port 4321. **Never use port 5000 — it is reserved on this system.** If another process already holds 4321, Astro silently bumps to 4322+. For the Claude Code preview tool, use the `.claude/launch.json` `automem-web` config (`astro dev` on `0.0.0.0:4321`; binding `0.0.0.0` avoids the macOS `localhost`→IPv6 `::1` resolution that breaks readiness checks on a 127.0.0.1-only bind).
 - `npm run check-links` boots `wrangler pages dev` against the built `_worker.js`. In restricted/sandboxed environments where wrangler can't serve, it returns 404 for *every* asset (favicon, JS bundles, all routes) — false negatives, not broken links. Verify links with an `npm run dev` crawl instead.
-- The blog index (`src/pages/blog/index.astro`) merges EmDash CMS posts with file-based markdown posts, deduped by public slug — a new `src/content/blog/NN-slug/` post shows up automatically, no CMS entry needed.
+- Blog posts are CMS-first. Runtime routes (`/blog`, `/blog/[slug]`, `/rss.xml`, archives, search) must not use `getCollection('blog')` or read `src/content/blog`; markdown files are migration input only. Use `npm run cms:migrate-blog` after `npm run cms:seed:apply` when importing old markdown posts.
 
 ## Architecture & Key Directories
 
 ```
 src/pages/           — Routes (.astro). Includes /blog/, /docs/, /about, /mascot-lab, etc.
-src/content/blog/    — Blog posts as markdown in numbered dirs (e.g., 01-introducing-automem/index.md)
+src/content/blog/    — Migration input only for old markdown posts; not an Astro content collection
 src/content/docs/    — Starlight documentation (57+ pages)
 src/components/      — Astro components (AutoJack mascot, MemoryHero, EmailSignup, SEO schemas/)
 src/layouts/         — Layout.astro (single base layout with hex line numbers, footer mascot)
 src/styles/          — global.css (Tailwind v4 @theme + CSS vars), starlight-custom.css
 src/lib/             — Utility modules (blog helpers, emdash email plugin)
 src/middleware.ts    — Cloudflare Workers env import, API route dispatch, emdash preview redirect
-src/content.config.ts — Content collection definitions (blog + docs)
+src/content.config.ts — Content collection definitions (docs only)
 src/live.config.ts   — EmDash CMS configuration
 functions/           — Cloudflare Pages Functions (api/signup.js, confirm.js, unsubscribe.js, admin/)
 scripts/             — Build tooling (build-pages.mjs, bundle-worker.mjs, check-links.js, file-doc-map.json)
@@ -88,9 +91,7 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 ## Content Collections (`src/content.config.ts`)
 
 - **docs**: `docsLoader()` from Starlight with `docsSchema()`
-- **blog**: `glob` loader matching `**/*.{md,mdx}` in `src/content/blog/`
-  - Schema: title (string), description (string), date (date), draft (boolean, optional), tags (string[], optional)
-  - Directory convention: numbered prefix `NN-slug/index.md`
+- Blog content comes from EmDash CMS `posts`. Do not reintroduce a file-backed `blog` collection or markdown fallback logic.
 
 ## Component Patterns
 
@@ -106,7 +107,7 @@ Colors use RGB triplet values for alpha compositing. Defined in `:root` (dark, d
 - ESM (`"type": "module"` in package.json)
 - Astro components use `.astro` extension
 - React islands via `@astrojs/react` for interactive components (TanStack Query + Router available)
-- Blog posts: numbered directory prefix (`01-`, `02-`, ...) with `index.md` inside
+- CMS posts/pages: seed schema with `npm run cms:seed:apply`; migrate old markdown with `npm run cms:migrate-blog`
 - Starlight docs: organized by section directories matching sidebar config in `astro.config.mjs`
 - Cloudflare Pages Functions: plain `.js` files (not TypeScript)
 

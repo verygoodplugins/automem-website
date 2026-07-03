@@ -1,0 +1,128 @@
+---
+import { getEmDashEntry, getSeoMeta } from 'emdash';
+import { PortableText } from 'emdash/ui';
+import { createPublicPageContext } from 'emdash/page';
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import { getCmsChrome } from '../../lib/cms-chrome';
+import '../../styles/global.css';
+
+export const prerender = false;
+
+interface CmsPageData {
+  id: string;
+  title: string;
+  content?: unknown[];
+  publishedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const { slug } = Astro.params;
+const chrome = await getCmsChrome();
+const {
+  entry: rawPage,
+  isPreview,
+  error,
+  cacheHint,
+} = await getEmDashEntry('pages', slug!);
+const page = rawPage as typeof rawPage & { data: CmsPageData };
+
+if (error) {
+  console.error('Failed to load CMS page:', error);
+}
+
+if (!page) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+Astro.cache.set(cacheHint);
+
+if (!isPreview) {
+  Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+}
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://automem.ai';
+const seo = getSeoMeta(page, {
+  siteTitle: chrome.siteTitle,
+  siteUrl,
+  path: `/pages/${page.id}`,
+  defaultOgImage: `${siteUrl}/og-image.png`,
+});
+const pageContext = createPublicPageContext({
+  Astro,
+  kind: 'content',
+  pageType: 'website',
+  title: seo.title,
+  description: seo.description,
+  canonical: seo.canonical,
+  image: seo.ogImage,
+  content: {
+    collection: 'pages',
+    id: page.data.id,
+    slug: page.id,
+  },
+  seo: {
+    ogTitle: seo.ogTitle,
+    ogDescription: seo.ogDescription,
+    ogImage: seo.ogImage,
+    robots: seo.robots,
+  },
+  siteName: chrome.siteTitle,
+});
+---
+
+<Layout
+  title={page.data.title}
+  description={seo.description ?? ''}
+  pageContext={pageContext}
+  footerMenuItems={chrome.footerMenuItems}
+>
+  <Navigation currentPath={Astro.url.pathname} menuItems={chrome.primaryMenuItems} siteTitle={chrome.siteTitle} />
+
+  <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
+    <article class="mx-auto max-w-3xl min-w-0" {...page.edit}>
+      <header class="mb-10 sm:mb-12 bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text shadow-hard min-w-0">
+        <div class="comment-header mb-4">:: CMS_PAGE</div>
+        <h1
+          class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-lab-text tracking-tighter leading-tight break-words"
+          {...page.edit.title}
+        >
+          {page.data.title}
+        </h1>
+      </header>
+
+      <div class="prose prose-lg max-w-none bg-lab-surface p-4 sm:p-8 rounded-lg border-2 border-lab-text min-w-0" {...page.edit.content}>
+        {page.data.content && <PortableText value={page.data.content} />}
+      </div>
+    </article>
+  </main>
+</Layout>
+
+<style>
+  @reference "../../styles/global.css";
+
+  .prose {
+    @apply text-lab-text font-mono text-base leading-relaxed;
+  }
+
+  .prose :global(*) {
+    @apply break-words;
+  }
+
+  .prose :global(h2) {
+    @apply text-lab-text text-2xl font-bold mt-10 mb-4 pb-2 border-b-2 border-lab-border;
+  }
+
+  .prose :global(h3) {
+    @apply text-lab-text text-xl font-bold mt-8 mb-3;
+  }
+
+  .prose :global(p) {
+    @apply mb-6 text-lab-text/80;
+  }
+
+  .prose :global(a) {
+    @apply text-lab-accent-text underline decoration-lab-accent/30 hover:decoration-lab-accent transition-all;
+  }
+</style>

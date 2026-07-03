@@ -1,17 +1,24 @@
 ---
 import '../styles/global.css';
+import { EmDashBodyEnd, EmDashBodyStart, EmDashHead } from 'emdash/ui';
+import type { PublicPageContext } from 'emdash';
 import SiteFooter from '../components/SiteFooter.astro';
 import ThemeInit from '../components/ThemeInit.astro';
 import AutoJackPeek from '../components/AutoJackPeek.astro';
+import type { ChromeLink } from '../lib/cms-chrome';
 
 export interface Props {
   title: string;
   description?: string;
+  pageContext?: PublicPageContext;
+  footerMenuItems?: ChromeLink[];
 }
 
 const {
   title,
   description = 'automem.ai - persistent memory for MCP-compatible AI tools across Claude, Cursor, Codex, ChatGPT, and more',
+  pageContext,
+  footerMenuItems,
 } = Astro.props;
 const pageTitle = `${title} | automem.ai`;
 const pageUrl = Astro.site ? new URL(Astro.url.pathname || '/', Astro.site).toString() : undefined;
@@ -23,40 +30,48 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
   <head>
     <meta charset="UTF-8" />
     <ThemeInit />
-    <meta name="description" content={description} />
+    {!pageContext && <meta name="description" content={description} />}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
     <meta name="generator" content={Astro.generator} />
-    <title>{pageTitle}</title>
+    {pageContext ? (
+      <EmDashHead page={pageContext} />
+    ) : (
+      <>
+        <title>{pageTitle}</title>
+        {pageUrl && (<link rel="canonical" href={pageUrl} />)}
+        <meta property="og:type" content="website" />
+        {pageUrl && (<meta property="og:url" content={pageUrl} />)}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
+      </>
+    )}
     <script defer src="https://api.pirsch.io/pa.js" id="pianjs" data-code="y8vzF2XcYTd2TFNyVLk2l2IaUyKdQTE6"></script>
-    {pageUrl && (<link rel="canonical" href={pageUrl} />)}
-    <meta property="og:type" content="website" />
-    {pageUrl && (<meta property="og:url" content={pageUrl} />)}
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:image" content={ogImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
   </head>
   <body class="bg-lab-bg text-lab-text min-h-screen font-mono selection:bg-lab-accent/25 relative">
+    {pageContext && <EmDashBodyStart page={pageContext} />}
     <div class="w-full max-w-full overflow-x-hidden relative">
       <div class="max-w-[1440px] mx-auto min-h-screen bg-lab-bg/55 backdrop-blur-[1px]">
         <slot />
 
-        <SiteFooter />
+        <SiteFooter menuItems={footerMenuItems} />
       </div>
     </div>
 
     <AutoJackPeek position="bottom-right" />
 
     <div class="grain-overlay"></div>
+    {pageContext && <EmDashBodyEnd page={pageContext} />}
     
     <style is:global>
       .grain-overlay {

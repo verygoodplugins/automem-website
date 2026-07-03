@@ -1,0 +1,83 @@
+---
+import LiveSearch from 'emdash/ui/search';
+import { createPublicPageContext } from 'emdash/page';
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import { getCmsChrome } from '../lib/cms-chrome';
+import '../styles/global.css';
+
+export const prerender = false;
+
+const chrome = await getCmsChrome();
+const pageContext = createPublicPageContext({
+  Astro,
+  kind: 'custom',
+  pageType: 'website',
+  title: `Search | ${chrome.siteTitle}`,
+  description: 'Search AutoMem posts and CMS-managed pages.',
+  canonical: Astro.url.href,
+  image: Astro.site ? new URL('/og-image.png', Astro.site).toString() : 'https://automem.ai/og-image.png',
+  siteName: chrome.siteTitle,
+});
+---
+
+<Layout
+  title="Search"
+  description="Search AutoMem posts and CMS-managed pages."
+  pageContext={pageContext}
+  footerMenuItems={chrome.footerMenuItems}
+>
+  <Navigation currentPath="/search" menuItems={chrome.primaryMenuItems} siteTitle={chrome.siteTitle} />
+
+  <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
+    <div class="max-w-4xl mx-auto">
+      <header class="mb-12">
+        <div class="comment-header">:: CMS_SEARCH</div>
+        <h1 class="text-4xl sm:text-5xl font-bold mb-4 tracking-tighter">
+          <span class="text-lab-secondary">Search</span>
+        </h1>
+      </header>
+
+      <section class="bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text shadow-hard">
+        <LiveSearch
+          placeholder="Search posts and pages"
+          collections={['posts', 'pages']}
+          limit={12}
+          autofocus
+          class="cms-search"
+          inputClass="cms-search-input"
+          resultsClass="cms-search-results"
+          resultClass="cms-search-result"
+        />
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  @reference "../styles/global.css";
+
+  .cms-search :global(.cms-search-input) {
+    @apply w-full rounded border-2 border-lab-text bg-lab-bg px-4 py-3 text-base text-lab-text outline-none transition focus:border-lab-accent;
+  }
+
+  .cms-search :global(.cms-search-results) {
+    @apply mt-4 border-t-2 border-lab-border pt-4;
+  }
+
+  .cms-search :global(.cms-search-result) {
+    @apply mb-3 block rounded border border-lab-border bg-lab-bg p-4 text-lab-text no-underline transition hover:border-lab-accent hover:text-lab-accent-text;
+  }
+
+  .cms-search :global(.emdash-live-search-result-title) {
+    @apply block text-lg font-bold;
+  }
+
+  .cms-search :global(.emdash-live-search-result-collection) {
+    @apply mt-1 block text-xs uppercase text-lab-muted;
+  }
+
+  .cms-search :global(.emdash-live-search-result-snippet) {
+    @apply mt-2 block text-sm text-lab-muted;
+  }
+</style>

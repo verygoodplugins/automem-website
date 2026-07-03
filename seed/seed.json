@@ -1,0 +1,233 @@
+{
+  "$schema": "https://emdashcms.com/seed.schema.json",
+  "version": "1",
+  "meta": {
+    "name": "AutoMem Website",
+    "description": "Schema and site features for the AutoMem marketing, docs, and blog site.",
+    "author": "AutoMem"
+  },
+  "settings": {
+    "title": "AutoMem",
+    "tagline": "Intelligent Memory Service for AI Agents",
+    "timezone": "UTC",
+    "dateFormat": "MMM d, yyyy"
+  },
+  "collections": [
+    {
+      "slug": "posts",
+      "label": "Posts",
+      "labelSingular": "Post",
+      "description": "AutoMem blog posts and release articles.",
+      "supports": ["drafts", "revisions", "preview", "scheduling", "search", "seo"],
+      "urlPattern": "/blog/{slug}",
+      "commentsEnabled": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image"
+        },
+        {
+          "slug": "content",
+          "label": "Content",
+          "type": "portableText",
+          "searchable": true
+        },
+        {
+          "slug": "excerpt",
+          "label": "Excerpt",
+          "type": "text",
+          "searchable": true
+        }
+      ]
+    },
+    {
+      "slug": "pages",
+      "label": "Pages",
+      "labelSingular": "Page",
+      "description": "CMS-managed public pages that do not replace the static marketing and docs routes.",
+      "supports": ["drafts", "revisions", "preview", "scheduling", "search", "seo"],
+      "urlPattern": "/pages/{slug}",
+      "commentsEnabled": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "content",
+          "label": "Content",
+          "type": "portableText",
+          "searchable": true
+        }
+      ]
+    }
+  ],
+  "taxonomies": [
+    {
+      "name": "category",
+      "label": "Categories",
+      "labelSingular": "Category",
+      "hierarchical": true,
+      "collections": ["posts"],
+      "terms": [
+        { "slug": "release", "label": "Release" },
+        { "slug": "research", "label": "Research" },
+        { "slug": "architecture", "label": "Architecture" },
+        { "slug": "tutorial", "label": "Tutorial" }
+      ]
+    },
+    {
+      "name": "tag",
+      "label": "Tags",
+      "labelSingular": "Tag",
+      "hierarchical": false,
+      "collections": ["posts"],
+      "terms": [
+        { "slug": "agentic-ai", "label": "agentic-ai" },
+        { "slug": "ai", "label": "ai" },
+        { "slug": "announcement", "label": "announcement" },
+        { "slug": "architecture", "label": "architecture" },
+        { "slug": "beginners", "label": "beginners" },
+        { "slug": "benchmarking", "label": "benchmarking" },
+        { "slug": "cms", "label": "cms" },
+        { "slug": "defi", "label": "defi" },
+        { "slug": "docker", "label": "docker" },
+        { "slug": "docs", "label": "docs" },
+        { "slug": "integrations", "label": "integrations" },
+        { "slug": "mcp", "label": "mcp" },
+        { "slug": "open-source", "label": "open-source" },
+        { "slug": "openclaw", "label": "openclaw" },
+        { "slug": "rag", "label": "rag" },
+        { "slug": "release", "label": "release" },
+        { "slug": "roadmap", "label": "roadmap" },
+        { "slug": "self-hosting", "label": "self-hosting" },
+        { "slug": "sse", "label": "sse" },
+        { "slug": "starlight", "label": "starlight" },
+        { "slug": "technical", "label": "technical" },
+        { "slug": "tutorial", "label": "tutorial" },
+        { "slug": "visualization", "label": "visualization" },
+        { "slug": "web-development", "label": "web-development" },
+        { "slug": "wordpress", "label": "wordpress" }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "name": "primary",
+      "label": "Primary Navigation",
+      "items": [
+        { "type": "custom", "label": "Docs", "url": "/docs/overview" },
+        { "type": "custom", "label": "Concepts", "url": "/docs/core-concepts/memory-model/" },
+        { "type": "custom", "label": "Benchmarks", "url": "/benchmarks" },
+        { "type": "custom", "label": "Blog", "url": "/blog" }
+      ]
+    },
+    {
+      "name": "footer",
+      "label": "Footer Navigation",
+      "items": [
+        { "type": "custom", "label": "MIT License", "url": "https://github.com/verygoodplugins/automem/blob/main/LICENSE", "target": "_blank" },
+        { "type": "custom", "label": "GitHub", "url": "https://github.com/verygoodplugins/automem", "target": "_blank" },
+        { "type": "custom", "label": "Discord", "url": "https://automem.ai/discord", "target": "_blank" },
+        { "type": "custom", "label": "InstaPods", "url": "https://instapods.com/apps/automem/?ref=jack", "target": "_blank" }
+      ]
+    }
+  ],
+  "widgetAreas": [
+    {
+      "name": "blog-sidebar",
+      "label": "Blog Sidebar",
+      "description": "Sidebar widgets displayed on CMS blog pages.",
+      "widgets": [
+        {
+          "type": "component",
+          "componentId": "core:search",
+          "title": "Search"
+        },
+        {
+          "type": "content",
+          "title": "AutoMem Updates",
+          "content": [
+            {
+              "_type": "block",
+              "style": "normal",
+              "children": [
+                {
+                  "_type": "span",
+                  "text": "Release notes, benchmark writeups, and memory-system research from the CMS."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "footer",
+      "label": "Footer Widgets",
+      "description": "Optional CMS-managed footer widgets.",
+      "widgets": []
+    }
+  ],
+  "sections": [
+    {
+      "slug": "newsletter-signup",
+      "title": "Newsletter Signup",
+      "description": "Reusable signup callout for posts and pages.",
+      "keywords": ["newsletter", "signup", "email", "cta"],
+      "source": "theme",
+      "content": [
+        {
+          "_type": "block",
+          "style": "h3",
+          "children": [{ "_type": "span", "text": "Stay in the loop" }]
+        },
+        {
+          "_type": "block",
+          "style": "normal",
+          "children": [{ "_type": "span", "text": "Get AutoMem release notes and memory-system research as it ships." }]
+        }
+      ]
+    },
+    {
+      "slug": "blog-search",
+      "title": "Blog Search",
+      "description": "Reusable search prompt for CMS surfaces.",
+      "keywords": ["search", "blog", "archive"],
+      "source": "theme",
+      "content": [
+        {
+          "_type": "block",
+          "style": "h3",
+          "children": [{ "_type": "span", "text": "Search the archive" }]
+        },
+        {
+          "_type": "block",
+          "style": "normal",
+          "children": [{ "_type": "span", "text": "Find posts, docs-adjacent notes, and release writeups from the CMS index." }]
+        }
+      ]
+    }
+  ],
+  "bylines": [
+    {
+      "id": "byline-jack-arturo",
+      "slug": "jack-arturo",
+      "displayName": "Jack Arturo",
+      "bio": "Developer, open source advocate, and builder of AI tools. Creator of AutoMem, WP Fusion, and EchoDash.",
+      "websiteUrl": "https://automem.ai/authors/jack-arturo"
+    }
+  ],
+  "content": {}
+}
