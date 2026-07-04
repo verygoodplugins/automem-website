@@ -55,9 +55,9 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 [AutoMem] GET http://memory-service.railway.internal:8001/health failed
 ```
 
-#### Root Cause 1: Missing PORT Environment Variable
+#### Root Cause 1: Misconfigured PORT Environment Variable
 
-**Problem:** Flask defaults to port 5000 when `PORT` is not set, but other services expect port 8001.
+**Problem:** The server reads `PORT` from the environment and falls back to `8001` if unset — but if `PORT` is explicitly set to something other than `8001` elsewhere in the Railway config, other services still expect port 8001.
 
 **Solution:**
 
@@ -65,7 +65,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 2. Add: `PORT=8001`
 3. Redeploy the service
 
-**Code reference:** [`app.py:1-10`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1-L10) — Flask app initialization reads `PORT` from environment.
+**Code reference:** [`automem/runtime_wiring.py:82`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/runtime_wiring.py#L82) — reads `PORT` from environment with an `8001` default. `app.py` is now a thin bootstrap module that delegates startup to `runtime_wiring.py`.
 
 #### Root Cause 2: IPv4-Only Binding (Fixed in v0.7.1+)
 
@@ -81,7 +81,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 * Running on http://0.0.0.0:8001
 ```
 
-**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`app.py`](https://github.com/verygoodplugins/automem/blob/main/app.py).
+**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`automem/runtime_wiring.py:109`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/runtime_wiring.py#L109), not in `app.py` directly.
 
 #### Root Cause 3: Wrong Internal Hostname
 
@@ -212,7 +212,7 @@ curl -H "Authorization: Bearer your-token" \
 2. **MCP bridge** (if using): Update `AUTOMEM_API_TOKEN` in the mcp-sse-server service variables
 3. **Client configuration** (Claude Desktop, Cursor, etc.): Update `.env` or platform config file with the copied token value
 
-**Code reference:** [`app.py:1-50`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1-L50) — `require_api_token` middleware validates tokens.
+**Code reference:** [`automem/api/auth_helpers.py:45-61`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/api/auth_helpers.py#L45-L61) — `require_api_token` validates tokens (not in `app.py`, which is now a thin bootstrap module).
 
 ---
 
@@ -402,13 +402,14 @@ Semantic search will not work correctly
 
 ```mermaid
 flowchart TD
-    Request["Embedding Request<br/>EmbeddingProvider.get_instance()"]
+    Request["Embedding Request<br/>init_embedding_provider()"]
 
     Request --> CheckConfig{"EMBEDDING_PROVIDER<br/>config?"}
 
     CheckConfig -->|"auto (default)"| Priority["Auto-selection priority"]
     CheckConfig -->|"voyage"| ForceVoyage["Force Voyage<br/>Require VOYAGE_API_KEY"]
     CheckConfig -->|"openai"| ForceOpenAI["Force OpenAI<br/>Require OPENAI_API_KEY"]
+    CheckConfig -->|"ollama"| ForceOllama["Force Ollama<br/>Defaults to localhost:11434"]
     CheckConfig -->|"local"| ForceLocal["Force FastEmbed<br/>Local ONNX model"]
     CheckConfig -->|"placeholder"| ForcePlaceholder["Force Placeholder<br/>Hash-based"]
 
@@ -417,18 +418,23 @@ flowchart TD
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
     Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1024d"]
-    Try2 -->|No| Try3{"FastEmbed<br/>available?"}
+    Try2 -->|No| Try3{"OLLAMA_BASE_URL or<br/>OLLAMA_MODEL set?"}
 
-    Try3 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
-    Try3 -->|No| Placeholder["PlaceholderEmbeddingProvider<br/>No semantic meaning"]
+    Try3 -->|Yes| Ollama["OllamaEmbeddingProvider"]
+    Try3 -->|No| Try4{"FastEmbed<br/>available?"}
+
+    Try4 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
+    Try4 -->|No| Placeholder["PlaceholderEmbeddingProvider<br/>No semantic meaning"]
 
     Voyage --> Validate["Validate dimension<br/>matches VECTOR_SIZE"]
     OpenAI --> Validate
+    Ollama --> Validate
     FastEmbed --> Validate
     Placeholder --> Validate
 
     ForceVoyage --> Validate
     ForceOpenAI --> Validate
+    ForceOllama --> Validate
     ForceLocal --> Validate
     ForcePlaceholder --> Validate
 
@@ -443,6 +449,7 @@ flowchart TD
 |---|---|---|---|
 | Voyage AI | $0.00012/1K tokens | Best | `VOYAGE_API_KEY` |
 | OpenAI | $0.00002/1K tokens | Good | `OPENAI_API_KEY` |
+| Ollama | Free (self-hosted) | Good | None — auto-selected if `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is set (defaults to `http://localhost:11434`) |
 | FastEmbed | Free | Good (local ONNX) | None |
 | Placeholder | Free | No semantic meaning | None (testing only) |
 
@@ -576,7 +583,7 @@ curl https://your-service.up.railway.app/health | jq '.enrichment.queue_depth'
 
 **1. Check relationship cache:**
 
-The LRU cache in [`automem/consolidation/`](https://github.com/verygoodplugins/automem/blob/main/automem/consolidation/) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
+The LRU cache in [`consolidation.py:201-217`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/consolidation.py#L201-L217) (the repo-root consolidation engine, imported by `automem/consolidation/runtime_bindings.py` — not itself inside the `automem/consolidation/` package) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
 
 **2. Verify indexes:**
 
