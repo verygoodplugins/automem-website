@@ -452,6 +452,15 @@ async function setTerms(contentId, taxonomy, termIds) {
   });
 }
 
+async function publishWithHistoricalDate(contentId, publishedAt) {
+  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`, {
+    publishedAt,
+  });
+  await api('PUT', `/content/posts/${encodeURIComponent(contentId)}`, {
+    publishedAt,
+  });
+}
+
 function sqlString(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
@@ -611,9 +620,7 @@ async function main() {
     }
 
     if (status === 'published') {
-      await api('POST', `/content/posts/${encodeURIComponent(saved.id)}/publish`, {
-        publishedAt: post.date.toISOString(),
-      });
+      await publishWithHistoricalDate(saved.id, post.date.toISOString());
     }
 
     await Promise.all([

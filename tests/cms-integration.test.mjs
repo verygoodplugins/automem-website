@@ -85,11 +85,15 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   const categoryArchive = await readSource('../src/pages/blog/category/[slug].astro');
   const searchPage = await readSource('../src/pages/search.astro');
   const cmsPage = await readSource('../src/pages/pages/[slug].astro');
+  const siteSearchApi = await readSource('../src/pages/api/site-search.ts');
   const migration = await readSource('../scripts/migrate-blog-to-emdash.mjs');
+  const middleware = await readSource('../src/middleware.ts');
+  const layout = await readSource('../src/layouts/Layout.astro');
 
   assert.notEqual(tagArchive, '', 'tag archive route should exist');
   assert.notEqual(categoryArchive, '', 'category archive route should exist');
   assert.notEqual(searchPage, '', 'search route should exist');
+  assert.notEqual(siteSearchApi, '', 'public site search API route should exist');
   assert.notEqual(cmsPage, '', 'CMS page route should exist');
   assert.notEqual(migration, '', 'blog migration script should exist');
 
@@ -97,10 +101,23 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(tagArchive, /getEntriesByTerm\(['"]posts['"],\s*['"]tag['"]/);
   assert.match(categoryArchive, /getTerm\(['"]category['"]/);
   assert.match(categoryArchive, /getEntriesByTerm\(['"]posts['"],\s*['"]category['"]/);
-  assert.match(searchPage, /LiveSearch/);
-  assert.match(searchPage, /routeMap=\{\{ posts: ['"]\/blog\/:slug['"], pages: ['"]\/pages\/:slug['"] \}\}/);
+  assert.doesNotMatch(searchPage, /LiveSearch/);
+  assert.match(searchPage, /\/api\/site-search/);
+  assert.match(searchPage, /item\.url/);
+  assert.match(middleware, /pathname === ['"]\/api\/site-search['"]/);
+  assert.match(siteSearchApi, /searchWithDb/);
+  assert.match(siteSearchApi, /ensureSearchHealthy/);
+  assert.match(siteSearchApi, /status:\s*['"]published['"]/);
+  assert.match(siteSearchApi, /\/blog\/\$\{slugOrId\}/);
+  assert.match(siteSearchApi, /\/pages\/\$\{slugOrId\}/);
+  assert.ok(
+    middleware.indexOf("pathname === '/api/site-search'") < middleware.indexOf('For unmatched API/admin routes'),
+    'site-search API should run before the generic /api 404 guard',
+  );
   assert.match(cmsPage, /getEmDashEntry\(['"]pages['"]/);
   assert.match(cmsPage, /PortableText/);
+  assert.match(layout, /<title>\{pageTitle\}<\/title>/);
+  assert.match(layout, /<EmDashHead page=\{pageContext\} \/>/);
   assert.match(migration, /data\/emdash\.db/);
   assert.match(migration, /EMDASH_URL/);
   assert.match(migration, /markdownToPortableText/);
@@ -110,4 +127,7 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /_type: ['"]mermaid['"]/);
   assert.match(migration, /client\.get\(['"]posts['"], slug, \{ raw: true \}\)/);
   assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
+  assert.match(migration, /async function publishWithHistoricalDate/);
+  assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
+  assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
 });

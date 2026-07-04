@@ -37,11 +37,11 @@ const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : '
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
     <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
     {pageContext ? (
       <EmDashHead page={pageContext} />
     ) : (
       <>
-        <title>{pageTitle}</title>
         {pageUrl && (<link rel="canonical" href={pageUrl} />)}
         <meta property="og:type" content="website" />
         {pageUrl && (<meta property="og:url" content={pageUrl} />)}

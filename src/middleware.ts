@@ -100,6 +100,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
       });
     }
 
+    if (pathname === '/api/site-search' && request.method === 'GET') {
+      return next();
+    }
+
     // Confirm/Unsubscribe
     if (pathname === '/confirm' && request.method === 'GET') {
       const { onRequestGet } = await import('../functions/confirm.js');
