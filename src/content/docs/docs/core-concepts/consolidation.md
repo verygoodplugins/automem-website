@@ -267,7 +267,7 @@ graph TB
 
     DFS["Find Connected Components<br/>DFS traversal to find clusters"]
 
-    Filter["Filter by Size<br/>Keep clusters >= 5 memories"]
+    Filter["Filter by Size<br/>Keep clusters >= min size<br/>(default 3 memories)"]
 
     subgraph "Meta-Memory Creation"
         Theme["Identify Dominant Type<br/>max(set(types), key=count)"]
@@ -303,6 +303,10 @@ The primary clustering path in `v0.15.1` loads memory metadata from FalkorDB and
 | `temporal_span_days` | float | Days between oldest and newest memory |
 | `created_at` | ISO datetime | When this meta-memory was created |
 | `content` | string | Auto-generated cluster summary |
+
+:::note[Excluded from recall]
+`MetaPattern` memories are internal consolidation artifacts. They are excluded from user-facing `/recall` results and from vector sync counts via `RECALL_EXCLUDED_TYPES` (default `MetaPattern`). Query them directly by ID or via graph tools if needed for debugging.
+:::
 
 MetaMemory nodes are connected to their member memories via `SUMMARIZES` relationships:
 

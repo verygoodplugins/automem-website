@@ -33,7 +33,7 @@ After cloning the repository, the structure relevant to development:
 
 | Path | Description |
 |---|---|
-| `app.py` | Main Flask API application |
+| `app.py` | Thin Flask bootstrap — creates the app, registers `@app.before_request` auth, delegates startup to `automem/runtime_wiring.py` |
 | `consolidation.py` | Background consolidation engine |
 | `requirements.txt` | Production dependencies |
 | `requirements-dev.txt` | Development dependencies |
@@ -97,7 +97,7 @@ The `en_core_web_sm` model enables Named Entity Recognition (NER) in the enrichm
 graph TB
     subgraph "Developer Machine"
         subgraph "Virtual Environment (venv)"
-            Flask["app.py\nFlask API\nPort 8001"]
+            Flask["app.py + automem/<br/>Flask API<br/>Port 8001"]
             Consol["consolidation.py\nBackground Engine"]
         end
 

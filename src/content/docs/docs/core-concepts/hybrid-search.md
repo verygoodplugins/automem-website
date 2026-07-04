@@ -7,15 +7,15 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
-- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/search/runtime_keywords.py) — Keyword matching logic
-- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/search/runtime_relations.py) — Relationship expansion
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py#L380-L390](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/config.py#L380-L390) — Search weight configuration
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/graph.py) — Graph traversal utilities
-- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/time.py) — Temporal expression parsing
-- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/tags.py) — Tag prefix utilities
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
+- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_keywords.py) — Keyword matching logic
+- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_relations.py) — Relationship expansion
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint orchestration
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Search weight and recall tuning configuration
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Score computation
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/time.py) — Temporal expression parsing
+- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/tags.py) — Tag prefix utilities
 :::
 
 This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the publication bundle and methodology links.
@@ -108,6 +108,8 @@ The `_vector_search()` function handles both explicit embeddings (passed by clie
 
 **Key behaviors:**
 
+- Over-fetches vector candidates (`RECALL_VECTOR_OVERFETCH`, default 4×, capped by `RECALL_VECTOR_FETCH_CAP=200`) before hybrid re-ranking so high-importance or exact-match memories are not cut on raw cosine similarity alone; response size is still trimmed to `limit`
+- Excludes internal artifact types listed in `RECALL_EXCLUDED_TYPES` (default `MetaPattern`) from ranked results
 - Returns empty list if no query text and no explicit embedding provided
 - Applies tag filters via `_build_qdrant_tag_filter()`
 - Deduplicates results using `seen_ids` set
@@ -394,6 +396,10 @@ The recall endpoint orchestrates the entire hybrid search process:
 |---|---|---|
 | `RECALL_EXPANSION_LIMIT` | 25 | Maximum expanded results (bridges + entities) |
 | `RECALL_RELATION_LIMIT` | 5 | Maximum relations fetched per memory |
+| `RECALL_VECTOR_OVERFETCH` | 4 | Vector candidate pool multiplier before hybrid re-rank (`1` = legacy) |
+| `RECALL_VECTOR_FETCH_CAP` | 200 | Absolute cap on over-fetched vector candidates |
+| `RECALL_EXCLUDED_TYPES` | `MetaPattern` | Comma-separated types excluded from recall and vector sync counts |
+| `RECALL_METADATA_SEARCH_ENABLED` | true | Admit bounded metadata-sidecar candidates during recall |
 
 ### Query Parameters
 

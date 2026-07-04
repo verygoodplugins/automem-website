@@ -6,9 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/enrichment.py) — Enrichment endpoints
-- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/backup.py#L29-L100) — `/backup` export endpoint
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/admin.py) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/enrichment.py) — Enrichment endpoints
+- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -226,7 +226,7 @@ The reprocessing operation performs these steps:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `batch_size` | integer | No | Embeddings per OpenAI API call. Default: `32`. Max recommended: `100` |
+| `batch_size` | integer | No | Memories per embedding-provider batch call. Default: `32`. Max: `100` |
 | `limit` | integer | No | Max memories to process. If omitted, processes all memories in database |
 | `force` | boolean | No | Re-embed memories even if embeddings already exist. Default: `false` |
 
@@ -246,14 +246,14 @@ curl -X POST https://your-automem-instance/admin/reembed \
 graph TB
     Request["POST /admin/reembed<br/>{batch_size: 32, limit: 1000}"]
     Auth["require_admin_token()"]
-    Init["Retrieve pre-initialized OpenAI client<br/>get_openai_client()"]
+    Init["Resolve configured embedding provider<br/>generate_real_embeddings_batch()"]
 
     FetchAll["Single FalkorDB query:<br/>MATCH (m:Memory)<br/>[WHERE m.content IS NOT NULL]<br/>RETURN id, content, tags, …<br/>ORDER BY timestamp DESC<br/>[LIMIT limit if set]"]
 
     subgraph "Batch Processing Loop"
         Slice["Slice next batch_size memories"]
 
-        CallOpenAI["OpenAI API:<br/>embeddings.create()<br/>model=embedding_model<br/>input=[contents]"]
+        CallProvider["Embedding provider batch:<br/>generate_real_embeddings_batch()<br/>allow_placeholder_fallback=false"]
 
         UpdateQdrant["Qdrant: upsert()<br/>PointStruct with full payload<br/>(metadata_preserved=True)"]
 
@@ -266,8 +266,8 @@ graph TB
     Auth-->Init
     Init-->FetchAll
     FetchAll-->Slice
-    Slice-->CallOpenAI
-    CallOpenAI-->UpdateQdrant
+    Slice-->CallProvider
+    CallProvider-->UpdateQdrant
     UpdateQdrant-->IncrCount
     IncrCount-->|More batches?|Slice
     IncrCount-->|Done|Response
@@ -315,9 +315,9 @@ ORDER BY m.timestamp DESC
 
 When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted from the query. However, the Python collection loop still checks `if content:` before adding a row to the processing list, so memories with null or empty content are excluded regardless of `force`. There is no separate per-batch content retrieval step — all memory data is loaded upfront.
 
-**Phase 2: OpenAI Embedding Generation**
+**Phase 2: Embedding Provider Batch Generation**
 
-Generates embeddings for the entire batch in a single API call using the configured `embedding_model`. Dimension is determined by the `VECTOR_SIZE` environment variable (default 1024).
+Generates embeddings for the entire batch in a single provider call via `generate_real_embeddings_batch(..., allow_placeholder_fallback=False)`. Uses whichever provider is configured (`EMBEDDING_PROVIDER`, Voyage, OpenAI, Ollama, FastEmbed, etc.) — not hard-coded to OpenAI. Returns **503** if no real provider is configured (including placeholder-only mode). Dimension follows `VECTOR_SIZE` (default 1024).
 
 **Phase 3: Qdrant Update**
 
@@ -325,17 +325,17 @@ Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt
 
 ### Performance Considerations
 
-| Batch Size | OpenAI API Calls (1000 memories) | Approx Time | Cost (1000 memories) |
-|------------|----------------------------------|-------------|---------------------|
-| 10 | 100 | ~5 minutes | $0.06 |
-| 32 | 32 | ~2 minutes | $0.06 |
-| 50 | 20 | ~1 minute | $0.06 |
-| 100 | 10 | ~30 seconds | $0.06 |
+| Batch Size | Provider API Calls (1000 memories) | Approx Time | Cost (1000 memories, OpenAI small) |
+|------------|--------------------------------------|-------------|-------------------------------------|
+| 10 | 100 | ~5 minutes | ~$0.06 |
+| 32 | 32 | ~2 minutes | ~$0.06 |
+| 50 | 20 | ~1 minute | ~$0.06 |
+| 100 | 10 | ~30 seconds | ~$0.06 |
 
 **Recommendations:**
 - **Default 32** balances API call overhead and failure blast radius
-- **Use 100** for large migrations (>10K memories) with stable OpenAI access
-- **Use 10** during testing or with rate-limited OpenAI keys
+- **Use 100** for large migrations (>10K memories) with stable provider access
+- **Use 10** during testing or with rate-limited provider keys
 - Monitor `processed` count to detect stalls mid-operation
 
 ### Error Handling
@@ -344,7 +344,7 @@ The operation continues even if individual batches fail:
 
 | Error | Cause | Behavior |
 |-------|-------|----------|
-| OpenAI API rate limit | Exceeded quota | Retries with exponential backoff (handled by OpenAI SDK) |
+| Provider API rate limit | Exceeded quota | Logged; batch marked failed (provider SDK may retry internally) |
 | Missing memory content | Deleted between enumeration and fetch | Logged, skipped, processing continues |
 | Qdrant connection failure | Network issue or Qdrant down | Logged; embedding writes are skipped for this batch and the operation continues with remaining batches (FalkorDB is never modified by this operation) |
 | Invalid content format | Null or non-string content | Logged, skipped |
@@ -395,7 +395,7 @@ The archive layout matches what the restore tooling expects, so a `/backup` expo
 
 **Authentication:** API token + Admin token
 
-**Purpose:** Perform non-destructive drift repair between FalkorDB and Qdrant. Detects and reconciles discrepancies without deleting data.
+**Purpose:** Perform non-destructive drift repair between FalkorDB and Qdrant. Detects and reconciles discrepancies without deleting data. Memory IDs are compared excluding `RECALL_EXCLUDED_TYPES` (default `MetaPattern`) so internal consolidation artifacts do not count as drift.
 
 ### Request Schema
 
@@ -421,12 +421,12 @@ curl -X POST https://your-automem-instance/admin/sync \
 ### Threat Model
 
 Admin operations can:
-- Force expensive OpenAI API calls (re-embedding entire database)
+- Force expensive embedding-provider API calls (re-embedding entire database)
 - Trigger resource-intensive enrichment reprocessing
 - Access operational metrics (enrichment statistics)
 
 **Without admin token protection**, a compromised API token could:
-1. Generate thousands of dollars in OpenAI costs via repeated re-embedding
+1. Generate significant embedding-provider costs via repeated re-embedding
 2. Overload enrichment workers with duplicate jobs
 3. Enumerate all memory IDs via reprocess endpoint
 

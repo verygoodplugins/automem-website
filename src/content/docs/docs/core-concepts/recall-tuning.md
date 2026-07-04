@@ -7,10 +7,10 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/8c67c16/automem/config.py) — All ranking weights and tuning knobs (with inline rationale)
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/8c67c16/automem/utils/scoring.py) — Score computation
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/8c67c16/automem/api/recall.py) — Recall endpoint orchestration and re-rank
-- [automem/search/**](https://github.com/verygoodplugins/automem/tree/8c67c16/automem/search) — Vector, keyword, and relation search
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — All ranking weights and tuning knobs (with inline rationale)
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Score computation
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint orchestration and re-rank
+- [automem/search/**](https://github.com/verygoodplugins/automem/tree/0720da2/automem/search) — Vector, keyword, and relation search
 :::
 
 AutoMem ships with a ranking pipeline that works well out of the box — every knob on this page defaults to *no behavior change* from prior releases. This guide is for operators who want to **tune** recall for a specific corpus: bias toward freshness, tighten a tag-scoped pool against off-topic memories, or adjust how much structured metadata and relationships contribute.
@@ -99,6 +99,27 @@ When the gate is set and a result's best query-topical evidence — the max of i
 - Values are clamped to `[0.0, 1.0]`.
 
 Reach for the gate when tag-scoped recall surfaces importance-inflated memories that don't match the query. Leave it at `0.0` for open, query-only recall where every candidate is already topical.
+
+---
+
+## Vector candidate pool
+
+Vector search fetches more candidates than the response `limit` so hybrid re-ranking can promote memories with strong importance, tag, or exact-match signals that rank slightly lower on raw cosine similarity.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `RECALL_VECTOR_OVERFETCH` | `4` | Multiplier on `limit` for the vector fetch pool. `1` restores legacy 1× behavior. |
+| `RECALL_VECTOR_FETCH_CAP` | `200` | Hard ceiling on fetched vector candidates, kept separate from `RECALL_MAX_LIMIT`. |
+
+If recall misses high-importance exact-topic memories that vector search ranks just outside the top-K, try raising `RECALL_VECTOR_OVERFETCH` before changing score weights.
+
+---
+
+## Internal artifact types
+
+Consolidation creates internal `MetaPattern` cluster summaries that should not appear in user-facing recall. These are filtered by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). The same set is excluded from `/health` memory/vector counts and `/admin/sync` drift accounting.
+
+Add types here only for other internal artifacts you create programmatically and never want ranked in `/recall`.
 
 ---
 

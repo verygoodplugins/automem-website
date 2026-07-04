@@ -65,7 +65,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 2. Add: `PORT=8001`
 3. Redeploy the service
 
-**Code reference:** [`automem/runtime_wiring.py:82`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/runtime_wiring.py#L82) — reads `PORT` from environment with an `8001` default. `app.py` is now a thin bootstrap module that delegates startup to `runtime_wiring.py`.
+**Code reference:** [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/runtime_wiring.py) — reads `PORT` from environment with an `8001` default. `app.py` is a thin bootstrap module that delegates startup to `runtime_wiring.py`.
 
 #### Root Cause 2: IPv4-Only Binding (Fixed in v0.7.1+)
 
@@ -81,7 +81,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 * Running on http://0.0.0.0:8001
 ```
 
-**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`automem/runtime_wiring.py:109`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/runtime_wiring.py#L109), not in `app.py` directly.
+**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/runtime_wiring.py), not in `app.py` directly.
 
 #### Root Cause 3: Wrong Internal Hostname
 
@@ -212,7 +212,7 @@ curl -H "Authorization: Bearer your-token" \
 2. **MCP bridge** (if using): Update `AUTOMEM_API_TOKEN` in the mcp-sse-server service variables
 3. **Client configuration** (Claude Desktop, Cursor, etc.): Update `.env` or platform config file with the copied token value
 
-**Code reference:** [`automem/api/auth_helpers.py:45-61`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/automem/api/auth_helpers.py#L45-L61) — `require_api_token` validates tokens (not in `app.py`, which is now a thin bootstrap module).
+**Code reference:** [`automem/api/auth_helpers.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/auth_helpers.py) — `require_api_token` validates tokens (invoked from `app.py`'s `@app.before_request` hook).
 
 ---
 

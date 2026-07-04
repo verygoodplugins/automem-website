@@ -140,6 +140,9 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `RECALL_EXPANSION_LIMIT` | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
 | `RECALL_ADAPTIVE_FLOOR` | No | `true` | Dynamically adjust score floor based on result set |
+| `RECALL_VECTOR_OVERFETCH` | No | `4` | Vector candidate pool multiplier before hybrid re-rank (`1` = legacy 1× fetch) |
+| `RECALL_VECTOR_FETCH_CAP` | No | `200` | Hard cap on over-fetched vector candidates (separate from `RECALL_MAX_LIMIT`) |
+| `RECALL_EXCLUDED_TYPES` | No | `MetaPattern` | Comma-separated memory types excluded from `/recall` and vector sync counts |
 | `RECALL_MAX_LIMIT` | No | `100` | Hard cap on the number of results `/recall` can return |
 | `SEARCH_RECENCY_WINDOW_DAYS` | No | `180` | Recency decay window in days (shapes `SEARCH_WEIGHT_RECENCY`, not a weight) |
 | `SEARCH_RECENCY_CURVE` | No | `linear` | Recency decay curve: `linear` (reaches 0 at the window) or `exp` (window acts as half-life); invalid falls back to `linear` |
