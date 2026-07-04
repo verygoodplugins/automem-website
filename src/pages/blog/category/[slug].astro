@@ -12,8 +12,13 @@ interface CmsPostData {
   title?: string;
   excerpt?: string;
   publishedAt?: Date;
+  scheduledAt?: Date;
   createdAt?: Date;
   bylines?: ContentBylineCredit[];
+}
+
+function effectivePostDate(post: { data: CmsPostData }) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt;
 }
 
 const { slug } = Astro.params;
@@ -28,9 +33,9 @@ const posts = (await getEntriesByTerm('posts', 'category', slug!)) as Array<{ id
 const postIds = posts.map((post) => post.data.id ?? post.id);
 const tagsByPost = await getTermsForEntries('posts', postIds, 'tag');
 const sortedPosts = posts.toSorted((a, b) => {
-  const da = a.data.publishedAt ?? a.data.createdAt;
-  const db = b.data.publishedAt ?? b.data.createdAt;
-  return (db?.getTime?.() ?? 0) - (da?.getTime?.() ?? 0);
+  const bTime = effectivePostDate(b)?.getTime() ?? 0;
+  const aTime = effectivePostDate(a)?.getTime() ?? 0;
+  return bTime - aTime;
 });
 ---
 
@@ -56,7 +61,7 @@ const sortedPosts = posts.toSorted((a, b) => {
 
       <div class="space-y-6">
         {sortedPosts.map((post) => {
-          const date = post.data.publishedAt ?? post.data.createdAt;
+          const date = effectivePostDate(post);
           const tags = tagsByPost.get(post.data.id ?? post.id) ?? [];
           const postSlug = post.data.slug ?? post.id;
           const byline = post.data.bylines?.[0]?.byline;

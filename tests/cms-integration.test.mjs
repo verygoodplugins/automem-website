@@ -265,3 +265,38 @@ test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages',
   assert.match(blogDetail, /await hydrateCmsSeo\(Astro\.locals,\s*['"]posts['"],\s*post\)/);
   assert.match(cmsPage, /await hydrateCmsSeo\(Astro\.locals,\s*['"]pages['"],\s*page\)/);
 });
+
+test('CMS page SEO and page context use public slugs instead of internal ids', async () => {
+  const cmsPage = await readSource('../src/pages/pages/[slug].astro');
+
+  assert.match(cmsPage, /slug\?: string \| null/);
+  assert.match(cmsPage, /const pageSlug = page\.data\.slug \?\? slug!/);
+  assert.match(cmsPage, /path:\s*`\/pages\/\$\{pageSlug\}`/);
+  assert.match(cmsPage, /slug:\s*pageSlug/);
+  assert.doesNotMatch(cmsPage, /path:\s*`\/pages\/\$\{page\.id\}`/);
+  assert.doesNotMatch(cmsPage, /slug:\s*page\.id/);
+});
+
+test('tag and category archives use scheduledAt for ready scheduled posts', async () => {
+  const tagArchive = await readSource('../src/pages/blog/tag/[slug].astro');
+  const categoryArchive = await readSource('../src/pages/blog/category/[slug].astro');
+
+  for (const archive of [tagArchive, categoryArchive]) {
+    assert.match(archive, /scheduledAt\?: Date/);
+    assert.match(archive, /function effectivePostDate/);
+    assert.match(archive, /post\.data\.publishedAt\s*\?\?\s*post\.data\.scheduledAt\s*\?\?\s*post\.data\.createdAt/);
+    assert.match(archive, /const sortedPosts = posts\.toSorted/);
+    assert.match(archive, /effectivePostDate\(b\)\?\.getTime\(\)\s*\?\?\s*0/);
+    assert.match(archive, /effectivePostDate\(a\)\?\.getTime\(\)\s*\?\?\s*0/);
+    assert.match(archive, /const date = effectivePostDate\(post\)/);
+  }
+});
+
+test('RSS applies its item cap after effective-date ordering', async () => {
+  const rss = await readSource('../src/pages/rss.xml.ts');
+
+  assert.match(rss, /const RSS_POST_LIMIT = 100/);
+  assert.doesNotMatch(rss, /limit:\s*100/);
+  assert.match(rss, /const orderedPosts = \[\.\.\.posts\]\.sort\([\s\S]*\)\.slice\(0,\s*RSS_POST_LIMIT\)/);
+  assert.match(rss, /items: orderedPosts\.map/);
+});

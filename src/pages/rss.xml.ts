@@ -3,6 +3,8 @@ import { getEmDashCollection } from 'emdash';
 import type { ContentBylineCredit } from 'emdash';
 import type { APIContext } from 'astro';
 
+const RSS_POST_LIMIT = 100;
+
 interface CmsPostData {
   slug?: string | null;
   title: string;
@@ -20,7 +22,6 @@ function effectivePostDate(post: { data: CmsPostData }) {
 export async function GET(context: APIContext) {
   const { entries, error } = await getEmDashCollection('posts', {
     status: 'published',
-    limit: 100,
     orderBy: { published_at: 'desc' },
   });
   const posts = entries as Array<{ id: string; data: CmsPostData }>;
@@ -32,7 +33,7 @@ export async function GET(context: APIContext) {
 
   const orderedPosts = [...posts].sort(
     (a, b) => effectivePostDate(b).getTime() - effectivePostDate(a).getTime(),
-  );
+  ).slice(0, RSS_POST_LIMIT);
 
   return rss({
     title: 'AutoMem Blog',

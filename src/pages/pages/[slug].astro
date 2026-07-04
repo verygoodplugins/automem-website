@@ -12,6 +12,7 @@ export const prerender = false;
 
 interface CmsPageData {
   id: string;
+  slug?: string | null;
   title: string;
   content?: unknown[];
   publishedAt?: Date;
@@ -51,11 +52,12 @@ if (!isPreview) {
 }
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://automem.ai';
+const pageSlug = page.data.slug ?? slug!;
 const seoPage = await hydrateCmsSeo(Astro.locals, 'pages', page);
 const seo = getSeoMeta(seoPage, {
   siteTitle: chrome.siteTitle,
   siteUrl,
-  path: `/pages/${page.id}`,
+  path: `/pages/${pageSlug}`,
   defaultOgImage: `${siteUrl}/og-image.png`,
 });
 const pageContext = createPublicPageContext({
@@ -69,7 +71,7 @@ const pageContext = createPublicPageContext({
   content: {
     collection: 'pages',
     id: page.data.id,
-    slug: page.id,
+    slug: pageSlug,
   },
   seo: {
     ogTitle: seo.ogTitle,
