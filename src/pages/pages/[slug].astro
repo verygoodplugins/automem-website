@@ -5,6 +5,7 @@ import { createPublicPageContext } from 'emdash/page';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import { getCmsChrome } from '../../lib/cms-chrome';
+import { hydrateCmsSeo } from '../../lib/cms-seo';
 import '../../styles/global.css';
 
 export const prerender = false;
@@ -43,7 +44,8 @@ if (!isPreview) {
 }
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://automem.ai';
-const seo = getSeoMeta(page, {
+const seoPage = await hydrateCmsSeo(Astro.locals, 'pages', page);
+const seo = getSeoMeta(seoPage, {
   siteTitle: chrome.siteTitle,
   siteUrl,
   path: `/pages/${page.id}`,

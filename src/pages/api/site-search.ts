@@ -9,12 +9,6 @@ const SITE_SEARCH_COLLECTIONS = new Set(['posts', 'pages']);
 const WHITESPACE_SPLIT_PATTERN = /\s+/;
 const FTS_OPERATORS_PATTERN = /\b(AND|OR|NOT|NEAR)\b/i;
 const DOUBLE_QUOTE_PATTERN = /"/g;
-const SNIPPET_SPLIT_PATTERN = /(<mark>|<\/mark>)/g;
-const SNIPPET_AMP_RE = /&/g;
-const SNIPPET_LT_RE = /</g;
-const SNIPPET_GT_RE = />/g;
-const SNIPPET_QUOT_RE = /"/g;
-const SNIPPET_APOS_RE = /'/g;
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -74,21 +68,8 @@ function escapeFtsQuery(query: string) {
   return terms.map((term) => `"${term}"*`).join(' ');
 }
 
-function sanitizeSearchSnippet(snippet: string | null) {
-  if (snippet === null) return undefined;
-
-  return snippet
-    .split(SNIPPET_SPLIT_PATTERN)
-    .map((part) => {
-      if (part === '<mark>' || part === '</mark>') return part;
-      return part
-        .replace(SNIPPET_AMP_RE, '&amp;')
-        .replace(SNIPPET_LT_RE, '&lt;')
-        .replace(SNIPPET_GT_RE, '&gt;')
-        .replace(SNIPPET_QUOT_RE, '&quot;')
-        .replace(SNIPPET_APOS_RE, '&#39;');
-    })
-    .join('');
+function normalizeSearchSnippet(snippet: string | null) {
+  return snippet ?? undefined;
 }
 
 function tableNames(collection: string) {
@@ -152,7 +133,7 @@ async function searchCollectionWithDb(
       slug: row.slug,
       locale: row.locale,
       title: row.title ?? undefined,
-      snippet: sanitizeSearchSnippet(row.snippet),
+      snippet: normalizeSearchSnippet(row.snippet),
       score: Math.abs(row.score),
     }));
   } catch (error) {

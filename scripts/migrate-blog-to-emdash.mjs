@@ -188,7 +188,15 @@ function parseInlineCell(value) {
   return { content: spans, markDefs };
 }
 
+function markdownTableHasLinks(lines) {
+  return lines.some((line, index) => index !== 1 && /\[[^\]]+\]\([^)]+\)/.test(line));
+}
+
 function markdownTableToPortableText(lines) {
+  if (markdownTableHasLinks(lines)) {
+    return markdownToPortableText(lines.join('\n'));
+  }
+
   const rows = lines.filter((line, index) => index !== 1).map((line, rowIndex) => ({
     _type: 'tableRow',
     _key: portableTextKey('r'),
@@ -200,12 +208,12 @@ function markdownTableToPortableText(lines) {
     })),
   }));
 
-  return {
+  return [{
     _type: 'table',
     _key: portableTextKey(),
     rows,
     hasHeaderRow: true,
-  };
+  }];
 }
 
 function collectHtmlBlock(lines, startIndex) {
@@ -294,7 +302,7 @@ function markdownToCmsPortableText(markdown) {
         tableLines.push(lines[index]);
         index++;
       }
-      blocks.push(markdownTableToPortableText(tableLines));
+      blocks.push(...markdownTableToPortableText(tableLines));
       continue;
     }
 
@@ -457,13 +465,7 @@ async function publishWithHistoricalDate(contentId, publishedAt) {
     publishedAt,
   });
 
-  if (!(await hasPublishedDate(contentId, publishedAt))) {
-    await api('PUT', `/content/posts/${encodeURIComponent(contentId)}`, {
-      publishedAt,
-    });
-  }
-
-  await verifyPublishedDate(contentId, publishedAt);
+  if (!isLocalTarget) await verifyPublishedDate(contentId, publishedAt);
 }
 
 function datesMatch(actual, expected) {
@@ -475,10 +477,6 @@ async function readPublishedDate(contentId) {
   const result = await api('GET', `/content/posts/${encodeURIComponent(contentId)}`);
   const item = result.item ?? result;
   return item?.publishedAt ?? item?.published_at ?? null;
-}
-
-async function hasPublishedDate(contentId, expected) {
-  return datesMatch(await readPublishedDate(contentId), expected);
 }
 
 async function verifyPublishedDate(contentId, expected) {

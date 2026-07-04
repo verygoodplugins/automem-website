@@ -7,6 +7,7 @@ import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import AuthorBio from '../../components/AuthorBio.astro';
 import { getCmsChrome } from '../../lib/cms-chrome';
+import { hydrateCmsSeo } from '../../lib/cms-seo';
 import '../../styles/global.css';
 
 interface CmsMediaValue {
@@ -67,7 +68,8 @@ const postSlug = post.data.slug ?? slug!;
 const byline = post.data.bylines?.[0]?.byline;
 const bylineName = byline?.displayName ?? 'Jack Arturo';
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://automem.ai';
-const seo = getSeoMeta(post, {
+const seoPost = await hydrateCmsSeo(Astro.locals, 'posts', post);
+const seo = getSeoMeta(seoPost, {
   siteTitle: chrome.siteTitle,
   siteUrl,
   path: `/blog/${postSlug}`,

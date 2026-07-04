@@ -38,6 +38,8 @@ test('public blog surfaces are CMS-only at runtime', async () => {
   assert.match(blogIndex, /post\.data\.slug \?\? post\.id/);
   assert.doesNotMatch(blogIndex, /href=\{`\/blog\/\$\{post\.id\}`\}/);
   assert.match(blogDetail, /getSeoMeta/);
+  assert.match(blogDetail, /hydrateCmsSeo/);
+  assert.match(blogDetail, /getSeoMeta\(seoPost,/);
   assert.match(blogDetail, /getEntryTerms\(['"]posts['"],\s*post\.data\.id/);
   assert.match(blogDetail, /post\.data\.bylines\?\.\[0\]\?\.byline/);
   assert.match(blogDetail, /WidgetArea name="blog-sidebar"/);
@@ -109,6 +111,9 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(middleware, /pathname === ['"]\/api\/site-search['"]/);
   assert.match(siteSearchApi, /searchPublishedContentWithDb/);
   assert.match(siteSearchApi, /ensureSearchHealthy/);
+  assert.match(siteSearchApi, /normalizeSearchSnippet/);
+  assert.doesNotMatch(siteSearchApi, /SNIPPET_AMP_RE/);
+  assert.doesNotMatch(siteSearchApi, /&quot;|&#39;|&amp;|&lt;|&gt;/);
   assert.match(siteSearchApi, /c\.status\s*=\s*'published'/);
   assert.match(siteSearchApi, /c\.status\s*=\s*'scheduled'/);
   assert.match(siteSearchApi, /c\.scheduled_at\s*<=\s*strftime/);
@@ -119,6 +124,8 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
     'site-search API should run before the generic /api 404 guard',
   );
   assert.match(cmsPage, /getEmDashEntry\(['"]pages['"]/);
+  assert.match(cmsPage, /hydrateCmsSeo/);
+  assert.match(cmsPage, /getSeoMeta\(seoPage,/);
   assert.match(cmsPage, /PortableText/);
   assert.match(layout, /<title>\{pageTitle\}<\/title>/);
   assert.match(layout, /<EmDashHead page=\{pageContext\} \/>/);
@@ -131,6 +138,9 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
     'dry-run branch should be reached before CMS API reads',
   );
   assert.match(migration, /_type: ['"]table['"]/);
+  assert.match(migration, /markdownTableHasLinks/);
+  assert.match(migration, /blocks\.push\(\.\.\.markdownTableToPortableText\(tableLines\)\)/);
+  assert.match(migration, /return markdownToPortableText\(lines\.join\(['"]\\n['"]\)\)/);
   assert.match(migration, /_type: ['"]embed['"]/);
   assert.match(migration, /_type: ['"]mermaid['"]/);
   assert.match(migration, /client\.get\(['"]posts['"], slug, \{ raw: true \}\)/);
@@ -138,5 +148,20 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /async function publishWithHistoricalDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
   assert.match(migration, /verifyPublishedDate/);
-  assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
+  assert.doesNotMatch(migration, /hasPublishedDate/);
+  assert.doesNotMatch(migration, /api\(['"]PUT['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
+});
+
+test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages', async () => {
+  const seoHelper = await readSource('../src/lib/cms-seo.ts');
+  const blogDetail = await readSource('../src/pages/blog/[slug].astro');
+  const cmsPage = await readSource('../src/pages/pages/[slug].astro');
+
+  assert.notEqual(seoHelper, '', 'CMS SEO helper should exist');
+  assert.match(seoHelper, /FROM _emdash_seo/);
+  assert.match(seoHelper, /collection = \$\{collection\}/);
+  assert.match(seoHelper, /content_id = \$\{entry\.data\.id\}/);
+  assert.match(seoHelper, /data:\s*\{\s*\.\.\.entry\.data,\s*seo/);
+  assert.match(blogDetail, /await hydrateCmsSeo\(Astro\.locals,\s*['"]posts['"],\s*post\)/);
+  assert.match(cmsPage, /await hydrateCmsSeo\(Astro\.locals,\s*['"]pages['"],\s*page\)/);
 });
