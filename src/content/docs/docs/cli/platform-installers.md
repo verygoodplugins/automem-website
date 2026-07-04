@@ -121,7 +121,7 @@ This command:
    - `automem-session-start.sh` — recalls context at session start
    - `automem-track-store.sh` — observes `store_memory` calls (PostToolUse)
    - `automem-stop-nudge.sh` — optional LLM-judged storage nudge (registered only with `--profile nudged`)
-2. Merges `~/.claude/settings.json` with the six `mcp__memory__*` tool permissions
+2. Merges `~/.claude/settings.json` with the six `mcp__memory__*` tool permissions (the installer template assumes the MCP server key is `"memory"` — if your `~/.claude.json` uses another key such as `"automem"`, rename the server or change the permission prefixes to match)
 3. Removes retired hooks and scripts from older installs (`capture-*.sh`, `session-memory.sh`, queue machinery, and their support files)
 
 Storage is **LLM-judged** — hooks prompt and observe; they never write memories themselves. After running the installer, follow the printed instructions to append the memory rules to `~/.claude/CLAUDE.md` manually.
@@ -133,7 +133,7 @@ Claude Code reads MCP server configuration from `~/.claude.json`:
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
       "args": ["@verygoodplugins/mcp-automem"],
       "env": {
@@ -144,6 +144,8 @@ Claude Code reads MCP server configuration from `~/.claude.json`:
   }
 }
 ```
+
+The server name (`memory` above) determines the tool prefix in Claude Code (`mcp__memory__*`). If you use a different server name, update the six permission entries in `~/.claude/settings.json` to match.
 
 ## OpenAI Codex
 

@@ -215,7 +215,7 @@ The `check_database_health` tool returns a `HealthStatus` object (defined in [`s
 
 | Field | Type | Description |
 |---|---|---|
-| `status` | `"healthy"` \| `"error"` | Overall health status |
+| `status` | `"healthy"` \| `"degraded"` \| `"error"` | Overall health status (`degraded` means the service is reachable but a backend or sync check needs attention) |
 | `backend` | `string` | Backend type (always `"automem"`) |
 | `statistics` | `object` | Database statistics and connection info |
 | `statistics.falkordb` | `string` | FalkorDB connection status |
@@ -297,7 +297,7 @@ delete_memory({ memory_id: "temporary-id" })
 
 ## Queue Processing CLI Command
 
-The `queue` CLI command processes pending memories from a local JSON queue file. This is a **manual recovery tool** — the Claude Code installer no longer drains the queue automatically (the retired capture/queue Stop hooks were removed in v0.15). Use it to replay entries that were written to the queue file by older installs or custom tooling.
+The `queue` CLI command processes pending memories from a local JSONL queue file (newline-delimited JSON, one memory entry per line). The default path is `~/.claude/scripts/memory-queue.jsonl`. This is a **manual recovery tool** — the Claude Code installer no longer drains the queue automatically (the retired capture/queue Stop hooks were removed in v0.15). Use it to replay entries that were written to the queue file by older installs or custom tooling.
 
 ### Usage
 
@@ -305,8 +305,8 @@ The `queue` CLI command processes pending memories from a local JSON queue file.
 # Process all pending queue entries
 npx @verygoodplugins/mcp-automem queue
 
-# Process a specific queue file
-npx @verygoodplugins/mcp-automem queue --file /path/to/queue.json
+# Process a specific queue file (JSONL — one entry per line)
+npx @verygoodplugins/mcp-automem queue --file /path/to/memory-queue.jsonll
 
 # Preview what would be processed without writing
 npx @verygoodplugins/mcp-automem queue --dry-run
