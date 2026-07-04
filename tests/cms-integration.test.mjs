@@ -153,12 +153,14 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /client\.get\(['"]posts['"], slug, \{ raw: true \}\)/);
   assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
   assert.match(migration, /async function publishWithHistoricalDate/);
+  assert.match(migration, /async function setHistoricalPublishedDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
-  assert.match(migration, /await api\(['"]POST['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish`,\s*\{\s*publishedAt,\s*\}\)/);
+  assert.match(migration, /await api\(['"]PUT['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`,\s*\{\s*publishedAt,\s*\}\)/);
+  assert.match(migration, /await setHistoricalPublishedDate\(contentId,\s*publishedAt\)/);
+  assert.doesNotMatch(migration, /await api\(['"]POST['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish`,\s*\{\s*publishedAt,\s*\}\)/);
   assert.match(migration, /verifyPublishedDate/);
   assert.doesNotMatch(migration, /verifyPublishedDate\(saved\.id, post\.date\.toISOString\(\)\)/);
   assert.doesNotMatch(migration, /hasPublishedDate/);
-  assert.doesNotMatch(migration, /api\(['"]PUT['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
 });
 
 test('blog index does not cache empty output when CMS posts fail to load', async () => {
@@ -172,6 +174,22 @@ test('blog index does not cache empty output when CMS posts fail to load', async
   assert.match(blogIndex, /['"]Cache-Control['"]:\s*['"]no-store/);
   assert.match(blogIndex, /return new Response\(/);
   assert.match(blogIndex, /status:\s*503/);
+});
+
+test('blog detail does not cache or report CMS lookup failures as missing posts', async () => {
+  const blogDetail = await readSource('../src/pages/blog/[slug].astro');
+  const errorIndex = blogDetail.indexOf('if (error) {');
+  const notFoundIndex = blogDetail.indexOf('if (!post) {');
+  const cacheIndex = blogDetail.indexOf('Astro.cache.set(cacheHint)');
+
+  assert.ok(errorIndex > -1, 'blog detail should handle CMS errors explicitly');
+  assert.ok(notFoundIndex > -1, 'blog detail should still return 404 for missing posts');
+  assert.ok(cacheIndex > -1, 'blog detail should cache successful CMS reads');
+  assert.ok(errorIndex < notFoundIndex, 'CMS error handling should happen before missing-post 404 handling');
+  assert.ok(errorIndex < cacheIndex, 'CMS error handling should happen before successful-response cache hints');
+  assert.match(blogDetail, /['"]Cache-Control['"]:\s*['"]no-store/);
+  assert.match(blogDetail, /return new Response\(/);
+  assert.match(blogDetail, /status:\s*503/);
 });
 
 test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages', async () => {

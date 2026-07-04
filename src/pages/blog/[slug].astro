@@ -41,6 +41,13 @@ const { entry: post, isPreview, error, cacheHint } = await getEmDashEntry<'posts
 
 if (error) {
   console.error('Failed to load CMS post:', error);
+  return new Response('CMS post temporarily unavailable.', {
+    status: 503,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
 
 if (!post) {

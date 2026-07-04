@@ -452,10 +452,17 @@ async function setTerms(contentId, taxonomy, termIds) {
   });
 }
 
-async function publishWithHistoricalDate(contentId, publishedAt) {
-  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`, {
+async function setHistoricalPublishedDate(contentId, publishedAt) {
+  await api('PUT', `/content/posts/${encodeURIComponent(contentId)}`, {
     publishedAt,
   });
+
+  if (!isLocalTarget) await verifyPublishedDate(contentId, publishedAt);
+}
+
+async function publishWithHistoricalDate(contentId, publishedAt) {
+  await setHistoricalPublishedDate(contentId, publishedAt);
+  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`);
 
   if (!isLocalTarget) await verifyPublishedDate(contentId, publishedAt);
 }
