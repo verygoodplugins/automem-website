@@ -44,6 +44,7 @@ const pageContext = createPublicPageContext({
           collections={['posts', 'pages']}
           limit={12}
           autofocus
+          routeMap={{ posts: '/blog/:slug', pages: '/pages/:slug' }}
           class="cms-search"
           inputClass="cms-search-input"
           resultsClass="cms-search-results"

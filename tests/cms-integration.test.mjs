@@ -98,10 +98,16 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(categoryArchive, /getTerm\(['"]category['"]/);
   assert.match(categoryArchive, /getEntriesByTerm\(['"]posts['"],\s*['"]category['"]/);
   assert.match(searchPage, /LiveSearch/);
+  assert.match(searchPage, /routeMap=\{\{ posts: ['"]\/blog\/:slug['"], pages: ['"]\/pages\/:slug['"] \}\}/);
   assert.match(cmsPage, /getEmDashEntry\(['"]pages['"]/);
   assert.match(cmsPage, /PortableText/);
   assert.match(migration, /data\/emdash\.db/);
   assert.match(migration, /EMDASH_URL/);
   assert.match(migration, /markdownToPortableText/);
-  assert.match(migration, /\/content\/posts\?q=\$\{encodeURIComponent\(slug\)\}&limit=20/);
+  assert.match(migration, /markdownToCmsPortableText\(post\.body\)/);
+  assert.match(migration, /_type: ['"]table['"]/);
+  assert.match(migration, /_type: ['"]embed['"]/);
+  assert.match(migration, /_type: ['"]mermaid['"]/);
+  assert.match(migration, /client\.get\(['"]posts['"], slug, \{ raw: true \}\)/);
+  assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
 });

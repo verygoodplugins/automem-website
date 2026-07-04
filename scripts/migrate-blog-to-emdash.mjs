@@ -31,6 +31,7 @@ const applyProduction = args.has('--apply-production');
 const emdashUrl = process.env.EMDASH_URL ?? DEFAULT_EMDASH_URL;
 const emdashToken = process.env.EMDASH_TOKEN;
 const siteUrl = process.env.SITE_URL ?? 'https://automem.ai';
+let portableTextKeyCounter = 0;
 
 function usage() {
   console.log(`Usage: npm run cms:migrate-blog -- [--dry-run] [--apply-production]
@@ -129,6 +130,190 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '');
 }
 
+function portableTextKey(prefix = 'm') {
+  return `${prefix}${(portableTextKeyCounter++).toString(36)}`;
+}
+
+function splitMarkdownTableRow(line) {
+  let value = line.trim();
+  if (value.startsWith('|')) value = value.slice(1);
+  if (value.endsWith('|')) value = value.slice(0, -1);
+  return value.split('|').map((cell) => cell.trim());
+}
+
+function isMarkdownTableSeparator(line) {
+  const cells = splitMarkdownTableRow(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function isMarkdownTableStart(lines, index) {
+  return lines[index]?.includes('|') && isMarkdownTableSeparator(lines[index + 1] ?? '');
+}
+
+function parseInlineCell(value) {
+  const spans = [];
+  const markDefs = [];
+  const pattern = /(\*\*(.+?)\*\*)|(_(.+?)_)|(`(.+?)`)|(\[(.+?)\]\((.+?)\))/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(value)) !== null) {
+    if (match.index > lastIndex) {
+      spans.push({ _type: 'span', _key: portableTextKey('s'), text: value.slice(lastIndex, match.index), marks: [] });
+    }
+
+    if (match[2] != null) {
+      spans.push({ _type: 'span', _key: portableTextKey('s'), text: match[2], marks: ['strong'] });
+    } else if (match[4] != null) {
+      spans.push({ _type: 'span', _key: portableTextKey('s'), text: match[4], marks: ['em'] });
+    } else if (match[6] != null) {
+      spans.push({ _type: 'span', _key: portableTextKey('s'), text: match[6], marks: ['code'] });
+    } else if (match[8] != null && match[9] != null) {
+      const key = portableTextKey('l');
+      markDefs.push({ _key: key, _type: 'link', href: match[9] });
+      spans.push({ _type: 'span', _key: portableTextKey('s'), text: match[8], marks: [key] });
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < value.length) {
+    spans.push({ _type: 'span', _key: portableTextKey('s'), text: value.slice(lastIndex), marks: [] });
+  }
+
+  if (spans.length === 0) {
+    spans.push({ _type: 'span', _key: portableTextKey('s'), text: value, marks: [] });
+  }
+
+  return { content: spans, markDefs };
+}
+
+function markdownTableToPortableText(lines) {
+  const rows = lines.filter((line, index) => index !== 1).map((line, rowIndex) => ({
+    _type: 'tableRow',
+    _key: portableTextKey('r'),
+    cells: splitMarkdownTableRow(line).map((cell) => ({
+      _type: 'tableCell',
+      _key: portableTextKey('c'),
+      ...parseInlineCell(cell),
+      isHeader: rowIndex === 0,
+    })),
+  }));
+
+  return {
+    _type: 'table',
+    _key: portableTextKey(),
+    rows,
+    hasHeaderRow: true,
+  };
+}
+
+function collectHtmlBlock(lines, startIndex) {
+  const collected = [];
+  let index = startIndex;
+
+  while (index < lines.length) {
+    collected.push(lines[index]);
+    const joined = collected.join('\n');
+    if (/<\/iframe>/i.test(joined) && (/<\/div>/i.test(joined) || !/<div\b/i.test(joined))) break;
+    if (!/<iframe\b/i.test(joined) && /<\/div>/i.test(joined)) break;
+    index++;
+  }
+
+  return { html: collected.join('\n'), nextIndex: Math.min(index + 1, lines.length) };
+}
+
+function shouldCollectHtmlBlock(lines, index) {
+  const line = lines[index]?.trim() ?? '';
+  if (/<iframe\b/i.test(line)) return true;
+  if (!line.startsWith('<div')) return false;
+
+  const lookahead = lines.slice(index, Math.min(index + 8, lines.length)).join('\n');
+  return /<iframe\b/i.test(lookahead);
+}
+
+function htmlBlockToPortableText(html) {
+  const src = html.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+  if (src) {
+    return {
+      _type: 'embed',
+      _key: portableTextKey(),
+      url: src,
+      provider: /youtu\.be|youtube\.com/i.test(src) ? 'youtube' : undefined,
+      html,
+    };
+  }
+
+  return {
+    _type: 'htmlBlock',
+    _key: portableTextKey(),
+    html,
+  };
+}
+
+function markdownToCmsPortableText(markdown) {
+  const blocks = [];
+  const pendingMarkdown = [];
+  const lines = markdown.split('\n');
+  let index = 0;
+
+  function flushMarkdown() {
+    const source = pendingMarkdown.join('\n');
+    pendingMarkdown.length = 0;
+    if (source.trim()) {
+      blocks.push(...markdownToPortableText(source));
+    }
+  }
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```mermaid')) {
+      flushMarkdown();
+      const codeLines = [];
+      index++;
+      while (index < lines.length && !lines[index].trim().startsWith('```')) {
+        codeLines.push(lines[index]);
+        index++;
+      }
+      if (index < lines.length) index++;
+      blocks.push({
+        _type: 'mermaid',
+        _key: portableTextKey(),
+        code: codeLines.join('\n'),
+      });
+      continue;
+    }
+
+    if (isMarkdownTableStart(lines, index)) {
+      flushMarkdown();
+      const tableLines = [lines[index], lines[index + 1]];
+      index += 2;
+      while (index < lines.length && lines[index].includes('|') && lines[index].trim() !== '') {
+        tableLines.push(lines[index]);
+        index++;
+      }
+      blocks.push(markdownTableToPortableText(tableLines));
+      continue;
+    }
+
+    if (shouldCollectHtmlBlock(lines, index)) {
+      flushMarkdown();
+      const { html, nextIndex } = collectHtmlBlock(lines, index);
+      blocks.push(htmlBlockToPortableText(html));
+      index = nextIndex;
+      continue;
+    }
+
+    pendingMarkdown.push(line);
+    index++;
+  }
+
+  flushMarkdown();
+  return blocks;
+}
+
 function parseFrontmatter(source, filePath) {
   const match = source.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
   if (!match) {
@@ -187,9 +372,12 @@ async function readMarkdownPosts() {
 }
 
 async function getExistingPost(slug) {
-  const result = await api('GET', `/content/posts?q=${encodeURIComponent(slug)}&limit=20`);
-  const existing = (result.items ?? []).find((item) => item.slug === slug || item.data?.slug === slug);
-  return existing ? client.get('posts', existing.id, { raw: true }) : null;
+  try {
+    return await client.get('posts', slug, { raw: true });
+  } catch (error) {
+    if (error?.status === 404) return null;
+    throw error;
+  }
 }
 
 async function ensureByline() {
@@ -317,7 +505,7 @@ async function patchLocalPublishedDates(records) {
     console.log('\nHistorical date patch SQL:');
     console.log(sql);
     if (!isLocalTarget) {
-      console.log('Production dates were not patched automatically. Apply the SQL to the target database explicitly.');
+      console.log('Historical dates were also sent through the EmDash content APIs. Keep this SQL as an audit fallback for the target database.');
     }
     return;
   }
@@ -366,7 +554,7 @@ async function main() {
   const migrated = [];
 
   for (const post of markdownPosts) {
-    const content = markdownToPortableText(post.body);
+    const content = markdownToCmsPortableText(post.body);
     const status = post.draft ? 'draft' : 'published';
     const tagTerms = await Promise.all(
       post.tags.map((tag) => {
@@ -397,6 +585,7 @@ async function main() {
         canonical: `${siteUrl.replace(/\/$/, '')}/blog/${post.slug}`,
         noIndex: post.draft,
       },
+      publishedAt: status === 'published' ? post.date.toISOString() : undefined,
     };
 
     if (dryRun) {
