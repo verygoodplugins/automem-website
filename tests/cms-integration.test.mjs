@@ -192,6 +192,24 @@ test('blog index orders ready scheduled posts by their effective publish time', 
   assert.match(blogIndex, /const date = effectivePostDate\(post\)/);
 });
 
+test('blog detail and RSS use scheduledAt for ready scheduled posts', async () => {
+  const blogDetail = await readSource('../src/pages/blog/[slug].astro');
+  const rss = await readSource('../src/pages/rss.xml.ts');
+
+  assert.match(blogDetail, /scheduledAt\?: Date/);
+  assert.match(blogDetail, /function effectivePostDate/);
+  assert.match(blogDetail, /post\.data\.publishedAt\s*\?\?\s*post\.data\.scheduledAt\s*\?\?\s*post\.data\.createdAt/);
+  assert.match(blogDetail, /const date = effectivePostDate\(post\)/);
+
+  assert.match(rss, /scheduledAt\?: Date/);
+  assert.match(rss, /function effectivePostDate/);
+  assert.match(rss, /post\.data\.publishedAt\s*\?\?\s*post\.data\.scheduledAt\s*\?\?\s*post\.data\.createdAt\s*\?\?\s*new Date\(\)/);
+  assert.match(rss, /const orderedPosts = \[\.\.\.posts\]\.sort/);
+  assert.match(rss, /effectivePostDate\(b\)\.getTime\(\)\s*-\s*effectivePostDate\(a\)\.getTime\(\)/);
+  assert.match(rss, /items: orderedPosts\.map/);
+  assert.match(rss, /pubDate: effectivePostDate\(post\)/);
+});
+
 test('blog detail does not cache or report CMS lookup failures as missing posts', async () => {
   const blogDetail = await readSource('../src/pages/blog/[slug].astro');
   const errorIndex = blogDetail.indexOf('if (error) {');

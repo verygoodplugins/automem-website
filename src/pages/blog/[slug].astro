@@ -29,6 +29,7 @@ interface CmsPostData {
   excerpt?: string;
   content?: unknown[];
   publishedAt?: Date;
+  scheduledAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
   featured_image?: CmsMediaValue | string | null;
@@ -65,7 +66,11 @@ const [tags, categories] = await Promise.all([
   getEntryTerms('posts', post.data.id, 'category'),
 ]);
 
-const date = post.data.publishedAt ?? post.data.createdAt;
+function effectivePostDate(post: { data: CmsPostData }) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt;
+}
+
+const date = effectivePostDate(post);
 const formattedDate = date?.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',

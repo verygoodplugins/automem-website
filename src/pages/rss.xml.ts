@@ -8,8 +8,13 @@ interface CmsPostData {
   title: string;
   excerpt?: string;
   publishedAt?: Date;
+  scheduledAt?: Date;
   createdAt?: Date;
   bylines?: ContentBylineCredit[];
+}
+
+function effectivePostDate(post: { data: CmsPostData }) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt ?? new Date();
 }
 
 export async function GET(context: APIContext) {
@@ -25,17 +30,21 @@ export async function GET(context: APIContext) {
     return new Response('Internal Server Error', { status: 500 });
   }
 
+  const orderedPosts = [...posts].sort(
+    (a, b) => effectivePostDate(b).getTime() - effectivePostDate(a).getTime(),
+  );
+
   return rss({
     title: 'AutoMem Blog',
     description: 'Articles about AI, memory systems, and building in the open',
     site: context.site || 'https://automem.ai',
-    items: posts.map((post) => {
+    items: orderedPosts.map((post) => {
       const postSlug = post.data.slug ?? post.id;
       const byline = post.data.bylines?.[0]?.byline;
       return {
         title: post.data.title,
         description: post.data.excerpt ?? '',
-        pubDate: post.data.publishedAt ?? post.data.createdAt ?? new Date(),
+        pubDate: effectivePostDate(post),
         link: `/blog/${postSlug}/`,
         author: byline?.displayName ?? 'Jack Arturo',
       };
