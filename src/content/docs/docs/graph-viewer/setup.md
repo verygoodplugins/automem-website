@@ -22,7 +22,13 @@ npm ci
 npm run dev
 ```
 
-The dev server starts at `http://localhost:5173` (Vite default) with hot module replacement.
+The dev server starts at `http://localhost:5173` (Vite default) with hot module replacement. API requests are proxied to the target in `VITE_API_TARGET` (see below).
+
+For local dev against the AutoMem Docker stack, point the proxy at your API:
+
+```bash
+VITE_API_TARGET=http://localhost:8001 npm run dev
+```
 
 For a production build:
 
@@ -33,6 +39,8 @@ npm run start
 
 The production server (`server.mjs`) serves the built static files on `http://localhost:3000`.
 
+Optional: `npm run dev:all` starts both the Vite dev server and the iPhone hand-tracking bridge for local LiDAR gesture testing.
+
 ---
 
 ## Environment Variables
@@ -41,9 +49,14 @@ Copy `.env.example` to `.env` and configure:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_API_TARGET` | `http://localhost:8001` | AutoMem API URL for the Vite dev proxy. In production, the viewer uses relative URLs or `localStorage` config. |
-| `VITE_BASE_PATH` | `/` | Base path prefix when hosting under a subpath (e.g. `/viewer/`) |
-| `VITE_ENABLE_HAND_CONTROLS` | `false` | Enable experimental webcam hand tracking controls |
+| `VITE_API_TARGET` | `http://localhost:8001` | AutoMem API URL for the Vite dev proxy. **Dev only** — do not set on production Railway viewer services. |
+| `VITE_BASE_PATH` | `/` | Base path prefix when hosting under a subpath (e.g. `/viewer/` on the AutoMem API origin). Keep `/` for standalone viewer deployments. |
+
+:::caution[Obsolete variables]
+`VITE_ENABLE_HAND_CONTROLS` is no longer used — hand gesture controls are toggled from the toolbar at runtime. `VITE_BASE` is not a supported variable; use `VITE_BASE_PATH` instead.
+:::
+
+For iPhone LiDAR hand-tracking during local dev, optionally set `VITE_HAND_BRIDGE_URL` (see `.env.example`). The bridge autostarts with `npm run dev:all`.
 
 ---
 
@@ -64,8 +77,8 @@ When the viewer is served from AutoMem's `/viewer` path (same origin), it detect
 When running the viewer separately from AutoMem, configure the API server:
 
 - **Dev**: Set `VITE_API_TARGET` in `.env` to your AutoMem URL. Vite proxies API requests.
-- **Production**: The viewer checks `localStorage` for `automem_server`. Set it via the UI settings or manually: `localStorage.setItem('automem_server', 'https://your-automem.example.com')`.
-- **URL override**: Append `?server=https://your-automem.example.com` to any page URL.
+- **Production**: The viewer checks `localStorage` for `automem_server`. Set it via the settings panel connection section or manually: `localStorage.setItem('automem_server', 'https://your-automem.example.com')`.
+- **URL override**: Append `?server=https://your-automem.example.com` to any page URL. AutoMem's `/viewer` bootstrap passes `server=<automem-origin>` automatically.
 
 ---
 
@@ -75,10 +88,10 @@ The viewer consumes these AutoMem API endpoints:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /graph/snapshot` | Full graph data (nodes + edges) |
-| `GET /graph/neighbors/:id` | Neighbors of a specific node |
-| `GET /graph/stats` | Graph statistics (counts, types) |
-| `GET /recall` | Whole-store semantic search, used by the search box to surface off-graph results |
+| `GET /graph/snapshot` | Bounded graph overview (nodes + edges) |
+| `GET /graph/neighbors/:id` | Neighbors of a specific node (expansion) |
+| `GET /graph/stats` | Graph statistics (counts, types, relationship breakdown) |
+| `GET /recall` | Whole-store semantic search for the search triage surface |
 | `GET /health` | Service health check |
 
 All requests (except `/health`) require the `X-API-Key: <token>` header.

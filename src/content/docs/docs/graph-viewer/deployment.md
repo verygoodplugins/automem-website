@@ -49,17 +49,11 @@ docker build -t automem-graph-viewer .
 docker run -p 3000:3000 automem-graph-viewer
 ```
 
-To connect to a local AutoMem instance, use Docker networking:
-
-```bash
-docker run -p 3000:3000 \
-  -e VITE_API_TARGET=http://host.docker.internal:8001 \
-  automem-graph-viewer
-```
-
-:::caution
-`VITE_API_TARGET` is a build-time variable (Vite inlines it). If you need to change the API target at runtime in production, use the `?server=` URL parameter or `localStorage.setItem('automem_server', url)` instead.
+:::caution[Runtime API configuration]
+The viewer stores browser-side API config (`automem_server`, `automem_token`) — not build-time env vars. After deployment, users configure the AutoMem API URL via `?server=` (supplied by AutoMem `/viewer` redirects), the settings panel, or `localStorage`. Do not bake `VITE_API_TARGET` into production images expecting runtime changes; it is a dev-proxy setting only.
 :::
+
+If you run the viewer locally alongside the AutoMem Docker stack, note that FalkorDB's built-in browser also defaults to port `3000`. Set `PORT=3001` (or similar) on one service to avoid a collision.
 
 ---
 
@@ -71,14 +65,28 @@ docker run -p 3000:3000 \
 ghcr.io/verygoodplugins/automem-graph-viewer:stable
 ```
 
-This avoids spending Railway compute rebuilding the frontend on every deploy. After the viewer's domain is created, set these variables on the `automem` API service (not the viewer service) so browser traffic can reach it:
+This avoids spending Railway compute rebuilding the frontend on every deploy. The viewer service typically needs no custom environment variables in production.
+
+After the viewer's domain is created, set these variables on the **`automem` API service** (not the viewer service) so browser traffic can reach it:
 
 ```bash
 GRAPH_VIEWER_URL=https://<viewer-domain>
 VIEWER_ALLOWED_ORIGINS=https://<viewer-domain>
 ```
 
-Browser-to-API traffic must use the API's public domain — Railway private domains aren't reachable from user browsers. The viewer itself typically needs no custom environment variables in production; it stores only browser-side config (server URL, token) and should never receive database credentials.
+Browser-to-API traffic must use the API's public domain — Railway private domains aren't reachable from user browsers. The viewer itself stores only browser-side config (server URL, token) and should never receive database credentials.
+
+### Recommended Railway layout
+
+| Service | Source | Public? | Notes |
+|---------|--------|---------|-------|
+| `automem` | `ghcr.io/verygoodplugins/automem:stable` | Yes | Auth, API routes, data access, `/viewer/*` bootstrap |
+| `automem-graph-viewer` | `ghcr.io/verygoodplugins/automem-graph-viewer:stable` | Yes | Static React/Three.js UI; no DB secrets |
+| `mcp-automem` | `ghcr.io/verygoodplugins/mcp-automem:stable` | Yes | Remote MCP bridge for hosted clients |
+| `falkordb` | `falkordb/falkordb:latest` | No | Private graph database |
+| `qdrant` | `qdrant/qdrant:latest` or Qdrant Cloud | No/External | Vector store |
+
+Keep the standalone viewer service served at `/`. Only set `VITE_BASE_PATH=/viewer/` when the built assets are actually served from the AutoMem API origin under `/viewer/`.
 
 **Source-linked deploys.** The repository's `railway.toml` is kept for preview/source deployments and mirrors the Dockerfile used to publish the GHCR image:
 
@@ -116,4 +124,4 @@ Requirements for the hosting provider:
 - Serve `index.html` for all unknown routes (SPA fallback)
 - Set appropriate cache headers on `/assets/*`
 
-The viewer will use relative URLs by default. Users configure the AutoMem API URL through the settings UI on first visit.
+The viewer will use relative URLs by default. Users configure the AutoMem API URL through the settings panel on first visit.
