@@ -100,11 +100,11 @@ graph TB
     end
 
     subgraph "Code Under Test"
-        MemoryConsolidator["MemoryConsolidator\nconsolidation.py:111-770"]
-        calculate_relevance["calculate_relevance_score()\nconsolidation.py:178-230"]
-        discover_creative["discover_creative_associations()\nconsolidation.py:232-330"]
-        cluster_similar["cluster_similar_memories()\nconsolidation.py:332-431"]
-        apply_forgetting["apply_controlled_forgetting()\nconsolidation.py:433-545"]
+        MemoryConsolidator["MemoryConsolidator\nconsolidation.py:121-1117"]
+        calculate_relevance["calculate_relevance_score()\nconsolidation.py:227-283"]
+        discover_creative["discover_creative_associations()\nconsolidation.py:334-456"]
+        cluster_similar["cluster_similar_memories()\nconsolidation.py:457-618"]
+        apply_forgetting["apply_controlled_forgetting()\nconsolidation.py:619-819"]
     end
 
     TestFunctions --> Fixtures
@@ -128,7 +128,7 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeGraph` Class
 
-`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:25-667](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py#L25-L667)):
+`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:35-795](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L35-L795)):
 
 - **Query pattern matching**: Uses string matching to identify query type (e.g., `"COUNT(DISTINCT r)"` for relationship counts)
 - **Deterministic responses**: Returns pre-configured data from state attributes
@@ -137,17 +137,17 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeVectorStore` Class
 
-`FakeVectorStore` tracks vector deletion operations ([tests/test_consolidation_engine.py:13-17](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L13-L17)).
+`FakeVectorStore` tracks vector deletion operations ([tests/test_consolidation_engine.py:19-24](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L19-L24)).
 
 #### `FakeResult` Class
 
-`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:8-10](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py#L8-L10)).
+`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:9-11](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L9-L11)).
 
 ### Test Fixtures
 
 #### `freeze_time` Fixture
 
-The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:20-28](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L20-L28)):
+The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:27-39](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L27-L39)):
 
 - **Auto-use**: Applies to all tests automatically
 - **Module patching**: Patches `consolidation_module.datetime`, not global `datetime`
