@@ -89,11 +89,11 @@ graph TB
 
 | HippoRAG 2 Concept | AutoMem Implementation | Code Reference |
 |---|---|---|
-| Semantic similarity | Qdrant cosine distance | [`app.py:959-994`](https://github.com/verygoodplugins/automem/blob/main/app.py#L959-L994) `_vector_search()` |
-| Causal edges | `LEADS_TO`, `DERIVED_FROM` | [`app.py:129-142`](https://github.com/verygoodplugins/automem/blob/main/app.py#L129-L142) `RELATIONSHIP_TYPES` |
+| Semantic similarity | Qdrant cosine distance | [`automem/search/runtime_recall_helpers.py:916`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/search/runtime_recall_helpers.py#L916) `_vector_search()` |
+| Causal edges | `LEADS_TO`, `DERIVED_FROM` | [`automem/config.py:341-430`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/config.py#L341-L430) `RELATIONSHIP_TYPES` |
 | Temporal edges | `OCCURRED_BEFORE`, `PRECEDED_BY` | Enrichment pipeline temporal linking |
-| Preference edges | `PREFERS_OVER` | [`app.py:134`](https://github.com/verygoodplugins/automem/blob/main/app.py#L134) |
-| Pattern reinforcement | `EXEMPLIFIES`, `REINFORCES` | [`app.py:135-137`](https://github.com/verygoodplugins/automem/blob/main/app.py#L135-L137) |
+| Preference edges | `PREFERS_OVER` | [`automem/config.py:381-388`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/config.py#L381-L388) |
+| Pattern reinforcement | `EXEMPLIFIES`, `REINFORCES` | [`automem/config.py:389-412`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/config.py#L389-L412) |
 
 ---
 
@@ -109,10 +109,10 @@ graph TB
 
 | A-MEM Concept | AutoMem Code Path | Behavior |
 |---|---|---|
-| Pattern recognition | [`app.py:1745-2063`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1745-L2063) `enrich_memory()` | Creates `EXEMPLIFIES` edges |
-| Bottom-up clustering | `consolidation.py:586-693` | Groups similar vectors into `MetaMemory` nodes |
-| Relevance decay | `consolidation.py:261-340` | Exponential decay based on age, access count, relationships |
-| Memory pruning | `consolidation.py:695-789` | Archives memories below 0.2 relevance, deletes below 0.05 |
+| Pattern recognition | [`automem/enrichment/runtime_orchestration.py:107-227`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/enrichment/runtime_orchestration.py#L107-L227) `enrich_memory()` | Creates `EXEMPLIFIES` edges |
+| Bottom-up clustering | [`consolidation.py:365`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L365) `cluster_similar_memories()` | Groups similar vectors into `MetaMemory` nodes |
+| Relevance decay | [`consolidation.py:214`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L214) `calculate_relevance_score()` | Exponential decay based on age, access count, relationships |
+| Memory pruning | [`consolidation.py:476`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L476) `apply_controlled_forgetting()` | Archives memories below 0.2 relevance, deletes below 0.05 |
 
 ---
 
@@ -149,10 +149,10 @@ graph TB
 
 | ReadAgent Concept | AutoMem Query | Code Path |
 |---|---|---|
-| Recent episodes | `time_query=last 24 hours` | [`app.py:380-382`](https://github.com/verygoodplugins/automem/blob/main/app.py#L380-L382) |
-| Session boundaries | `time_query=yesterday` | [`app.py:377-379`](https://github.com/verygoodplugins/automem/blob/main/app.py#L377-L379) |
-| Historical context | `time_query=last month` | [`app.py:398-405`](https://github.com/verygoodplugins/automem/blob/main/app.py#L398-L405) |
-| Sequential ordering | `ORDER BY m.timestamp DESC` | [`app.py:699`](https://github.com/verygoodplugins/automem/blob/main/app.py#L699) `_graph_trending_results()` |
+| Recent episodes | `time_query=last 24 hours` | [`automem/utils/time.py:73`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/utils/time.py#L73) `_parse_time_expression()` |
+| Session boundaries | `time_query=yesterday` | [`automem/utils/time.py:73`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/utils/time.py#L73) `_parse_time_expression()` |
+| Historical context | `time_query=last month` | [`automem/utils/time.py:73`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/utils/time.py#L73) `_parse_time_expression()` |
+| Sequential ordering | `ORDER BY m.timestamp DESC` | [`automem/search/runtime_recall_helpers.py:618`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/search/runtime_recall_helpers.py#L618) `_graph_trending_results()` |
 
 **Recency scoring** implements ReadAgent's concept that recent memories are more accessible, with exponential decay in relevance as time passes without reinforcement.
 
@@ -173,7 +173,7 @@ FalkorDB stores the canonical memory record and all relationships. Qdrant is a p
 
 ### Memory Types and Classification
 
-A-MEM's atomic note principle requires each memory to have a single, clear type. AutoMem's `MemoryClassifier` ([app.py:996-1084](https://github.com/verygoodplugins/automem/blob/main/app.py#L996-L1084)) implements this:
+A-MEM's atomic note principle requires each memory to have a single, clear type. AutoMem's `MemoryClassifier` ([automem/classification/memory_classifier.py:7-192](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/automem/classification/memory_classifier.py#L7-L192)) implements this:
 
 | Memory Type | Regex Patterns | Confidence | Example |
 |---|---|---|---|
@@ -188,10 +188,10 @@ ReadAgent and A-MEM both emphasize that memories must be reorganized over time. 
 
 | Task | Research Basis | AutoMem Implementation | Interval |
 |---|---|---|---|
-| `decay` | ReadAgent temporal decay | `decay_memory_relevance()` — age, access, relationships, importance | Daily |
-| `creative` | HippoRAG 2 associative memory | `find_creative_associations()` — non-obvious connections via vectors | Weekly |
-| `cluster` | A-MEM emergent structure | `cluster_memories()` — group similar embeddings, create `MetaMemory` nodes | Monthly |
-| `forget` | MELODI compression + pruning | `forget_irrelevant_memories()` — archive < 0.2, delete < 0.05 | Disabled by default |
+| `decay` | ReadAgent temporal decay | [`calculate_relevance_score()`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L214) — age, access, relationships, importance | Daily |
+| `creative` | HippoRAG 2 associative memory | [`discover_creative_associations()`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L266) — non-obvious connections via vectors | Weekly |
+| `cluster` | A-MEM emergent structure | [`cluster_similar_memories()`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L365) — group similar embeddings, create `MetaMemory` nodes | Monthly |
+| `forget` | MELODI compression + pruning | [`apply_controlled_forgetting()`](https://github.com/verygoodplugins/automem/blob/8c67c164b9ec2bde87a6a3720767f50c3d4a3dd2/consolidation.py#L476) — archive < 0.2, delete < 0.05 | Disabled by default |
 
 **Decay scoring formula** implements ReadAgent's finding that memories fade without reinforcement but are preserved through connections. Factors weighted: recency, access frequency, relationship count, and stored importance score.
 
