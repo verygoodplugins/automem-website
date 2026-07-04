@@ -317,7 +317,7 @@ When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted from the 
 
 **Phase 2: Embedding Provider Batch Generation**
 
-Generates embeddings for the entire batch in a single provider call via `generate_real_embeddings_batch(..., allow_placeholder_fallback=False)`. Uses whichever provider is configured (`EMBEDDING_PROVIDER`, Voyage, OpenAI, Ollama, FastEmbed, etc.) — not hard-coded to OpenAI. Returns **503** if no real provider is configured (including placeholder-only mode). Dimension follows `VECTOR_SIZE` (default 1024).
+Generates embeddings for the entire batch in a single provider call via `generate_real_embeddings_batch(..., allow_placeholder_fallback=False)`. Uses whichever provider is configured (`EMBEDDING_PROVIDER`, Voyage, OpenAI, Ollama, FastEmbed, etc.) — not hard-coded to OpenAI. Returns **503** only when the embedding callable is absent or Qdrant/FalkorDB is unavailable before processing starts. Placeholder-only or other provider failures raised during batch generation are caught per batch and surfaced as HTTP **200** with `status: "complete"`, `failed`, and `failed_ids` — check those fields rather than HTTP status alone. Dimension follows `VECTOR_SIZE` (default 1024).
 
 **Phase 3: Qdrant Update**
 

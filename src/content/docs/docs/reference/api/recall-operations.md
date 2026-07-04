@@ -130,7 +130,7 @@ Tag-scoped queries with text or an explicit embedding may widen the pool further
 
 ### Internal Artifact Type Exclusion
 
-User-facing `/recall` results exclude internal artifact memory types (for example consolidation `MetaPattern` cluster summaries). Filtering is controlled by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). The same exclusion applies to vector sync accounting in `/health`, `/admin/sync`, and background drift repair so internal artifacts do not inflate drift counts or appear in ranked recall.
+User-facing `/recall` results exclude internal artifact memory types (for example consolidation `MetaPattern` cluster summaries). Filtering is controlled by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). At automem@0720da2 this exclusion applies to ranked recall only — `/health`, `/admin/sync`, and background drift repair still count all `Memory` nodes, including internal artifacts.
 
 ### Relative-Recency Bias
 
