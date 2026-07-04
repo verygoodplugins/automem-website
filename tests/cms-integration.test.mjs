@@ -57,8 +57,8 @@ test('EmDash seed and CMS maintenance scripts are tracked', async () => {
   const seed = JSON.parse(seedSource);
   const packageJson = JSON.parse(await readSource('../package.json'));
 
-  assert.deepEqual(packageJson.scripts['cms:seed:validate'], 'emdash seed seed/seed.json --database data/emdash.db --validate');
-  assert.deepEqual(packageJson.scripts['cms:seed:apply'], 'emdash seed seed/seed.json --database data/emdash.db --on-conflict=update');
+  assert.deepEqual(packageJson.scripts['cms:seed:validate'], 'mkdir -p data && emdash seed seed/seed.json --database data/emdash.db --validate');
+  assert.deepEqual(packageJson.scripts['cms:seed:apply'], 'mkdir -p data && emdash seed seed/seed.json --database data/emdash.db --on-conflict=update');
   assert.deepEqual(packageJson.scripts['cms:migrate-blog'], 'node scripts/migrate-blog-to-emdash.mjs');
 
   const collectionSlugs = new Set(seed.collections.map((collection) => collection.slug));
@@ -104,10 +104,14 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.doesNotMatch(searchPage, /LiveSearch/);
   assert.match(searchPage, /\/api\/site-search/);
   assert.match(searchPage, /item\.url/);
+  assert.match(searchPage, /appendHighlightedSnippet/);
+  assert.doesNotMatch(searchPage, /innerHTML\s*=\s*item\.snippet/);
   assert.match(middleware, /pathname === ['"]\/api\/site-search['"]/);
-  assert.match(siteSearchApi, /searchWithDb/);
+  assert.match(siteSearchApi, /searchPublishedContentWithDb/);
   assert.match(siteSearchApi, /ensureSearchHealthy/);
-  assert.match(siteSearchApi, /status:\s*['"]published['"]/);
+  assert.match(siteSearchApi, /c\.status\s*=\s*'published'/);
+  assert.match(siteSearchApi, /c\.status\s*=\s*'scheduled'/);
+  assert.match(siteSearchApi, /c\.scheduled_at\s*<=\s*strftime/);
   assert.match(siteSearchApi, /\/blog\/\$\{slugOrId\}/);
   assert.match(siteSearchApi, /\/pages\/\$\{slugOrId\}/);
   assert.ok(
@@ -122,6 +126,10 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /EMDASH_URL/);
   assert.match(migration, /markdownToPortableText/);
   assert.match(migration, /markdownToCmsPortableText\(post\.body\)/);
+  assert.ok(
+    migration.indexOf('if (dryRun) {\n    for (const post of markdownPosts)') < migration.indexOf('const byline = await ensureByline();'),
+    'dry-run branch should be reached before CMS API reads',
+  );
   assert.match(migration, /_type: ['"]table['"]/);
   assert.match(migration, /_type: ['"]embed['"]/);
   assert.match(migration, /_type: ['"]mermaid['"]/);
@@ -129,5 +137,6 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
   assert.match(migration, /async function publishWithHistoricalDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
+  assert.match(migration, /verifyPublishedDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
 });

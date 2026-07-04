@@ -14,8 +14,8 @@
     "test:benchmarks": "node --test tests/benchmarks-lib.test.mjs tests/sync-benchmarks.test.mjs",
     "astro": "astro",
     "check-links": "node scripts/check-links.js",
-    "cms:seed:validate": "emdash seed seed/seed.json --database data/emdash.db --validate",
-    "cms:seed:apply": "emdash seed seed/seed.json --database data/emdash.db --on-conflict=update",
+    "cms:seed:validate": "mkdir -p data && emdash seed seed/seed.json --database data/emdash.db --validate",
+    "cms:seed:apply": "mkdir -p data && emdash seed seed/seed.json --database data/emdash.db --on-conflict=update",
     "cms:migrate-blog": "node scripts/migrate-blog-to-emdash.mjs",
     "postinstall": "patch-package"
   },

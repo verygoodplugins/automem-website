@@ -78,6 +78,28 @@ const pageContext = createPublicPageContext({
       results.hidden = true;
     };
 
+    const appendHighlightedSnippet = (container: HTMLElement, snippet: string) => {
+      let mark: HTMLElement | null = null;
+      const parts = snippet.split(/(<mark>|<\/mark>)/g);
+
+      for (const part of parts) {
+        if (!part) continue;
+
+        if (part === '<mark>') {
+          mark = document.createElement('mark');
+          container.append(mark);
+          continue;
+        }
+
+        if (part === '</mark>') {
+          mark = null;
+          continue;
+        }
+
+        (mark ?? container).append(document.createTextNode(part));
+      }
+    };
+
     const renderResults = (items: Array<{
       id?: string;
       slug?: string | null;
@@ -115,7 +137,7 @@ const pageContext = createPublicPageContext({
         if (item.snippet) {
           const snippet = document.createElement('span');
           snippet.className = 'cms-search-result-snippet';
-          snippet.innerHTML = item.snippet;
+          appendHighlightedSnippet(snippet, item.snippet);
           link.append(snippet);
         }
 

@@ -1,10 +1,20 @@
 import type { APIRoute } from 'astro';
-import { search, searchWithDb } from 'emdash';
+import { search } from 'emdash';
 import type { SearchResult } from 'emdash';
+import { sql, type Kysely } from 'kysely';
 
 export const prerender = false;
 
 const SITE_SEARCH_COLLECTIONS = new Set(['posts', 'pages']);
+const WHITESPACE_SPLIT_PATTERN = /\s+/;
+const FTS_OPERATORS_PATTERN = /\b(AND|OR|NOT|NEAR)\b/i;
+const DOUBLE_QUOTE_PATTERN = /"/g;
+const SNIPPET_SPLIT_PATTERN = /(<mark>|<\/mark>)/g;
+const SNIPPET_AMP_RE = /&/g;
+const SNIPPET_LT_RE = /</g;
+const SNIPPET_GT_RE = />/g;
+const SNIPPET_QUOT_RE = /"/g;
+const SNIPPET_APOS_RE = /'/g;
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -42,6 +52,129 @@ function publicSearchUrl(item: Pick<SearchResult, 'collection' | 'id' | 'slug'>)
   return `/${encodeURIComponent(item.collection)}/${slugOrId}`;
 }
 
+function isFts5SyntaxError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('fts5: syntax error') || message.includes('unknown special query');
+}
+
+function escapeFtsQuery(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2) {
+    const inner = trimmed.slice(1, -1);
+    return `"${inner.replace(DOUBLE_QUOTE_PATTERN, '""')}"`;
+  }
+
+  const escaped = trimmed.replace(DOUBLE_QUOTE_PATTERN, '""');
+  if (FTS_OPERATORS_PATTERN.test(trimmed)) return escaped;
+
+  const terms = escaped.split(WHITESPACE_SPLIT_PATTERN).filter((term) => term.length > 0);
+  return terms.map((term) => `"${term}"*`).join(' ');
+}
+
+function sanitizeSearchSnippet(snippet: string | null) {
+  if (snippet === null) return undefined;
+
+  return snippet
+    .split(SNIPPET_SPLIT_PATTERN)
+    .map((part) => {
+      if (part === '<mark>' || part === '</mark>') return part;
+      return part
+        .replace(SNIPPET_AMP_RE, '&amp;')
+        .replace(SNIPPET_LT_RE, '&lt;')
+        .replace(SNIPPET_GT_RE, '&gt;')
+        .replace(SNIPPET_QUOT_RE, '&quot;')
+        .replace(SNIPPET_APOS_RE, '&#39;');
+    })
+    .join('');
+}
+
+function tableNames(collection: string) {
+  return {
+    fts: `_emdash_fts_${collection}`,
+    content: `ec_${collection}`,
+  };
+}
+
+async function tableExists(db: Kysely<any>, tableName: string) {
+  const result = await sql<{ name: string }>`
+    SELECT name
+    FROM sqlite_master
+    WHERE type IN ('table', 'view') AND name = ${tableName}
+    LIMIT 1
+  `.execute(db);
+
+  return result.rows.length > 0;
+}
+
+async function searchCollectionWithDb(
+  db: Kysely<any>,
+  collection: string,
+  query: string,
+  limit: number,
+): Promise<SearchResult[]> {
+  const escapedQuery = escapeFtsQuery(query);
+  if (!escapedQuery) return [];
+
+  const { fts, content } = tableNames(collection);
+  if (!(await tableExists(db, fts))) return [];
+
+  try {
+    const result = await sql<{
+      id: string;
+      slug: string | null;
+      locale: string;
+      title: string | null;
+      snippet: string | null;
+      score: number;
+    }>`
+      SELECT
+        c.id,
+        c.slug,
+        c.locale,
+        c.title,
+        snippet("${sql.raw(fts)}", 2, '<mark>', '</mark>', '...', 32) as snippet,
+        bm25("${sql.raw(fts)}") as score
+      FROM "${sql.raw(fts)}" f
+      JOIN "${sql.raw(content)}" c ON f.id = c.id
+      WHERE "${sql.raw(fts)}" MATCH ${escapedQuery}
+      AND (c.status = 'published' OR (c.status = 'scheduled' AND c.scheduled_at <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now')))
+      AND c.deleted_at IS NULL
+      ORDER BY score
+      LIMIT ${limit}
+    `.execute(db);
+
+    return result.rows.map((row) => ({
+      collection,
+      id: row.id,
+      slug: row.slug,
+      locale: row.locale,
+      title: row.title ?? undefined,
+      snippet: sanitizeSearchSnippet(row.snippet),
+      score: Math.abs(row.score),
+    }));
+  } catch (error) {
+    if (isFts5SyntaxError(error)) return [];
+    throw error;
+  }
+}
+
+async function searchPublishedContentWithDb(
+  db: Kysely<any>,
+  query: string,
+  collections: string[],
+  limit: number,
+) {
+  const items = (
+    await Promise.all(collections.map((collection) => searchCollectionWithDb(db, collection, query, limit * 2)))
+  ).flat();
+
+  items.sort((a, b) => b.score - a.score);
+  return { items: items.slice(0, limit) };
+}
+
 export const GET: APIRoute = async ({ locals, url }) => {
   const query = url.searchParams.get('q')?.trim() ?? '';
   if (query.length < 2) {
@@ -50,16 +183,18 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
   try {
     const emdash = (locals as any)?.emdash;
+    const collections = parseSearchCollections(url.searchParams.get('collections'));
+    const limit = parseSearchLimit(url.searchParams.get('limit'));
     const searchOptions = {
-      collections: parseSearchCollections(url.searchParams.get('collections')),
+      collections,
       status: 'published',
-      limit: parseSearchLimit(url.searchParams.get('limit')),
+      limit,
     };
 
     await emdash?.ensureSearchHealthy?.();
 
     const result = emdash?.db
-      ? await searchWithDb(emdash.db, query, searchOptions)
+      ? await searchPublishedContentWithDb(emdash.db, query, collections, limit)
       : await search(query, searchOptions);
     const items = (result.items ?? []).map((item) => ({
       id: item.id,

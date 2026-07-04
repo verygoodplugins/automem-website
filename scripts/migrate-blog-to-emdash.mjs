@@ -456,9 +456,39 @@ async function publishWithHistoricalDate(contentId, publishedAt) {
   await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`, {
     publishedAt,
   });
-  await api('PUT', `/content/posts/${encodeURIComponent(contentId)}`, {
-    publishedAt,
-  });
+
+  if (!(await hasPublishedDate(contentId, publishedAt))) {
+    await api('PUT', `/content/posts/${encodeURIComponent(contentId)}`, {
+      publishedAt,
+    });
+  }
+
+  await verifyPublishedDate(contentId, publishedAt);
+}
+
+function datesMatch(actual, expected) {
+  if (!actual) return false;
+  return new Date(actual).getTime() === new Date(expected).getTime();
+}
+
+async function readPublishedDate(contentId) {
+  const result = await api('GET', `/content/posts/${encodeURIComponent(contentId)}`);
+  const item = result.item ?? result;
+  return item?.publishedAt ?? item?.published_at ?? null;
+}
+
+async function hasPublishedDate(contentId, expected) {
+  return datesMatch(await readPublishedDate(contentId), expected);
+}
+
+async function verifyPublishedDate(contentId, expected) {
+  const actual = await readPublishedDate(contentId);
+
+  if (!datesMatch(actual, expected)) {
+    throw new Error(
+      `Remote CMS did not preserve historical publishedAt for ${contentId}. Expected ${expected}, received ${actual ?? 'null'}.`,
+    );
+  }
 }
 
 function sqlString(value) {
@@ -559,6 +589,21 @@ async function main() {
 
   console.log(`Migrating ${markdownPosts.length} markdown posts to ${emdashUrl}${dryRun ? ' (dry run)' : ''}.`);
 
+  if (dryRun) {
+    const migrated = [];
+
+    for (const post of markdownPosts) {
+      markdownToCmsPortableText(post.body);
+      const status = post.draft ? 'draft' : 'published';
+      console.log(`[dry-run] would upsert ${post.slug} (${status})`);
+      migrated.push({ slug: post.slug, date: post.date });
+    }
+
+    await patchLocalPublishedDates(migrated);
+    console.log(`Migration dry run finished: ${migrated.length} posts inspected.`);
+    return;
+  }
+
   const byline = await ensureByline();
   const migrated = [];
 
@@ -596,12 +641,6 @@ async function main() {
       },
       publishedAt: status === 'published' ? post.date.toISOString() : undefined,
     };
-
-    if (dryRun) {
-      console.log(`[dry-run] would upsert ${post.slug} (${status})`);
-      migrated.push({ slug: post.slug, date: post.date });
-      continue;
-    }
 
     const existing = await getExistingPost(post.slug);
     let saved;
