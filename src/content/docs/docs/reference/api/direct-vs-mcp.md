@@ -230,8 +230,8 @@ curl -X POST https://your-automem-instance/memory \
   }'
 ```
 
-:::note[Additional pass-through store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is handled by the MCP client as multi-step orchestration — store the replacement, invalidate the old memory, and create an `INVALIDATED_BY` or `EVOLVED_INTO` association — not as a single POST passthrough. See [Memory Operations](/docs/reference/api/memory-operations/).
+:::note[Additional MCP store parameters]
+The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
 **Content Size Governance (MCP layer adds two-tier validation):**

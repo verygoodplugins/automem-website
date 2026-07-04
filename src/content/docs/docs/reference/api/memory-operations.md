@@ -268,7 +268,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 | `supersede_relation` | `string` | `INVALIDATED_BY` | Relationship from old → new (`INVALIDATED_BY` or `EVOLVED_INTO`) |
 | `supersede_reason` | `string` | — | Optional reason stored on the old memory's metadata |
 
-**Supersede mode:** Pass `content` plus `supersedes_memory_id` to store a replacement, mark the old memory invalid, and create the association in one step. Batch mode (`memories: [...]`) does not accept supersede fields.
+**Supersede mode:** Pass `content` plus `supersedes_memory_id` to store a replacement, mark the old memory invalid, and create the association. The MCP client orchestrates this as multiple HTTP calls (`GET` old memory → `POST` replacement → `PATCH` old → `POST /associate`); it is not a single `POST /memory` pass-through. Batch mode (`memories: [...]`) does not accept supersede fields.
 
 **MCP example:**
 
