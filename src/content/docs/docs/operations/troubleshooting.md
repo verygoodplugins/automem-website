@@ -409,7 +409,7 @@ flowchart TD
     CheckConfig -->|"auto (default)"| Priority["Auto-selection priority"]
     CheckConfig -->|"voyage"| ForceVoyage["Force Voyage<br/>Require VOYAGE_API_KEY"]
     CheckConfig -->|"openai"| ForceOpenAI["Force OpenAI<br/>Require OPENAI_API_KEY"]
-    CheckConfig -->|"ollama"| ForceOllama["Force Ollama<br/>Require OLLAMA_BASE_URL"]
+    CheckConfig -->|"ollama"| ForceOllama["Force Ollama<br/>Defaults to localhost:11434"]
     CheckConfig -->|"local"| ForceLocal["Force FastEmbed<br/>Local ONNX model"]
     CheckConfig -->|"placeholder"| ForcePlaceholder["Force Placeholder<br/>Hash-based"]
 
@@ -418,7 +418,7 @@ flowchart TD
     Try1 -->|No| Try2{"OPENAI_API_KEY<br/>set?"}
 
     Try2 -->|Yes| OpenAI["OpenAIEmbeddingProvider<br/>text-embedding-3-small: 1024d"]
-    Try2 -->|No| Try3{"OLLAMA_BASE_URL<br/>set?"}
+    Try2 -->|No| Try3{"OLLAMA_BASE_URL or<br/>OLLAMA_MODEL set?"}
 
     Try3 -->|Yes| Ollama["OllamaEmbeddingProvider"]
     Try3 -->|No| Try4{"FastEmbed<br/>available?"}
@@ -449,7 +449,7 @@ flowchart TD
 |---|---|---|---|
 | Voyage AI | $0.00012/1K tokens | Best | `VOYAGE_API_KEY` |
 | OpenAI | $0.00002/1K tokens | Good | `OPENAI_API_KEY` |
-| Ollama | Free (self-hosted) | Good | `OLLAMA_BASE_URL` |
+| Ollama | Free (self-hosted) | Good | None — auto-selected if `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is set (defaults to `http://localhost:11434`) |
 | FastEmbed | Free | Good (local ONNX) | None |
 | Placeholder | Free | No semantic meaning | None (testing only) |
 
