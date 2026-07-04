@@ -1,5 +1,6 @@
 ---
 import { getEmDashCollection, getTermsForEntries } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
 import { Image } from 'emdash/ui';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
@@ -18,19 +19,15 @@ interface CmsMediaValue {
   meta?: Record<string, unknown>;
 }
 
-interface CmsByline {
-  displayName?: string;
-  slug?: string;
-}
-
 interface CmsPostData {
   id: string;
+  slug?: string | null;
   title: string;
   excerpt?: string;
   publishedAt?: Date;
   createdAt?: Date;
   featured_image?: CmsMediaValue | string | null;
-  byline?: CmsByline | null;
+  bylines?: ContentBylineCredit[];
 }
 
 const cursor = Astro.url.searchParams.get('cursor') ?? undefined;
@@ -100,10 +97,12 @@ const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` :
               const date = post.data.publishedAt ?? post.data.createdAt;
               const tags = tagsByPost.get(post.data.id) ?? [];
               const categories = categoriesByPost.get(post.data.id) ?? [];
+              const postSlug = post.data.slug ?? post.id;
+              const byline = post.data.bylines?.[0]?.byline;
               return (
                 <article class="group">
                   <a
-                    href={`/blog/${post.id}`}
+                    href={`/blog/${postSlug}`}
                     class="grid gap-5 bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none md:grid-cols-[minmax(0,1fr)_180px]"
                   >
                     <div class="min-w-0">
@@ -132,9 +131,9 @@ const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` :
                             })}
                           </time>
                         )}
-                        {post.data.byline?.displayName && (
+                        {byline?.displayName && (
                           <span class="text-lab-muted font-mono text-xs">
-                            {post.data.byline.displayName}
+                            {byline.displayName}
                           </span>
                         )}
                       </div>

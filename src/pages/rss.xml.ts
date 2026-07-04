@@ -1,15 +1,15 @@
 import rss from '@astrojs/rss';
 import { getEmDashCollection } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
 import type { APIContext } from 'astro';
 
 interface CmsPostData {
+  slug?: string | null;
   title: string;
   excerpt?: string;
   publishedAt?: Date;
   createdAt?: Date;
-  byline?: {
-    displayName?: string;
-  } | null;
+  bylines?: ContentBylineCredit[];
 }
 
 export async function GET(context: APIContext) {
@@ -29,13 +29,17 @@ export async function GET(context: APIContext) {
     title: 'AutoMem Blog',
     description: 'Articles about AI, memory systems, and building in the open',
     site: context.site || 'https://automem.ai',
-    items: posts.map((post) => ({
-      title: post.data.title,
-      description: post.data.excerpt ?? '',
-      pubDate: post.data.publishedAt ?? post.data.createdAt ?? new Date(),
-      link: `/blog/${post.id}/`,
-      author: post.data.byline?.displayName ?? 'Jack Arturo',
-    })),
+    items: posts.map((post) => {
+      const postSlug = post.data.slug ?? post.id;
+      const byline = post.data.bylines?.[0]?.byline;
+      return {
+        title: post.data.title,
+        description: post.data.excerpt ?? '',
+        pubDate: post.data.publishedAt ?? post.data.createdAt ?? new Date(),
+        link: `/blog/${postSlug}/`,
+        author: byline?.displayName ?? 'Jack Arturo',
+      };
+    }),
     customData: `<language>en-us</language>`,
   });
 }

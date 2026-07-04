@@ -1,5 +1,6 @@
 ---
 import { getEmDashEntry, getEntryTerms, getSeoMeta } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
 import { CommentForm, Comments, Image, PortableText, WidgetArea } from 'emdash/ui';
 import { createPublicPageContext } from 'emdash/page';
 import Layout from '../../layouts/Layout.astro';
@@ -20,15 +21,9 @@ interface CmsMediaValue {
   meta?: Record<string, unknown>;
 }
 
-interface CmsByline {
-  displayName?: string;
-  slug?: string;
-  bio?: string | null;
-  websiteUrl?: string | null;
-}
-
 interface CmsPostData {
   id: string;
+  slug?: string | null;
   title: string;
   excerpt?: string;
   content?: unknown[];
@@ -36,7 +31,7 @@ interface CmsPostData {
   createdAt?: Date;
   updatedAt?: Date;
   featured_image?: CmsMediaValue | string | null;
-  byline?: CmsByline | null;
+  bylines?: ContentBylineCredit[];
 }
 
 const { slug } = Astro.params;
@@ -68,13 +63,14 @@ const formattedDate = date?.toLocaleDateString('en-US', {
   day: 'numeric',
   year: 'numeric',
 }) ?? '';
-const byline = post.data.byline;
+const postSlug = post.data.slug ?? slug!;
+const byline = post.data.bylines?.[0]?.byline;
 const bylineName = byline?.displayName ?? 'Jack Arturo';
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://automem.ai';
 const seo = getSeoMeta(post, {
   siteTitle: chrome.siteTitle,
   siteUrl,
-  path: `/blog/${post.id}`,
+  path: `/blog/${postSlug}`,
   defaultOgImage: `${siteUrl}/og-image.png`,
 });
 const pageContext = createPublicPageContext({
@@ -88,7 +84,7 @@ const pageContext = createPublicPageContext({
   content: {
     collection: 'posts',
     id: post.data.id,
-    slug: post.id,
+    slug: postSlug,
   },
   seo: {
     ogTitle: seo.ogTitle,

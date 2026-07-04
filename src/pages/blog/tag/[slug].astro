@@ -1,5 +1,6 @@
 ---
 import { getEntriesByTerm, getTerm, getTermsForEntries } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
 import Layout from '../../../layouts/Layout.astro';
 import Navigation from '../../../components/Navigation.astro';
 import { getCmsChrome } from '../../../lib/cms-chrome';
@@ -7,11 +8,12 @@ import '../../../styles/global.css';
 
 interface CmsPostData {
   id?: string;
+  slug?: string | null;
   title?: string;
   excerpt?: string;
   publishedAt?: Date;
   createdAt?: Date;
-  byline?: { displayName?: string } | null;
+  bylines?: ContentBylineCredit[];
 }
 
 const { slug } = Astro.params;
@@ -56,10 +58,12 @@ const sortedPosts = posts.toSorted((a, b) => {
         {sortedPosts.map((post) => {
           const date = post.data.publishedAt ?? post.data.createdAt;
           const categories = categoriesByPost.get(post.data.id ?? post.id) ?? [];
+          const postSlug = post.data.slug ?? post.id;
+          const byline = post.data.bylines?.[0]?.byline;
           return (
             <article class="group">
               <a
-                href={`/blog/${post.id}`}
+                href={`/blog/${postSlug}`}
                 class="block bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all"
               >
                 <div class="mb-3 flex flex-wrap gap-2">
@@ -75,7 +79,7 @@ const sortedPosts = posts.toSorted((a, b) => {
                 {post.data.excerpt && <p class="text-lab-muted mb-3 font-mono text-sm">{post.data.excerpt}</p>}
                 <div class="flex flex-wrap items-center gap-3 text-xs text-lab-muted font-mono">
                   {date && <time>{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</time>}
-                  {post.data.byline?.displayName && <span>{post.data.byline.displayName}</span>}
+                  {byline?.displayName && <span>{byline.displayName}</span>}
                 </div>
               </a>
             </article>

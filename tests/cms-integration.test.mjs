@@ -35,11 +35,16 @@ test('public blog surfaces are CMS-only at runtime', async () => {
 
   assert.match(blogIndex, /Astro\.cache\.set\(cacheHint\)/);
   assert.match(blogIndex, /getTermsForEntries\(['"]posts['"]/);
+  assert.match(blogIndex, /post\.data\.slug \?\? post\.id/);
+  assert.doesNotMatch(blogIndex, /href=\{`\/blog\/\$\{post\.id\}`\}/);
   assert.match(blogDetail, /getSeoMeta/);
   assert.match(blogDetail, /getEntryTerms\(['"]posts['"],\s*post\.data\.id/);
+  assert.match(blogDetail, /post\.data\.bylines\?\.\[0\]\?\.byline/);
   assert.match(blogDetail, /WidgetArea name="blog-sidebar"/);
   assert.match(blogDetail, /createPublicPageContext/);
   assert.match(rss, /getEmDashCollection\(['"]posts['"]/);
+  assert.match(rss, /post\.data\.slug \?\? post\.id/);
+  assert.doesNotMatch(rss, /\/blog\/\$\{post\.id\}/);
 });
 
 test('EmDash seed and CMS maintenance scripts are tracked', async () => {
@@ -98,4 +103,5 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /data\/emdash\.db/);
   assert.match(migration, /EMDASH_URL/);
   assert.match(migration, /markdownToPortableText/);
+  assert.match(migration, /\/content\/posts\?q=\$\{encodeURIComponent\(slug\)\}&limit=20/);
 });

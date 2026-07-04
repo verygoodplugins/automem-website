@@ -187,12 +187,9 @@ async function readMarkdownPosts() {
 }
 
 async function getExistingPost(slug) {
-  try {
-    return await client.get('posts', slug, { raw: true });
-  } catch (error) {
-    if (error?.status === 404) return null;
-    throw error;
-  }
+  const result = await api('GET', `/content/posts?q=${encodeURIComponent(slug)}&limit=20`);
+  const existing = (result.items ?? []).find((item) => item.slug === slug || item.data?.slug === slug);
+  return existing ? client.get('posts', existing.id, { raw: true }) : null;
 }
 
 async function ensureByline() {
