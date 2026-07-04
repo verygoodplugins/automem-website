@@ -256,7 +256,7 @@ The built server is available at `dist/index.js`.
 **Build process:**
 - `npm run prebuild` — Syncs template versions (`node scripts/sync-template-versions.mjs`)
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
-- `npm run postbuild` — Builds OpenClaw plugin package and makes `dist/index.js` executable (`node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js`)
+- `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
 
 ## Setup Wizard

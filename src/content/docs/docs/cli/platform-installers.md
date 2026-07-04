@@ -16,7 +16,7 @@ Each platform installer generates and installs appropriate configuration files f
 | Command | Generated Files | Configuration Location |
 |---|---|---|
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
-| `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
+| `claude-code` | Hook scripts in `~/.claude/hooks/` (SessionStart recall, PostToolUse store tracker; optional Stop nudge via `--profile nudged`) | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
 | `hermes` | `mcp_servers.automem` and/or `memory.provider` in `config.yaml`, rules in `AGENTS.md`; provider plugin + `.env` (provider/both modes) | `~/.hermes/` (automatic) |
@@ -103,21 +103,28 @@ The `.cursor/rules/automem.mdc` file installed by the `cursor` command contains 
 
 ## Claude Code
 
-The `claude-code` command installs hook scripts and support scripts into the global `~/.claude/` directory and merges tool permissions into `~/.claude/settings.json`. It does not write `CLAUDE.md` — that file must be appended manually.
+The `claude-code` command is the **settings-level** install path. It writes hook scripts into `~/.claude/hooks/`, merges the six `mcp__memory__*` tool permissions into `~/.claude/settings.json`, and removes retired hook-era files from older installs. It does not write `CLAUDE.md` — that file must be appended manually. For the recommended plugin path (auto-updating marketplace bundle), see [Claude Code](/docs/platforms/claude-code/).
 
 ### Installation
 
 ```bash
+# Default: SessionStart recall + PostToolUse store tracking (silent session end)
 npx @verygoodplugins/mcp-automem claude-code
+
+# Opt in to the visible Stop storage nudge at session end
+npx @verygoodplugins/mcp-automem claude-code --profile nudged
 ```
 
 This command:
 
-1. Installs hook scripts (e.g., `automem-session-start.sh`, `capture-build-result.sh`, `capture-test-pattern.sh`, `capture-deployment.sh`, `session-memory.sh`) into `~/.claude/hooks/`
-2. Installs support scripts (e.g., `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`) into `~/.claude/scripts/`
-3. Merges `~/.claude/settings.json` with appropriate tool permissions
+1. Installs hook scripts into `~/.claude/hooks/`:
+   - `automem-session-start.sh` — recalls context at session start
+   - `automem-track-store.sh` — observes `store_memory` calls (PostToolUse)
+   - `automem-stop-nudge.sh` — optional LLM-judged storage nudge (registered only with `--profile nudged`)
+2. Merges `~/.claude/settings.json` with the six `mcp__memory__*` tool permissions
+3. Removes retired hooks and scripts from older installs (`capture-*.sh`, `session-memory.sh`, queue machinery, and their support files)
 
-After running the installer, follow the printed instructions to append the memory rules to `~/.claude/CLAUDE.md` manually.
+Storage is **LLM-judged** — hooks prompt and observe; they never write memories themselves. After running the installer, follow the printed instructions to append the memory rules to `~/.claude/CLAUDE.md` manually.
 
 ### MCP Configuration
 

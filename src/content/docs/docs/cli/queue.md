@@ -46,7 +46,7 @@ graph TB
 
 ### UpdateMemoryArgs Parameters
 
-The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)):
+The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)):
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -136,7 +136,7 @@ graph TB
 
 ### DeleteMemoryArgs Parameters
 
-The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
+The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -211,7 +211,7 @@ graph TB
 
 ### HealthStatus Response Structure
 
-The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b/src/types.ts)):
+The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)):
 
 | Field | Type | Description |
 |---|---|---|
@@ -297,7 +297,7 @@ delete_memory({ memory_id: "temporary-id" })
 
 ## Queue Processing CLI Command
 
-The `queue` CLI command processes pending memories from the local queue. When a memory operation is initiated by the AI but the AutoMem service is temporarily unavailable, operations can be queued locally and processed later.
+The `queue` CLI command processes pending memories from a local JSON queue file. This is a **manual recovery tool** — the Claude Code installer no longer drains the queue automatically (the retired capture/queue Stop hooks were removed in v0.15). Use it to replay entries that were written to the queue file by older installs or custom tooling.
 
 ### Usage
 
@@ -363,7 +363,7 @@ Queue will be retried on next run
 
 **Graceful Degradation:**
 
-When the AutoMem service is down, the MCP server continues to operate but memory operations are queued rather than immediately processed.
+When the AutoMem service is down, the MCP server continues to operate but memory operations fail until the service is reachable. The `queue` command is for manual replay of a local queue file, not automatic background draining.
 
 **Deletion Safety:**
 

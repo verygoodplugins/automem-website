@@ -7,9 +7,9 @@ sidebar:
 
 :::note[Source files]
 - [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py) — Flask API endpoints
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP transport layer
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/types.ts) — TypeScript type definitions
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP transport layer
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts) — TypeScript type definitions
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -264,6 +264,11 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 | `embedding` | `number[]` | auto-generated | Vector matching `VECTOR_SIZE` config (default 1024, truncated from provider native dimensions via OpenAI `dimensions` parameter) for semantic search |
 | `metadata` | `object` | `{}` | Structured metadata (files modified, error signatures, etc.) |
 | `timestamp` | `string` (ISO 8601) | `now()` | When the memory was created |
+| `supersedes_memory_id` | `string` | — | Supersede mode: existing memory ID this new memory replaces or corrects |
+| `supersede_relation` | `string` | `INVALIDATED_BY` | Relationship from old → new (`INVALIDATED_BY` or `EVOLVED_INTO`) |
+| `supersede_reason` | `string` | — | Optional reason stored on the old memory's metadata |
+
+**Supersede mode:** Pass `content` plus `supersedes_memory_id` to store a replacement, mark the old memory invalid, and create the association in one step. Batch mode (`memories: [...]`) does not accept supersede fields.
 
 **MCP example:**
 

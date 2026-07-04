@@ -376,16 +376,12 @@ The `templates/` directory contains platform-specific integration files that are
 templates/
 ├── claude-code/
 │   ├── hooks/               # Shell scripts triggered by Claude events
-│   │   ├── PostToolUse.sh  # After tool execution
-│   │   └── Stop.sh         # Session end (queue processor)
-│   ├── scripts/             # Support utilities
-│   │   ├── session-memory.sh
-│   │   ├── memory-filters.json
-│   │   └── queue-processor.sh
-│   ├── settings.json        # Base hook configuration
-│   └── profiles/
-│       ├── settings.lean.json
-│       └── settings.extras.json
+│   │   ├── automem-session-start.sh   # SessionStart recall
+│   │   ├── automem-track-store.sh     # PostToolUse store tracking
+│   │   └── automem-stop-nudge.sh      # Optional Stop nudge (--profile nudged)
+│   ├── settings.json        # Base hook configuration (lean profile)
+│   ├── settings.stop-nudge.json  # Adds Stop nudge hook registration
+│   └── profiles/            # (retired — use --profile nudged on CLI instead)
 ├── cursor/
 │   ├── automem.mdc          # Cursor rule template
 │   └── mcp-config.json      # MCP server config snippet

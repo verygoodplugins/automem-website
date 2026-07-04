@@ -19,6 +19,7 @@ The mcp-automem client uses two primary environment variables to locate and auth
 | `AUTOMEM_PROCESS_TAG` | No | (none) | Process title tag for safe cleanup |
 | `MCP_PROCESS_TAG` | No | (none) | Alternative process tag variable |
 | `AUTOMEM_LOG_LEVEL` | No | (none) | Set to `debug` for verbose logging |
+| `AUTOMEM_RECALL_TOKEN_BUDGET` | No | `18000` | Estimated token budget for MCP `recall_memory` responses |
 
 ### AUTOMEM_API_URL
 
@@ -269,7 +270,7 @@ Each platform installer generates and installs appropriate configuration:
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/`, support scripts in `~/.claude/scripts/` | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
-| `openclaw` | `~/.openclaw/skills/automem/SKILL.md` | `~/.openclaw/openclaw.json` (automatic) |
+| `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode) or `plugins.entries.automem` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
 
 See [Platform Installers](/docs/cli/platform-installers/) for detailed instructions per platform.
 
