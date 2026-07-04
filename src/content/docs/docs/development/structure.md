@@ -159,7 +159,7 @@ Self-contained consolidation engine with no Flask dependencies. Designed for bot
 | `GraphLike` (Protocol) | Database abstraction | `query()` method only |
 | `VectorStoreProtocol` (Protocol) | Vector store abstraction | `delete()` method only |
 
-**Caching optimization**: Relationship count queries use `@lru_cache` with hourly invalidation ([consolidation.py:152-176](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/consolidation.py#L152-L176)).
+**Caching optimization**: Relationship count queries use `@lru_cache` with hourly invalidation ([consolidation.py:201-217](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/consolidation.py#L201-L217)).
 
 :::tip[Flask independence]
 `consolidation.py` is deliberately Flask-independent. It can be imported and used in CLI scripts or schedulers without Flask overhead. The `GraphLike` and `VectorStoreProtocol` protocols enable testing with in-memory mocks.
@@ -244,10 +244,10 @@ tests/
 
 Tests use pytest markers to separate execution tiers: `unit` (no external services, runs with `make test`), `integration` (requires Docker stack, runs with `make test-integration`), and `live` (runs against a deployed Railway instance).
 
-**Mock objects** (defined in [`tests/test_consolidation_engine.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py) and `tests/support/`):
+**Mock objects** (defined in [`tests/test_consolidation_engine.py`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py) and `tests/support/`):
 
-- `FakeGraph`: Implements `GraphLike` protocol with in-memory state — imported from [`tests/support/fake_graph.py`](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/support/fake_graph.py)
-- `FakeVectorStore`: Implements `VectorStoreProtocol` for deletion tracking — defined in [`tests/test_consolidation_engine.py` ~L11](https://github.com/verygoodplugins/automem/blob/1b812cf883cbc95632d5f9f1ed180d1865c0638a/tests/test_consolidation_engine.py#L11)
+- `FakeGraph`: Implements `GraphLike` protocol with in-memory state — imported from [`tests/support/fake_graph.py`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py)
+- `FakeVectorStore`: Implements `VectorStoreProtocol` for deletion tracking — defined in [`tests/test_consolidation_engine.py:19-24`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L19-L24)
 
 **Test philosophy**: Consolidation tests use deterministic mocks and frozen time to ensure reproducible relevance score calculations.
 
@@ -302,7 +302,6 @@ graph TB
     CLI --> SETUP["setup.ts"]
     CLI --> CLAUDECODE["claude-code.ts"]
     CLI --> QUEUE["queue.ts"]
-    CLI --> CONFIG["config.ts"]
     CLI --> CURSOR["cursor.ts"]
     CLI --> CODEX["codex.ts"]
     CLI --> OPENCLAW["openclaw.ts"]
@@ -313,8 +312,13 @@ graph TB
     TEMPLATES --> TOCLAW["openclaw/\nSKILL.md"]
     TEMPLATES --> TWARP["warp/\nwarp-rules.md"]
 
-    PLUGINS --> PCCLI[".claude-plugin/\nmarketplace files"]
-    PLUGINS --> PSERVER["server/\nserver.json metadata"]
+    PLUGINS --> PAUTOMEM["automem/"]
+    PAUTOMEM --> PCCLI[".claude-plugin/\nplugin.json"]
+    PAUTOMEM --> PCOMMANDS["commands/"]
+    PAUTOMEM --> PHOOKS["hooks/"]
+    PAUTOMEM --> PSCRIPTS["scripts/"]
+    PAUTOMEM --> PSKILLS["skills/\nmemory-management/"]
+    ROOT --> ROOTPLUGIN[".claude-plugin/\nmarketplace.json"]
 
     GITHUB --> WORKFLOWS["workflows/\nCI/CD YAML files"]
 
@@ -327,20 +331,19 @@ graph TB
 
 #### Entry Point: `index.ts`
 
-The [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/index.ts) file serves dual purposes based on command-line arguments:
+The [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts) file serves dual purposes based on command-line arguments:
 
 1. **Server Mode** (no arguments): Launches an MCP server using `StdioServerTransport` from `@modelcontextprotocol/sdk`
 2. **CLI Mode** (with arguments): Routes commands to appropriate CLI handlers in `src/cli/`
 
 #### HTTP Client: `automem-client.ts`
 
-The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/automem-client.ts) file implements the `AutoMemClient` class, providing a typed HTTP interface to the AutoMem backend service.
+The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts) file implements the `AutoMemClient` class, providing a typed HTTP interface to the AutoMem backend service.
 
 | Method | HTTP Endpoint | Purpose |
 |---|---|---|
 | `storeMemory()` | `POST /memory` | Store new memory with content, tags, metadata |
-| `recallMemory()` | `GET /recall` | Hybrid search (vector + keyword + tags) |
-| `recallMemoryByTag()` | `GET /memory/by-tag` | Tag-only filtering |
+| `recallMemory()` | `GET /recall`, or `GET /memory/by-tag` internally when called with `tags` + `exhaustive: true` | Hybrid search (vector + keyword + tags), or tag-only filtering |
 | `associateMemories()` | `POST /associate` | Create typed relationships |
 | `updateMemory()` | `PATCH /memory/:id` | Update existing memory fields |
 | `deleteMemory()` | `DELETE /memory/:id` | Remove memory and embedding |
@@ -354,7 +357,7 @@ The [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blo
 
 #### Type Definitions: `types.ts`
 
-The [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/src/types.ts) file defines TypeScript interfaces for all data structures:
+The [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/types.ts) file defines TypeScript interfaces for all data structures:
 
 - **Configuration types**: `AutoMemConfig`, `MCPServerConfig`, `ClaudeCodeConfig`
 - **Memory operation arguments**: `StoreMemoryArgs`, `RecallMemoryArgs`, `AssociateMemoriesArgs`
@@ -413,7 +416,7 @@ The `dist/` directory is generated by TypeScript compilation (`tsc`) and contain
 2. **Type declarations** (`.d.ts`) — For TypeScript consumers
 3. **Source maps** (`.js.map`) — For debugging compiled code
 
-**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/tsconfig.json)):
+**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/tsconfig.json)):
 
 - `outDir: "./dist"` — Output location
 - `declaration: true` — Generate `.d.ts` files
@@ -433,7 +436,7 @@ The `dist/` directory is generated by TypeScript compilation (`tsc`) and contain
 
 ### Plugins Directory (`plugins/`)
 
-The `plugins/` directory contains a packaged version of the MCP server for Claude Desktop's plugin system. This directory duplicates content from `templates/` to support the `.mcpb` extension format, which requires a self-contained plugin directory with all resources included.
+`plugins/automem/` packages AutoMem as an installable Claude Code plugin: `.claude-plugin/plugin.json` (plugin manifest), plus `commands/`, `hooks/`, `scripts/`, and `skills/memory-management/`. A separate top-level `.claude-plugin/marketplace.json` registers the plugin in the Claude Code plugin marketplace. There is no `server/` subdirectory — this is a Claude Code plugin bundle, not a packaged MCP server.
 
 ### Configuration Files
 
@@ -456,13 +459,13 @@ The repository root contains multiple configuration files:
 
 Five files must maintain version consistency (managed by release-please):
 
-1. `package.json` — e.g. `"version": "0.14.0"` (at mcp-automem@b81c63a)
-2. `plugins/mcp-automem/server.json` — same version string
+1. `package.json` — e.g. `"version": "0.15.0"` (at mcp-automem@946f9e5)
+2. `server.json` (repo root) — same version string
 3. `manifest.json` — same version string
-4. `plugin.json` — same version string
-5. `marketplace.json` — same version string
+4. `plugins/automem/.claude-plugin/plugin.json` — same version string
+5. `.claude-plugin/marketplace.json` — same version string
 
-The [`release-please.yml`](https://github.com/verygoodplugins/mcp-automem/blob/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8/.github/workflows/release-please.yml) workflow automatically updates all five files when creating releases based on conventional commits.
+The [`release-please.yml`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/.github/workflows/release-please.yml) workflow automatically updates all five files when creating releases based on conventional commits.
 
 ### GitHub Workflows (`.github/`)
 
