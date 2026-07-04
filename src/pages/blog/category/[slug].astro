@@ -1,0 +1,104 @@
+---
+import { getEntriesByTerm, getTerm, getTermsForEntries } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
+import Layout from '../../../layouts/Layout.astro';
+import Navigation from '../../../components/Navigation.astro';
+import { getCmsChrome } from '../../../lib/cms-chrome';
+import '../../../styles/global.css';
+
+interface CmsPostData {
+  id?: string;
+  slug?: string | null;
+  title?: string;
+  excerpt?: string;
+  publishedAt?: Date;
+  scheduledAt?: Date;
+  createdAt?: Date;
+  bylines?: ContentBylineCredit[];
+}
+
+function effectivePostDate(post: { data: CmsPostData }) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt;
+}
+
+const { slug } = Astro.params;
+const chrome = await getCmsChrome();
+const term = await getTerm('category', slug!);
+
+if (!term) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+const posts = (await getEntriesByTerm('posts', 'category', slug!)) as Array<{ id: string; data: CmsPostData }>;
+const postIds = posts.map((post) => post.data.id ?? post.id);
+const tagsByPost = await getTermsForEntries('posts', postIds, 'tag');
+const sortedPosts = posts.toSorted((a, b) => {
+  const bTime = effectivePostDate(b)?.getTime() ?? 0;
+  const aTime = effectivePostDate(a)?.getTime() ?? 0;
+  return bTime - aTime;
+});
+---
+
+<Layout
+  title={`Category: ${term.label} - AutoMem Blog`}
+  description={`Posts in the ${term.label} category.`}
+  footerMenuItems={chrome.footerMenuItems}
+>
+  <Navigation currentPath="/blog" menuItems={chrome.primaryMenuItems} siteTitle={chrome.siteTitle} />
+
+  <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
+    <div class="max-w-4xl mx-auto">
+      <a href="/blog" class="inline-flex items-center gap-2 text-lab-muted hover:text-lab-accent-text transition mb-8 font-mono text-sm">
+        ← Back to Blog
+      </a>
+
+      <header class="mb-12">
+        <div class="comment-header">:: CATEGORY_ARCHIVE</div>
+        <h1 class="text-4xl sm:text-5xl font-bold mb-4 tracking-tighter">
+          <span class="text-lab-secondary">{term.label}</span>
+        </h1>
+      </header>
+
+      <div class="space-y-6">
+        {sortedPosts.map((post) => {
+          const date = effectivePostDate(post);
+          const tags = tagsByPost.get(post.data.id ?? post.id) ?? [];
+          const postSlug = post.data.slug ?? post.id;
+          const byline = post.data.bylines?.[0]?.byline;
+          return (
+            <article class="group">
+              <a
+                href={`/blog/${postSlug}`}
+                class="block bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all"
+              >
+                <h2 class="text-xl sm:text-2xl font-bold mb-2 text-lab-text group-hover:text-lab-accent-text transition break-words">
+                  {post.data.title}
+                </h2>
+                {post.data.excerpt && <p class="text-lab-muted mb-3 font-mono text-sm">{post.data.excerpt}</p>}
+                <div class="flex flex-wrap items-center gap-3 text-xs text-lab-muted font-mono">
+                  {date && <time>{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</time>}
+                  {byline?.displayName && <span>{byline.displayName}</span>}
+                </div>
+                {tags.length > 0 && (
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
+                        #{tag.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </a>
+            </article>
+          );
+        })}
+      </div>
+
+      {sortedPosts.length === 0 && (
+        <div class="text-center py-12 bg-lab-surface rounded-lg border-2 border-lab-border">
+          <p class="text-lab-muted text-lg font-mono">// No published posts for this category.</p>
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>

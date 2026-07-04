@@ -1,72 +1,104 @@
 ---
-import { getEmDashCollection } from 'emdash';
-import { getCollection } from 'astro:content';
+import { getEmDashCollection, getTermsForEntries } from 'emdash';
+import type { ContentBylineCredit } from 'emdash';
+import { Image } from 'emdash/ui';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
-import { publicBlogSlug } from '../../lib/blog-slugs';
+import { getCmsChrome } from '../../lib/cms-chrome';
 import '../../styles/global.css';
 
-// CDN caching: 1h fresh, 24h stale-while-revalidate
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+interface CmsMediaValue {
+  id: string;
+  src?: string;
+  filename?: string;
+  mimeType?: string;
+  width?: number;
+  height?: number;
+  alt?: string;
+  provider?: string;
+  meta?: Record<string, unknown>;
+}
 
-// Get all published posts from emdash CMS, newest first
-const { entries: posts, error } = await getEmDashCollection("posts", {
-  orderBy: { published_at: "desc" },
+interface CmsPostData {
+  id: string;
+  slug?: string | null;
+  title: string;
+  excerpt?: string;
+  publishedAt?: Date;
+  scheduledAt?: Date;
+  createdAt?: Date;
+  featured_image?: CmsMediaValue | string | null;
+  bylines?: ContentBylineCredit[];
+}
+
+const BLOG_PAGE_SIZE = 20;
+const pageOffsetParam = Number.parseInt(Astro.url.searchParams.get('offset') ?? '0', 10);
+const pageOffset = Number.isFinite(pageOffsetParam) && pageOffsetParam > 0 ? pageOffsetParam : 0;
+const chrome = await getCmsChrome();
+
+const { entries: posts, error, cacheHint } = await getEmDashCollection<'posts', CmsPostData>('posts', {
+  status: 'published',
+  orderBy: { published_at: 'desc' },
 });
 
 if (error) {
-  console.error("Failed to load posts:", error);
+  console.error('Failed to load CMS posts:', error);
+  return new Response('CMS posts are temporarily unavailable.', {
+    status: 503,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
 
-const contentPosts = await getCollection('blog', ({ data }) => !data.draft);
-const fallbackPosts = contentPosts.map((entry) => ({
-  slug: publicBlogSlug(entry),
-  data: {
-    title: entry.data.title,
-    description: entry.data.description,
-    publishedAt: entry.data.date,
-    createdAt: entry.data.date,
-    tags: entry.data.tags ?? [],
-  },
-}));
+Astro.cache.set(cacheHint);
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
-// Merge CMS posts with file-based posts, deduped by public slug, so markdown-only
-// entries (e.g. release posts not yet migrated into emdash) still show on the index
-// instead of being dropped whenever emdash returns any posts. emdash wins on collision.
-const emdashSlugs = new Set(posts.map((post) => post.slug ?? post.id));
-const displayPosts = [...posts, ...fallbackPosts.filter((post) => !emdashSlugs.has(post.slug))].sort(
-  (a, b) => {
-    const da = a.data.publishedAt ?? a.data.createdAt;
-    const db = b.data.publishedAt ?? b.data.createdAt;
-    return (db?.getTime?.() ?? 0) - (da?.getTime?.() ?? 0);
-  }
-);
+function effectivePostDate(post: (typeof posts)[number]) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt;
+}
 
-// Group posts by year
-type Post = (typeof displayPosts)[number];
-const postsByYear: Record<number, Post[]> = {};
-displayPosts.forEach(post => {
-  const date = post.data.publishedAt ?? post.data.createdAt;
+const orderedPosts = [...posts].sort((a, b) => {
+  const bTime = effectivePostDate(b)?.getTime() ?? 0;
+  const aTime = effectivePostDate(a)?.getTime() ?? 0;
+  return bTime - aTime;
+});
+const pagePosts = orderedPosts.slice(pageOffset, pageOffset + BLOG_PAGE_SIZE);
+const postIds = pagePosts.map((post) => post.data.id);
+const [tagsByPost, categoriesByPost] = await Promise.all([
+  getTermsForEntries('posts', postIds, 'tag'),
+  getTermsForEntries('posts', postIds, 'category'),
+]);
+
+const postsByYear: Record<number, typeof pagePosts> = {};
+pagePosts.forEach((post) => {
+  const date = effectivePostDate(post);
   if (!date) return;
   const year = date.getFullYear();
-  if (!postsByYear[year]) {
-    postsByYear[year] = [];
-  }
+  postsByYear[year] ??= [];
   postsByYear[year].push(post);
 });
 
-// Get sorted years (newest first)
-const years = Object.keys(postsByYear)
-  .map(Number)
-  .sort((a, b) => b - a);
+const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a);
+const nextHref = orderedPosts.length > pageOffset + BLOG_PAGE_SIZE
+  ? `/blog?offset=${pageOffset + BLOG_PAGE_SIZE}`
+  : undefined;
 ---
 
-<Layout title="Blog - AutoMem" description="Articles about AI, memory systems, and open source development">
-  <Navigation currentPath="/blog" />
+<Layout
+  title="Blog - AutoMem"
+  description="Articles about AI, memory systems, and open source development"
+  footerMenuItems={chrome.footerMenuItems}
+>
+  <Navigation
+    currentPath="/blog"
+    menuItems={chrome.primaryMenuItems}
+    siteTitle={chrome.siteTitle}
+  />
 
   <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
-    <div class="max-w-4xl mx-auto">
-      <!-- Header -->
+    <div class="max-w-5xl mx-auto">
       <div class="mb-12">
         <div class="comment-header">:: TRANSMISSION_LOG</div>
         <h1 class="text-4xl sm:text-5xl font-bold mb-4 tracking-tighter">
@@ -77,30 +109,36 @@ const years = Object.keys(postsByYear)
         </p>
       </div>
 
-      <!-- Posts by Year -->
-      {years.map(year => (
+      {years.map((year) => (
         <section class="mb-16">
           <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-lab-text font-mono">{year}</h2>
           <div class="space-y-6">
-            {postsByYear[year].map(post => {
-              const date = post.data.publishedAt ?? post.data.createdAt;
-              const slug = post.slug ?? post.id;
-              // emdash posts store their summary as `excerpt`, content posts as `description`.
-              const summary = post.data.description ?? (post.data as { excerpt?: string }).excerpt;
+            {postsByYear[year].map((post) => {
+              const date = effectivePostDate(post);
+              const tags = tagsByPost.get(post.data.id) ?? [];
+              const categories = categoriesByPost.get(post.data.id) ?? [];
+              const postSlug = post.data.slug ?? post.id;
+              const byline = post.data.bylines?.[0]?.byline;
               return (
-              <article class="group">
-                <a
-                  href={`/blog/${slug}`}
-                  class="block bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none"
-                >
-                  <div class="flex items-start justify-between gap-3 sm:gap-4 min-w-0">
-                    <div class="flex-1 min-w-0">
+                <article class="group">
+                  <a
+                    href={`/blog/${postSlug}`}
+                    class="grid gap-5 bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard transition-all active:translate-x-[0] active:translate-y-[0] active:shadow-none md:grid-cols-[minmax(0,1fr)_180px]"
+                  >
+                    <div class="min-w-0">
+                      <div class="mb-3 flex flex-wrap items-center gap-2 text-xs font-mono uppercase">
+                        {categories.map((category) => (
+                          <span class="border border-lab-accent/45 bg-lab-accent/10 px-2 py-1 text-lab-accent-text">
+                            {category.label}
+                          </span>
+                        ))}
+                      </div>
                       <h3 class="text-xl sm:text-2xl font-bold mb-2 text-lab-text group-hover:text-lab-accent-text transition break-words">
                         {post.data.title}
                       </h3>
-                      {summary && (
+                      {post.data.excerpt && (
                         <p class="text-lab-muted mb-3 font-mono text-sm break-words">
-                          {summary}
+                          {post.data.excerpt}
                         </p>
                       )}
                       <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
@@ -109,27 +147,51 @@ const years = Object.keys(postsByYear)
                             {date.toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
-                              year: 'numeric'
+                              year: 'numeric',
                             })}
                           </time>
                         )}
+                        {byline?.displayName && (
+                          <span class="text-lab-muted font-mono text-xs">
+                            {byline.displayName}
+                          </span>
+                        )}
                       </div>
+                      {tags.length > 0 && (
+                        <div class="mt-4 flex flex-wrap gap-2">
+                          {tags.map((tag) => (
+                            <span class="px-2 py-1 bg-lab-secondary/20 text-lab-secondary border border-lab-secondary/30 text-xs font-bold uppercase">
+                              #{tag.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div class="text-lab-muted group-hover:text-lab-accent-text group-hover:translate-x-1 transition-all flex-shrink-0 font-mono mt-1">
-                      →
-                    </div>
-                  </div>
-                </a>
-              </article>
+                    {post.data.featured_image && (
+                      <div class="overflow-hidden rounded border-2 border-lab-text bg-lab-bg md:order-2">
+                        <Image
+                          image={post.data.featured_image}
+                          class="aspect-[4/3] h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </a>
+                </article>
               );
             })}
           </div>
         </section>
       ))}
 
-      {displayPosts.length === 0 && (
+      {orderedPosts.length === 0 && (
         <div class="text-center py-12 bg-lab-surface rounded-lg border-2 border-lab-border">
-          <p class="text-lab-muted text-lg font-mono">// No posts yet. Check back soon.</p>
+          <p class="text-lab-muted text-lg font-mono">// No CMS posts are published yet.</p>
+        </div>
+      )}
+
+      {nextHref && (
+        <div class="mt-12 flex justify-center">
+          <a href={nextHref} class="btn-lab-accent">Older Posts</a>
         </div>
       )}
     </div>

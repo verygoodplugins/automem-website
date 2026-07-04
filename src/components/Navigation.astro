@@ -1,18 +1,31 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
 import DiscordIcon from './DiscordIcon.astro';
+import type { ChromeLink } from '../lib/cms-chrome';
 
-const { currentPath: currentPathProp = '' } = Astro.props;
-const currentPath = Astro.url?.pathname ?? currentPathProp;
+interface Props {
+  currentPath?: string;
+  menuItems?: ChromeLink[];
+  siteTitle?: string;
+}
 
-const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
-const DISCORD_URL = 'https://automem.ai/discord';
-const links = [
+const fallbackLinks: ChromeLink[] = [
   { href: '/docs/overview', label: 'Docs' },
   { href: '/docs/core-concepts/memory-model/', label: 'Concepts' },
   { href: '/benchmarks', label: 'Benchmarks' },
   { href: '/blog', label: 'Blog' },
 ];
+
+const {
+  currentPath: currentPathProp = '',
+  menuItems = fallbackLinks,
+  siteTitle = 'AutoMem',
+} = Astro.props;
+const currentPath = Astro.url?.pathname ?? currentPathProp;
+
+const GITHUB_URL = 'https://github.com/verygoodplugins/automem';
+const DISCORD_URL = 'https://automem.ai/discord';
+const links = menuItems;
 
 const isActive = (href: string) => {
   if (href === '/docs/overview') {
@@ -31,7 +44,7 @@ const isActive = (href: string) => {
       <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center transition-transform group-hover:scale-105">
         <img src="/automem-icon.svg" alt="" class="h-9 w-9 rounded-md" loading="eager" decoding="async" />
       </span>
-      <span class="text-xl font-bold tracking-normal sm:text-2xl">AutoMem</span>
+      <span class="text-xl font-bold tracking-normal sm:text-2xl">{siteTitle}</span>
     </a>
 
     <div class="flex min-w-0 items-center justify-end gap-2">
@@ -45,6 +58,8 @@ const isActive = (href: string) => {
               hover:bg-lab-panel hover:text-lab-text
               ${isActive(link.href) ? 'text-lab-accent-text' : ''}
             `}
+            target={link.target}
+            rel={link.rel}
           >
             {link.label}
           </a>
@@ -117,6 +132,8 @@ const isActive = (href: string) => {
             hover:bg-lab-panel hover:text-lab-text
             ${isActive(link.href) ? 'text-lab-accent-text' : ''}
           `}
+          target={link.target}
+          rel={link.rel}
         >
           {link.label}
         </a>

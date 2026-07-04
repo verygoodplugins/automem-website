@@ -250,6 +250,8 @@ const routesJson = JSON.stringify({
     '/admin/*',
     '/blog',
     '/blog/*',
+    '/pages/*',
+    '/search',
     '/rss.xml',
     '/confirm',
     '/unsubscribe',

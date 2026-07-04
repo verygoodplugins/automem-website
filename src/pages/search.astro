@@ -1,0 +1,237 @@
+---
+import { createPublicPageContext } from 'emdash/page';
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import { getCmsChrome } from '../lib/cms-chrome';
+import '../styles/global.css';
+
+export const prerender = false;
+
+const chrome = await getCmsChrome();
+const pageContext = createPublicPageContext({
+  Astro,
+  kind: 'custom',
+  pageType: 'website',
+  title: `Search | ${chrome.siteTitle}`,
+  description: 'Search AutoMem posts and CMS-managed pages.',
+  canonical: Astro.url.href,
+  image: Astro.site ? new URL('/og-image.png', Astro.site).toString() : 'https://automem.ai/og-image.png',
+  siteName: chrome.siteTitle,
+});
+---
+
+<Layout
+  title="Search"
+  description="Search AutoMem posts and CMS-managed pages."
+  pageContext={pageContext}
+  footerMenuItems={chrome.footerMenuItems}
+>
+  <Navigation currentPath="/search" menuItems={chrome.primaryMenuItems} siteTitle={chrome.siteTitle} />
+
+  <main class="min-h-screen py-12 sm:py-20 px-4 sm:px-6 bg-lab-bg">
+    <div class="max-w-4xl mx-auto">
+      <header class="mb-12">
+        <div class="comment-header">:: CMS_SEARCH</div>
+        <h1 class="text-4xl sm:text-5xl font-bold mb-4 tracking-tighter">
+          <span class="text-lab-secondary">Search</span>
+        </h1>
+      </header>
+
+      <section class="cms-search bg-lab-surface rounded-lg p-4 sm:p-6 border-2 border-lab-text shadow-hard" data-site-search>
+        <input
+          type="search"
+          class="cms-search-input"
+          placeholder="Search posts and pages"
+          autocomplete="off"
+          autofocus
+          data-search-input
+        />
+        <p class="cms-search-state" data-search-state hidden></p>
+        <div class="cms-search-results" data-search-results hidden></div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  const roots = document.querySelectorAll('[data-site-search]');
+
+  for (const root of roots) {
+    const input = root.querySelector('[data-search-input]');
+    const state = root.querySelector('[data-search-state]');
+    const results = root.querySelector('[data-search-results]');
+
+    if (!(input instanceof HTMLInputElement) || !(state instanceof HTMLElement) || !(results instanceof HTMLElement)) {
+      continue;
+    }
+
+    let debounceTimer: number | undefined;
+    let abortController: AbortController | null = null;
+
+    const setState = (message: string) => {
+      state.textContent = message;
+      state.hidden = !message;
+    };
+
+    const clearResults = () => {
+      results.replaceChildren();
+      results.hidden = true;
+    };
+
+    const appendHighlightedSnippet = (container: HTMLElement, snippet: string) => {
+      let mark: HTMLElement | null = null;
+      const parts = snippet.split(/(<mark>|<\/mark>)/g);
+
+      for (const part of parts) {
+        if (!part) continue;
+
+        if (part === '<mark>') {
+          mark = document.createElement('mark');
+          container.append(mark);
+          continue;
+        }
+
+        if (part === '</mark>') {
+          mark = null;
+          continue;
+        }
+
+        (mark ?? container).append(document.createTextNode(part));
+      }
+    };
+
+    const renderResults = (items: Array<{
+      id?: string;
+      slug?: string | null;
+      collection?: string;
+      title?: string | null;
+      snippet?: string | null;
+      url?: string;
+    }>) => {
+      results.replaceChildren();
+
+      if (!items.length) {
+        clearResults();
+        setState('No results found');
+        return;
+      }
+
+      setState('');
+      const fragment = document.createDocumentFragment();
+
+      for (const item of items) {
+        const link = document.createElement('a');
+        link.className = 'cms-search-result';
+        link.href = item.url || '#';
+
+        const title = document.createElement('span');
+        title.className = 'cms-search-result-title';
+        title.textContent = item.title || item.slug || item.id || 'Untitled';
+        link.append(title);
+
+        const collection = document.createElement('span');
+        collection.className = 'cms-search-result-collection';
+        collection.textContent = item.collection === 'posts' ? 'Blog' : 'Page';
+        link.append(collection);
+
+        if (item.snippet) {
+          const snippet = document.createElement('span');
+          snippet.className = 'cms-search-result-snippet';
+          appendHighlightedSnippet(snippet, item.snippet);
+          link.append(snippet);
+        }
+
+        fragment.append(link);
+      }
+
+      results.append(fragment);
+      results.hidden = false;
+    };
+
+    const runSearch = async () => {
+      const query = input.value.trim();
+
+      if (query.length < 2) {
+        if (abortController) abortController.abort();
+        clearResults();
+        setState('');
+        return;
+      }
+
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
+      setState('Searching...');
+
+      const params = new URLSearchParams({
+        q: query,
+        collections: 'posts,pages',
+        limit: '12',
+      });
+
+      try {
+        const response = await fetch(`/api/site-search?${params}`, {
+          signal: abortController.signal,
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) throw new Error('Search failed');
+
+        const payload = await response.json();
+        renderResults(payload?.data?.items ?? []);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        clearResults();
+        setState('Search failed');
+      }
+    };
+
+    const scheduleSearch = () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(runSearch, 250);
+    };
+
+    input.addEventListener('input', scheduleSearch);
+
+    const initialQuery = new URLSearchParams(window.location.search).get('q');
+    if (initialQuery) {
+      input.value = initialQuery;
+      runSearch();
+    }
+  }
+</script>
+
+<style>
+  @reference "../styles/global.css";
+
+  .cms-search-input {
+    @apply w-full rounded border-2 border-lab-text bg-lab-bg px-4 py-3 text-base text-lab-text outline-none transition focus:border-lab-accent;
+  }
+
+  .cms-search-state {
+    @apply mt-4 text-sm text-lab-muted;
+  }
+
+  .cms-search-results {
+    @apply mt-4 border-t-2 border-lab-border pt-4;
+  }
+
+  .cms-search-result {
+    @apply mb-3 block rounded border border-lab-border bg-lab-bg p-4 text-lab-text no-underline transition hover:border-lab-accent hover:text-lab-accent-text;
+  }
+
+  .cms-search-result-title {
+    @apply block text-lg font-bold;
+  }
+
+  .cms-search-result-collection {
+    @apply mt-1 block text-xs uppercase text-lab-muted;
+  }
+
+  .cms-search-result-snippet {
+    @apply mt-2 block text-sm text-lab-muted;
+  }
+
+  .cms-search-result-snippet :global(mark) {
+    @apply rounded bg-lab-accent/25 px-1 text-lab-accent;
+  }
+</style>

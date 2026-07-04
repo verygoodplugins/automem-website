@@ -11,6 +11,9 @@ npm run dev          # Astro dev server on http://localhost:4321 (host 0.0.0.0)
 npm run build        # Production build via scripts/build-pages.mjs (NOT plain astro build)
 npm run preview      # Preview production build
 npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
+npm run cms:seed:validate # Validate seed/seed.json against data/emdash.db
+npm run cms:seed:apply    # Apply/update EmDash schema, menus, widgets, settings
+npm run cms:migrate-blog  # Import old src/content/blog markdown into EmDash
 ```
 
 `npm run dev` runs without the Cloudflare adapter (workerd can't load Node DB drivers locally) and uses libsql + filesystem sessions; `npm run build` swaps the adapter in and uses D1.
@@ -18,7 +21,7 @@ npm run check-links  # Linkinator broken-link check (run AFTER npm run build)
 **Local preview & link-checking notes:**
 - `npm run dev` runs on port 4321. **Never use port 5000 — it is reserved on this system.** If another process already holds 4321, Astro silently bumps to 4322+. For the Claude Code preview tool, use the `.claude/launch.json` `automem-web` config (it runs `astro dev` on `0.0.0.0:4321` — binding `0.0.0.0` avoids the macOS `localhost`→IPv6 `::1` resolution that breaks readiness checks on a 127.0.0.1-only bind).
 - `npm run check-links` boots `wrangler pages dev` against the built `_worker.js`. In restricted/sandboxed environments where wrangler can't serve, it returns 404 for *every* asset (favicon, JS bundles, all routes) — these are false negatives, not broken links. Verify links with an `npm run dev` crawl instead.
-- The blog index (`src/pages/blog/index.astro`) merges EmDash CMS posts with file-based markdown posts, deduped by public slug. A new markdown post under `src/content/blog/NN-slug/` shows up automatically; no CMS entry needed.
+- Blog posts are CMS-first. Runtime routes (`/blog`, `/blog/[slug]`, `/rss.xml`, archives, search) must not use `getCollection('blog')` or read `src/content/blog`; markdown files are migration input only. Use `npm run cms:migrate-blog` after `npm run cms:seed:apply` when importing old markdown posts.
 
 ## Stack
 
@@ -26,7 +29,7 @@ Astro 6.1 + React 19 islands · Tailwind CSS v4 (Vite plugin, not PostCSS) · St
 
 ## Architecture (big picture)
 
-- **Two content systems**: long-form blog posts in `src/content/blog/NN-slug/index.md` (custom collection, schema in `src/content.config.ts`); product docs in `src/content/docs/docs/...` rendered by Starlight (sidebar configured in `astro.config.mjs`).
+- **Content systems**: EmDash CMS owns posts/pages; product docs in `src/content/docs/docs/...` are rendered by Starlight (sidebar configured in `astro.config.mjs`). Do not reintroduce a file-backed blog collection.
 - **Three runtimes share one project**: Astro SSR pages, Cloudflare Pages Functions in `functions/` (plain `.js`, not TS, dispatched via `src/middleware.ts`), and EmDash CMS routes mounted at `/_emdash/*`.
 - **Single base layout**: `src/layouts/Layout.astro` (install-first chrome, footer mascot). Starlight pages use a separate Starlight layout customized via `src/styles/starlight-custom.css`.
 - **Build pipeline**: `scripts/build-pages.mjs` temporarily strips `pages_build_output_dir` from `wrangler.toml`, runs `astro build`, runs `scripts/bundle-worker.mjs` (esbuild), then restores `wrangler.toml`. Always invoke via `npm run build`.
@@ -58,4 +61,4 @@ Docs cover three sibling repos checked out next to this one: `../automem` (Pytho
 - Don't run `astro build` directly — use `npm run build`.
 - Don't switch Tailwind to PostCSS — it uses `@tailwindcss/vite`.
 - Don't commit `.env`, `.dev.vars`, `data/`, `uploads/`, `.wrangler/`.
-- Blog post directories use a numbered prefix (`01-`, `02-`, …) with `index.md` inside.
+- Old markdown blog directories use a numbered prefix (`01-`, `02-`, ...) with `index.md` inside, but they are migration input only.
