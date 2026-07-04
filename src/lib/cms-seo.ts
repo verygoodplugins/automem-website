@@ -26,8 +26,13 @@ interface CmsSeoEntry {
   seo?: CmsSeo | null;
 }
 
-function getEmDashDb(locals: unknown) {
+function getLocalEmDashDb(locals: unknown) {
   return (locals as { emdash?: { db?: Kysely<any> } } | undefined)?.emdash?.db;
+}
+
+async function getAmbientEmDashDb() {
+  const { getDb } = await import('emdash/runtime');
+  return getDb();
 }
 
 function noIndexFromRow(value: CmsSeoRow['seo_no_index']) {
@@ -39,10 +44,8 @@ export async function hydrateCmsSeo<TEntry extends CmsSeoEntry>(
   collection: string,
   entry: TEntry,
 ) {
-  const db = getEmDashDb(locals);
-  if (!db) return entry;
-
   try {
+    const db = getLocalEmDashDb(locals) ?? await getAmbientEmDashDb();
     const result = await sql<CmsSeoRow>`
       SELECT seo_title, seo_description, seo_image, seo_canonical, seo_no_index
       FROM _emdash_seo

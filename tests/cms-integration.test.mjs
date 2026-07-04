@@ -91,6 +91,7 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   const migration = await readSource('../scripts/migrate-blog-to-emdash.mjs');
   const middleware = await readSource('../src/middleware.ts');
   const layout = await readSource('../src/layouts/Layout.astro');
+  const cmsChrome = await readSource('../src/lib/cms-chrome.ts');
 
   assert.notEqual(tagArchive, '', 'tag archive route should exist');
   assert.notEqual(categoryArchive, '', 'category archive route should exist');
@@ -110,10 +111,13 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.doesNotMatch(searchPage, /innerHTML\s*=\s*item\.snippet/);
   assert.match(middleware, /pathname === ['"]\/api\/site-search['"]/);
   assert.match(siteSearchApi, /searchPublishedContentWithDb/);
+  assert.match(siteSearchApi, /import\(['"]emdash\/runtime['"]\)/);
+  assert.match(siteSearchApi, /resolveSearchDb/);
   assert.match(siteSearchApi, /ensureSearchHealthy/);
   assert.match(siteSearchApi, /normalizeSearchSnippet/);
   assert.doesNotMatch(siteSearchApi, /SNIPPET_AMP_RE/);
   assert.doesNotMatch(siteSearchApi, /&quot;|&#39;|&amp;|&lt;|&gt;/);
+  assert.doesNotMatch(siteSearchApi, /:\s*await search\(query,\s*searchOptions\)/);
   assert.match(siteSearchApi, /c\.status\s*=\s*'published'/);
   assert.match(siteSearchApi, /c\.status\s*=\s*'scheduled'/);
   assert.match(siteSearchApi, /c\.scheduled_at\s*<=\s*strftime/);
@@ -127,7 +131,10 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(cmsPage, /hydrateCmsSeo/);
   assert.match(cmsPage, /getSeoMeta\(seoPage,/);
   assert.match(cmsPage, /PortableText/);
+  assert.match(cmsChrome, /sanitizeHref/);
+  assert.match(cmsChrome, /const href = sanitizeHref\(item\.url\)/);
   assert.match(layout, /<title>\{pageTitle\}<\/title>/);
+  assert.match(layout, /pageContext\?\.title\s*\?\?/);
   assert.match(layout, /<EmDashHead page=\{pageContext\} \/>/);
   assert.match(migration, /data\/emdash\.db/);
   assert.match(migration, /EMDASH_URL/);
@@ -147,6 +154,9 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
   assert.match(migration, /async function publishWithHistoricalDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
+  assert.match(migration, /if \(!isLocalTarget\) await verifyPublishedDate\(saved\.id, post\.date\.toISOString\(\)\)/);
+  assert.match(migration, /await api\(['"]POST['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish`\)/);
+  assert.doesNotMatch(migration, /publish`,\s*\{\s*publishedAt/);
   assert.match(migration, /verifyPublishedDate/);
   assert.doesNotMatch(migration, /hasPublishedDate/);
   assert.doesNotMatch(migration, /api\(['"]PUT['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
@@ -159,6 +169,8 @@ test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages',
 
   assert.notEqual(seoHelper, '', 'CMS SEO helper should exist');
   assert.match(seoHelper, /FROM _emdash_seo/);
+  assert.match(seoHelper, /import\(['"]emdash\/runtime['"]\)/);
+  assert.match(seoHelper, /return getDb\(\)/);
   assert.match(seoHelper, /collection = \$\{collection\}/);
   assert.match(seoHelper, /content_id = \$\{entry\.data\.id\}/);
   assert.match(seoHelper, /data:\s*\{\s*\.\.\.entry\.data,\s*seo/);

@@ -461,9 +461,7 @@ async function setTerms(contentId, taxonomy, termIds) {
 }
 
 async function publishWithHistoricalDate(contentId, publishedAt) {
-  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`, {
-    publishedAt,
-  });
+  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`);
 
   if (!isLocalTarget) await verifyPublishedDate(contentId, publishedAt);
 }
@@ -657,6 +655,7 @@ async function main() {
     }
 
     if (status === 'published') {
+      if (!isLocalTarget) await verifyPublishedDate(saved.id, post.date.toISOString());
       await publishWithHistoricalDate(saved.id, post.date.toISOString());
     }
 

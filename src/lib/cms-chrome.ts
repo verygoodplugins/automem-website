@@ -1,4 +1,4 @@
-import { getMenu, getSiteSettings } from 'emdash';
+import { getMenu, getSiteSettings, sanitizeHref } from 'emdash';
 import type { MenuItem } from 'emdash';
 
 export interface ChromeLink {
@@ -49,9 +49,10 @@ export const fallbackFooterMenuItems: ChromeLink[] = [
 ];
 
 function toChromeLink(item: MenuItem): ChromeLink {
-  const isExternal = /^https?:\/\//i.test(item.url);
+  const href = sanitizeHref(item.url);
+  const isExternal = /^https?:\/\//i.test(href);
   return {
-    href: item.url,
+    href,
     label: item.label,
     target: item.target,
     rel: item.target === '_blank' || isExternal ? 'noopener noreferrer' : undefined,

@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { search } from 'emdash';
 import type { SearchResult } from 'emdash';
 import { sql, type Kysely } from 'kysely';
 
@@ -70,6 +69,14 @@ function escapeFtsQuery(query: string) {
 
 function normalizeSearchSnippet(snippet: string | null) {
   return snippet ?? undefined;
+}
+
+async function resolveSearchDb(locals: unknown) {
+  const db = (locals as { emdash?: { db?: Kysely<any> } } | undefined)?.emdash?.db;
+  if (db) return db;
+
+  const { getDb } = await import('emdash/runtime');
+  return getDb();
 }
 
 function tableNames(collection: string) {
@@ -166,17 +173,10 @@ export const GET: APIRoute = async ({ locals, url }) => {
     const emdash = (locals as any)?.emdash;
     const collections = parseSearchCollections(url.searchParams.get('collections'));
     const limit = parseSearchLimit(url.searchParams.get('limit'));
-    const searchOptions = {
-      collections,
-      status: 'published',
-      limit,
-    };
 
     await emdash?.ensureSearchHealthy?.();
 
-    const result = emdash?.db
-      ? await searchPublishedContentWithDb(emdash.db, query, collections, limit)
-      : await search(query, searchOptions);
+    const result = await searchPublishedContentWithDb(await resolveSearchDb(locals), query, collections, limit);
     const items = (result.items ?? []).map((item) => ({
       id: item.id,
       slug: item.slug,

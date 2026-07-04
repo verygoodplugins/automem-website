@@ -20,7 +20,7 @@ const {
   pageContext,
   footerMenuItems,
 } = Astro.props;
-const pageTitle = `${title} | automem.ai`;
+const pageTitle = pageContext?.title ?? `${title} | automem.ai`;
 const pageUrl = Astro.site ? new URL(Astro.url.pathname || '/', Astro.site).toString() : undefined;
 const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).toString() : 'https://automem.ai/og-image.png';
 ---
