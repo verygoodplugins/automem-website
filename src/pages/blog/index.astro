@@ -40,12 +40,19 @@ const { entries: posts, error, cacheHint, nextCursor } = await getEmDashCollecti
   orderBy: { published_at: 'desc' },
 });
 
-Astro.cache.set(cacheHint);
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-
 if (error) {
   console.error('Failed to load CMS posts:', error);
+  return new Response('CMS posts are temporarily unavailable.', {
+    status: 503,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
+
+Astro.cache.set(cacheHint);
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
 const postIds = posts.map((post) => post.data.id);
 const [tagsByPost, categoriesByPost] = await Promise.all([

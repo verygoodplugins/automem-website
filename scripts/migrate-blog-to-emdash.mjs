@@ -188,15 +188,7 @@ function parseInlineCell(value) {
   return { content: spans, markDefs };
 }
 
-function markdownTableHasLinks(lines) {
-  return lines.some((line, index) => index !== 1 && /\[[^\]]+\]\([^)]+\)/.test(line));
-}
-
 function markdownTableToPortableText(lines) {
-  if (markdownTableHasLinks(lines)) {
-    return markdownToPortableText(lines.join('\n'));
-  }
-
   const rows = lines.filter((line, index) => index !== 1).map((line, rowIndex) => ({
     _type: 'tableRow',
     _key: portableTextKey('r'),
@@ -461,7 +453,9 @@ async function setTerms(contentId, taxonomy, termIds) {
 }
 
 async function publishWithHistoricalDate(contentId, publishedAt) {
-  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`);
+  await api('POST', `/content/posts/${encodeURIComponent(contentId)}/publish`, {
+    publishedAt,
+  });
 
   if (!isLocalTarget) await verifyPublishedDate(contentId, publishedAt);
 }
@@ -655,7 +649,6 @@ async function main() {
     }
 
     if (status === 'published') {
-      if (!isLocalTarget) await verifyPublishedDate(saved.id, post.date.toISOString());
       await publishWithHistoricalDate(saved.id, post.date.toISOString());
     }
 

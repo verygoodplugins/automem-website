@@ -145,21 +145,33 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
     'dry-run branch should be reached before CMS API reads',
   );
   assert.match(migration, /_type: ['"]table['"]/);
-  assert.match(migration, /markdownTableHasLinks/);
   assert.match(migration, /blocks\.push\(\.\.\.markdownTableToPortableText\(tableLines\)\)/);
-  assert.match(migration, /return markdownToPortableText\(lines\.join\(['"]\\n['"]\)\)/);
+  assert.match(migration, /markDefs\.push\(\{ _key: key, _type: ['"]link['"], href: match\[9\] \}\)/);
+  assert.doesNotMatch(migration, /return markdownToPortableText\(lines\.join\(['"]\\n['"]\)\)/);
   assert.match(migration, /_type: ['"]embed['"]/);
   assert.match(migration, /_type: ['"]mermaid['"]/);
   assert.match(migration, /client\.get\(['"]posts['"], slug, \{ raw: true \}\)/);
   assert.match(migration, /publishedAt: status === ['"]published['"] \? post\.date\.toISOString\(\) : undefined/);
   assert.match(migration, /async function publishWithHistoricalDate/);
   assert.match(migration, /\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish/);
-  assert.match(migration, /if \(!isLocalTarget\) await verifyPublishedDate\(saved\.id, post\.date\.toISOString\(\)\)/);
-  assert.match(migration, /await api\(['"]POST['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish`\)/);
-  assert.doesNotMatch(migration, /publish`,\s*\{\s*publishedAt/);
+  assert.match(migration, /await api\(['"]POST['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}\/publish`,\s*\{\s*publishedAt,\s*\}\)/);
   assert.match(migration, /verifyPublishedDate/);
+  assert.doesNotMatch(migration, /verifyPublishedDate\(saved\.id, post\.date\.toISOString\(\)\)/);
   assert.doesNotMatch(migration, /hasPublishedDate/);
   assert.doesNotMatch(migration, /api\(['"]PUT['"],\s*`\/content\/posts\/\$\{encodeURIComponent\(contentId\)\}`/);
+});
+
+test('blog index does not cache empty output when CMS posts fail to load', async () => {
+  const blogIndex = await readSource('../src/pages/blog/index.astro');
+  const errorIndex = blogIndex.indexOf('if (error) {');
+  const cacheIndex = blogIndex.indexOf("Astro.response.headers.set('Cache-Control', 'public");
+
+  assert.ok(errorIndex > -1, 'blog index should handle CMS errors explicitly');
+  assert.ok(cacheIndex > -1, 'blog index should set public cache headers on successful CMS reads');
+  assert.ok(errorIndex < cacheIndex, 'CMS error handling should happen before public cache headers are set');
+  assert.match(blogIndex, /['"]Cache-Control['"]:\s*['"]no-store/);
+  assert.match(blogIndex, /return new Response\(/);
+  assert.match(blogIndex, /status:\s*503/);
 });
 
 test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages', async () => {
