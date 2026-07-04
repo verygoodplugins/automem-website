@@ -121,6 +121,8 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.match(siteSearchApi, /c\.status\s*=\s*'published'/);
   assert.match(siteSearchApi, /c\.status\s*=\s*'scheduled'/);
   assert.match(siteSearchApi, /c\.scheduled_at\s*<=\s*strftime/);
+  assert.match(siteSearchApi, /snippet\("[^"]+",\s*-1,\s*['"]<mark>['"]/);
+  assert.doesNotMatch(siteSearchApi, /snippet\("[^"]+",\s*2,\s*['"]<mark>['"]/);
   assert.match(siteSearchApi, /\/blog\/\$\{slugOrId\}/);
   assert.match(siteSearchApi, /\/pages\/\$\{slugOrId\}/);
   assert.ok(
@@ -176,6 +178,20 @@ test('blog index does not cache empty output when CMS posts fail to load', async
   assert.match(blogIndex, /status:\s*503/);
 });
 
+test('blog index orders ready scheduled posts by their effective publish time', async () => {
+  const blogIndex = await readSource('../src/pages/blog/index.astro');
+
+  assert.match(blogIndex, /scheduledAt\?: Date/);
+  assert.match(blogIndex, /function effectivePostDate/);
+  assert.match(blogIndex, /post\.data\.publishedAt\s*\?\?\s*post\.data\.scheduledAt\s*\?\?\s*post\.data\.createdAt/);
+  assert.match(blogIndex, /const orderedPosts = \[\.\.\.posts\]\.sort/);
+  assert.match(blogIndex, /effectivePostDate\(b\)\?\.getTime\(\)\s*\?\?\s*0/);
+  assert.match(blogIndex, /const pagePosts = orderedPosts\.slice/);
+  assert.match(blogIndex, /const postIds = pagePosts\.map/);
+  assert.match(blogIndex, /pagePosts\.forEach/);
+  assert.match(blogIndex, /const date = effectivePostDate\(post\)/);
+});
+
 test('blog detail does not cache or report CMS lookup failures as missing posts', async () => {
   const blogDetail = await readSource('../src/pages/blog/[slug].astro');
   const errorIndex = blogDetail.indexOf('if (error) {');
@@ -190,6 +206,30 @@ test('blog detail does not cache or report CMS lookup failures as missing posts'
   assert.match(blogDetail, /['"]Cache-Control['"]:\s*['"]no-store/);
   assert.match(blogDetail, /return new Response\(/);
   assert.match(blogDetail, /status:\s*503/);
+});
+
+test('CMS pages do not cache or report CMS lookup failures as missing pages', async () => {
+  const cmsPage = await readSource('../src/pages/pages/[slug].astro');
+  const errorIndex = cmsPage.indexOf('if (error) {');
+  const notFoundIndex = cmsPage.indexOf('if (!page) {');
+  const cacheIndex = cmsPage.indexOf('Astro.cache.set(cacheHint)');
+
+  assert.ok(errorIndex > -1, 'CMS page route should handle CMS errors explicitly');
+  assert.ok(notFoundIndex > -1, 'CMS page route should still return 404 for missing pages');
+  assert.ok(cacheIndex > -1, 'CMS page route should cache successful CMS reads');
+  assert.ok(errorIndex < notFoundIndex, 'CMS page error handling should happen before missing-page 404 handling');
+  assert.ok(errorIndex < cacheIndex, 'CMS page error handling should happen before successful-response cache hints');
+  assert.match(cmsPage, /['"]Cache-Control['"]:\s*['"]no-store/);
+  assert.match(cmsPage, /return new Response\(/);
+  assert.match(cmsPage, /status:\s*503/);
+});
+
+test('featured CMS images preserve media alt text instead of forcing titles', async () => {
+  const blogIndex = await readSource('../src/pages/blog/index.astro');
+  const blogDetail = await readSource('../src/pages/blog/[slug].astro');
+
+  assert.doesNotMatch(blogIndex, /alt=\{post\.data\.title\}/);
+  assert.doesNotMatch(blogDetail, /alt=\{post\.data\.title\}/);
 });
 
 test('CMS SEO hydration helper reads EmDash SEO rows for dynamic content pages', async () => {

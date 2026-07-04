@@ -31,6 +31,13 @@ const page = rawPage as typeof rawPage & { data: CmsPageData };
 
 if (error) {
   console.error('Failed to load CMS page:', error);
+  return new Response('CMS page temporarily unavailable.', {
+    status: 503,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
 
 if (!page) {

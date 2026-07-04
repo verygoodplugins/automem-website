@@ -25,18 +25,19 @@ interface CmsPostData {
   title: string;
   excerpt?: string;
   publishedAt?: Date;
+  scheduledAt?: Date;
   createdAt?: Date;
   featured_image?: CmsMediaValue | string | null;
   bylines?: ContentBylineCredit[];
 }
 
-const cursor = Astro.url.searchParams.get('cursor') ?? undefined;
+const BLOG_PAGE_SIZE = 20;
+const pageOffsetParam = Number.parseInt(Astro.url.searchParams.get('offset') ?? '0', 10);
+const pageOffset = Number.isFinite(pageOffsetParam) && pageOffsetParam > 0 ? pageOffsetParam : 0;
 const chrome = await getCmsChrome();
 
-const { entries: posts, error, cacheHint, nextCursor } = await getEmDashCollection<'posts', CmsPostData>('posts', {
+const { entries: posts, error, cacheHint } = await getEmDashCollection<'posts', CmsPostData>('posts', {
   status: 'published',
-  limit: 20,
-  cursor,
   orderBy: { published_at: 'desc' },
 });
 
@@ -54,15 +55,25 @@ if (error) {
 Astro.cache.set(cacheHint);
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
-const postIds = posts.map((post) => post.data.id);
+function effectivePostDate(post: (typeof posts)[number]) {
+  return post.data.publishedAt ?? post.data.scheduledAt ?? post.data.createdAt;
+}
+
+const orderedPosts = [...posts].sort((a, b) => {
+  const bTime = effectivePostDate(b)?.getTime() ?? 0;
+  const aTime = effectivePostDate(a)?.getTime() ?? 0;
+  return bTime - aTime;
+});
+const pagePosts = orderedPosts.slice(pageOffset, pageOffset + BLOG_PAGE_SIZE);
+const postIds = pagePosts.map((post) => post.data.id);
 const [tagsByPost, categoriesByPost] = await Promise.all([
   getTermsForEntries('posts', postIds, 'tag'),
   getTermsForEntries('posts', postIds, 'category'),
 ]);
 
-const postsByYear: Record<number, typeof posts> = {};
-posts.forEach((post) => {
-  const date = post.data.publishedAt ?? post.data.createdAt;
+const postsByYear: Record<number, typeof pagePosts> = {};
+pagePosts.forEach((post) => {
+  const date = effectivePostDate(post);
   if (!date) return;
   const year = date.getFullYear();
   postsByYear[year] ??= [];
@@ -70,7 +81,9 @@ posts.forEach((post) => {
 });
 
 const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a);
-const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` : undefined;
+const nextHref = orderedPosts.length > pageOffset + BLOG_PAGE_SIZE
+  ? `/blog?offset=${pageOffset + BLOG_PAGE_SIZE}`
+  : undefined;
 ---
 
 <Layout
@@ -101,7 +114,7 @@ const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` :
           <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-lab-text font-mono">{year}</h2>
           <div class="space-y-6">
             {postsByYear[year].map((post) => {
-              const date = post.data.publishedAt ?? post.data.createdAt;
+              const date = effectivePostDate(post);
               const tags = tagsByPost.get(post.data.id) ?? [];
               const categories = categoriesByPost.get(post.data.id) ?? [];
               const postSlug = post.data.slug ?? post.id;
@@ -158,7 +171,6 @@ const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` :
                       <div class="overflow-hidden rounded border-2 border-lab-text bg-lab-bg md:order-2">
                         <Image
                           image={post.data.featured_image}
-                          alt={post.data.title}
                           class="aspect-[4/3] h-full w-full object-cover"
                         />
                       </div>
@@ -171,7 +183,7 @@ const nextHref = nextCursor ? `/blog?cursor=${encodeURIComponent(nextCursor)}` :
         </section>
       ))}
 
-      {posts.length === 0 && (
+      {orderedPosts.length === 0 && (
         <div class="text-center py-12 bg-lab-surface rounded-lg border-2 border-lab-border">
           <p class="text-lab-muted text-lg font-mono">// No CMS posts are published yet.</p>
         </div>

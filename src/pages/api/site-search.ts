@@ -123,7 +123,7 @@ async function searchCollectionWithDb(
         c.slug,
         c.locale,
         c.title,
-        snippet("${sql.raw(fts)}", 2, '<mark>', '</mark>', '...', 32) as snippet,
+        snippet("${sql.raw(fts)}", -1, '<mark>', '</mark>', '...', 32) as snippet,
         bm25("${sql.raw(fts)}") as score
       FROM "${sql.raw(fts)}" f
       JOIN "${sql.raw(content)}" c ON f.id = c.id
