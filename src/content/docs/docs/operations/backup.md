@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/main/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/main/\.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/main/docs/RAILWAY_DEPLOYMENT.md).
+This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/RAILWAY_DEPLOYMENT.md).
 :::
 
 This page describes the backup strategies and disaster recovery procedures available for AutoMem deployments. It covers the three-layer backup architecture, automated backup methods, configuration options, backup formats, and four recovery paths for different failure scenarios. For monitoring backup health and detecting data drift, see [Health Monitoring](/docs/operations/health/).
@@ -354,8 +354,8 @@ The fastest and most reliable recovery method. Uses Qdrant's vector payloads to 
 | Function | Purpose | Code Location |
 |---|---|---|
 | `qdrant_client.scroll()` | Fetch all vectors with payloads | Qdrant SDK call |
-| `_filter_reserved_fields()` | Remove type, confidence from metadata | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/main/scripts/recover_from_qdrant.py) |
-| `CREATE MERGE (m:Memory)` | Rebuild memory nodes | Cypher query in recovery loop |
+| `restore_memory_to_graph_only()` | Filters `RESERVED_FIELDS` from metadata inline (no separate filter function) | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/recover_from_qdrant.py) |
+| `CREATE (m:Memory {...})` | Rebuild memory nodes | Cypher query in recovery loop |
 | Relationship extraction | Parse `metadata.relationships` array | Recovery loop logic |
 
 :::note[Critical Fix (v0.5.0)]
@@ -447,8 +447,9 @@ aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./
 # Step 2: Decompress backup
 gunzip qdrant_20251020_143000.json.gz
 
-# Step 3: Restore to Qdrant
-python scripts/restore_from_backup.py --file qdrant_20251020_143000.json
+# Step 3: Restore to Qdrant (the script takes --backup-dir + --backup-timestamp,
+# not a single --file path; use --qdrant-only to restore just Qdrant here)
+python scripts/restore_from_backup.py --backup-timestamp 20251020_143000 --qdrant-only
 
 # Step 4: Rebuild FalkorDB from Qdrant
 python scripts/recover_from_qdrant.py
@@ -501,10 +502,9 @@ Uses the health monitor to detect and automatically fix inconsistencies between 
 - Preventive maintenance
 
 ```bash
-# Enable auto-recovery on health monitor service
-HEALTH_MONITOR_AUTO_RECOVER=true
-
-# Or trigger manual recovery
+# Auto-recovery is a CLI flag, not an environment variable — there is no
+# persistent env-var equivalent. Run the health-monitor process/cron with
+# the flag baked into its invocation:
 python scripts/health_monitor.py --auto-recover
 ```
 
@@ -553,21 +553,24 @@ curl https://your-automem-url/health
 
 ```bash
 # Check FalkorDB count matches Qdrant count
-curl https://your-automem-url/health | jq '.statistics'
+curl https://your-automem-url/health | jq '{memory_count, vector_count, sync_status}'
 ```
 
 **3. Relationship Integrity:**
 
 ```bash
-# Use analyze endpoint to check relationship distribution
-curl https://your-automem-url/analyze | jq '.relationship_types'
+# The /analyze endpoint has no relationship_types field. `relationship_types`
+# is actually a query parameter on GET /memories/<memory_id>/related — spot-check
+# individual memories' relationships there rather than a single aggregate call.
+curl "https://your-automem-url/memories/<memory_id>/related"
 ```
 
 **4. Embedding Coverage:**
 
 ```bash
-# Verify all memories have embeddings
-curl https://your-automem-url/analyze | jq '.embedding_coverage'
+# /analyze has no embedding_coverage field. Compare vector_count against
+# memory_count from /health instead:
+curl https://your-automem-url/health | jq '{memory_count, vector_count}'
 ```
 
 **5. Search Functionality:**
