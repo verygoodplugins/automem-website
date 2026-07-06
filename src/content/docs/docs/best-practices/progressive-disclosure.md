@@ -27,7 +27,7 @@ The mcp-automem package provides three distinct integration strategies, each sui
 
 ### Server Configuration
 
-The MCP server is implemented in [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) and exposes six tools via stdio transport. To integrate a new MCP-capable platform, point the platform at the mcp-automem binary without CLI arguments — this triggers server mode.
+The MCP server is implemented in [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts) and exposes six tools via stdio transport. To integrate a new MCP-capable platform, point the platform at the mcp-automem binary without CLI arguments — this triggers server mode.
 
 ### Platform-Specific Considerations
 
@@ -47,13 +47,13 @@ Most MCP platforms use a JSON configuration file. Key points:
 
 ### Process Lifecycle
 
-Important implementation details from [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts):
+Important implementation details from [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts):
 
-1. **Server mode detection** — Empty `process.argv[2]` triggers server mode (line 37)
-2. **Console redirection** — All `console.log` calls redirected to stderr to prevent stdout pollution (lines 44-48)
-3. **Quiet dotenv** — Environment loading silenced to prevent debug output (lines 40-43)
-4. **EPIPE handling** — Graceful exit on broken pipe when a platform disconnects (lines 69-79)
-5. **Process tagging** — Optional `AUTOMEM_PROCESS_TAG` environment variable for safe process management (lines 55-67)
+1. **Server mode detection** — Empty `process.argv[2]` triggers server mode (lines 41-42)
+2. **Console redirection** — All `console.log` calls redirected to stderr to prevent stdout pollution (lines 74-80)
+3. **Quiet dotenv** — Environment loading silenced to prevent debug output (lines 60-72)
+4. **EPIPE handling** — Graceful exit on broken pipe when a platform disconnects (`installStdioErrorGuards()`, defined lines 100-110, invoked at line 1714)
+5. **Process tagging** — Optional `AUTOMEM_PROCESS_TAG` environment variable (also honors an undocumented `MCP_PROCESS_TAG` alias) for safe process management (lines 84-98)
 
 ## Template System for CLI Installers
 
@@ -68,7 +68,6 @@ Each template uses placeholder variables that are replaced during installation:
 | `{{PROJECT_NAME}}` | Project identifier for tagging | `package.json` name, git remote, or directory name | `my-app` |
 | `{{MCP_TOOL_PREFIX}}` | Platform-specific tool prefix | Hardcoded per platform | `mcp__memory__` |
 | `{{MCP_SERVER_NAME}}` | MCP server name in config | User-provided or default `"memory"` | `memory` |
-| `{{CURRENT_MONTH}}` | Month for temporal tagging | `new Date().toISOString().slice(0, 7)` | `2025-01` |
 
 **Example template snippet** (before substitution):
 
@@ -94,9 +93,9 @@ To add a new platform installer (e.g., for a hypothetical "MyIDE"):
 
 **2. Implement CLI command:** `src/cli/myide.ts`
 
-**3. Register command in main entry point** (`src/index.ts` around lines 238-242)
+**3. Register command in main entry point** (`src/index.ts` — add an `if (command === "myide") {...}` block to the dispatch sequence after the existing `hermes`/`queue` checks, around line 392)
 
-**4. Update help text** (`src/index.ts` around lines 109-115):
+**4. Update help text** (`src/index.ts`, the `COMMANDS:` list, lines 185-198):
 
 ```
 COMMANDS:
@@ -135,7 +134,7 @@ The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](h
 | POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{success, message}` | `associateMemories()` |
 | PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{memory_id, message}` | `updateMemory()` |
 | DELETE | `/memory/:id` | N/A | `{memory_id, message}` | `deleteMemory()` |
-| GET | `/memory/by-tag?tags=...&limit=...` | N/A | `{memories[], count}` | `searchByTag()` |
+| GET | `/memory/by-tag?tags=...&limit=...` | N/A | `{memories[], count}` | reached internally via `recallMemory({ tags, exhaustive: true })` — there is no separate public `searchByTag()` method |
 | GET | `/health` | N/A | `{status, falkordb, qdrant, graph, timestamp}` | `checkHealth()` |
 
 **Query parameter encoding:**
@@ -147,7 +146,7 @@ The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](h
 
 ### API Request Flow and Error Handling
 
-Error handling details from [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) lines 48-97:
+Error handling details from [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts#L157-L233) (`makeRequest()`, lines 157-233):
 
 - **Retryable errors**: Network errors, 5xx server errors (3 attempts max)
 - **Backoff**: Exponential — 500ms, 1s, 2s
@@ -169,7 +168,7 @@ MCP tool annotations provide hints to clients about tool behavior:
 |---|---|---|
 | `readOnlyHint` | Tool doesn't modify state | `recall_memory`, `check_database_health` |
 | `destructiveHint` | Tool removes data | `delete_memory` |
-| `idempotentHint` | Multiple calls with same args produce same result | `update_memory`, `delete_memory` |
+| `idempotentHint` | Multiple calls with same args produce same result | `update_memory` only — `delete_memory` sets `idempotentHint: false` since its bulk-by-tag mode is not idempotent |
 | `openWorldHint` | Results may reference external entities | Not used (memory IDs are self-contained) |
 
 ### Content Size Governance
@@ -259,7 +258,7 @@ const [recent, projectDecisions, patterns] = await Promise.all([
 
 - Batch operations when possible (store multiple memories in sequence)
 - Cache `recallMemory` results for repeated queries within a session
-- Use `searchByTag` for pure tag-based filtering (faster than semantic search)
+- Use `recallMemory({ tags, exhaustive: true })` for pure tag-based filtering (faster than semantic search) — there is no separate `searchByTag()` method
 
 **For instruction-based platforms (Cursor, Codex):**
 
@@ -272,7 +271,10 @@ const [recent, projectDecisions, patterns] = await Promise.all([
 Always health-check on startup:
 
 ```typescript
-const client = new AutoMemClient();
+const client = new AutoMemClient({
+  endpoint: process.env.AUTOMEM_API_URL!,
+  apiKey: process.env.AUTOMEM_API_KEY,
+});
 const health = await client.checkHealth();
 if (health.status !== 'healthy') {
   console.warn('AutoMem service degraded — memory features may be limited');
@@ -324,7 +326,7 @@ If migrating from a different MCP memory implementation:
 | **Authentication failures** | 401/403 errors | Set `AUTOMEM_API_KEY` in server environment variables, not client-side. Verify API key format matches backend requirements. |
 | **Recall returns empty** | Queries return 0 results despite stored memories | Check tags match exactly. Verify time filters aren't too restrictive. Try query without tags first. Check backend health. |
 | **Content too large errors** | Store operations rejected | Enforce 500-char soft limit, 2000-char hard limit before calling API. Split long content into multiple memories with associations. |
-| **Timeout errors** | Operations fail after ~25 seconds | Reduce `limit` parameter in recall queries. Check backend performance. Consider using `searchByTag` instead of semantic search for simple tag queries. |
+| **Timeout errors** | Operations fail after ~25 seconds | Reduce `limit` parameter in recall queries. Check backend performance. Consider using `recallMemory({ tags, exhaustive: true })` instead of semantic search for simple tag queries. |
 
 ### Debugging Techniques
 
@@ -343,11 +345,11 @@ Custom integrations with mcp-automem can be implemented through three primary ap
 
 3. **Direct API Integration** — Ideal for non-MCP platforms or when full control is needed. Import `AutoMemClient`, call HTTP methods directly, handle retries and errors in application code.
 
-**Key integration points in the codebase:**
+**Key integration points in the codebase** (`src/index.ts` has grown to 1763 lines total; anchors below reflect current HEAD):
 
-- Server entry: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) lines 32-79
-- Tool definitions: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) lines 319-872
-- Tool handlers: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/index.ts) lines 878-1132
-- HTTP client: [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts) lines 15-357
-- Templates: [`templates/`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/)
-- CLI installers: [`src/cli/`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/cli/)
+- Server entry / startup: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L41-L110) lines 41-110
+- Tool definitions: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L466-L1418) lines 466-1418
+- Tool handlers: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L1424-L1706) lines 1424-1706
+- HTTP client: [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts) — `AutoMemClient` class starts at line 150 (892 lines total)
+- Templates: [`templates/`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/templates/)
+- CLI installers: [`src/cli/`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/)
