@@ -1,5 +1,5 @@
 ---
-title: Progressive Disclosure
+title: Custom Integrations
 description: Build custom integrations for platforms not officially supported by mcp-automem using MCP server, template system, or direct API approaches.
 sidebar:
   order: 3
@@ -104,13 +104,13 @@ COMMANDS:
   ...
 ```
 
-See [`src/cli/cursor.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/cli/cursor.ts) and [`src/cli/codex.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/cli/codex.ts) as reference implementations.
+See [`src/cli/cursor.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/cursor.ts) and [`src/cli/codex.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/codex.ts) as reference implementations.
 
 ### Template Best Practices
 
 Based on existing templates in `templates/cursor/automem.mdc.template` and `templates/codex/memory-rules.md`:
 
-1. **Include version comment** — `<!-- automem-template-version: 1.0.0 -->` enables migration detection
+1. **Include version comment** — `<!-- automem-template-version: 0.15.0 -->` enables migration detection
 2. **Use platform-specific tool naming** — Show exact tool prefix format (e.g., `mcp__memory__` vs `mcp_memory_`)
 3. **Provide concrete examples** — Don't just describe tools, show actual usage with project variables
 4. **Explain importance scoring** — Critical: 0.9+, Important: 0.7-0.9, Standard: 0.5-0.7
@@ -125,7 +125,7 @@ For platforms that don't support MCP or prefer direct HTTP communication, `AutoM
 
 ### HTTP Endpoint Reference
 
-The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/main/src/automem-client.ts)):
+The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts)):
 
 | Method | Endpoint | Request Body | Response | Client Method |
 |---|---|---|---|---|

@@ -285,7 +285,7 @@ export default defineConfig({
           items: [
             { label: 'Memory Rules & Patterns', slug: 'docs/best-practices/memory-rules' },
             { label: 'Context Engineering', slug: 'docs/best-practices/context-engineering' },
-            { label: 'Progressive Disclosure', slug: 'docs/best-practices/progressive-disclosure' },
+            { label: 'Custom Integrations', slug: 'docs/best-practices/progressive-disclosure' },
           ],
         },
         {
