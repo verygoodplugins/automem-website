@@ -20,7 +20,7 @@ graph TB
     Root["automem/\nRepository Root"]
 
     subgraph "Python Source"
-        AppPy["app.py\nMain Flask application"]
+        AppPy["app.py\nThin Flask bootstrap"]
         ConsolPy["consolidation.py\nBackground workers"]
 
         Root --> AppPy
@@ -61,9 +61,9 @@ graph TB
 
 ### Core Service Modules
 
-#### `app.py` — Flask Orchestration Entry Point
+#### `app.py` — Thin Flask Bootstrap
 
-A ~506-line orchestration file that wires together all components from the `automem/` package. It is no longer a monolithic application — all business logic, routes, workers, and configuration live in the package.
+A small entry module that creates the Flask app, registers `@app.before_request` auth, and delegates startup to `automem/runtime_wiring.py`. All business logic, routes, workers, and configuration live in the `automem/` package — not in `app.py`.
 
 | Responsibility | Implementation |
 |---|---|

@@ -258,6 +258,9 @@ Controls query result expansion and limits:
 | `RECALL_EXPANSION_LIMIT` | int | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | float | No | `0.0` | Minimum score threshold for returned results |
 | `RECALL_ADAPTIVE_FLOOR` | bool | No | `true` | Dynamically adjust score floor based on result set |
+| `RECALL_VECTOR_OVERFETCH` | int | No | `4` | Vector candidate pool multiplier before hybrid re-rank. `1` = legacy 1× fetch |
+| `RECALL_VECTOR_FETCH_CAP` | int | No | `200` | Absolute cap on over-fetched vector candidates (separate from `RECALL_MAX_LIMIT`) |
+| `RECALL_EXCLUDED_TYPES` | string | No | `MetaPattern` | Comma-separated memory types excluded from `/recall` results and vector sync counts |
 
 ### Recall Ranking
 

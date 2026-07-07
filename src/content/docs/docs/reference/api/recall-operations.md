@@ -6,12 +6,13 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/f190ae5942cec46c77132bac56c24e74423b9598/automem/config.py) — Score weight configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP `recall_memory` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client and response normalization
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Score weight and recall tuning configuration
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `recall_memory` tool
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and formatting
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines nine scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
@@ -114,6 +115,22 @@ Before 0.16, recall returned every matching memory regardless of lifecycle state
 ### Metadata Sidecar Search
 
 Text queries can admit a bounded set of additional candidates when the query strongly matches whitelisted metadata values (the metadata "sidecar"). This is enabled by default and controlled by the `RECALL_METADATA_SEARCH_ENABLED` environment variable — there is **no request parameter**.
+
+The sidecar runs after vector and keyword candidates are merged. It reserves up to `max(1, min(limit, 10))` slots and can **upgrade** memories already in the candidate pool (their IDs are passed as `include_seen_ids`) so a strong metadata match is not dropped when the vector pool is full. Sidecar matches still pass the same tag, time, and state filters as other candidates.
+
+### Vector Candidate Over-fetch
+
+Vector search returns more candidates than the requested `limit` so the hybrid re-rank can surface high-importance or exact-match memories that rank slightly lower on raw cosine similarity alone. The fetch size is:
+
+```
+max(limit, min(limit × RECALL_VECTOR_OVERFETCH, RECALL_VECTOR_FETCH_CAP))
+```
+
+Tag-scoped queries with text or an explicit embedding may widen the pool further (still capped by `RECALL_VECTOR_FETCH_CAP`). The response is trimmed to `limit` after scoring — over-fetch does not increase payload size. Defaults: `RECALL_VECTOR_OVERFETCH=4`, `RECALL_VECTOR_FETCH_CAP=200`. Set `RECALL_VECTOR_OVERFETCH=1` to restore legacy 1× vector fetch behavior.
+
+### Internal Artifact Type Exclusion
+
+User-facing `/recall` results exclude internal artifact memory types (for example consolidation `MetaPattern` cluster summaries). Filtering is controlled by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). At automem@0720da2 this exclusion applies to ranked recall only — `/health`, `/admin/sync`, and background drift repair still count all `Memory` nodes, including internal artifacts.
 
 ### Relative-Recency Bias
 

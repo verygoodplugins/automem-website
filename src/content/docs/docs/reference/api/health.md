@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
-- [app.py#L266-L280](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/app.py#L266-L280) — app-level API token guard
-- [automem/api/auth_helpers.py#L45-L58](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/auth_helpers.py#L45-L58) — `/health` auth exemption
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [app.py](https://github.com/verygoodplugins/automem/blob/0720da2/app.py) — Thin bootstrap; `@app.before_request` delegates to `require_api_token()`
+- [automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/auth_helpers.py) — Token validation and `/health` auth exemption
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -108,8 +108,8 @@ sequenceDiagram
 | `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when Qdrant unavailable) |
 | `falkordb` | string | FalkorDB status: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
-| `memory_count` | integer \| null | Total memories in FalkorDB (null if query fails) |
-| `vector_count` | integer \| null | Total points in Qdrant collection (null if unavailable) |
+| `memory_count` | integer \| null | User-facing memories in FalkorDB, excluding `RECALL_EXCLUDED_TYPES` (default `MetaPattern`; null if query fails) |
+| `vector_count` | integer \| null | Vector-sync-eligible points in Qdrant, excluding the same types (null if unavailable) |
 | `sync_status` | string | Drift status between FalkorDB and Qdrant: `"synced"`, `"drift_detected"`, `"orphaned_vectors"`, or `"unknown"` |
 | `vector_dimensions` | object | Embedding dimension info: `configured` (from `VECTOR_SIZE`), `effective` (provider-reported), `collection` (Qdrant collection size), `mismatch` (boolean) |
 | `enrichment` | object | Enrichment queue metrics (see below) |

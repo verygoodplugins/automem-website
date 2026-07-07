@@ -22,7 +22,7 @@ AutoMem's health monitoring system operates at multiple levels to ensure data in
 ```mermaid
 graph TB
     subgraph "Health Monitoring System"
-        HealthEndpoint["/health Endpoint<br/>app.py"]
+        HealthEndpoint["/health Endpoint<br/>automem/api/health.py"]
         HealthMonitor["health_monitor.py<br/>Continuous Monitoring"]
         GHAWorkflow[".github/workflows/backup.yml<br/>Scheduled Checks"]
     end
