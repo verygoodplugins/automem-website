@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/) module paths, [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/embedding/runtime_pipeline.py), [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/consolidation.py), and [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/api/recall.py).
+This page is based on [`automem/`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/) module paths, [`app.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/app.py), [`automem/embedding/runtime_pipeline.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/embedding/runtime_pipeline.py), [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/consolidation.py), and [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/api/recall.py).
 :::
 
 This page describes AutoMem's performance optimization strategies, including embedding batching, relationship count caching, query time tracking, and structured logging. These optimizations reduce API costs by 40-50%, speed up consolidation by 80%, and improve monitoring capabilities. For operational monitoring strategies, see [Health Monitoring](/docs/operations/health/).
@@ -103,6 +103,8 @@ The worker uses a timeout-based accumulation strategy:
 | `EMBEDDING_BATCH_SIZE` | 20 | 1-2048 | Maximum items per batch | High-volume: 50-100; Low-latency: 10 |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | 2.0 | 0.1-60.0 | Max wait time for partial batch | Cost-optimized: 5-10s; Low-latency: 1s |
 
+These two batching variables are read in [`app.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/app.py#L217-L218) and passed into `embedding_worker()`. The consolidation timing variables later in this page come from `automem/config.py`.
+
 ### Performance Impact
 
 | Metric | Before | After | Improvement |
@@ -164,7 +166,7 @@ The `hour_key` approach provides a balance between:
 
 ## Query Time Tracking
 
-All API endpoints track query execution time using `time.perf_counter()` and include it in responses.
+Selected API endpoints track query execution time using `time.perf_counter()` and include it in responses. The table below lists the current response fields; `/health` is intentionally a lightweight status endpoint and does not include a query-time field.
 
 ### Endpoints with Query Time Tracking
 
