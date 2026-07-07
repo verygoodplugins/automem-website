@@ -82,6 +82,7 @@ See [Authentication](/docs/reference/authentication/) for token generation and u
 | `OLLAMA_MAX_RETRIES` | No | `2` | Retry attempts on Ollama connection failure |
 | `EMBEDDING_BATCH_SIZE` | No | `20` | Items per batch API call (reduces costs 40–50%) |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | No | `2.0` | Max wait before flushing a partial batch |
+| `AUTOMEM_MODELS_DIR` | No | `~/.config/automem/models/` | Local FastEmbed model cache directory |
 
 ### Enrichment Pipeline
 
@@ -121,6 +122,9 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `CONSOLIDATION_CONTROL_NODE_ID` | No | `global` | ID of the consolidation control node in the graph |
 | `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD` | No | `0.75` | Min cosine similarity for cluster membership (0–1) |
 | `CONSOLIDATION_MIN_CLUSTER_SIZE` | No | `3` | Min memories required to form a cluster |
+| `IDENTITY_SYNTHESIS_ENABLED` | No | `false` | Enable experimental scheduled entity identity synthesis |
+| `CONSOLIDATION_IDENTITY_INTERVAL_SECONDS` | No | `0` (`604800` when enabled) | Identity synthesis cycle frequency; `0` disables the cycle |
+| `IDENTITY_SYNTHESIS_MODEL` | No | `CLASSIFICATION_MODEL` | Model used for entity identity synthesis |
 
 ### Search and Recall
 

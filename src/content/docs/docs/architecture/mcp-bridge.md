@@ -82,15 +82,15 @@ The `mcp-automem` npm package operates as a local MCP server using stdio transpo
 graph LR
     START["npx @verygoodplugins/mcp-automem"]
 
-    subgraph Detection["Mode Detection<br/>src/index.ts:84"]
+    subgraph Detection["Mode Detection<br/>src/index.ts:41-42"]
         CHECK{"process.argv[2]<br/>exists?"}
     end
 
     subgraph Server_Mode["Server Mode"]
-        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts"]
-        MCP_SERVER["new Server()<br/>src/index.ts:358"]
-        STDIO_TRANSPORT["StdioServerTransport<br/>stdin/stdout"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:369"]
+        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:100-110"]
+        MCP_SERVER["new Server()<br/>src/index.ts:457-464"]
+        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:1715"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:1424"]
     end
 
     subgraph CLI_Mode["CLI Mode"]

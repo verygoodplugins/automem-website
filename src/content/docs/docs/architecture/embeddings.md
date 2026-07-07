@@ -200,19 +200,18 @@ The system validates embedding dimensions against the configured `VECTOR_SIZE` a
 When a memory is stored via `POST /memory`:
 
 1. Flask route handler writes memory to FalkorDB (synchronous, blocks response)
-2. Job is added to `embedding_queue` with `{memory_id, content, attempt: 0}`
+2. Job is added to `embedding_queue` as a `(memory_id, content)` tuple
 3. Response is returned immediately (non-blocking)
 4. Background worker picks up the job and generates the embedding
 
 ### Job Structure
 
-Each queued job is a dictionary with the following structure:
+Each queued job is a two-item tuple:
 
-| Field | Type | Description |
-|---|---|---|
-| `memory_id` | str | UUID of the memory to embed |
-| `content` | str | Text content to generate embedding for |
-| `attempt` | int | Retry counter (0-indexed) |
+| Position | Field | Type | Description |
+|---|---|---|---|
+| `0` | `memory_id` | str | UUID of the memory to embed |
+| `1` | `content` | str | Text content to generate embedding for |
 
 ---
 
@@ -299,7 +298,7 @@ The `store_embedding_in_qdrant()` helper function persists each embedding.
 
 **Payload Requirements:**
 - Must include all searchable fields: `content`, `tags`, `tag_prefixes`, `type`, `importance`, `timestamp`, `metadata`
-- Missing payload is fetched from FalkorDB using `_serialize_node()`
+- Payload fields are fetched from FalkorDB before the Qdrant upsert
 - Ensures Qdrant can be used as backup/recovery source
 
 ---
@@ -312,7 +311,8 @@ The `store_embedding_in_qdrant()` helper function persists each embedding.
 |---|---|
 | OpenAI API failure | Log error, skip embedding, continue with next batch |
 | Qdrant connection failure | Log warning, memory remains in FalkorDB (graceful degradation) |
-| Job processing exception | Increment `attempt` counter, re-queue if `attempt < 3` |
+| Batch generation exception | Log error, mark queued jobs done, and rely on the canonical FalkorDB record |
+| Per-memory Qdrant upsert exception | Log error for that memory and continue processing the batch |
 | Queue full | Use `queue.put()` without timeout (blocks until space available) |
 
 ### Graceful Degradation
