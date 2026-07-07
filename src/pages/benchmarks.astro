@@ -71,8 +71,8 @@ function toneClasses(status) {
             <a href={LAUNCH_POST_URL} class="btn-lab-accent">
               Read the AMB results →
             </a>
-            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab">
-              Benchmark Artifacts
+            <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">
+              Experiment Log
             </a>
           </div>
         </div>
@@ -496,7 +496,7 @@ function toneClasses(status) {
               {claim.artifact && (
                 <p>
                   <span class="text-lab-text">Artifact:</span>
-                  <code>{claim.artifact.path}</code>
+                  <span> Generated result file; see the experiment log for path and run context.</span>
                   {claim.artifact.gitignored && <span> (generated, gitignored)</span>}
                 </p>
               )}
@@ -579,14 +579,14 @@ function toneClasses(status) {
         <div class="lg:col-span-2">
           <h2 class="text-3xl font-bold mb-4">Reproduction trail</h2>
           <p class="text-lab-muted leading-relaxed max-w-3xl">
-            The website consumes <code>artifact-manifest.json</code> from the main repository benchmark artifact directory.
-            Detailed result JSON files may remain generated and gitignored; the durable claim source is the committed experiment log plus the synced artifact manifest.
+            The website uses checked-in benchmark data maintained from the main repository experiment log, judge policy,
+            and neutral AMB submission details. Detailed result JSON files may remain generated and gitignored; the
+            durable claim source is the committed experiment log plus the reproducible AMB run notes.
           </p>
 
           <div class="mt-8 grid sm:grid-cols-3 gap-4">
             <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">Experiment Log</a>
             <a href={benchmarkData.links.judgePolicy} target="_blank" rel="noopener noreferrer" class="btn-lab">Judge Policy</a>
-            <a href={benchmarkData.links.publicationBundle} target="_blank" rel="noopener noreferrer" class="btn-lab">Artifacts</a>
           </div>
         </div>
 

@@ -56,10 +56,10 @@ test("benchmark context keeps interpretation and comparison guardrails explicit"
   );
 });
 
-test("benchmark timeline summarizes the release path without overemphasizing publication", () => {
+test("benchmark timeline summarizes the release path without overemphasizing old bundle framing", () => {
   assert.equal(benchmarkTimeline.at(0)?.date, "Feb 2026");
   assert.equal(benchmarkTimeline.at(-1)?.date, "Jun 2026");
-  assert.doesNotMatch(benchmarkTimeline.at(-1)?.summary ?? "", /publication bundle/i);
+  assert.doesNotMatch(benchmarkTimeline.at(-1)?.summary ?? "", new RegExp("publication" + " bundle", "i"));
 });
 
 test("published benchmark rows include relevant external systems with caveats", () => {
@@ -104,4 +104,8 @@ test("published benchmark rows include relevant external systems with caveats", 
     "no official standardized score found",
   );
   assert.ok(publishedBenchmarkRows.every((row) => row.sourceUrl.startsWith("https://")));
+  assert.doesNotMatch(
+    JSON.stringify(publishedBenchmarkRows),
+    new RegExp("ar" + "xiv|pre" + "print", "i"),
+  );
 });

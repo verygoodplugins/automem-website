@@ -2,8 +2,6 @@
   "generatedAt": "2026-05-18T06:20:58Z",
   "sourceRepo": "verygoodplugins/automem",
   "sourceSha": "a742602f5d6ad2dea5a4d3c387d5b49d610afe2c",
-  "bundle": "automem-arxiv-2026-05",
-  "publicationBundlePath": "benchmarks/publication/2026-05-arxiv",
   "officialClaimSource": "benchmarks/EXPERIMENT_LOG.md",
   "judgePolicy": "docs/BENCHMARK_JUDGE_POLICY.md",
   "ambSubmission": {
@@ -119,7 +117,7 @@
       "retrieval": "recall@5 97.00% (485/500)",
       "answerModel": "gpt-5-mini",
       "judgeModel": "gpt-5.4-mini-2026-03-17",
-      "source": "benchmarks/EXPERIMENT_LOG.md; fresh publication verification run 2026-05-18 UTC",
+      "source": "benchmarks/EXPERIMENT_LOG.md; fresh benchmark verification run 2026-05-18 UTC",
       "artifact": {
         "path": "benchmarks/results/longmemeval-full-publication-20260518.json",
         "gitignored": true,
@@ -181,7 +179,7 @@
       "retrieval": null,
       "answerModel": null,
       "judgeModel": "gpt-5.4-mini-2026-03-17",
-      "source": "benchmarks/EXPERIMENT_LOG.md; fresh publication verification run 2026-05-17",
+      "source": "benchmarks/EXPERIMENT_LOG.md; fresh benchmark verification run 2026-05-17",
       "artifact": {
         "path": "benchmarks/results/locomo_baseline_20260517_193934.json",
         "gitignored": true,
@@ -357,7 +355,7 @@
       "benchmark": "Claude Code hook replay",
       "scope": "fixture and metrics harness",
       "questions": null,
-      "score": "harness tests only; no publication score",
+      "score": "harness tests only; no headline score",
       "retrieval": null,
       "answerModel": null,
       "judgeModel": null,
@@ -383,7 +381,6 @@
   ],
   "links": {
     "experimentLog": "https://github.com/verygoodplugins/automem/blob/main/benchmarks/EXPERIMENT_LOG.md",
-    "judgePolicy": "https://github.com/verygoodplugins/automem/blob/main/docs/BENCHMARK_JUDGE_POLICY.md",
-    "publicationBundle": "https://github.com/verygoodplugins/automem/tree/main/benchmarks/publication/2026-05-arxiv"
+    "judgePolicy": "https://github.com/verygoodplugins/automem/blob/main/docs/BENCHMARK_JUDGE_POLICY.md"
   }
 }

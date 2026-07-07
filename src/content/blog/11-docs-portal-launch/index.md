@@ -13,7 +13,7 @@ That era is over.
 
 The **AutoMem docs portal** is live at [automem.ai/docs](/docs/), and it's not a FAQ page. It's 53 pages of production-grade technical documentation covering the full stack — from first deploy to benchmark internals.
 
-> **Editor note, May 2026:** Benchmark claims have been promoted to a generated [Benchmarks](/benchmarks/) page sourced from the main `automem` repository publication bundle. This launch post is historical context; use the benchmark page for current figures.
+> **Editor note, May 2026:** Benchmark claims have been promoted to a generated [Benchmarks](/benchmarks/) page sourced from the main `automem` repository experiment log. This launch post is historical context; use the benchmark page for current figures.
 
 ## How We Got Here
 
@@ -103,7 +103,7 @@ The [Memory Rules & Patterns](/docs/best-practices/memory-rules/) guide is basic
 
 ## The Number That Matters
 
-The current canonical benchmark surface is [automem.ai/benchmarks](/benchmarks/). It reports LongMemEval full and LoCoMo full from the main repository's publication bundle, with canary and exploratory rows clearly separated.
+The current canonical benchmark surface is [automem.ai/benchmarks](/benchmarks/). It reports LongMemEval full and LoCoMo full from the main repository's benchmark verification trail, with canary and exploratory rows clearly separated.
 
 The hardest parts of these benchmarks are temporal reasoning — "what did we talk about 3 weeks ago?" — and multi-hop inference — "based on what I know about X, what should I do about Y?" Those are exactly the failure modes that make AI memory frustrating in real use.
 
