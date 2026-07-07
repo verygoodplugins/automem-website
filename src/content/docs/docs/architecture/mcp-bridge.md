@@ -10,8 +10,8 @@ Key GitHub sources:
 - [mcp-sse-server/server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Express app, transport handlers, tool definitions, session management
 - [docs/MCP_SSE.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/docs/MCP_SSE.md) — Transport protocol documentation
 - [mcp-sse-server/README.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/README.md) — Deployment quickstart
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — mcp-automem package entry point (stdio client)
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/automem-client.ts) — HTTP client implementation
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — mcp-automem package entry point (stdio client)
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client implementation
 :::
 
 The MCP Bridge connects AI platforms to AutoMem's memory service. It exists in two forms that serve different integration scenarios:
@@ -94,12 +94,14 @@ graph LR
     end
 
     subgraph CLI_Mode["CLI Mode"]
+        INSTALL["runInstallCommand()<br/>src/cli/install.ts"]
         SETUP["runSetup()<br/>src/cli/setup.ts"]
         CONFIG["runConfig()<br/>src/cli/setup.ts"]
         CURSOR["runCursorSetup()<br/>src/cli/cursor.ts"]
         CLAUDE_CODE["runClaudeCodeSetup()<br/>src/cli/claude-code.ts"]
         CODEX["runCodexSetup()<br/>src/cli/codex.ts"]
         OPENCLAW["runOpenClawSetup()<br/>src/cli/openclaw.ts"]
+        HERMES["runHermesSetup()<br/>src/cli/hermes.ts"]
         MIGRATE["runMigrateCommand()<br/>src/cli/migrate.ts"]
         UNINSTALL["runUninstallCommand()<br/>src/cli/uninstall.ts"]
         QUEUE["runQueueCommand()<br/>src/cli/queue.ts"]
@@ -108,17 +110,19 @@ graph LR
 
     START --> CHECK
     CHECK -->|"No args"| STDIO_GUARD
-    CHECK -->|"Command"| SETUP
+    CHECK -->|"Command"| INSTALL
 
     STDIO_GUARD --> MCP_SERVER
     MCP_SERVER --> STDIO_TRANSPORT
     MCP_SERVER --> TOOL_HANDLER
 
+    CHECK --> SETUP
     CHECK --> CONFIG
     CHECK --> CURSOR
     CHECK --> CLAUDE_CODE
     CHECK --> CODEX
     CHECK --> OPENCLAW
+    CHECK --> HERMES
     CHECK --> MIGRATE
     CHECK --> UNINSTALL
     CHECK --> QUEUE

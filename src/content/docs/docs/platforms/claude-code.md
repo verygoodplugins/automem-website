@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. The `claude-code` CLI installer sets up hook scripts that run at key events (session start, build, test, deployment) to capture context automatically. CLAUDE.md rules guide Claude's judgment for manual memory operations.
+Claude Code integration provides persistent memory through a direct MCP connection plus instruction-based memory rules. Hooks prompt recall at session start and observe `store_memory` calls; durable facts are stored by the model per the shared memory policy, not by mechanical capture hooks. CLAUDE.md rules guide when and how to use the memory tools.
 
 :::tip[Plugin is the recommended path again]
 The v0.14 deprecation of the Claude Code **plugin** was **reversed** in June 2026 — the plugin is once again the recommended install path (enable-time config prompts, automatic marketplace updates, atomic uninstall). The `npx @verygoodplugins/mcp-automem claude-code` CLI installer is the supported **settings-level** alternative and the migration/cleanup path for older installs. Nothing is scheduled for removal. See the upstream [DEPRECATION.md](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md).
@@ -95,20 +95,20 @@ For local development (no API key needed):
 Run the CLI installer to install hook scripts and merge permissions:
 
 ```bash
+# Default: SessionStart recall + PostToolUse store tracking (silent session end)
 npx @verygoodplugins/mcp-automem claude-code
+
+# Opt in to the visible Stop storage nudge at session end
+npx @verygoodplugins/mcp-automem claude-code --profile nudged
 ```
 
 This installs the following hook scripts into `~/.claude/hooks/`:
 
 - `automem-session-start.sh` — recalls context at session start
-- `capture-build-result.sh` — captures build outcomes
-- `capture-test-pattern.sh` — captures test results
-- `capture-deployment.sh` — captures deployment events
-- `session-memory.sh` — stores session summary on exit
+- `automem-track-store.sh` — observes `store_memory` calls (PostToolUse)
+- `automem-stop-nudge.sh` — optional LLM-judged storage nudge (registered only with `--profile nudged`)
 
-Support scripts installed into `~/.claude/scripts/`:
-
-- `python-command.sh`, `queue-cleanup.sh`, `process-session-memory.py`, `memory-filters.json`
+Re-running the installer removes retired hooks from older installs (`capture-*.sh`, `session-memory.sh`, queue machinery, and their support files).
 
 It also merges the following into `permissions.allow` (assuming server named `"memory"`):
 
@@ -288,33 +288,28 @@ Store a decision, insight, or pattern:
 
 ---
 
-## Migration from Hooks (Pre-v0.8.0)
+## Migration from Legacy Hook Installs
 
-If you have a pre-v0.8.0 hooks-based setup, these components were removed:
-
-| Component | Path | Purpose |
-|-----------|------|---------|
-| Capture hooks | `templates/claude-code/hooks/capture-*.sh` | Automated memory capture |
-| Queue processing | `templates/claude-code/scripts/process-queue.py` | Batch memory processing |
-| Cleanup scripts | `templates/claude-code/scripts/queue-cleanup.sh` | Queue deduplication |
-| Notifications | `templates/claude-code/scripts/smart-notify.sh` | Desktop notifications |
-| Profile system | `templates/claude-code/profiles/` | Lean vs extras configs |
-
-**Migration steps:**
+If you have a pre-v0.15.0 hooks-based setup, re-run the current installer to clean up retired machinery:
 
 ```bash
-# 1. Backup existing setup
-cp ~/.claude/settings.json ~/.claude/settings.json.pre-v0.8.0.bak
-
-# 2. Remove old hooks (optional)
-rm -rf ~/.claude/hooks/
-
-# 3. Update to current setup
+# Re-run to strip retired hooks, scripts, and hook-era permission grants
 npx @verygoodplugins/mcp-automem claude-code
 
-# 4. Verify tools appear
+# Verify tools appear
 claude --list-tools | grep memory
 ```
+
+**Retired components** (removed automatically on re-run):
+
+| Component | Path | Why retired |
+|-----------|------|-------------|
+| Mechanical capture hooks | `capture-build-result.sh`, `capture-test-pattern.sh`, `capture-deployment.sh` | Templated one-liners were corpus noise; storage is LLM-judged |
+| Session-summary Stop hook | `session-memory.sh`, `process-session-memory.py`, `memory-filters.json` | Replaced by opt-in `automem-stop-nudge.sh` |
+| Queue Stop machinery | `queue-cleanup.sh`, `mcp-automem queue` drainer | Nothing writes to the queue once capture hooks are gone |
+| Python/jq permission grants | `Bash(python*)`, `Bash(jq:*)` in settings | Only existed for the retired queue/session chain |
+
+The plugin path bundles the current SessionStart + PostToolUse hooks and does not register a Stop hook by default.
 
 ---
 
@@ -381,16 +376,3 @@ curl -H "Authorization: Bearer $KEY" https://your-automem.example.com/health
 - Try broader queries with fewer filters
 - Remove `time_query` for older memories
 - Use `tag_mode: "any"` instead of `"all"`
-
-### Windows: hooks fail to run Python
-
-**Symptom:** session-start or capture hooks log errors like `python: command not found`, or hooks appear to succeed but skip the Python step silently.
-
-Windows systems often ship with `python` pointing at the Microsoft Store app shim, with the real interpreter exposed only as `python3` or under `py -3`. The installer ships a `python-command.sh` wrapper that resolves to the correct interpreter for the current host:
-
-```bash
-# Installed by the CLI installer
-~/.claude/scripts/python-command.sh
-```
-
-The bundled hook scripts invoke `python-command.sh` instead of calling `python` directly, so upgrading to the latest mcp-automem release and re-running `npx @verygoodplugins/mcp-automem claude-code` is typically enough to pick up the fix. If you've customized hooks in place, point them at the wrapper rather than hard-coding `python` or `python3`.

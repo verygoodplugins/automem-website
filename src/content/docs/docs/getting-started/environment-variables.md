@@ -191,6 +191,7 @@ These variables configure the `mcp-automem` client package, not the server.
 | `AUTOMEM_API_KEY` | No | _unset_ | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | _unset_ | Alternative name for the API key |
 | `AUTOMEM_LOG_LEVEL` | No | _unset_ | Set to `debug` for verbose MCP client logging |
+| `AUTOMEM_RECALL_TOKEN_BUDGET` | No | `18000` | Global estimated token budget for MCP `recall_memory` responses (applies to all formats, including `json`; `memory_id` fetches are never truncated) |
 | `AUTOMEM_PROCESS_TAG` | No | _unset_ | Process title tag for safe process management |
 | `MCP_PROCESS_TAG` | No | _unset_ | Alternative process tag variable |
 

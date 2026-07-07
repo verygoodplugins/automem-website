@@ -6,8 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/src/index.ts) — MCP server, tool definitions, and request handlers
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/34fcfe2b7bdac6a99829c64cc74611e29af69a38/server.json) — MCP server manifest
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP server, tool definitions, and request handlers
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -229,8 +230,8 @@ curl -X POST https://your-automem-instance/memory \
   }'
 ```
 
-:::note[Additional pass-through store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Memory Operations](/docs/reference/api/memory-operations/).
+:::note[Additional MCP store parameters]
+The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
 **Content Size Governance (MCP layer adds two-tier validation):**
@@ -282,6 +283,8 @@ The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, a
 **Response shaping and backend-owned recall:**
 
 The MCP bridge forwards recall arguments to the AutoMem backend and then formats the response for MCP clients. Hybrid scoring, tag filtering, deduplication, entity expansion, and `priority_ids` guarantees all live in AutoMem itself, so HTTP and MCP produce the same recall behavior when you pass the same arguments.
+
+**MCP response budgeting (v0.15+):** Budgeted formats (`text`, `items`, `detailed`) are summary-first to stay under MCP client tool-response caps (~25k tokens in Claude Code). When a memory has a server-generated `summary`, budgeted output shows that instead of a long `content` preview; relations collapse to compact stubs (max 3 per memory); metadata collapses to its key list. The default token budget is 18,000 estimated tokens (override with `AUTOMEM_RECALL_TOKEN_BUDGET`). `format: "json"` keeps raw per-field passthrough but the global budget still applies. ID fetches via `memory_id` are never truncated — use that mode to retrieve a full record.
 
 **HTTP API equivalent:**
 

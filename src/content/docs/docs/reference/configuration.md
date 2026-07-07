@@ -359,6 +359,7 @@ The `mcp-automem` client uses two primary environment variables to locate and au
 | `AUTOMEM_PROCESS_TAG` | No | (none) | Process title tag for safe cleanup in multi-process environments |
 | `MCP_PROCESS_TAG` | No | (none) | Alternative process tag variable |
 | `AUTOMEM_LOG_LEVEL` | No | (none) | Set to `debug` for verbose logging |
+| `AUTOMEM_RECALL_TOKEN_BUDGET` | No | `18000` | Global estimated token budget for MCP `recall_memory` responses (applies to all formats, including `json`; `memory_id` fetches are never truncated) |
 
 **Common endpoint values:**
 - Local development: `http://127.0.0.1:8001` or `http://localhost:8001`

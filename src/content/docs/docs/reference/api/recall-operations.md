@@ -673,21 +673,31 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 
 ### MCP Response Formatting
 
-Each memory is formatted as a numbered list item for the AI platform:
+Budgeted formats (`text`, `items`, `detailed`) are **summary-first** to stay under MCP client tool-response caps (~25k tokens in Claude Code). The formatter in `src/recall-memory.ts`:
+
+- Prefers each memory's server-generated `summary` over a long `content` preview when present
+- Truncates content previews to 400 characters when no summary is available
+- Collapses relations to compact stubs (max 3 per memory, 100-char summaries)
+- Collapses metadata to its key list
+- Applies a global token budget (default 18,000 estimated tokens; override with `AUTOMEM_RECALL_TOKEN_BUDGET`)
+
+`format: "json"` keeps raw per-field passthrough but the global budget still applies. **ID fetches** via `memory_id` are never truncated — use that mode to retrieve a full record.
+
+Each memory in budgeted `text` output is a numbered list item:
 
 ```
-1. [content] [tags] (importance: X) score=X.XXX [match_type] relations=X [via entity: Y] (deduped x2)
+1. [summary or preview] [tags] (importance: X) score=X.XXX [match_type] relations=X
    ID: mem-abc123
    Created: 2025-01-15T10:30:00Z
 ```
 
-A summary line includes statistics:
+A summary line includes statistics when applicable:
 
 ```
 (3 duplicates removed; 5 via entity expansion (Rachel, Platform team); 2 via relation expansion)
 ```
 
-The MCP response also includes `structuredContent` with the full `RecallResult` object for programmatic consumption.
+The MCP response also includes `structuredContent` with the (possibly budget-trimmed) `RecallResult` object for programmatic consumption.
 
 ### Common MCP Patterns
 
