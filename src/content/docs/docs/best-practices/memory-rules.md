@@ -20,7 +20,7 @@ The memory system implements a **trust-based architecture**: AI assistants have 
 This philosophy evolved from early experiments with hook-based automation (Claude Code) toward instruction-based patterns (Cursor, Codex). The instruction-based approach proved more reliable because the AI can contextualize significance better than automated event capture.
 
 :::note[Hook system history]
-The hook system was experimentally implemented for Claude Code (v0.5.0) and Cursor (v0.5.0), then removed in v0.8.0 and v0.6.0 respectively. See [Progressive Disclosure](/docs/best-practices/progressive-disclosure/) for background on this architectural evolution.
+The hook system was experimentally implemented for Claude Code (v0.5.0) and Cursor (v0.5.0), then removed in v0.8.0 and v0.6.0 respectively. See [Custom Integrations](/docs/best-practices/progressive-disclosure/) for the current template-based integration path.
 :::
 
 ---
