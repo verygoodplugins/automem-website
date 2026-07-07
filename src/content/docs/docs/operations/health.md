@@ -89,6 +89,13 @@ The health endpoint provides real-time service status, database connectivity che
   "qdrant": "connected",
   "memory_count": 884,
   "vector_count": 884,
+  "sync_status": "synced",
+  "vector_dimensions": {
+    "configured": 1024,
+    "effective": 1024,
+    "collection": 1024,
+    "mismatch": false
+  },
   "graph": "memories",
   "timestamp": "2025-10-20T14:30:00Z",
   "enrichment": {
@@ -111,9 +118,22 @@ The health endpoint provides real-time service status, database connectivity che
 | `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer\|null | Total memories in FalkorDB (null if query fails) |
 | `vector_count` | integer\|null | Total points in Qdrant collection (null if unavailable) |
+| `sync_status` | string | FalkorDB/Qdrant count comparison: `"synced"`, `"drift_detected"`, `"orphaned_vectors"`, or `"unknown"` |
+| `vector_dimensions` | object | Configured, effective, and Qdrant collection vector dimensions (see below) |
 | `enrichment` | object | Enrichment queue metrics (see below) |
 | `graph` | string | FalkorDB graph name (`FALKORDB_GRAPH` env variable) |
 | `timestamp` | string | ISO 8601 timestamp of health check |
+
+#### Vector Dimension Fields
+
+The `vector_dimensions` object helps detect mismatches between the configured embedding size and the active Qdrant collection:
+
+| Field | Type | Description |
+|---|---|---|
+| `configured` | integer | `VECTOR_SIZE` from configuration |
+| `effective` | integer\|null | Runtime effective vector size after provider/Qdrant initialization |
+| `collection` | integer\|null | Vector size reported by the Qdrant collection |
+| `mismatch` | boolean | `true` when a Qdrant collection dimension differs from `VECTOR_SIZE` after provider initialization |
 
 #### Enrichment Queue Metrics
 
@@ -135,6 +155,7 @@ The `enrichment` object provides visibility into the background enrichment pipel
 | `status` | `healthy`, `degraded` | Overall service status |
 | `falkordb` | `connected`, `disconnected` | FalkorDB connection state |
 | `qdrant` | `connected`, `disconnected` | Qdrant connection state (optional service) |
+| `sync_status` | `synced`, `drift_detected`, `orphaned_vectors`, `unknown` | Count comparison between FalkorDB memories and Qdrant vectors |
 | `enrichment.status` | `running`, `stopped` | Background enrichment worker state |
 
 #### Health Check Flow
@@ -144,7 +165,7 @@ sequenceDiagram
     participant Client
     participant API as "app.py<br/>/health"
     participant Falkor as "FalkorDB<br/>redis_ping()"
-    participant Qdrant as "Qdrant<br/>client.get_collections()"
+    participant Qdrant as "Qdrant<br/>client.get_collection()"
 
     Client->>API: GET /health
 
@@ -155,16 +176,16 @@ sequenceDiagram
     else FalkorDB Unavailable
         Falkor-->>API: None
         API->>API: Set falkordb: disconnected
-        API-->>Client: 503 Service Unavailable
+        API->>API: Set status: degraded
     end
 
-    API->>Qdrant: Test connection<br/>get_collections()
+    API->>Qdrant: Test connection<br/>get_collection()
     alt Qdrant Available
         Qdrant-->>API: Collections list
         API->>API: Set qdrant: connected
     else Qdrant Unavailable
         Qdrant-->>API: Exception
-        API->>API: Set qdrant: unavailable<br/>(continue anyway)
+        API->>API: Set qdrant: disconnected<br/>and status: degraded
     end
 
     API->>Falkor: Count memories<br/>MATCH (m:Memory) RETURN count(m)
@@ -172,7 +193,7 @@ sequenceDiagram
 
     API->>API: Check enrichment queue<br/>ServiceState.enrichment_queue
 
-    API-->>Client: 200 OK<br/>{status, falkordb, qdrant,<br/>memory_count, enrichment}
+    API-->>Client: 200 OK<br/>{status, falkordb, qdrant,<br/>memory_count, sync_status,<br/>vector_dimensions, enrichment}
 ```
 
 #### Example Requests
@@ -192,21 +213,21 @@ curl -s https://your-project.up.railway.app/health | jq .status
 
 AutoMem continues operating even when components are unavailable:
 
-- **Qdrant unavailable**: `status` remains `"healthy"`, `qdrant` shows `"disconnected"`
-- **FalkorDB unavailable**: `status` becomes `"degraded"`, HTTP 503 returned
+- **Qdrant unavailable**: `status` becomes `"degraded"`, `qdrant` shows `"disconnected"`, vector fields are `null`/`unknown`
+- **FalkorDB unavailable**: `status` becomes `"degraded"`, `falkordb` shows `"disconnected"`
+- **Count drift**: `sync_status` becomes `"drift_detected"` or `"orphaned_vectors"`; missing vectors degrade the overall status
 - **Enrichment worker stopped**: Service remains healthy but enrichment pipeline stops processing
 
 #### Health Check Response Codes
 
 | Status Code | Meaning | Action |
 |---|---|---|
-| `200` | Service healthy | Continue normal operation |
-| `503` | Service degraded | FalkorDB or Qdrant unreachable |
-| `500` | Service unhealthy | Critical failure in health check itself |
+| `200` | Health handler returned a JSON body | Inspect the body `status`, database fields, `sync_status`, and `vector_dimensions` |
+| `500` | Health handler failed before returning JSON | Investigate application logs and service startup state |
 
 #### Integration with Railway
 
-Railway's health check configuration monitors the `/health` endpoint to determine service availability. If the endpoint returns non-2xx status or fails to respond within 100 seconds, Railway marks the service as unhealthy and may restart it.
+Railway's health check configuration monitors the `/health` endpoint to determine service availability. The current handler reports degraded database and sync states in the JSON body, so external monitors should inspect `status`, `sync_status`, and `vector_dimensions` rather than relying only on HTTP status.
 
 Railway health check configuration in `railway.json`:
 ```json
@@ -678,16 +699,18 @@ Qdrant: 778 vectors
    python scripts/recover_from_qdrant.py
    ```
 
-### Problem: Health Endpoint Returns 503
+### Problem: Health Endpoint Reports Degraded
 
 **Causes:**
 - FalkorDB connection failed
 - Qdrant connection failed (if configured)
+- FalkorDB and Qdrant counts drifted
 - Service still starting up
 
 **Solutions:**
 - Check FalkorDB container is running: `docker ps | grep falkordb`
 - Verify FalkorDB environment variables: `FALKORDB_HOST`, `FALKORDB_PORT`, `FALKORDB_PASSWORD`
+- Inspect `sync_status` and `vector_dimensions` in `/health`
 - Wait 30-60 seconds if service was just deployed
 
 ### Problem: Auto-Recovery Not Triggering
