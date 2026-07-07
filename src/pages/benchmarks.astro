@@ -9,7 +9,6 @@ import {
   benchmarkMeaningCards,
   benchmarkTimeline,
   publishedBenchmarkRows,
-  artifactUrl,
   formatGeneratedDate,
   primaryPercent,
   sourceLabel,
@@ -30,9 +29,6 @@ const notYetRunClaims = benchmarkData.notYetRun.filter(
 
 const ambAsOf = formatGeneratedDate(amb?.asOf ?? benchmarkData.generatedAt);
 const beam10m = amb?.beam?.rows?.find((row) => row.tier === '10M');
-const ambReproduceUrl = amb?.reproduceDoc
-  ? artifactUrl(benchmarkData.sourceRepo, amb.reproduceDoc)
-  : null;
 const LAUNCH_POST_URL = '/blog/automem-amb-neutral-numbers';
 
 function toneClasses(status) {
@@ -591,9 +587,6 @@ function toneClasses(status) {
           <div class="mt-8 grid sm:grid-cols-3 gap-4">
             <a href={benchmarkData.links.experimentLog} target="_blank" rel="noopener noreferrer" class="btn-lab">Experiment Log</a>
             <a href={benchmarkData.links.judgePolicy} target="_blank" rel="noopener noreferrer" class="btn-lab">Judge Policy</a>
-            {ambReproduceUrl && (
-              <a href={ambReproduceUrl} target="_blank" rel="noopener noreferrer" class="btn-lab">AMB Reproduce</a>
-            )}
           </div>
         </div>
 

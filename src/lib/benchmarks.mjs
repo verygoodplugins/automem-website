@@ -156,11 +156,11 @@ export const publishedBenchmarkRows = [
   {
     system: "MemMachine",
     locomo: "91.69%",
-    longMemEval: "93.0%",
-    other: "gpt4.1-mini / LongMemEvalS",
+    longMemEval: "not sourced here",
+    other: "LoCoMo benchmark",
     status: "external reported",
-    note: "MemMachine reports LoCoMo and LongMemEvalS accuracy-efficiency results under its own optimized setup.",
-    sourceLabel: "MemMachine benchmark",
+    note: "MemMachine reports LoCoMo accuracy-efficiency results under its own optimized setup. LongMemEvalS is omitted until a non-removed public source supports the value.",
+    sourceLabel: "MemMachine LoCoMo",
     sourceUrl:
       "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
   },
