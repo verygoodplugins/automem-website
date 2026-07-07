@@ -395,7 +395,7 @@ CONSOLIDATION_DECAY_INTERVAL_SECONDS=86400
 
 **Impact**: Minimal for consolidation use case, as relevance scores change slowly.
 
-**Alternative**: For real-time applications, consider cache invalidation on relationship creation (requires code modification in [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/consolidation.py#L201-L217), where `_get_relationship_count_cached_impl()` lives — `automem/consolidation/` only holds thin `runtime_*` wrapper modules, not the cached implementation itself).
+**Alternative**: For real-time applications, consider cache invalidation on relationship creation (requires code modification in [`consolidation.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/consolidation.py#L201-L217), where `_get_relationship_count_cached_impl()` lives; the `automem/consolidation/runtime_*` modules handle runtime wiring, while other modules in that package cover separate consolidation features).
 
 ### Memory Overhead
 
@@ -468,4 +468,4 @@ The LRU cache uses `hour_key` for invalidation — this cannot be fully disabled
 
 ### Remove Health Enrichment Stats
 
-Remove the enrichment section from the health response by modifying [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/api/health.py#L100-L107) to exclude the `enrichment` key from the response JSON.
+Remove the enrichment section from the health response by modifying [`automem/api/health.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/automem/api/health.py#L99-L106) to exclude the full `enrichment` key from the response JSON.
