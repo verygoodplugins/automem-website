@@ -599,7 +599,7 @@ The consolidation engine implements memory principles from neuroscience research
 
 - **Exponential decay** mirrors [forgetting curves](https://en.wikipedia.org/wiki/Forgetting_curve) (Ebbinghaus, 1885)
 - **REM-like processing** inspired by [memory replay during sleep](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4648295/)
-- **Clustering** implements principles from [MELODI](https://arxiv.org/html/2410.03156v1) (DeepMind, 2024) for memory compression
+- **Clustering** implements principles from MELODI (DeepMind, 2024) for memory compression
 - **Controlled forgetting** follows [active forgetting research](https://www.nature.com/articles/nrn.2016.147) showing forgetting aids learning
 
 For related API operations (triggering consolidation manually, viewing status), see [Consolidation Operations](/docs/reference/api/consolidation/).

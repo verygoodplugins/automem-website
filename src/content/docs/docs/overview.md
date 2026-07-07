@@ -7,7 +7,7 @@ This document introduces AutoMem, a production-grade long-term memory system for
 
 ## What is AutoMem?
 
-AutoMem is a Flask-based HTTP API service that provides persistent, queryable memory storage for AI assistants. Unlike traditional RAG systems that retrieve similar documents, AutoMem builds knowledge graphs with typed relationships, enabling multi-hop reasoning, temporal awareness, and pattern learning. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the canonical/publication source trail.
+AutoMem is a Flask-based HTTP API service that provides persistent, queryable memory storage for AI assistants. Unlike traditional RAG systems that retrieve similar documents, AutoMem builds knowledge graphs with typed relationships, enabling multi-hop reasoning, temporal awareness, and pattern learning. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the benchmark source trail.
 
 **Key capabilities:**
 

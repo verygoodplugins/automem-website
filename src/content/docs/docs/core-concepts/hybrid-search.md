@@ -18,7 +18,7 @@ Key implementation files:
 - [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/tags.py) — Tag prefix utilities
 :::
 
-This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the publication bundle and methodology links.
+This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the experiment log and methodology links.
 
 For information about the memory structure being searched, see [Memory Model](/docs/core-concepts/memory-model/). For details on relationship types used in graph traversal, see [Relationship Types](/docs/core-concepts/relationship-types/). For API usage, see [Recall Operations](/docs/reference/api/recall-operations/).
 
@@ -425,7 +425,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 
 ### Benchmark Results
 
-AutoMem's current canonical results are sourced from the main repository's May 2026 publication bundle, not from hand-maintained prose. The headline results are:
+AutoMem's current canonical results are sourced from the main repository's May 2026 benchmark verification trail, not from hand-maintained prose. The headline results are:
 
 | Benchmark | Scope | Score | Retrieval | Notes |
 |---|---|---|---|---|

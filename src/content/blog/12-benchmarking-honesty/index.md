@@ -8,7 +8,7 @@ tags:
   - open-source
 ---
 
-> **Editor note, May 2026:** This post documents a March benchmark postmortem. Current benchmark claims now live on the generated [Benchmarks](/benchmarks/) page, sourced from the main `automem` repository publication bundle. Treat the figures below as historical methodology context, not current marketing claims.
+> **Editor note, May 2026:** This post documents a March benchmark postmortem. Current benchmark claims now live on the generated [Benchmarks](/benchmarks/) page, sourced from the main `automem` repository experiment log. Treat the figures below as historical methodology context, not current marketing claims.
 
 Last month I told you we had a higher LoCoMo score than our corrected evaluator supported. That number was wrong.
 

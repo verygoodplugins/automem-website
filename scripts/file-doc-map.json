@@ -79,7 +79,7 @@
     "railway.toml": ["deployment/railway"],
     "README.md": ["overview", "getting-started/introduction"],
     "benchmarks/EXPERIMENT_LOG.md": ["site:/benchmarks", "overview", "core-concepts/hybrid-search", "research"],
-    "benchmarks/publication/**": ["site:/benchmarks", "overview", "core-concepts/hybrid-search", "research"],
+    "benchmarks/results/**": ["site:/benchmarks", "overview", "core-concepts/hybrid-search", "research"],
     "docs/BENCHMARK_JUDGE_POLICY.md": ["site:/benchmarks", "research", "development/testing"],
     "docs/RECALL_QUALITY_LAB.md": ["core-concepts/hybrid-search", "research", "development/testing"],
 

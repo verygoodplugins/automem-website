@@ -236,7 +236,7 @@ Pure vector databases cannot represent these relationships:
 
 ## Performance Validation
 
-AutoMem includes benchmark testing against LoCoMo (ACL 2024) and LongMemEval (ICLR 2025). Current public claims are sourced from the main repository's committed publication bundle and rendered on the [Benchmarks](/benchmarks/) page.
+AutoMem includes benchmark testing against LoCoMo (ACL 2024) and LongMemEval (ICLR 2025). Current public claims are sourced from the main repository's committed experiment log and rendered on the [Benchmarks](/benchmarks/) page.
 
 | Benchmark | Scope | Score | Retrieval | Claim status |
 |---|---|---|---|---|
@@ -251,7 +251,7 @@ These are reproducibility and systems claims, not state-of-the-art claims. Explo
 
 Benchmarking a memory system is harder than benchmarking retrieval. Temporal reasoning, episodic questions, and adversarial phrasing all break assumptions that single-turn RAG evals get away with. AutoMem's eval infrastructure is deliberately separate from the production code and documented publicly so the numbers above can be reproduced, challenged, and improved on:
 
-- **[Benchmarks](/benchmarks/)** — the public benchmark page generated from the canonical publication bundle.
+- **[Benchmarks](/benchmarks/)** — the public benchmark page curated from the experiment log and neutral AMB submission.
 - **[automem-evals](https://github.com/verygoodplugins/automem-evals)** — the standalone exploratory evaluation lab. It is useful for diagnostics, but official LoCoMo and LongMemEval claims live in the main `automem` repository.
 - **[docs/EVALS_CONTRACT.md](https://github.com/verygoodplugins/automem/blob/main/docs/EVALS_CONTRACT.md)** — the contract the server exposes to eval harnesses. Defines the endpoints, payload shapes, and determinism guarantees that make reproducible runs possible.
 - **Opt-in LoCoMo cat5 judge** — category 5 (adversarial temporal reasoning) questions are scored by an LLM judge behind a feature flag. Off by default to keep free/fast eval runs cheap; opt in when you need the full benchmark.
