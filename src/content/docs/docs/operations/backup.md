@@ -130,8 +130,9 @@ python scripts/backup_automem.py --cleanup --keep 7
 # Custom directory
 python scripts/backup_automem.py --backup-dir /path/to/backups
 
-# With S3 upload - requires boto3 and AWS credentials set via environment variables
-python scripts/backup_automem.py --s3-bucket automem-backups
+# With S3 upload - requires boto3 and AWS credentials set via environment variables.
+# The bucket is configurable; object keys are written under automem-backups/.
+python scripts/backup_automem.py --s3-bucket my-automem-backups
 ```
 
 ### Local Filesystem Storage
@@ -155,13 +156,14 @@ The `--cleanup --keep N` flag removes backups older than N days based on filenam
 ### S3 Cloud Storage
 
 ```
-s3://automem-backups/
-├── falkordb/
-│   ├── falkordb_20251020_143000.json.gz
-│   └── ...
-└── qdrant/
-    ├── qdrant_20251020_143000.json.gz
-    └── ...
+s3://my-automem-backups/
+└── automem-backups/
+    ├── falkordb/
+    │   ├── falkordb_20251020_143000.json.gz
+    │   └── ...
+    └── qdrant/
+        ├── qdrant_20251020_143000.json.gz
+        └── ...
 ```
 
 **S3 Cost Estimation:**
@@ -188,7 +190,7 @@ sequenceDiagram
     participant FDB as "FalkorDB<br/>:6379"
     participant QDR as "Qdrant Cloud<br/>HTTPS API"
     participant Script as "backup_automem.py"
-    participant S3 as "S3 Bucket<br/>automem-backups"
+    participant S3 as "S3 Bucket<br/>my-automem-backups"
 
     Note over GHA: Triggered every 6 hours<br/>or manually via workflow_dispatch
 
@@ -215,7 +217,7 @@ sequenceDiagram
     Script->>Script: Compress to .json.gz<br/>backups/falkordb/<br/>backups/qdrant/
 
     alt S3 Upload Enabled
-        Script->>S3: Upload via boto3<br/>s3://automem-backups/
+        Script->>S3: Upload via boto3<br/>s3://my-automem-backups/automem-backups/
         S3-->>Script: Upload complete
     end
 
@@ -442,10 +444,11 @@ sequenceDiagram
 
 ```bash
 # Step 1: Download backup file into the directory structure restore_from_backup.py
-# expects — <backup-dir>/qdrant/qdrant_<timestamp>.json.gz — and leave it compressed;
-# the script decompresses it itself via gzip.open()
+# expects — <backup-dir>/qdrant/qdrant_<timestamp>.json.gz — and leave it compressed.
+# backup_automem.py uploads objects under automem-backups/<store>/<file>;
+# the restore script decompresses the local file itself via gzip.open().
 mkdir -p ./backups/qdrant
-aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./backups/qdrant/
+aws s3 cp s3://my-automem-backups/automem-backups/qdrant/qdrant_20251020_143000.json.gz ./backups/qdrant/
 
 # Step 2: Restore to Qdrant (--backup-dir defaults to ./backups; --qdrant-only
 # restores just Qdrant here)
@@ -560,7 +563,9 @@ curl https://your-automem-url/health | jq '{memory_count, vector_count, sync_sta
 
 ```bash
 # Check aggregate graph edge counts and relationship distribution
-curl https://your-automem-url/graph/stats | jq '{edges: .totals.edges, by_relationship}'
+curl -H "Authorization: Bearer your-api-token" \
+  https://your-automem-url/graph/stats \
+  | jq '{edges: .totals.edges, by_relationship}'
 ```
 
 **4. Embedding Coverage:**
