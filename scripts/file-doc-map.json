@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Maps source file patterns to doc page slugs. Use exact paths or '/**' suffix for subtrees.",
-    "last_updated": "2026-07-02",
+    "last_updated": "2026-07-04",
     "automem_repo": "verygoodplugins/automem",
     "mcp_repo": "verygoodplugins/mcp-automem",
     "graph_viewer_repo": "verygoodplugins/automem-graph-viewer"
