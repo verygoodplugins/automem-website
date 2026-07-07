@@ -441,17 +441,17 @@ sequenceDiagram
 **Execution steps:**
 
 ```bash
-# Step 1: Download backup files from S3
-aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./
+# Step 1: Download backup file into the directory structure restore_from_backup.py
+# expects — <backup-dir>/qdrant/qdrant_<timestamp>.json.gz — and leave it compressed;
+# the script decompresses it itself via gzip.open()
+mkdir -p ./backups/qdrant
+aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./backups/qdrant/
 
-# Step 2: Decompress backup
-gunzip qdrant_20251020_143000.json.gz
-
-# Step 3: Restore to Qdrant (the script takes --backup-dir + --backup-timestamp,
-# not a single --file path; use --qdrant-only to restore just Qdrant here)
+# Step 2: Restore to Qdrant (--backup-dir defaults to ./backups; --qdrant-only
+# restores just Qdrant here)
 python scripts/restore_from_backup.py --backup-timestamp 20251020_143000 --qdrant-only
 
-# Step 4: Rebuild FalkorDB from Qdrant
+# Step 3: Rebuild FalkorDB from Qdrant
 python scripts/recover_from_qdrant.py
 ```
 
