@@ -1,11 +1,19 @@
 name: Docs Auto-Merge
 
-# Autonomous merge for the docs-audit bot (.github/workflows/docs-update.yml).
+# Autonomous merge for trusted same-repo documentation PRs.
+#
+# There are two lanes:
+# - docs/audit-* PRs from .github/workflows/docs-update.yml require an explicit
+#   confidence marker in the PR body.
+# - source-release docs PRs from the three documented sibling repos can merge
+#   automatically once they are non-draft and CI passes, unless explicitly held.
+#
 # The auditing agent ends every PR body with a confidence marker:
 #   <!-- DOCS-AUDIT: CLEAR --> -> agent verified everything; mark ready + auto-merge.
 #   <!-- DOCS-AUDIT: HOLD -->  -> agent flagged open questions; leave as a draft.
 # Fail-safe: a HOLD marker OR no marker at all keeps the PR a draft for a human,
-# and proactively cancels any auto-merge a prior CLEAR run may have enabled.
+# and proactively cancels any auto-merge a prior CLEAR run may have enabled for
+# docs/audit-* PRs.
 # To ship a HELD PR, a maintainer edits the body to replace HOLD with CLEAR (the
 # `edited` trigger re-runs this guard) or merges by hand; marking it "ready"
 # alone will not auto-merge while the body still says HOLD.
@@ -25,8 +33,16 @@ jobs:
       ${{
         github.event.pull_request.base.ref == 'main' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
-        startsWith(github.event.pull_request.head.ref, 'docs/audit-') &&
-        startsWith(github.event.pull_request.title, 'docs:')
+        (
+          startsWith(github.event.pull_request.head.ref, 'docs/audit-') ||
+          startsWith(github.event.pull_request.head.ref, 'docs/automem-') ||
+          startsWith(github.event.pull_request.head.ref, 'docs/mcp-automem-') ||
+          startsWith(github.event.pull_request.head.ref, 'docs/graph-viewer-')
+        ) &&
+        (
+          startsWith(github.event.pull_request.title, 'docs:') ||
+          startsWith(github.event.pull_request.title, 'docs(')
+        )
       }}
     runs-on: ubuntu-latest
     concurrency:
@@ -38,6 +54,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           BODY="$(gh pr view "$PR_URL" --json body --jq '.body // ""')"
           # HOLD always wins: the agent flagged something for a human to decide.
@@ -52,9 +70,26 @@ jobs:
             echo "eligible=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # No marker => fail safe to human review.
-          echo "PR has no docs-audit confidence marker; defaulting to HOLD (draft)."
-          echo "eligible=false" >> "$GITHUB_OUTPUT"
+          case "$PR_BRANCH" in
+            docs/audit-*)
+              # No marker => fail safe to human review for audit PRs.
+              echo "Audit PR has no docs-audit confidence marker; defaulting to HOLD (draft)."
+              echo "eligible=false" >> "$GITHUB_OUTPUT"
+              ;;
+            docs/automem-*|docs/mcp-automem-*|docs/graph-viewer-*)
+              if [ "$PR_IS_DRAFT" = "true" ]; then
+                echo "Source-release docs PR is still a draft; leaving it held."
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "Source-release docs PR is non-draft and has no HOLD marker; eligible for auto-merge."
+                echo "eligible=true" >> "$GITHUB_OUTPUT"
+              fi
+              ;;
+            *)
+              echo "Docs PR branch '$PR_BRANCH' is not an auto-merge lane."
+              echo "eligible=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Cancel stale auto-merge when held
         if: steps.guard.outputs.eligible != 'true'
