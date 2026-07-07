@@ -196,7 +196,7 @@ All API endpoints track query execution time using `time.perf_counter()` and inc
   "stored_at": "<timestamp>",
   "type": "<memory_type>",
   "confidence": 0.0,
-  "qdrant": "stored",
+  "qdrant": "queued",
   "embedding_status": "queued",
   "enrichment": "queued",
   "metadata": {},
