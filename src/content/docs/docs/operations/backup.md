@@ -6,14 +6,14 @@ sidebar:
 ---
 
 :::note[Source files]
-This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/main/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/main/\.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/main/docs/RAILWAY_DEPLOYMENT.md).
+This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/RAILWAY_DEPLOYMENT.md).
 :::
 
-This page describes the backup strategies and disaster recovery procedures available for AutoMem deployments. It covers the three-layer backup architecture, automated backup methods, configuration options, backup formats, and four recovery paths for different failure scenarios. For monitoring backup health and detecting data drift, see [Health Monitoring](/docs/operations/health/).
+This page describes the backup strategies and disaster recovery procedures available for AutoMem deployments. It covers the three recovery layers, scheduled backup automation, configuration options, backup formats, and four recovery paths for different failure scenarios. For monitoring backup health and detecting data drift, see [Health Monitoring](/docs/operations/health/).
 
 ## Backup Architecture Overview
 
-AutoMem implements a defense-in-depth backup strategy with three independent layers:
+AutoMem implements a defense-in-depth backup strategy with three recovery layers plus scheduled automation:
 
 ```mermaid
 graph TB
@@ -54,12 +54,12 @@ graph TB
 
 ### Layer Responsibilities
 
-| Layer | Mechanism | Recovery Speed | Scope | Platform Lock |
+| Area | Mechanism | Recovery Speed | Scope | Platform Lock |
 |---|---|---|---|---|
 | **Infrastructure** | Railway volume snapshots | Instant | FalkorDB only | Yes (Railway) |
 | **Dual Storage** | Real-time dual writes | Immediate | Both databases | No |
 | **Application** | Script exports | Minutes | Both databases | No |
-| **Automated** | Scheduled execution | N/A (prevention) | Both databases | No |
+| **Automation** | Scheduled execution | N/A (prevention) | Both databases | No |
 
 ---
 
@@ -94,7 +94,7 @@ The FalkorDB service uses a persistent volume mounted at `/var/lib/falkordb/data
 
 ### backup_automem.py Script
 
-The core backup script at [`scripts/backup_automem.py`](https://github.com/verygoodplugins/automem/blob/main/scripts/backup_automem.py) exports data from both FalkorDB and Qdrant to compressed JSON files.
+The core backup script at [`scripts/backup_automem.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/backup_automem.py) exports data from both FalkorDB and Qdrant to compressed JSON files.
 
 ### Backup Format
 
@@ -111,7 +111,7 @@ The FalkorDB export captures the entire Redis keyspace including:
 
 The Qdrant export includes:
 
-- Vector embeddings (dimensions depend on `VECTOR_SIZE` config: 768, 1024, 2048, or 3072)
+- Vector embeddings (dimensions depend on the configured `VECTOR_SIZE`, embedding provider, and any adopted existing Qdrant collection dimension)
 - Payload data (memory content, metadata, tags)
 - Point IDs mapped to memory IDs
 - Collection configuration
@@ -175,7 +175,7 @@ s3://automem-backups/
 
 ---
 
-## Automated Backup Methods (Layer 4)
+## Automated Backup Methods
 
 ### GitHub Actions Workflow
 
@@ -223,7 +223,7 @@ sequenceDiagram
     GHA->>GHA: Log backup summary<br/>File sizes and timestamps
 ```
 
-The workflow is defined in [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/main/.github/workflows/backup.yml) and triggers every 6 hours or manually via `workflow_dispatch`.
+The workflow is defined in [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/.github/workflows/backup.yml) and triggers every 6 hours or manually via `workflow_dispatch`.
 
 :::caution[TCP Proxy requirement]
 The workflow validates that `FALKORDB_HOST` is not a Railway internal hostname (`*.railway.internal`), as GitHub Actions runners cannot access internal Railway domains. The TCP proxy must be enabled to provide external connectivity.
@@ -240,7 +240,7 @@ The workflow validates that `FALKORDB_HOST` is not a Railway internal hostname (
 | `QDRANT_API_KEY` | Qdrant authentication | API key from Qdrant Cloud | `QdrantClient(api_key=)` |
 | `AWS_ACCESS_KEY_ID` | S3 upload (optional) | AWS credentials | `boto3.client('s3')` |
 | `AWS_SECRET_ACCESS_KEY` | S3 upload (optional) | AWS credentials | `boto3.client('s3')` |
-| `AWS_DEFAULT_REGION` | S3 region (optional) | `us-east-1` | `boto3.client('s3', region_name=)` |
+| `AWS_DEFAULT_REGION` | S3 region (optional) | `us-east-1` | AWS SDK environment resolution |
 
 The TCP proxy endpoint is found in Railway Dashboard → FalkorDB service → Settings → Networking → TCP Proxy.
 
@@ -252,16 +252,16 @@ The TCP proxy endpoint is found in Railway Dashboard → FalkorDB service → Se
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `FALKORDB_HOST` | Yes | - | FalkorDB hostname or IP |
+| `FALKORDB_HOST` | No | `localhost` | FalkorDB hostname or IP |
 | `FALKORDB_PORT` | Yes | `6379` | FalkorDB Redis port |
 | `FALKORDB_PASSWORD` | Yes | - | FalkorDB authentication password |
 | `FALKORDB_GRAPH` | No | `memories` | Graph database name |
-| `QDRANT_URL` | Yes* | - | Qdrant endpoint URL |
+| `QDRANT_URL` | Yes* | `http://localhost:6333` | Qdrant endpoint URL |
 | `QDRANT_API_KEY` | Yes* | - | Qdrant API authentication |
 | `QDRANT_COLLECTION` | No | `memories` | Qdrant collection name |
 | `AWS_ACCESS_KEY_ID` | No | - | For S3 upload |
 | `AWS_SECRET_ACCESS_KEY` | No | - | For S3 upload |
-| `AWS_DEFAULT_REGION` | No | `us-east-1` | S3 region |
+| `AWS_DEFAULT_REGION` | No | - | Optional S3 region consumed by boto3 / AWS SDK environment resolution |
 
 *Qdrant variables optional if system is running without vector storage.
 
@@ -354,8 +354,8 @@ The fastest and most reliable recovery method. Uses Qdrant's vector payloads to 
 | Function | Purpose | Code Location |
 |---|---|---|
 | `qdrant_client.scroll()` | Fetch all vectors with payloads | Qdrant SDK call |
-| `_filter_reserved_fields()` | Remove type, confidence from metadata | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/main/scripts/recover_from_qdrant.py) |
-| `CREATE MERGE (m:Memory)` | Rebuild memory nodes | Cypher query in recovery loop |
+| `restore_memory_to_graph_only()` | Filters `RESERVED_FIELDS` from metadata inline (no separate filter function) | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/recover_from_qdrant.py) |
+| `CREATE (m:Memory {...})` | Rebuild memory nodes | Cypher query in recovery loop |
 | Relationship extraction | Parse `metadata.relationships` array | Recovery loop logic |
 
 :::note[Critical Fix (v0.5.0)]
@@ -441,16 +441,17 @@ sequenceDiagram
 **Execution steps:**
 
 ```bash
-# Step 1: Download backup files from S3
-aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./
+# Step 1: Download backup file into the directory structure restore_from_backup.py
+# expects — <backup-dir>/qdrant/qdrant_<timestamp>.json.gz — and leave it compressed;
+# the script decompresses it itself via gzip.open()
+mkdir -p ./backups/qdrant
+aws s3 cp s3://automem-backups/qdrant/qdrant_20251020_143000.json.gz ./backups/qdrant/
 
-# Step 2: Decompress backup
-gunzip qdrant_20251020_143000.json.gz
+# Step 2: Restore to Qdrant (--backup-dir defaults to ./backups; --qdrant-only
+# restores just Qdrant here)
+python scripts/restore_from_backup.py --backup-timestamp 20251020_143000 --qdrant-only
 
-# Step 3: Restore to Qdrant
-python scripts/restore_from_backup.py --file qdrant_20251020_143000.json
-
-# Step 4: Rebuild FalkorDB from Qdrant
+# Step 3: Rebuild FalkorDB from Qdrant
 python scripts/recover_from_qdrant.py
 ```
 
@@ -501,10 +502,9 @@ Uses the health monitor to detect and automatically fix inconsistencies between 
 - Preventive maintenance
 
 ```bash
-# Enable auto-recovery on health monitor service
-HEALTH_MONITOR_AUTO_RECOVER=true
-
-# Or trigger manual recovery
+# Auto-recovery is a CLI flag, not an environment variable — there is no
+# persistent env-var equivalent. Run the health-monitor process/cron with
+# the flag baked into its invocation:
 python scripts/health_monitor.py --auto-recover
 ```
 
@@ -553,21 +553,22 @@ curl https://your-automem-url/health
 
 ```bash
 # Check FalkorDB count matches Qdrant count
-curl https://your-automem-url/health | jq '.statistics'
+curl https://your-automem-url/health | jq '{memory_count, vector_count, sync_status}'
 ```
 
 **3. Relationship Integrity:**
 
 ```bash
-# Use analyze endpoint to check relationship distribution
-curl https://your-automem-url/analyze | jq '.relationship_types'
+# Check aggregate graph edge counts and relationship distribution
+curl https://your-automem-url/graph/stats | jq '{edges: .totals.edges, by_relationship}'
 ```
 
 **4. Embedding Coverage:**
 
 ```bash
-# Verify all memories have embeddings
-curl https://your-automem-url/analyze | jq '.embedding_coverage'
+# /analyze has no embedding_coverage field. Compare vector_count against
+# memory_count from /health instead:
+curl https://your-automem-url/health | jq '{memory_count, vector_count}'
 ```
 
 **5. Search Functionality:**
@@ -632,7 +633,7 @@ Monitor the system for 24 hours after recovery:
 
 **Cause:** Using old version of `recover_from_qdrant.py` without `RESERVED_FIELDS` filtering
 
-**Solution:** Update to v0.5.0+ of AutoMem. If already on old version, run [`scripts/cleanup_memory_types.py`](https://github.com/verygoodplugins/automem/blob/main/scripts/cleanup_memory_types.py) to fix corrupted types.
+**Solution:** Update to v0.5.0+ of AutoMem. If already on old version, run [`scripts/cleanup_memory_types.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/cleanup_memory_types.py) to fix corrupted types.
 
 ### Drift Persists After Recovery
 
