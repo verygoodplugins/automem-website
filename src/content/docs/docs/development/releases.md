@@ -177,10 +177,10 @@ Release Please automatically updates version numbers across five files using the
 | File | Field Updated | Purpose |
 |---|---|---|
 | `package.json` | `version` | npm package version |
-| `plugins/server/server.json` | `version` | MCP server metadata |
-| `plugins/.claude-plugin/manifest.json` | `version` | Claude Desktop extension manifest |
-| `plugins/.claude-plugin/plugin.json` | `version` | Claude Plugin marketplace metadata |
-| `plugins/.claude-plugin/marketplace.json` | `version` | Marketplace listing version |
+| `server.json` | `version` | MCP server metadata |
+| `manifest.json` | `version` | Claude Desktop extension manifest |
+| `plugins/automem/.claude-plugin/plugin.json` | `version` | Claude Plugin marketplace metadata |
+| `.claude-plugin/marketplace.json` | `version` | Marketplace listing version |
 
 :::caution[Never manually bump versions]
 Never manually edit version numbers in any of these five files. Release Please keeps them synchronized. Manual edits will cause drift and break the release automation.
@@ -250,13 +250,17 @@ No stored secrets (like `NPM_TOKEN`) are required due to Trusted Publishing.
 
 ## Dependabot Configuration
 
-Automated dependency updates via GitHub Dependabot run weekly and are grouped into two categories:
+Automated dependency updates via GitHub Dependabot run weekly and are grouped into four categories:
 
-**Production Dependencies Group**: All dependencies excluding `@types/*`, `typescript`, `vitest`, `eslint*`, `prettier`
+**production-dependencies**: All production dependencies (minor and patch updates)
 
-**Dev Dependencies Group**: `@types/*`, `typescript`, `vitest`, `eslint*`, `prettier`
+**dev-dependencies**: All development dependencies (minor and patch updates)
 
-This grouping prevents excessive PRs by batching related updates. All dependency updates use the `chore(deps):` conventional commit prefix, which does not trigger version bumps.
+**dev-toolchain-majors**: Major-version updates for `@eslint/*`, `@types/*`, `@vitest/*`, `eslint`, `typescript`, `typescript-eslint`, `vitest`
+
+**dev-other-majors**: Major-version updates for all other dependencies
+
+This grouping prevents excessive PRs by batching related updates and isolating major-version bumps from routine minor/patch updates. All dependency updates use the `chore(deps)` conventional commit prefix, which does not trigger version bumps.
 
 ## Distribution Channels
 
