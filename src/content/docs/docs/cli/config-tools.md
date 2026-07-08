@@ -33,15 +33,19 @@ The endpoint is read at server startup by `AutoMemClient` and written by the `se
 
 ### AUTOMEM_API_KEY
 
-Optional authentication token for secured AutoMem instances. Required when deploying to Railway or other hosted environments. The client supports two environment variable names for compatibility:
+Optional authentication token for secured AutoMem instances. Required when deploying to Railway or other hosted environments. The client checks several sources for compatibility, including the Claude Code plugin's option-passing convention:
 
 - `AUTOMEM_API_KEY` (preferred)
 - `AUTOMEM_API_TOKEN` (alternative)
+- `CLAUDE_PLUGIN_OPTION_API_KEY` / `CLAUDE_PLUGIN_OPTION_api_key` (Claude Code plugin option)
+- `CLAUDE_PLUGIN_OPTION_API_TOKEN` / `CLAUDE_PLUGIN_OPTION_api_token` (Claude Code plugin option)
 
-The `readAutoMemApiKeyFromEnv()` function checks these variables in priority order:
+The `readAutoMemApiKeyFromEnv()` function checks these in priority order and returns the first truthy, trimmed value:
 
 1. `AUTOMEM_API_KEY`
 2. `AUTOMEM_API_TOKEN`
+3. `CLAUDE_PLUGIN_OPTION_API_KEY` or `CLAUDE_PLUGIN_OPTION_api_key`
+4. `CLAUDE_PLUGIN_OPTION_API_TOKEN` or `CLAUDE_PLUGIN_OPTION_api_token`
 
 ### Process Tags
 
@@ -94,18 +98,14 @@ graph TB
 graph TB
     subgraph "Configuration Resolution Priority"
         direction TB
-        CMD["1. Command-line args<br/>--endpoint, --api-key"]
-        ENV_FILE["2. .env file<br/>current directory"]
-        PROCESS_ENV["3. Process environment<br/>shell exports"]
-        DEFAULT["4. Default<br/>http://localhost:8001"]
+        ENV["1. Environment variables<br/>AUTOMEM_API_URL / AUTOMEM_ENDPOINT<br/>+ API key (.env or shell)"]
+        CLAUDE_JSON["2. ~/.claude.json<br/>scans mcpServers entries"]
+        DEFAULT["3. Default<br/>http://127.0.0.1:8001"]
     end
 
-    AUTO_CLIENT["AutoMemClient<br/>src/automem-client.ts"] --> CMD
-    CMD -->|Not found| ENV_FILE
-    ENV_FILE -->|Not found| PROCESS_ENV
-    PROCESS_ENV -->|Not found| DEFAULT
-
-    ENV_FILE --> DOT_ENV["dotenv.config()<br/>loads AUTOMEM_API_URL<br/>loads AUTOMEM_API_KEY"]
+    RESOLVE["resolveAutoMemConfig()<br/>src/cli/queue.ts"] --> ENV
+    ENV -->|Not found| CLAUDE_JSON
+    CLAUDE_JSON -->|Not found| DEFAULT
 ```
 
 ### Priority Levels
