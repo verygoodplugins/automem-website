@@ -164,23 +164,24 @@ This updates `AGENTS.md` in the current directory with memory operation rules fo
 Codex uses TOML format for its configuration file at `~/.codex/config.toml`. The TOML format is semantically equivalent to the JSON format used by other platforms:
 
 ```toml
-[[mcp_servers]]
-name = "automem"
+[mcp_servers.memory]
 command = "npx"
-args = ["@verygoodplugins/mcp-automem"]
+args = ["-y", "@verygoodplugins/mcp-automem"]
 
-[mcp_servers.env]
+[mcp_servers.memory.env]
 AUTOMEM_API_URL = "http://localhost:8001"
 AUTOMEM_API_KEY = "your-api-key"
 ```
 
 ### Config Snippet Generation
 
-Generate the JSON config snippet for your current configuration:
+Print the current configuration for other platforms (Claude Desktop JSON, Claude Code env export, Hermes YAML):
 
 ```bash
 npx @verygoodplugins/mcp-automem config
 ```
+
+Add `--format=json` (or `--json`) to get the raw JSON snippet instead of the human-readable text output.
 
 ## OpenClaw
 
@@ -234,11 +235,11 @@ All modes also write an AutoMem rules block to `~/.hermes/AGENTS.md`. See the [H
 
 ## Remote MCP (Cloud Platforms)
 
-For cloud AI platforms that cannot run local processes (ChatGPT, Claude.ai via API, ElevenLabs), AutoMem provides a remote MCP bridge via the `mcp-sse-server` service.
+For cloud AI platforms that cannot run local processes (ChatGPT, Claude.ai via API, ElevenLabs), AutoMem provides a remote MCP bridge via the `automem` server's built-in remote MCP sidecar (see [`docs/MCP_SSE.md`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/docs/MCP_SSE.md)).
 
-The `mcp-sse-server` exposes AutoMem tools over SSE (Server-Sent Events) transport, which is compatible with remote MCP clients. Deploy it alongside the AutoMem backend — see [Railway Deployment](/docs/deployment/railway/) for the deployment setup.
+The sidecar exposes AutoMem tools over Streamable HTTP (recommended) with SSE (Server-Sent Events) as a legacy fallback, both compatible with remote MCP clients. Deploy it alongside the AutoMem backend — see [Railway Deployment](/docs/deployment/railway/) for the deployment setup.
 
-Configure cloud platforms with the public URL of your deployed `mcp-sse-server`:
+Configure cloud platforms with the public URL of your deployed remote MCP sidecar:
 
 ```
 https://your-mcp-bridge.up.railway.app
@@ -273,7 +274,7 @@ graph TB
 
     subgraph "MCP Server"
         NPX["npx @verygoodplugins/mcp-automem<br/>(stdio transport)"]
-        SSE["mcp-sse-server<br/>(SSE transport, cloud platforms)"]
+        SSE["automem remote MCP sidecar<br/>(Streamable HTTP, SSE fallback; cloud platforms)"]
     end
 
     ClaudeDesktop --> NPX
