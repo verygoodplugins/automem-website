@@ -7,6 +7,15 @@ All notable releases for **AutoMem** (the memory server) and **MCP AutoMem** (th
 
 ---
 
+## July 2026
+
+### 0.16.1 · Recall & Admin Bug Fixes
+**2026-07-07**
+
+A patch release hardening recall and the admin surface. Admin repair endpoints now reject placeholder-provider fallback and use real provider embeddings instead. Memory writes require confirmed graph commits before returning success. Recall over-fetches vector candidates and excludes artifact types, widens context-tag candidate fetch, and preserves the metadata sidecar budget and vector fetch limit floor. Consolidation sync ignores `MetaPattern` artifacts when checking for drift. See [What's New](/docs/whats-new/).
+
+---
+
 ## June 2026
 
 ### 0.16.0 · Recall Ranking Overhaul
@@ -53,7 +62,7 @@ Optimized relationship taxonomy for cleaner graph traversal. LoCoMo cat5 multi-h
 Complete OpenClaw plugin rewrite — native MCP integration and new skill setup. Split global vs. project rules for Cursor. Hook stdin parsing with truncation guards and dedup checks.
 
 ### 0.14.0 · Docker & Hardened Deployments
-**2026-03-08**
+**2026-03-07**
 
 Official Docker build workflow. `QDRANT_HOST` + `QDRANT_PORT` for flexible Qdrant config. Stateless MCP bridge transport for resilient connections. Consolidation overhaul: reduced decay rate, importance floor, archived memory filtering. Voyage AI set as recommended embedding default.
 
