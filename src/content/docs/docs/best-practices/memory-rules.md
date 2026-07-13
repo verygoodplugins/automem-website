@@ -47,23 +47,23 @@ The `recall_memory` tool supports five fundamental recall strategies, often used
 ```
 recall_memory({
   tags: ["preference"],
-  limit: 10
+  limit: 20,
+  sort: "updated_desc"
 })
 ```
 
 **Phase 2 — Task context (semantic + temporal):**
 ```
 recall_memory({
-  queries: ["<current topic>", "user corrections"],
+  query: "<proper nouns, specific tools, exact topics from the user's message>",
   tags: ["<project-name>"],
-  limit: 10,
-  auto_decompose: true,
-  time_query: "last 30 days"
+  limit: 30,
+  time_query: "last 90 days"
 })
 ```
 
 :::tip[Key insight]
-Don't mix tag-based preference recall with semantic task recall — combining them dilutes results. Preferences are stable and should use exact tag matching without semantic search interference.
+Don't mix tag-based preference recall with semantic task recall — combining them dilutes results. Preferences are stable and should use exact tag matching without semantic search interference. For Phase 2, a single well-written `query` consistently beats `queries[]` + `auto_decompose: true` on focused tasks; reserve multi-query decomposition for genuinely multi-topic questions.
 :::
 
 ### Advanced Recall Techniques
@@ -84,7 +84,7 @@ Enable graph traversal to follow relationships from seed results:
 }
 ```
 
-API parameters exposed in `src/index.ts:350-355`:
+API parameters exposed in `src/index.ts:764-811`:
 - `expand_entities: true` — Enable multi-hop entity expansion
 - `expand_relations: true` — Follow graph relationships from seed results
 - `expand_min_importance: 0.5` — Filter expanded results by importance threshold
