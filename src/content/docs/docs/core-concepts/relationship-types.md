@@ -336,7 +336,7 @@ graph TB
     Seeds["Seed Results<br/>5-10 memories"]
     Expand["Traverse Relationships<br/>Follow typed edges"]
     Filter["Apply Filters<br/>importance, strength"]
-    Score["Hybrid Scoring<br/>9-component"]
+    Score["Hybrid Scoring<br/>10-component"]
     Merge["Merge Results<br/>Deduplicate by ID"]
 
     Query-->Seeds
@@ -439,29 +439,25 @@ Memory A -[INVALIDATED_BY {reason: "Deprecated in v2.0 style guide"}]-> Memory B
 
 ## Relationship Scoring and Weights
 
-During hybrid recall, relationships contribute to the final memory score through the **relation component** (25% weight by default):
+During hybrid recall, relationships contribute to the final memory score through the **relation component** (25% weight by default), computed only when graph expansion (`expand_relations=true`) traverses an edge from a seed result:
 
-**Relation Score Calculation:**
+**Relation Score Calculation** (`_expand_related_memories()` in `automem/api/recall.py`):
 
 ```
-relation_score =
-    incoming_strength × 0.50   # Memories pointed to by others
-  + outgoing_strength × 0.30   # Memories pointing to others
-  + type_diversity    × 0.20   # Number of distinct relationship types
+relation_score = edge_strength + max(seed_score, 0.0) × 0.25
 ```
 
 **Factors:**
 
-- Incoming relationship strength (50% of relation score)
-- Outgoing relationship strength (30% of relation score)
-- Relationship type diversity (20% of relation score)
+- `edge_strength` — the edge's own weight, coalesced from `r.strength`, `r.score`, `r.confidence`, `r.similarity`, or `r.count` (in that order), defaulting to `0.0` if none are set
+- `seed_score` — the final relevance score of the seed memory the edge was expanded from, boosted by a fixed `0.25` factor
 
 **Configuration:**
 
 - `SEARCH_WEIGHT_RELATION` (default: 0.25) — Relation component weight in hybrid scoring
 
 :::tip
-Higher-strength relationships and more diverse relationship types boost memory relevance during recall. A memory with 3 different relationship types scores higher than one with 3 identical relationship types at the same strength.
+Higher-strength edges and higher-scoring seed memories boost the relation component during recall. Relationship type diversity is not itself a scoring factor.
 :::
 
 ---
