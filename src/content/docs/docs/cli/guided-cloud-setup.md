@@ -65,7 +65,7 @@ The installer verifies the endpoint's `/health` before touching any agent config
 3. If the CLI can't finish in your environment, it **falls back to a browser deploy** and then asks you to paste the URL + key, exactly like the InstaPods flow.
 
 :::caution[Railway requires `PORT=8001`]
-The AutoMem service must run on port 8001. The [Railway template](/docs/deployment/railway/) sets `PORT=8001` for you — without it Flask defaults to 5000 and other services can't connect (`ECONNREFUSED`).
+The AutoMem service must run on port 8001. The [Railway template](/docs/deployment/railway/) sets `PORT=8001` for you. AutoMem's own default already falls back to `8001` when `PORT` is unset (Flask's bare `5000` default is never reached), but Railway assigns its own `PORT` per service — so other services can only reach `memory-service` reliably if `PORT` is set to `8001` explicitly.
 :::
 
 ### Reuse vs. fresh deploy
@@ -157,7 +157,7 @@ curl https://your-automem-url/health \
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Railway CLI sign-in stalls | No browser / restricted shell | The installer falls back to a browser deploy; finish there and paste the URL + key |
-| `ECONNREFUSED` after a Railway deploy | `PORT` not set | Set `PORT=8001` on `memory-service` ([Railway guide](/docs/deployment/railway/)) |
+| `ECONNREFUSED` after a Railway deploy | Railway assigned `memory-service` a different port than other services expect | Set `PORT=8001` explicitly on `memory-service` ([Railway guide](/docs/deployment/railway/)) |
 | `401 Unauthorized` on `/health` | Wrong/missing token | Re-check the key the provider issued; provide it without a `Bearer` prefix |
 | Installer can't find your new deploy | Credentials not ready yet | Re-run the installer and choose **reuse an existing deployment**, or use **Other** and paste the URL + key |
 | Charged for a second deploy | Picked "deploy fresh" with one already live | Re-run and choose the existing deployment to reuse its credentials |
