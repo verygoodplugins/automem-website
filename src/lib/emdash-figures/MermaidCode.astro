@@ -1,0 +1,58 @@
+---
+/**
+ * Renders standard Portable Text `code` blocks.
+ *
+ * EmDash's normal markdown writer stores fenced Mermaid as
+ * `{ _type: "code", language: "mermaid" }`, while older migrated posts use
+ * the custom `{ _type: "mermaid" }` block. Route both shapes through the same
+ * diagram renderer and leave all other code fences as code.
+ */
+import Mermaid from './Mermaid.astro';
+
+const { node } = Astro.props;
+const language = node?.language?.trim();
+const languageClass = language ? `language-${language}` : '';
+const isMermaid = language?.toLowerCase() === 'mermaid';
+---
+
+{node?.code && isMermaid ? (
+  <Mermaid node={{ code: node.code, caption: node.filename }} />
+) : node?.code ? (
+  <div class="emdash-code">
+    {node.filename && <div class="emdash-code-filename">{node.filename}</div>}
+    <pre class={languageClass}><code class={languageClass}>{node.code}</code></pre>
+  </div>
+) : null}
+
+<style>
+  .emdash-code {
+    margin: 1.5rem 0;
+  }
+
+  .emdash-code-filename {
+    font-family: monospace;
+    font-size: 0.75rem;
+    background: #2d2d2d;
+    color: #ccc;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .emdash-code pre {
+    margin: 0;
+    padding: 1rem;
+    background: #1e1e1e;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .emdash-code-filename + pre {
+    border-radius: 0 0 0.5rem 0.5rem;
+  }
+
+  .emdash-code code {
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.875rem;
+    color: #e0e0e0;
+  }
+</style>
