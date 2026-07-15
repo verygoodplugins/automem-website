@@ -5,6 +5,7 @@ import { createPublicPageContext } from 'emdash/page';
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import { getCmsChrome } from '../../lib/cms-chrome';
+import { isCmsEntryNotFoundError } from '../../lib/cms-entry-errors';
 import { hydrateCmsSeo } from '../../lib/cms-seo';
 import '../../styles/global.css';
 
@@ -29,6 +30,10 @@ const {
   cacheHint,
 } = await getEmDashEntry('pages', slug!);
 const page = rawPage as typeof rawPage & { data: CmsPageData };
+
+if (error && isCmsEntryNotFoundError(error)) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
 
 if (error) {
   console.error('Failed to load CMS page:', error);

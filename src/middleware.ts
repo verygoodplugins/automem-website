@@ -17,6 +17,19 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   } catch {
     // Not running in Cloudflare runtime (e.g. local dev without bindings)
   }
+
+  if (url.pathname === '/blog/') {
+    const canonicalBlogUrl = new URL(url);
+    canonicalBlogUrl.pathname = '/blog';
+    return new Response(null, {
+      status: 308,
+      headers: {
+        Location: canonicalBlogUrl.toString(),
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
   const pathname = (url?.pathname || '/').replace(/\/+$/, '') || '/';
 
   if (wantsHomepageMarkdown(request, pathname)) {

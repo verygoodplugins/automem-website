@@ -100,6 +100,15 @@ test("Pages worker routes include homepage and API catalog for agent negotiation
   assert.match(bundler, /'\/\.well-known\/api-catalog'/);
 });
 
+test("middleware canonicalizes the trailing-slash blog index", async () => {
+  const middleware = await readSource("src/middleware.ts");
+
+  assert.match(middleware, /url\.pathname === ['"]\/blog\/['"]/);
+  assert.match(middleware, /canonicalBlogUrl\.pathname = ['"]\/blog['"]/);
+  assert.match(middleware, /status:\s*308/);
+  assert.match(middleware, /['"]Cache-Control['"]:\s*['"]no-store/);
+});
+
 test("homepage is server-rendered so middleware can negotiate markdown", async () => {
   const homepage = await readSource("src/pages/index.astro");
 

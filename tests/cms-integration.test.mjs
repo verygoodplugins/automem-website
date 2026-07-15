@@ -165,15 +165,16 @@ test('CMS route additions are present and wired to EmDash APIs', async () => {
   assert.doesNotMatch(migration, /hasPublishedDate/);
 });
 
-test('blog index does not cache empty output when CMS posts fail to load', async () => {
+test('blog index does not cache CMS failures or stale listing HTML', async () => {
   const blogIndex = await readSource('../src/pages/blog/index.astro');
   const errorIndex = blogIndex.indexOf('if (error) {');
-  const cacheIndex = blogIndex.indexOf("Astro.response.headers.set('Cache-Control', 'public");
+  const cacheIndex = blogIndex.indexOf("Astro.response.headers.set('Cache-Control', 'no-store')");
 
   assert.ok(errorIndex > -1, 'blog index should handle CMS errors explicitly');
-  assert.ok(cacheIndex > -1, 'blog index should set public cache headers on successful CMS reads');
-  assert.ok(errorIndex < cacheIndex, 'CMS error handling should happen before public cache headers are set');
+  assert.ok(cacheIndex > -1, 'blog index should prevent stale listing HTML after successful CMS reads');
+  assert.ok(errorIndex < cacheIndex, 'CMS error handling should happen before successful response cache headers are set');
   assert.match(blogIndex, /['"]Cache-Control['"]:\s*['"]no-store/);
+  assert.doesNotMatch(blogIndex, /s-maxage=3600/);
   assert.match(blogIndex, /return new Response\(/);
   assert.match(blogIndex, /status:\s*503/);
 });
@@ -224,6 +225,28 @@ test('blog detail does not cache or report CMS lookup failures as missing posts'
   assert.match(blogDetail, /['"]Cache-Control['"]:\s*['"]no-store/);
   assert.match(blogDetail, /return new Response\(/);
   assert.match(blogDetail, /status:\s*503/);
+});
+
+test('CMS entry routes treat missing live entries as 404s, not CMS outages', async () => {
+  const entryErrors = await readSource('../src/lib/cms-entry-errors.ts');
+  const blogDetail = await readSource('../src/pages/blog/[slug].astro');
+  const cmsPage = await readSource('../src/pages/pages/[slug].astro');
+
+  assert.match(entryErrors, /LiveEntryNotFoundError/);
+  assert.match(entryErrors, /export function isCmsEntryNotFoundError/);
+
+  for (const source of [blogDetail, cmsPage]) {
+    assert.match(source, /import \{ isCmsEntryNotFoundError \}/);
+    assert.match(source, /if \(error && isCmsEntryNotFoundError\(error\)\)/);
+    assert.match(source, /if \(error\)/);
+    assert.match(source, /status:\s*404/);
+
+    const notFoundErrorIndex = source.indexOf('if (error && isCmsEntryNotFoundError(error))');
+    const cmsErrorIndex = source.indexOf('if (error) {');
+    assert.ok(notFoundErrorIndex > -1, 'route should handle live-entry misses explicitly');
+    assert.ok(cmsErrorIndex > -1, 'route should still handle real CMS errors explicitly');
+    assert.ok(notFoundErrorIndex < cmsErrorIndex, 'missing-entry normalization should happen before generic CMS errors');
+  }
 });
 
 test('CMS pages do not cache or report CMS lookup failures as missing pages', async () => {
