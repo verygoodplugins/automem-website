@@ -210,6 +210,20 @@ test('blog detail and RSS use scheduledAt for ready scheduled posts', async () =
   assert.match(rss, /pubDate: effectivePostDate\(post\)/);
 });
 
+test('CMS PortableText renders Mermaid code fences as diagrams', async () => {
+  const blockComponents = await readSource('../src/lib/emdash-figures/block-components.ts');
+  const mermaidCode = await readSource('../src/lib/emdash-figures/MermaidCode.astro');
+
+  assert.match(blockComponents, /import MermaidCode/);
+  assert.match(blockComponents, /code:\s*MermaidCode/);
+  assert.match(blockComponents, /mermaid:\s*Mermaid/);
+
+  assert.match(mermaidCode, /language\?\.toLowerCase\(\)\s*===\s*['"]mermaid['"]/);
+  assert.match(mermaidCode, /<Mermaid node=\{\{ code: node\.code/);
+  assert.match(mermaidCode, /<pre class=\{languageClass\}>/);
+  assert.match(mermaidCode, /<code class=\{languageClass\}>\{node\.code\}<\/code>/);
+});
+
 test('blog detail does not cache or report CMS lookup failures as missing posts', async () => {
   const blogDetail = await readSource('../src/pages/blog/[slug].astro');
   const errorIndex = blogDetail.indexOf('if (error) {');

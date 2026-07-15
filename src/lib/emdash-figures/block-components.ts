@@ -6,9 +6,11 @@
  * declared in plugin.ts. Each component receives the block as `Astro.props.node`.
  */
 import Mermaid from './Mermaid.astro';
+import MermaidCode from './MermaidCode.astro';
 import FigureSvg from './FigureSvg.astro';
 
 export const blockComponents = {
+  code: MermaidCode,
   mermaid: Mermaid,
   figureSvg: FigureSvg,
 };
