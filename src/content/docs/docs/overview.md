@@ -148,7 +148,7 @@ AutoMem's architecture separates concerns into distinct modules, each handling s
 | **Embedding Providers** | `automem/embedding/` | Pluggable embedding generation | `EmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageEmbeddingProvider`, `FastEmbedProvider`, `PlaceholderEmbeddingProvider` |
 | **Enrichment Pipeline** | `automem/enrichment/` | Entity extraction, pattern detection, relationship building | `EnrichmentStats`, `extract_entities`, `generate_summary` |
 | **Consolidation Engine** | `automem/consolidation/` | Memory decay, creative association, clustering, forgetting | `MemoryConsolidator`, `ConsolidationScheduler` |
-| **Memory Classifier** | `automem/classifier/` | Regex + LLM-based memory type classification | `MemoryClassifier`, `classify` |
+| **Memory Classifier** | `automem/classification/` | Regex + LLM-based memory type classification | `MemoryClassifier`, `classify` |
 | **Health Monitor** | `scripts/health_monitor.py` | Drift detection, webhook alerts | `check_drift`, `repair_drift` |
 
 The MCP bridge exposes six tools to AI platforms:
@@ -238,7 +238,7 @@ The following diagram illustrates how a memory flows through the system from sto
 sequenceDiagram
     participant Client as "AI Client"
     participant API as "Flask API<br/>automem/api/"
-    participant Classifier as "MemoryClassifier<br/>automem/classifier/"
+    participant Classifier as "MemoryClassifier<br/>automem/classification/"
     participant Graph as "FalkorDB<br/>ServiceState.memory_graph"
     participant Vector as "Qdrant<br/>ServiceState.qdrant"
     participant EnrichQ as "Enrichment Queue<br/>ServiceState.enrichment_queue"
@@ -294,7 +294,7 @@ sequenceDiagram
         Graph-->>API: candidate_ids
     end
 
-    API->>API: Merge + rank results<br/>9-component scoring
+    API->>API: Merge + rank results<br/>10-component scoring
 
     opt expand_relations=true
         API->>Graph: MATCH relationships
@@ -315,12 +315,12 @@ AutoMem is designed to continue operating even when components fail. The most cr
 
 | Scenario | System Behavior | Code Reference |
 |----------|----------------|----------------|
-| **Qdrant unavailable at startup** | Logs warning, initializes with `state.qdrant = None`, graph operations continue normally | [`automem/api/`](https://github.com/verygoodplugins/automem/tree/main/automem/api) |
-| **Qdrant fails during write** | Logs error, memory persists in FalkorDB, enrichment queued | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) |
-| **Qdrant fails during recall** | Falls back to keyword/graph search only, returns results without vector scoring | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/recall.py) |
-| **Embedding provider unavailable** | Falls back to `PlaceholderEmbeddingProvider`, generates deterministic hash-based vectors | [`automem/embedding/`](https://github.com/verygoodplugins/automem/tree/main/automem/embedding) |
-| **Enrichment worker crashes** | Failed jobs remain in queue with retry tracking, manual reprocess available via `POST /enrichment/reprocess` | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/main/automem/enrichment) |
-| **Consolidation scheduler fails** | Logs error, scheduler continues on next tick, control node tracks last successful runs | [`automem/consolidation/`](https://github.com/verygoodplugins/automem/tree/main/automem/consolidation) |
+| **Qdrant unavailable at startup** | Logs warning, initializes with `state.qdrant = None`, graph operations continue normally | [`automem/api/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api) |
+| **Qdrant fails during write** | Logs error, memory persists in FalkorDB, enrichment queued | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/memory.py) |
+| **Qdrant fails during recall** | Falls back to keyword/graph search only, returns results without vector scoring | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/recall.py) |
+| **Embedding provider unavailable** | Falls back to `PlaceholderEmbeddingProvider`, generates deterministic hash-based vectors | [`automem/embedding/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding) |
+| **Enrichment worker crashes** | Failed jobs remain in queue with retry tracking, manual reprocess available via `POST /enrichment/reprocess` | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/enrichment) |
+| **Consolidation scheduler fails** | Logs error, scheduler continues on next tick, control node tracks last successful runs | [`automem/consolidation/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/consolidation) |
 
 ---
 
@@ -409,11 +409,13 @@ graph TB
     subgraph auto_select["Auto-Selection Priority"]
         CheckVoyage{"VOYAGE_API_KEY<br/>set?"}
         CheckOpenAI{"OPENAI_API_KEY<br/>set?"}
+        CheckOllama{"OLLAMA_BASE_URL<br/>set?"}
         CheckFastEmbed{"FastEmbed<br/>available?"}
         UsePlaceholder["PlaceholderEmbeddingProvider<br/>automem/embedding/placeholder.py"]
 
         Voyage["VoyageEmbeddingProvider<br/>automem/embedding/voyage.py<br/>voyage-4: 256/512/1024/2048 configurable"]
         OpenAI["OpenAIEmbeddingProvider<br/>automem/embedding/openai.py<br/>text-embedding-3-small: 1536d native<br/>auto-upgrades to large when VECTOR_SIZE > 1536"]
+        Ollama["OllamaEmbeddingProvider<br/>OLLAMA_BASE_URL/OLLAMA_MODEL"]
         FastEmbed["FastEmbedProvider<br/>automem/embedding/fastembed.py<br/>BAAI/bge-base-en-v1.5: 768d"]
     end
 
@@ -435,7 +437,9 @@ graph TB
     CheckVoyage -->|"Yes"| Voyage
     CheckVoyage -->|"No"| CheckOpenAI
     CheckOpenAI -->|"Yes"| OpenAI
-    CheckOpenAI -->|"No"| CheckFastEmbed
+    CheckOpenAI -->|"No"| CheckOllama
+    CheckOllama -->|"Yes"| Ollama
+    CheckOllama -->|"No"| CheckFastEmbed
     CheckFastEmbed -->|"Yes"| FastEmbed
     CheckFastEmbed -->|"No"| UsePlaceholder
 
@@ -446,6 +450,7 @@ graph TB
 
     Voyage --> Result["Return embedding"]
     OpenAI --> Result
+    Ollama --> Result
     FastEmbed --> Result
     UsePlaceholder --> Result
 ```
@@ -454,6 +459,7 @@ graph TB
 
 - **Voyage**: High-quality embeddings, supports 256d, 512d, 1024d, and 2048d, requires API key
 - **OpenAI**: High-quality embeddings, uses `text-embedding-3-small` by default, auto-upgrades to `text-embedding-3-large` when `VECTOR_SIZE > 1536`, and supports compatible providers via `OPENAI_BASE_URL`
+- **Ollama**: Local server-based embeddings via `OLLAMA_BASE_URL`/`OLLAMA_MODEL`, checked after OpenAI and before FastEmbed in auto-selection
 - **FastEmbed**: Local ONNX models, no API key required, ~210MB model download on first use
 - **Placeholder**: Hash-based deterministic vectors, no semantic meaning, always available as fallback
 
@@ -502,7 +508,7 @@ AutoMem implements two-tier authentication: standard API tokens for normal opera
 | `POST /admin/reembed` | Both tokens | `Authorization: Bearer <token>` + `X-Admin-Token: <admin_token>` | Admin operations |
 | `POST /enrichment/reprocess` | Both tokens | Same as above | Admin operations |
 
-Token validation is handled by the `require_api_token` decorator in [`automem/api/`](https://github.com/verygoodplugins/automem/tree/main/automem/api), which checks headers and query parameters in order of preference. Admin endpoints additionally validate the `X-Admin-Token` header.
+Token validation is handled by the `require_api_token` decorator in [`automem/api/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api), which checks headers and query parameters in order of preference. Admin endpoints additionally validate the `X-Admin-Token` header.
 
 For full details, see [Authentication](/docs/reference/authentication/).
 
@@ -533,7 +539,7 @@ The MCP bridge requires two additional environment variables:
 | `AUTOMEM_API_KEY` | API key for authenticated instances | _optional_ |
 
 :::caution
-On Railway, if `PORT=8001` is not set, Flask defaults to `5000`, causing connection refused errors. The deployment must bind to `::` (IPv6 dual-stack) for internal networking to work.
+`runtime_wiring.py` already defaults `PORT` to `8001` if the environment variable is unset, so an unset `PORT` does not fall back to Flask's `5000` default. The deployment must still bind to `::` (IPv6 dual-stack) for Railway's internal networking to work.
 :::
 
 ---
