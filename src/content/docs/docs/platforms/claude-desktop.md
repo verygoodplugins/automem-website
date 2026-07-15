@@ -51,11 +51,18 @@ graph TB
 
 ## Installation
 
-### Method 1: One-Click `.mcpb` Install (Planned)
+### Method 1: One-Click `.mcpb` Install
 
-:::note
-The `.mcpb` (MCP Bundle) one-click install format is a planned feature and is not yet implemented. Use Method 2 (manual JSON configuration) for now.
-:::
+Download the AutoMem Claude Desktop Extension and double-click it to install — no manual JSON editing required:
+
+**[Download AutoMem for Claude Desktop (.mcpb)](https://github.com/verygoodplugins/mcp-automem/releases/latest/download/mcp-automem.mcpb)**
+
+After opening the file, Claude Desktop prompts you to:
+1. Enter your **AutoMem Endpoint** (`http://127.0.0.1:8001` for local, or your Railway URL for cloud)
+2. Optionally enter your **API Key** (required for Railway/cloud deployments, skip for local)
+3. Click **Enable**
+
+This installs the same `@verygoodplugins/mcp-automem` server as Method 2 below. Use Method 2 if you need to run multiple server instances or prefer manual JSON configuration.
 
 ### Method 2: Manual JSON Configuration
 
