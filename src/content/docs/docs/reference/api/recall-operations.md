@@ -15,7 +15,7 @@ sidebar:
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
 :::
 
-The recall system provides a single unified endpoint that supports multiple search strategies. It combines nine scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
+The recall system provides a single unified endpoint that supports multiple search strategies. It combines 10 scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
 
 ## Endpoint Overview
 
@@ -79,7 +79,7 @@ Time queries are parsed by `_parse_time_expression()` from `automem/utils/time.p
 | `context_types` | array[string] | — | Memory types to prioritize |
 | `priority_ids` | array[string] | — | Memory IDs to boost during scoring |
 
-Context hints influence the 9-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
+Context hints influence the 10-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
 
 :::note[`priority_ids` semantics]
 `priority_ids` adds a relevance boost to matching memories during scoring — it does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints, it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
@@ -208,7 +208,7 @@ graph LR
 
 ## Hybrid Scoring System
 
-### 9-Component Score Calculation
+### 10-Component Score Calculation
 
 ```mermaid
 graph TB
@@ -221,6 +221,10 @@ graph TB
     subgraph KeywordSearch["Keyword Search (FalkorDB)"]
         KeywordComp["Keyword Component<br/>Weight: SEARCH_WEIGHT_KEYWORD<br/>TF-IDF + phrase matching"]
         ExactComp["Exact Component<br/>Weight: SEARCH_WEIGHT_EXACT<br/>Direct content overlap"]
+    end
+
+    subgraph MetadataSidecar["Metadata Sidecar Search"]
+        MetadataComp["Metadata Component<br/>Weight: SEARCH_WEIGHT_METADATA<br/>Metadata sidecar channel match"]
     end
 
     subgraph MetadataScoring["Metadata Scoring"]
@@ -239,12 +243,14 @@ graph TB
 
     Query --> VectorSearch
     Query --> KeywordSearch
+    Query --> MetadataSidecar
     Query --> MetadataScoring
     Query --> ContextScoring
 
     VectorComp --> FinalScore
     KeywordComp --> FinalScore
     ExactComp --> FinalScore
+    MetadataComp --> FinalScore
     ImportanceComp --> FinalScore
     ConfidenceComp --> FinalScore
     RecencyComp --> FinalScore
@@ -258,6 +264,7 @@ The formula:
 ```
 final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
               (keyword_score × SEARCH_WEIGHT_KEYWORD) +
+              (metadata_score × SEARCH_WEIGHT_METADATA) +
               (exact_match_score × SEARCH_WEIGHT_EXACT) +
               (importance × SEARCH_WEIGHT_IMPORTANCE) +
               (confidence × SEARCH_WEIGHT_CONFIDENCE) +
@@ -273,6 +280,7 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
 |-----------|---------------------|---------------|
 | Vector | `SEARCH_WEIGHT_VECTOR` | 0.35 |
 | Keyword | `SEARCH_WEIGHT_KEYWORD` | 0.35 |
+| Metadata | `SEARCH_WEIGHT_METADATA` | 0.35 |
 | Exact | `SEARCH_WEIGHT_EXACT` | 0.20 |
 | Importance | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 |
 | Confidence | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 |
@@ -298,9 +306,13 @@ Implemented in `_graph_keyword_search()` using Cypher queries:
 - Tag match: 1 point per keyword
 - Exact phrase bonus: +2 (content) or +1 (tag)
 
-**Metadata Components:**
+**Metadata Sidecar Component:**
 
-Computed by `_compute_metadata_score()` and `_parse_metadata_field()`:
+The dedicated `SEARCH_WEIGHT_METADATA` component only applies to candidates admitted via the metadata sidecar search channel (see `RECALL_METADATA_SEARCH_ENABLED`) — it is separate from the importance/confidence/recency/tag sub-scores below.
+
+**Importance, Confidence, Recency & Tag Sub-Scores:**
+
+Computed by `_compute_metadata_score()` and `_parse_metadata_field()`, each with its own independent weight in the final formula above:
 - **Importance**: Direct multiplication by weight (0.0–1.0 range)
 - **Confidence**: Classification confidence from memory type detection
 - **Recency**: `max(0, 1 - (age_days / 180))` — 6-month linear decay based on time since last access
