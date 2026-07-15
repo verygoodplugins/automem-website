@@ -7,7 +7,7 @@ sidebar:
 
 This page provides step-by-step instructions for deploying AutoMem on Railway, including service configuration, internal networking setup, and troubleshooting. Railway is a Platform-as-a-Service (PaaS) that provides containerized deployments with persistent volumes and internal service discovery.
 
-For the fastest hosted setup with generated MCP config, see [InstaPods Deployment](/docs/deployment/instapods/). To let the installer deploy this template and capture the endpoint + token for you, see [Guided Cloud Setup](/docs/cli/guided-cloud-setup/). For local development setup, see the [Development Guide](https://github.com/verygoodplugins/automem/blob/main/INSTALLATION.md). For backup configuration and monitoring, see [Backup & Recovery](/docs/operations/backup/) and [Health Monitoring](/docs/operations/health/). For MCP bridge setup specifically, see the [MCP Integration guide](https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md).
+For the fastest hosted setup with generated MCP config, see [InstaPods Deployment](/docs/deployment/instapods/). To let the installer deploy this template and capture the endpoint + token for you, see [Guided Cloud Setup](/docs/cli/guided-cloud-setup/). For local development setup, see the [Development Guide](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/INSTALLATION.md). For backup configuration and monitoring, see [Backup & Recovery](/docs/operations/backup/) and [Health Monitoring](/docs/operations/health/). For MCP bridge setup specifically, see the [MCP Integration guide](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/docs/MCP_SSE.md).
 
 ## Overview
 
@@ -146,7 +146,7 @@ Root Directory: (empty - use repo root)
 ```
 
 :::caution[PORT is required]
-`PORT=8001` is **required**. Without this variable, Flask defaults to port 5000, causing connection failures from other services.
+`PORT=8001` is **required**. AutoMem's own default already falls back to `8001` when `PORT` is unset (`automem/runtime_wiring.py`), but Railway does not guarantee that fallback is reachable from other services unless the variable is set explicitly — so set `PORT=8001` on the `memory-service` regardless.
 :::
 
 **Variable Reference Patterns**
@@ -381,7 +381,7 @@ graph TB
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `PORT` | Yes (Railway) | `5000` | Flask listen port. **Must be 8001 on Railway** |
+| `PORT` | Yes (Railway) | `8001` | Flask listen port (`automem/runtime_wiring.py` defaults to `8001`, not Flask's own `5000`). **Must be set to 8001 on Railway** so other services can reach it at a known port |
 | `FALKORDB_HOST` | Yes | `localhost` | FalkorDB hostname. Use `falkordb.railway.internal` on Railway |
 | `FALKORDB_PORT` | Yes | `6379` | FalkorDB port |
 | `FALKORDB_PASSWORD` | Yes | None | FalkorDB authentication password |
@@ -392,6 +392,13 @@ graph TB
 | `QDRANT_URL` | Recommended | None | Qdrant Cloud endpoint |
 | `QDRANT_API_KEY` | Recommended | None | Qdrant authentication |
 | `QDRANT_COLLECTION` | No | `memories` | Qdrant collection name |
+| `VOYAGE_API_KEY` | No | None | Alternative embedding provider to OpenAI |
+| `EMBEDDING_PROVIDER` | No | `auto` | Forces a specific embedding provider instead of auto-selection |
+| `VECTOR_SIZE` | No | `1024` | Embedding vector dimensionality |
+| `MEMORY_CONTENT_HARD_LIMIT` | No | `2000` | Max memory content length in characters (rejected above this) |
+| `MEMORY_AUTO_SUMMARIZE` | No | `true` | Auto-summarize content above the soft length limit |
+| `QDRANT_TIMEOUT_SECONDS` | No | None | Qdrant client request timeout |
+| `QDRANT_ENSURE_PAYLOAD_INDEXES` | No | `true` | Create Qdrant payload indexes on startup |
 
 ### falkordb Variables
 
@@ -423,7 +430,7 @@ MCP bridge or other services cannot connect to `memory-service`.
 
 **Solution 1: Add PORT Variable**
 
-Most common cause. Flask defaults to port 5000 without explicit `PORT` variable. Add `PORT=8001` to `memory-service` variables in Railway Dashboard, then redeploy.
+Most common cause. AutoMem defaults to port `8001` when `PORT` is unset, but other services need a known, explicitly-set port to connect to reliably. Add `PORT=8001` to `memory-service` variables in Railway Dashboard, then redeploy.
 
 **Solution 2: Update IPv6 Binding**
 
