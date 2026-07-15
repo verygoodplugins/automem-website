@@ -19,7 +19,7 @@ graph TB
         Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
-            API["memory-service<br/>app.py<br/>localhost:8001"]
+            API["flask-api<br/>app.py<br/>localhost:8001"]
             Falkor["falkordb<br/>localhost:6379"]
             QdrantLocal["qdrant<br/>localhost:6333"]
         end
