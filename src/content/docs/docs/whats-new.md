@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-The latest releases — **AutoMem server 0.16.0** and **mcp-automem 0.15.0** (June 2026) — focus on recall correctness, batch operations, two new install paths, and data-driven tuning. This page summarizes the highlights; each item links to the page that documents it in full.
+The latest releases — **AutoMem server 0.16.1** and **mcp-automem 0.15.0** (June–July 2026) — focus on recall correctness, batch operations, two new install paths, and data-driven tuning. This page summarizes the highlights; each item links to the page that documents it in full.
 
 For the complete commit-level history, see the [Changelog](/docs/development/changelog/) and the release notes on [automem](https://github.com/verygoodplugins/automem/releases) and [mcp-automem](https://github.com/verygoodplugins/mcp-automem/releases).
 
@@ -43,6 +43,15 @@ Consolidation gained entity deduplication and identity synthesis, plus hardened 
 ### Recall Quality Lab
 
 A new contributor/maintainer harness tunes recall scoring against a **clone of real data** instead of guesswork — generate a test set with known answers, then measure Recall@K / MRR / NDCG with a statistical comparison to tell a real improvement from noise. It is not required to run AutoMem. See [Hybrid Search](/docs/core-concepts/hybrid-search/) and [Research & Motivation](/docs/research/).
+
+## AutoMem server 0.16.1 (patch)
+
+A stability follow-up to the 0.16.0 ranking overhaul:
+
+- **Confirmed graph writes** — memory-graph writes now require confirmation rather than assuming success.
+- **Placeholder-fallback rejection** — the API rejects problematic placeholder values instead of silently accepting them.
+- **Vector candidate fetching optimized** and context-tag candidate retrieval widened, with metadata sidecar budgets preserved. See [Recall Tuning](/docs/core-concepts/recall-tuning/).
+- **`MetaPattern` artifacts excluded from drift accounting** — consolidation summaries no longer trigger false positives in `/admin/sync` drift checks. See [Recall Tuning](/docs/core-concepts/recall-tuning/#internal-artifact-types).
 
 ---
 
