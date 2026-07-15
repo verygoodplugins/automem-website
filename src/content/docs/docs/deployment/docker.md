@@ -11,7 +11,7 @@ For cloud deployment on Railway, see [Railway Deployment](/docs/deployment/railw
 
 ## Service Architecture
 
-Docker Compose orchestrates three services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/main/docker-compose.yml): the Flask API, FalkorDB graph database (which includes its own browser UI on port 3000 for local graph inspection), and the Qdrant vector store.
+Docker Compose orchestrates three services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/docker-compose.yml): the Flask API, FalkorDB graph database (which includes its own browser UI on port 3000 for local graph inspection), and the Qdrant vector store.
 
 ```mermaid
 graph TB
@@ -57,7 +57,7 @@ graph TB
 |---|---|---|---|---|
 | `flask-api` | Built from Dockerfile | 8001 | AutoMem Flask API with background workers | None (depends on FalkorDB health) |
 | `falkordb` | `falkordb/falkordb:latest` | 6379 (Redis), 3000 (UI) | Graph database (canonical memory storage) | `redis-cli ping` every 10s |
-| `qdrant` | `qdrant/qdrant:v1.11.3` | 6333 | Vector search database (optional) | None (service_started) |
+| `qdrant` | `qdrant/qdrant:v1.11.3` | 6333 (REST), 6334 (gRPC) | Vector search database (optional) | None (service_started) |
 
 > **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI. Note that the standalone viewer docs also use port `3000` by default, so if you run it locally alongside this Docker stack you should change its port (for example, `PORT=3001`) to avoid a conflict with FalkorDB's built-in UI.
 
@@ -83,7 +83,8 @@ FalkorDB runs with aggressive persistence enabled via `REDIS_ARGS`:
 - `--save 60 1`: Create RDB snapshot every 60 seconds if at least 1 key changed
 - `--appendonly yes`: Enable AOF (append-only file) for durability
 - `--appendfsync everysec`: Sync AOF to disk every second
-- `--dir /data`: Store persistence files in `/data` (mounted volume)
+
+The persistence directory is set separately via `FALKORDB_DATA_PATH=/data` (not a `REDIS_ARGS` flag) — FalkorDB's startup script always appends `--dir $FALKORDB_DATA_PATH` after `REDIS_ARGS`, so a `--dir` flag inside `REDIS_ARGS` itself would be silently overridden.
 
 This configuration prioritizes data safety over performance, suitable for development where memory operations should not be lost on container restart.
 
@@ -111,8 +112,14 @@ The Flask API service accepts environment variables for configuration. Most have
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint | Docker internal URL |
 | `QDRANT_API_KEY` | `${QDRANT_API_KEY:-}` | Qdrant authentication | Not required for local Qdrant |
 | `OPENAI_API_KEY` | `${OPENAI_API_KEY:-}` | OpenAI API access | Falls back to placeholder embeddings |
+| `VOYAGE_API_KEY` | `${VOYAGE_API_KEY:-}` | Voyage AI API access | Used when `EMBEDDING_PROVIDER=voyage` or auto-selected |
 | `EMBEDDING_PROVIDER` | `${EMBEDDING_PROVIDER:-auto}` | Provider selection | `auto|openai|voyage|local|placeholder` |
+| `VECTOR_SIZE` | `1024` | Embedding vector dimension | Must match the selected provider's output dimension |
 | `AUTOMEM_MODELS_DIR` | `/root/.config/automem/models` | FastEmbed model cache | Must match volume mount path |
+| `MEMORY_CONTENT_HARD_LIMIT` | `2000` | Max memory content length (chars) | Content over this is rejected |
+| `MEMORY_AUTO_SUMMARIZE` | `true` | Auto-summarize oversized content | Set `false` to disable |
+| `QDRANT_TIMEOUT_SECONDS` | `${QDRANT_TIMEOUT_SECONDS:-}` | Qdrant client request timeout | Empty by default (client library default applies) |
+| `QDRANT_ENSURE_PAYLOAD_INDEXES` | `true` | Create Qdrant payload indexes at startup | Set `false` to skip |
 
 ### Accessing Variables
 
@@ -152,6 +159,7 @@ Docker Compose creates an isolated network where services communicate using serv
 | 6379 | 6379 | falkordb | TCP (Redis protocol) | FalkorDB graph queries |
 | 3000 | 3000 | falkordb | HTTP | FalkorDB built-in web UI |
 | 6333 | 6333 | qdrant | HTTP | Qdrant vector search API |
+| 6334 | 6334 | qdrant | gRPC | Qdrant vector search API (gRPC) |
 
 ### Internal DNS Resolution
 
