@@ -110,14 +110,14 @@ docker compose up --build
 
 ### Volume Configuration
 
-Docker Compose defines named volumes for persistent data and a bind mount for source code hot-reload:
+Docker Compose defines named volumes for persistent data and a bind mount for the source tree:
 
 | Volume | Container Path | Purpose | Persistence Level |
 |--------|---------------|---------|------------------|
 | `falkordb_data` | `/data` | RDB snapshots + AOF (append-only file) | High (every 60s or 1 key change) |
 | `qdrant_data` | `/qdrant/storage` | Vector collections + write-ahead log | High (write-ahead log) |
 | `fastembed_models` | `/root/.config/automem/models` | Downloaded ONNX embedding models | Medium (cache, re-downloadable) |
-| `.` (bind mount) | `/app` | Source code for hot-reload | N/A (host filesystem) |
+| `.` (bind mount) | `/app` | Source code (see note below — editing files does not auto-reload the running server) | N/A (host filesystem) |
 | `./backups/falkordb` | `/backups` | Manual RDB exports | N/A (host filesystem) |
 | `./backups/qdrant` | `/backups` | Manual snapshot exports | N/A (host filesystem) |
 
@@ -126,7 +126,8 @@ Docker Compose defines named volumes for persistent data and a bind mount for so
 - `--save 60 1` — Create RDB snapshot every 60 seconds if at least 1 key changed
 - `--appendonly yes` — Enable AOF for durability
 - `--appendfsync everysec` — Sync AOF to disk every second
-- `--dir /data` — Store persistence files in the mounted volume
+
+The persistence directory itself is set separately via `FALKORDB_DATA_PATH=/data` (not via a `--dir` flag in `REDIS_ARGS`): FalkorDB's container entrypoint always appends `--dir $FALKORDB_DATA_PATH` after `REDIS_ARGS`, so any `--dir` value inside `REDIS_ARGS` would be silently overridden.
 
 ### Environment Variables
 
@@ -144,8 +145,8 @@ Optional variables with defaults:
 
 | Variable | Docker Compose Default | Purpose | Notes |
 |----------|----------------------|---------|-------|
-| `FLASK_ENV` | `development` | Flask environment mode | Enables debug mode, hot-reload |
-| `FLASK_DEBUG` | `"1"` | Flask debug flag | Enables detailed error pages |
+| `FLASK_ENV` | `development` | Flask environment mode | Set for convention, but not read by `app.py` — see hot-reload note below |
+| `FLASK_DEBUG` | `"1"` | Flask debug flag | Set for convention, but not read by `app.py` — see hot-reload note below |
 | `FALKORDB_PASSWORD` | `${FALKORDB_PASSWORD:-}` | FalkorDB authentication | Empty by default (no auth) |
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint | Docker internal URL |
 | `QDRANT_API_KEY` | `${QDRANT_API_KEY:-}` | Qdrant authentication | Not required for local Qdrant |
@@ -190,9 +191,9 @@ Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`
 | `make test-integration` | Start services, run `pytest -rs -m integration`, keep running | Run integration test suite against local Docker stack | None (uses test tokens) |
 | `make clean` | `docker compose down -v` | Stop containers, remove volumes | **High** — deletes all memory data |
 
-**Hot-reload during development:**
+**No hot-reload — restart required after code changes:**
 
-The Flask API container mounts the project directory as a volume with `FLASK_DEBUG=1`. Edit any Python file and the API automatically reloads within ~2 seconds — no need to restart containers.
+The Flask API container mounts the project directory as a volume, and `docker-compose.yml` sets `FLASK_ENV=development` / `FLASK_DEBUG=1`. However, `app.py` starts the server via `run_default_server()`, which always calls `app.run(host="::", port=port, debug=False)` — the `debug` flag is hardcoded, so `FLASK_ENV`/`FLASK_DEBUG` have no effect and Werkzeug's auto-reloader never activates. Editing a Python file will **not** reload the running server; restart the container to pick up changes: `docker compose restart flask-api` (or `make stop && make dev`).
 
 **Running integration tests:**
 
@@ -252,16 +253,12 @@ python app.py
 **Expected startup output:**
 
 ```
-[INFO] Loading configuration...
-[INFO] Connecting to FalkorDB at localhost:6379
-[INFO] FalkorDB connected successfully
-[INFO] Starting enrichment worker thread
-[INFO] Starting embedding worker thread
-[INFO] Starting consolidation scheduler
+2026-07-16 12:00:00,000 | INFO | automem.api | Starting Flask API on port 8001
  * Running on http://[::]:8001
+Press CTRL+C to quit
 ```
 
-The server binds to `[::]` (IPv6 dual-stack) on port 8001.
+`app.py` logs a single line before initializing FalkorDB, Qdrant, and the enrichment/embedding/consolidation workers — there is no per-step "connecting to..." or "worker started" logging. If initialization fails partway through, the process logs the failed step and exits (`sys.exit(1)`) rather than continuing to serve traffic. The server binds to `[::]` (IPv6 dual-stack) on port 8001.
 
 ---
 
@@ -281,10 +278,23 @@ curl http://localhost:8001/health
   "falkordb": "connected",
   "qdrant": "connected",
   "memory_count": 0,
+  "vector_count": 0,
+  "sync_status": "synced",
+  "vector_dimensions": {
+    "configured": 1024,
+    "effective": 1024,
+    "collection": 1024,
+    "mismatch": false
+  },
   "enrichment": {
     "status": "running",
-    "queue_depth": 0
+    "queue_depth": 0,
+    "pending": 0,
+    "inflight": 0,
+    "processed": 0,
+    "failed": 0
   },
+  "timestamp": "2026-07-16T12:00:00+00:00",
   "graph": "memories"
 }
 ```
@@ -293,16 +303,21 @@ curl http://localhost:8001/health
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Overall health: `"healthy"` or `"unhealthy"` |
-| `falkordb` | string | FalkorDB connection: `"connected"` or error message |
-| `qdrant` | string | Qdrant connection: `"connected"`, `"unavailable"`, or `"not configured"` |
-| `memory_count` | integer | Total memories in graph |
+| `status` | string | Overall health: `"healthy"` or `"degraded"` (either database disconnected, or vector/graph counts have drifted apart) |
+| `falkordb` | string | FalkorDB connection: `"connected"` or `"disconnected"` |
+| `qdrant` | string | Qdrant connection: `"connected"` or `"disconnected"` |
+| `memory_count` | integer | Total memories in the graph |
+| `vector_count` | integer | Total points in the Qdrant collection |
+| `sync_status` | string | `"synced"`, `"drift_detected"` (fewer vectors than memories), or `"orphaned_vectors"` (more vectors than memories) |
+| `vector_dimensions` | object | Configured vs. effective vs. collection embedding dimension, and whether they `mismatch` |
 | `enrichment.status` | string | Worker thread state: `"running"` or `"stopped"` |
-| `enrichment.queue_depth` | integer | Pending enrichment jobs |
+| `enrichment.queue_depth` | integer | Jobs currently queued |
+| `enrichment.pending` / `.inflight` | integer | Jobs waiting vs. actively processing |
+| `enrichment.processed` / `.failed` | integer | Lifetime success/failure counters |
 | `graph` | string | FalkorDB graph name (default: `memories`) |
 
 :::note
-`"qdrant": "unavailable"` is **expected behavior** when Qdrant is not configured. AutoMem gracefully degrades — vector search is disabled but all graph-based operations continue normally. To enable Qdrant, set `QDRANT_URL` and restart.
+Qdrant is optional but is **not** disabled by default in this local Docker Compose setup — `docker-compose.yml` runs a `qdrant` service and points `QDRANT_URL` at it, so `"qdrant": "connected"` is the expected steady state here. If you deliberately run without Qdrant (e.g. bare-metal without `QDRANT_URL` set), the field reports `"disconnected"` and `status` becomes `"degraded"`; vector search is unavailable but graph-based operations continue normally.
 :::
 
 ### Common Health Check Failures
