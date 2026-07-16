@@ -151,7 +151,10 @@ In plugin mode, the installer writes to `~/.openclaw/openclaw.json` under `plugi
           "endpoint": "http://127.0.0.1:8001",
           "apiKey": "your-token-here",
           "autoRecall": true,
-          "autoRecallLimit": 3,
+          "preferenceRecallLimit": 20,
+          "contextRecallLimit": 30,
+          "debugRecallLimit": 20,
+          "contextRecallWindowDays": 90,
           "exposure": "dm-only",
           "defaultTags": ["platform/openclaw", "project/my-project"]
         }
@@ -168,9 +171,16 @@ In plugin mode, the installer writes to `~/.openclaw/openclaw.json` under `plugi
 | `endpoint` | string | — | Base URL for the AutoMem service (required) |
 | `apiKey` | string | — | Bearer token for authenticated deployments (optional) |
 | `autoRecall` | boolean | `true` | Recall relevant memories before each agent turn |
-| `autoRecallLimit` | integer | `3` | Max memories to auto-recall (1–10) |
+| `preferenceRecallLimit` | integer | `20` | Max memories for the preference recall phase (1–50) |
+| `contextRecallLimit` | integer | `30` | Max memories for the task-context recall phase (1–50) |
+| `debugRecallLimit` | integer | `20` | Max memories for debug-context recall (1–50) |
+| `contextRecallWindowDays` | integer | `90` | Lookback window in days for task-context recall (1–365) |
 | `exposure` | string | `"dm-only"` | Auto-recall scope: `dm-only`, `all`, or `off` |
 | `defaultTags` | string[] | `[]` | Tags applied when the request doesn't supply tags |
+
+:::note
+`autoRecallLimit` (a single limit, 1–50) still works as a **legacy** fallback: if any of `preferenceRecallLimit`/`contextRecallLimit`/`debugRecallLimit` are unset, they fall back to `autoRecallLimit`, then to the defaults above. New configs should set the three granular limits directly rather than `autoRecallLimit`.
+:::
 
 ### MCP/Skill configuration
 
