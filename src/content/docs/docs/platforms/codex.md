@@ -207,9 +207,10 @@ The `AGENTS.md` template assumes the server is named `memory`. If you use a diff
 
 ## AGENTS.md Rule System
 
-The `codex` CLI command generates an `AGENTS.md` section with placeholders:
+The `codex` CLI command generates an `AGENTS.md` section with one placeholder:
 - `{{PROJECT_NAME}}` → detected from `package.json` or git remote
-- `{{CURRENT_MONTH}}` → current month in `YYYY-MM` format
+
+There is no `{{CURRENT_MONTH}}` template variable — the rendered template only substitutes the project name.
 
 ### Memory Operation Patterns
 
