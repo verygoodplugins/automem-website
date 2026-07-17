@@ -258,7 +258,7 @@ python app.py
 Press CTRL+C to quit
 ```
 
-`app.py` logs a single line before initializing FalkorDB, Qdrant, and the enrichment/embedding/consolidation workers — there is no per-step "connecting to..." or "worker started" logging. If initialization fails partway through, the process logs the failed step and exits (`sys.exit(1)`) rather than continuing to serve traffic. The server binds to `[::]` (IPv6 dual-stack) on port 8001.
+`app.py` logs a single line before initializing FalkorDB, Qdrant, and the enrichment/embedding/consolidation workers — there is no per-step "connecting to..." or "worker started" logging. FalkorDB and Qdrant connection failures are caught internally and degrade gracefully (the service starts with that dependency marked unavailable — check `/health` below); `sys.exit(1)` is reserved for genuinely fatal initialization errors, such as a Qdrant vector-dimension mismatch with autodetection disabled. The server binds to `[::]` (IPv6 dual-stack) on port 8001.
 
 ---
 
@@ -307,8 +307,8 @@ curl http://localhost:8001/health
 | `falkordb` | string | FalkorDB connection: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant connection: `"connected"` or `"disconnected"` |
 | `memory_count` | integer | Total memories in the graph |
-| `vector_count` | integer | Total points in the Qdrant collection |
-| `sync_status` | string | `"synced"`, `"drift_detected"` (fewer vectors than memories), or `"orphaned_vectors"` (more vectors than memories) |
+| `vector_count` | integer or `null` | Total points in the Qdrant collection; `null` if the count couldn't be collected (e.g. Qdrant disconnected) |
+| `sync_status` | string | `"synced"`, `"drift_detected"` (fewer vectors than memories), `"orphaned_vectors"` (more vectors than memories), or `"unknown"` (one of the counts is unavailable, so nothing to compare) |
 | `vector_dimensions` | object | Configured vs. effective vs. collection embedding dimension, and whether they `mismatch` |
 | `enrichment.status` | string | Worker thread state: `"running"` or `"stopped"` |
 | `enrichment.queue_depth` | integer | Jobs currently queued |
