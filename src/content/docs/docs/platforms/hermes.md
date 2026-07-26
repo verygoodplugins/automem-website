@@ -48,15 +48,17 @@ Hermes is also one of the agents offered by the [guided installer](/docs/getting
 
 | Flag | Environment variable | Description | Default |
 |---|---|---|---|
-| `--mode <mode>` | `AUTOMEM_HERMES_MODE` | `mcp`, `provider`, or `both` | `mcp` |
+| `--mode <mode>` | — | `mcp`, `provider`, or `both` | `mcp` |
 | `--endpoint <url>` | `AUTOMEM_API_URL` | AutoMem HTTP API endpoint | `http://127.0.0.1:8001` |
 | `--api-key <token>` | `AUTOMEM_API_KEY` | Bearer token for authenticated endpoints | — |
 | `--rules <path>` | — | Rules file to update | `$HERMES_HOME/AGENTS.md` |
-| `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan; write nothing | Off |
-| `--yes` / `-y` | `AUTOMEM_YES=1` | Skip prompts (CI) | Off |
+| `--dry-run` | — | Print the plan; write nothing | Off |
+| `--yes` / `-y` | — | Skip prompts (CI) | Off |
 | `--quiet` | — | Suppress output | Off |
 
-Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and every changed file keeps a `.bak` copy.
+Only `--endpoint` and `--api-key` have environment-variable equivalents on the `hermes` command. The `AUTOMEM_HERMES_MODE`, `AUTOMEM_DRY_RUN`, and `AUTOMEM_YES` variables are read by the [guided installer](/docs/getting-started/quick-start/) (`mcp-automem install`) only — the `hermes` subcommand takes those settings from flags.
+
+Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and `config.yaml`, the rules file, and the provider plugin files each keep a `.bak` copy. `$HERMES_HOME/.env` is the exception — AutoMem keys are merged into it in place, with no backup.
 
 ---
 
