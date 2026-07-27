@@ -29,7 +29,7 @@ The sidecar service (`mcp-sse-server`) is included in the AutoMem server reposit
 - **Streamable HTTP** (recommended): `POST /mcp` — full-duplex MCP-over-HTTP, MCP protocol version 2025-03-26
 - **SSE** (legacy): `GET /mcp/sse` — server→client event stream, MCP protocol version 2024-11-05
 
-Sessions are maintained server-side with a 1-hour TTL and 5-minute sweep interval. The Streamable HTTP transport supports `Last-Event-ID` for resumability.
+SSE sessions are maintained server-side with a 1-hour TTL and 5-minute sweep interval. The Streamable HTTP transport is stateless — each request builds its own transport, and any `mcp-session-id` header is ignored.
 
 ---
 
@@ -59,7 +59,7 @@ Sessions are maintained server-side with a 1-hour TTL and 5-minute sweep interva
 3. Your sidecar URL will be: `https://your-mcp-bridge.up.railway.app`
 
 :::caution
-The memory service **must** have `PORT=8001` set. Without it, Flask defaults to port 5000, causing connection refused errors from the sidecar.
+The sidecar's `AUTOMEM_API_URL` must point at the port the memory service is actually listening on. The service defaults to `8001` when `PORT` is unset, so the default configuration matches — but if you have set `PORT` to something else, update `AUTOMEM_API_URL` to match or the sidecar will get connection refused.
 
 On Railway, use internal DNS for `AUTOMEM_API_URL`: `http://memory-service.railway.internal:8001`
 :::
@@ -126,14 +126,15 @@ https://your-mcp-bridge.up.railway.app/mcp?api_token=YOUR_TOKEN
 Prefer header-based authentication when the Claude.ai interface supports it — tokens in URLs appear in server logs and browser history.
 :::
 
-**Token extraction priority** (sidecar `getAuthToken()` function):
+**Token extraction priority.** The sidecar's `getAuthToken()` function checks, in order:
 1. `Authorization: Bearer <token>` header
 2. `X-API-Key: <token>` header
 3. `X-API-Token: <token>` header
 4. `?api_key=<token>` query parameter
 5. `?apiKey=<token>` query parameter
 6. `?api_token=<token>` query parameter
-7. `AUTOMEM_API_TOKEN` environment variable (fallback)
+
+If none of those yield a token, the `/mcp` and `/mcp/sse` route handlers fall back to the sidecar's own `AUTOMEM_API_TOKEN` environment variable. That fallback lives at the call sites, not inside `getAuthToken()` — a request with no credentials is only rejected with `401` when the environment variable is also unset.
 
 ---
 
@@ -193,7 +194,6 @@ Benefits of Streamable HTTP:
 - No `sessionId` management needed
 - Full-duplex communication
 - Better error handling
-- Supports `Last-Event-ID` for stream resumability
 
 ---
 
@@ -219,9 +219,9 @@ The sidecar sends heartbeats every 20 seconds to maintain SSE connections. If Cl
 - The sidecar sets anti-buffering headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache`)
 - Consider switching to Streamable HTTP transport
 
-### Stream replay (Streamable HTTP)
+### Reconnecting (Streamable HTTP)
 
-The sidecar's `InMemoryEventStore` persists events for 1 hour with a maximum of 1000 events per stream. If Claude.ai sends a `Last-Event-ID` header on reconnect, the sidecar replays missed events automatically.
+The Streamable HTTP endpoint does not replay missed events. Its transport is constructed without an event store, so a `Last-Event-ID` header on reconnect has no effect and the client starts a fresh exchange. Because the endpoint is stateless, reconnecting is cheap — but any response still in flight when the connection drops is lost and the request must be reissued.
 
 ---
 
