@@ -128,26 +128,26 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeGraph` Class
 
-`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:35-795](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L35-L795)):
+`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:42-847](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/tests/support/fake_graph.py#L42-L847)):
 
 - **Query pattern matching**: Uses string matching to identify query type (e.g., `"COUNT(DISTINCT r)"` for relationship counts)
 - **Deterministic responses**: Returns pre-configured data from state attributes
 - **Side effect tracking**: Records deletions, archives, and score updates
-- **Query history**: Stores all queries for verification
+- **Query history**: Records every call in `graph.queries` as `(query, params)` tuples for verification
 
 #### `FakeVectorStore` Class
 
-`FakeVectorStore` tracks vector deletion operations ([tests/test_consolidation_engine.py:19-24](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L19-L24)).
+`FakeVectorStore` records each `delete()` call as a `(collection_name, points_selector)` tuple in `vector_store.deletions` ([tests/test_consolidation_engine.py:19-24](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/tests/test_consolidation_engine.py#L19-L24)).
 
 #### `FakeResult` Class
 
-`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:9-11](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L9-L11)).
+`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:9-11](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/tests/support/fake_graph.py#L9-L11)).
 
 ### Test Fixtures
 
 #### `freeze_time` Fixture
 
-The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:27-39](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L27-L39)):
+The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:27-39](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/tests/test_consolidation_engine.py#L27-L39)):
 
 - **Auto-use**: Applies to all tests automatically
 - **Module patching**: Patches `consolidation_module.datetime`, not global `datetime`
@@ -173,6 +173,8 @@ Follow this pattern for consolidation engine tests:
 2. **Execution**: Instantiate `MemoryConsolidator` and call method
 3. **Verification**: Assert return values and check mock state
 
+`calculate_relevance_score()` takes a single memory dict (plus an optional `current_time`), not individual keyword arguments — it reads `id`, `timestamp`, `last_accessed`, `importance`, and `confidence` off that dict:
+
 ```python
 def test_calculate_relevance_score_recent_memory():
     # 1. Setup
@@ -180,17 +182,19 @@ def test_calculate_relevance_score_recent_memory():
     graph.relationship_counts = {"mem_001": 3}
 
     # 2. Execution
-    consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
+    consolidator = MemoryConsolidator(graph, vector_store=FakeVectorStore())
     score = consolidator.calculate_relevance_score(
-        memory_id="mem_001",
-        importance=0.8,
-        access_count=5,
-        last_accessed=iso_days_ago(1),
-        created_at=iso_days_ago(2),
+        {
+            "id": "mem_001",
+            "timestamp": iso_days_ago(2),
+            "last_accessed": iso_days_ago(1),
+            "importance": 0.8,
+            "confidence": 0.7,
+        }
     )
 
     # 3. Verification
-    assert 0.5 < score < 1.0  # Recent, high-importance memory
+    assert 0 < score <= 1.0  # Recent, high-importance memory
 ```
 
 #### Mock Data Configuration
@@ -204,36 +208,32 @@ graph.relationship_counts = {
 }
 ```
 
-**Sample memories for creative associations** — configure `sample_rows` with structure matching the query in `discover_creative_associations()`:
+All of these row attributes hold plain lists of column values (`List[List[Any]]`) in the same order the corresponding Cypher query returns them — not dicts.
+
+**Sample memories for creative associations** — configure `sample_rows` as `[id, content, type, embedding, timestamp]`, matching the query in `discover_creative_associations()`:
 
 ```python
 graph.sample_rows = [
-    ["mem_001", "Chose PostgreSQL for reliability", 0.8, 2],
-    ["mem_002", "Prefer typed languages", 0.7, 1],
+    ["mem_001", "Chose PostgreSQL for reliability", "Decision", [1.0, 0.0, 0.0], iso_days_ago(3)],
+    ["mem_002", "Prefer typed languages", "Preference", [0.0, 1.0, 0.0], iso_days_ago(4)],
 ]
 ```
 
-**Cluster data** — configure `cluster_rows` for clustering tests:
+**Cluster data** — configure `cluster_rows` as `[id, content, embedding, type]` for clustering tests:
 
 ```python
 graph.cluster_rows = [
-    ["mem_001", "content_a", [0.1, 0.2, 0.3]],
-    ["mem_002", "content_b", [0.15, 0.22, 0.31]],
+    ["mem_001", "content_a", [0.1, 0.2, 0.3], "Insight"],
+    ["mem_002", "content_b", [0.15, 0.22, 0.31], "Insight"],
 ]
 ```
 
-**Decay and forgetting data** — configure `decay_rows` or `forgetting_rows` with full memory attributes:
+**Decay and forgetting data** — configure `decay_rows` as `[id, content, last_accessed, importance, timestamp, relevance_score]` (or `forgetting_rows` for the forgetting query):
 
 ```python
 graph.decay_rows = [
-    {
-        "id": "mem_001",
-        "importance": 0.8,
-        "access_count": 10,
-        "last_accessed": iso_days_ago(30),
-        "created_at": iso_days_ago(60),
-        "relevance_score": 0.75
-    }
+    ["mem_001", "Early note", iso_days_ago(30), 0.8, iso_days_ago(60), 0.75],
+    ["mem_002", "Recent insight", iso_days_ago(1), 0.7, iso_days_ago(1), 0.9],
 ]
 ```
 
@@ -245,40 +245,42 @@ Many consolidation methods support a `dry_run` parameter. Test both modes:
 def test_apply_forgetting_dry_run():
     graph = FakeGraph()
     # ... configure graph ...
-    consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
+    consolidator = MemoryConsolidator(graph, vector_store=FakeVectorStore())
     result = consolidator.apply_controlled_forgetting(dry_run=True)
-    assert len(graph.deleted_nodes) == 0  # Nothing deleted in dry run
+    assert graph.deleted == []  # Nothing deleted in dry run
 
 def test_apply_forgetting_execution():
     graph = FakeGraph()
     # ... configure graph with low-relevance memories ...
     vector_store = FakeVectorStore()
-    consolidator = MemoryConsolidator(graph=graph, vector_store=vector_store)
+    consolidator = MemoryConsolidator(graph, vector_store=vector_store)
     result = consolidator.apply_controlled_forgetting(dry_run=False)
-    assert len(graph.deleted_nodes) > 0   # Nodes deleted
-    assert len(vector_store.deleted_ids) > 0  # Vectors deleted
+    assert len(graph.deleted) > 0        # Nodes deleted
+    assert len(vector_store.deletions) > 0  # Vector deletions issued
 ```
 
 #### Verifying Mock Interactions
 
-**Query history** — check which queries were executed:
+**Query history** — `graph.queries` holds `(query, params)` tuples, so match on the first element:
 
 ```python
-assert any("MATCH (m:Memory)" in q for q in graph.query_history)
+assert any("MATCH (m:Memory)" in query for query, _params in graph.queries)
 ```
 
-**State changes** — verify deletions, archives, and score updates:
+**State changes** — `graph.deleted` is a list of memory IDs, while `graph.archived` and `graph.updated_scores` are lists of `(memory_id, score)` tuples:
 
 ```python
-assert "mem_001" in graph.deleted_nodes
-assert "mem_002" in graph.archived_nodes
-assert graph.updated_scores.get("mem_003") < 0.2
+assert "mem_001" in graph.deleted
+assert "mem_002" in [memory_id for memory_id, _score in graph.archived]
+assert dict(graph.updated_scores)["mem_003"] < 0.2
 ```
 
-**Vector store interactions:**
+**Vector store interactions** — `vector_store.deletions` holds `(collection_name, points_selector)` tuples:
 
 ```python
-assert "mem_001" in vector_store.deleted_ids
+collection, selector = vector_store.deletions[0]
+assert collection == "memories"
+assert selector.get("point_ids") == ["mem_001"]
 ```
 
 ### Test Coverage Report
@@ -440,7 +442,7 @@ Integration tests store and recall actual memories in the AutoMem service. Use a
 
 ### CI/CD Integration
 
-The CI workflow ([`.github/workflows/ci.yml`](https://github.com/verygoodplugins/mcp-automem/blob/main/.github/workflows/ci.yml)) runs on every PR and push to main:
+The CI workflow ([`.github/workflows/ci.yml`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/.github/workflows/ci.yml)) runs on every PR and push to main:
 
 1. Link validation on documentation files
 2. `npm run lint` — ESLint (fails build on errors)
