@@ -36,16 +36,17 @@ The **StatsBar** uses honest scope language throughout the app:
 | **In view** | Memories loaded into the 3D scene (bounded overview + any expansions) |
 | **In store** | Total memories on the server |
 
-The overview loads the most important memories first (default 2,000 nodes). Completeness comes from exploration, not loading the entire corpus at once.
+The overview loads a bounded slice of the store — 2,000 nodes by default. That ceiling is now a **client-side** limit rather than a server one: the API's old `min(limit, 2000)` cap was lifted, and 2,000 is where the on-main-thread physics simulation (d3-force-3d + React Three Fiber) starts to stutter. There is no UI for it, but you can raise it for testing on capable hardware with `?cap=10000` in the URL or `localStorage.automem_snapshot_cap = '10000'`. Completeness comes from exploration, not loading the entire corpus at once.
 
-Force layout configuration options include:
+Force layout configuration options:
 
-| Parameter | Description |
-|-----------|-------------|
-| Charge strength | Repulsion between nodes |
-| Link distance | Preferred edge length |
-| Center gravity | Pull toward origin |
-| Collision radius | Minimum node spacing |
+| Parameter | Description | Range | Default |
+|-----------|-------------|-------|---------|
+| Charge strength | Repulsion between nodes | -200 to -50 | -100 |
+| Link distance | Preferred edge length | 20 - 100 | 50 |
+| Link strength | How rigidly edges hold their distance | 0.1 - 1.0 | 0.5 |
+| Center strength | Pull toward origin | 0.01 - 0.2 | 0.05 |
+| Collision radius | Minimum node spacing | 1.0 - 4.0 | 2.0 |
 
 ### Expandable Graph
 
@@ -85,7 +86,19 @@ The `useClusterDetection` hook drives **ClusterBoundaries** and **ClusterLabels*
 
 - **Breadcrumbs** — Back/forward through your node selection history (`useBreadcrumbs`)
 - **MiniMap** — Viewport overview with zoom indicator
-- **Keyboard navigation** via `useKeyboardNavigation`: arrow keys to traverse nodes, Enter to select, `/` to focus search, `?` for shortcuts help
+- **Keyboard navigation** via `useKeyboardNavigation`. Press `?` for the in-app shortcuts panel:
+
+| Key | Action |
+|-----|--------|
+| `↑` `↓` `←` `→` | Navigate between nodes |
+| `Shift` + `↑` `↓` | Navigate in the Z axis |
+| `Tab` / `Shift`+`Tab` | Next / previous node |
+| `Esc` | Deselect, or cancel pathfinding |
+| `P` | Find path from the selected node |
+| `R` / `Shift`+`R` | Reheat simulation / reset view |
+| `,` | Toggle settings |
+| `L` | Toggle labels |
+| `?` | Show shortcuts help |
 
 ### Hand Tracking Controls
 
