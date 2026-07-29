@@ -38,8 +38,8 @@ Use `~/.config/automem/.env` for personal API keys and secrets that should never
 | `GRAPH_NAME` | — | `memories` | Python-internal alias for `FALKORDB_GRAPH`; set `FALKORDB_GRAPH`, not this name |
 | `PORT` | No | `8001` | Flask API server port |
 
-:::caution
-`PORT=8001` is mandatory on Railway. Flask defaults to port 5000 if unset, causing `ECONNREFUSED` errors from other services.
+:::tip
+AutoMem defaults `PORT` to `8001` when it is unset — it does not fall back to Flask's usual 5000. Set `PORT` explicitly only when you need a different port, or when your platform expects to inject one (Railway sets it for you).
 :::
 
 ### Vector Search (Qdrant)
@@ -97,7 +97,7 @@ Background enrichment runs after each memory is stored — it generates similari
 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | No | `5` | Delay between retry attempts |
 | `ENRICHMENT_ENABLE_SUMMARIES` | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_SPACY_MODEL` | No | `en_core_web_sm` | spaCy model for NER (if installed) |
-| `JIT_ENRICHMENT_ENABLED` | No | `true` | Run enrichment inline on store (just-in-time) |
+| `JIT_ENRICHMENT_ENABLED` | No | `true` | Run lightweight entity/summary extraction inline during **recall**, for results that the background worker has not enriched yet (just-in-time) |
 
 ### Consolidation Engine
 
@@ -139,7 +139,7 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `SEARCH_WEIGHT_CONFIDENCE` | No | `0.05` | Memory confidence weight |
 | `SEARCH_WEIGHT_EXACT` | No | `0.20` | Content token overlap weight |
 | `SEARCH_WEIGHT_RELATION` | No | `0.25` | Graph relation proximity boost |
-| `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | LLM-scored relevance (disabled by default) |
+| `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | Weight on the consolidation-decay `relevance_score` (access patterns + age). Experimental; `0.0` makes it a no-op |
 | `RECALL_RELATION_LIMIT` | No | `5` | Max related memories per result |
 | `RECALL_EXPANSION_LIMIT` | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
@@ -177,10 +177,9 @@ For guidance on *when* to tune these ranking knobs, see the [Recall Tuning](/doc
 
 ### API Server
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `LOG_LEVEL` | No | `INFO` | Python logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `FLASK_ENV` | No | `production` | Flask environment mode |
+The service has no logging or Flask-mode environment variables. Logging is configured once at startup at `INFO` level and there is no `LOG_LEVEL` override; `FLASK_ENV` and `FLASK_DEBUG` are not read anywhere, so setting them has no effect (debug mode and hot reload are not available). To change the log level today you have to edit the `configure_logging()` call in `app.py`.
+
+`AUTOMEM_LOG_LEVEL` in the MCP client table below is unrelated — it controls the `mcp-automem` client, not the Python service.
 
 ---
 
