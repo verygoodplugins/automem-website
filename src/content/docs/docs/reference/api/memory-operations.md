@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py) — Flask API endpoints
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/memory.py) — Flask API endpoints
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP tool definitions and handlers
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP transport layer
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts) — TypeScript type definitions
@@ -237,7 +237,7 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
   "stored_at": "2025-01-15T10:30:00Z",
   "type": "Decision",
   "confidence": 0.9,
-  "qdrant": "ok",
+  "qdrant": "queued",
   "embedding_status": "queued",
   "enrichment": "queued",
   "metadata": {},
@@ -247,6 +247,18 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
   "query_time_ms": 12.5
 }
 ```
+
+The `qdrant` and `embedding_status` fields are correlated, so only certain pairs occur:
+
+| Path | `embedding_status` | `qdrant` |
+|------|--------------------|----------|
+| Embedding supplied in the request, upsert succeeded | `provided` | `stored` |
+| Embedding supplied, Qdrant upsert raised | `provided` | `failed` |
+| Embedding supplied, Qdrant not configured | `provided` | `null` |
+| No embedding, Qdrant configured (the common case) | `queued` | `queued` |
+| No embedding, Qdrant not configured | `skipped` | `unconfigured` |
+
+`enrichment` is `"queued"` when the enrichment queue is running and `"disabled"` when it is not. There is no `"ok"` value for `qdrant`.
 
 ### MCP Tool: `store_memory`
 
@@ -325,23 +337,25 @@ Ingests up to 500 memories in a single request. Each memory in the batch follows
 ### Request Format
 
 ```json
-[
-  {
-    "content": "First memory content",
-    "type": "Decision",
-    "tags": ["project-alpha"],
-    "importance": 0.9
-  },
-  {
-    "content": "Second memory content",
-    "type": "Context",
-    "tags": ["project-alpha"],
-    "importance": 0.5
-  }
-]
+{
+  "memories": [
+    {
+      "content": "First memory content",
+      "type": "Decision",
+      "tags": ["project-alpha"],
+      "importance": 0.9
+    },
+    {
+      "content": "Second memory content",
+      "type": "Context",
+      "tags": ["project-alpha"],
+      "importance": 0.5
+    }
+  ]
+}
 ```
 
-Send the request body as a JSON array (not an object). The `Content-Type` must be `application/json`.
+Send the request body as a JSON **object** with a `memories` array — a bare JSON array is rejected with `400 Bad Request` (`"JSON body with 'memories' array required"`). The array must be non-empty. The `Content-Type` must be `application/json`.
 
 ### Example Request
 
@@ -349,10 +363,12 @@ Send the request body as a JSON array (not an object). The `Content-Type` must b
 curl -X POST https://your-automem-instance/memory/batch \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '[
-    {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
-    {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
-  ]'
+  -d '{
+    "memories": [
+      {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
+      {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
+    ]
+  }'
 ```
 
 ### Response Format
@@ -362,7 +378,7 @@ curl -X POST https://your-automem-instance/memory/batch \
   "status": "success",
   "stored": 2,
   "memory_ids": ["abc-123", "def-456"],
-  "qdrant": "ok",
+  "qdrant": "queued",
   "enrichment": "queued",
   "query_time_ms": 45.2
 }
@@ -375,16 +391,19 @@ Each memory in the batch is written to FalkorDB synchronously and queued for bac
 | Status | Condition |
 |--------|-----------|
 | 201 Created | All memories stored successfully |
-| 400 Bad Request | Validation error (invalid field, missing content, etc.) |
+| 400 Bad Request | Validation error — missing/empty `memories` array, non-object entry, missing `content`, content over the hard limit, **or** a batch larger than 500 memories |
 | 401 Unauthorized | Missing or invalid API token |
-| 413 Payload Too Large | Batch exceeds 500 memories |
+| 503 Service Unavailable | FalkorDB unavailable |
+
+Validation is all-or-nothing: the handler validates every entry before writing, so the first bad entry aborts the whole batch and nothing is stored.
 
 **Validation Error Example:**
 
 ```json
 {
-  "error": "Invalid memory at index 2: content is required",
-  "index": 2
+  "status": "error",
+  "code": 400,
+  "message": "Memory at index 2 missing 'content'"
 }
 ```
 
@@ -707,16 +726,17 @@ The handler pages through matching memories in batches of 200, deletes each batc
 
 ## Error Responses
 
-All endpoints follow consistent error formatting:
+All endpoints follow consistent error formatting. A single application-wide error handler converts both `abort()` calls and unexpected exceptions into this shape:
 
 ```json
 {
-  "error": "Description of what went wrong",
-  "field": "field_name"
+  "status": "error",
+  "code": 400,
+  "message": "Description of what went wrong"
 }
 ```
 
-Validation errors include specific field names and expected formats to aid debugging.
+There is no `error` or `field` key — the human-readable detail (including any offending field or batch index) is carried in `message`. Unhandled exceptions are reported as `code: 500` with the generic message `"Internal server error"`, so server-side details never leak to the client.
 
 | Status Code | Meaning |
 |-------------|--------|
