@@ -184,7 +184,7 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 | `--no-agent-install` | `AUTOMEM_NO_AGENT_INSTALL=1` | Set up the endpoint only; skip agents |
 
 :::note[Headless and CI]
-In CI or agent runtimes (`CI`, `CODEX`, `CLAUDE_CODE`, or `GITHUB_ACTIONS` set), the installer assumes `--yes` automatically. Without a TTY and without `--yes`, it prints the plan and stops, so an unattended pipe can never make unreviewed changes.
+There is no implicit `--yes`. Without a TTY and without `--yes` or `--dry-run`, the installer prints the plan and stops, so an unattended pipe can never make unreviewed changes — pass `--yes` (or `AUTOMEM_YES=1`) to apply it. The `CI`, `CODEX`, and `CLAUDE_CODE` environment variables only suppress the animated splash, not the approval step.
 :::
 
 ---
@@ -219,13 +219,13 @@ A healthy response looks like this:
 |---|---|
 | `status` | Overall health: `"healthy"` or `"degraded"` |
 | `falkordb` | Graph store connection: `"connected"` or `"disconnected"` |
-| `qdrant` | Vector store connection: `"connected"` or `"unavailable"` |
+| `qdrant` | Vector store connection: `"connected"` or `"disconnected"` |
 | `memory_count` | Total memories in the graph |
 | `enrichment.status` | Background worker state: `"running"` or `"stopped"` |
 | `graph` | FalkorDB graph name (default `memories`) |
 
 :::note
-`"qdrant": "unavailable"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
+`"qdrant": "disconnected"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
 :::
 
 ### Try it end to end
@@ -261,8 +261,8 @@ make dev   # docker compose up --build
 
 Services start on `:8001` (Flask API), `:6379` (FalkorDB), and `:6333` (Qdrant). See [Docker & Local Dev](/docs/getting-started/docker/) for volumes, environment overrides, and the bare-metal Python path.
 
-:::caution[Railway: set `PORT=8001`]
-On Railway, `memory-service` **must** set `PORT=8001`. Without it Flask defaults to port 5000, other services can't connect, and you'll see `ECONNREFUSED` errors. The [Railway template](/docs/deployment/railway/) sets this for you.
+:::caution[Railway: keep `PORT` at `8001`]
+AutoMem binds `PORT` and falls back to `8001` when it is unset. On Railway, if another service or a platform default sets `PORT` to something else, the rest of the stack points at `:8001` and you'll see `ECONNREFUSED` errors — so pin `PORT=8001` on `memory-service`. The [Railway template](/docs/deployment/railway/) sets this for you.
 :::
 
 ### Connect an agent by hand
@@ -306,7 +306,7 @@ AutoMem accepts a token three ways, in order of preference:
 curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8001/health
 
 # 2. Custom header
-curl -H "X-API-Token: YOUR_TOKEN" http://localhost:8001/health
+curl -H "X-API-Key: YOUR_TOKEN" http://localhost:8001/health
 
 # 3. Query parameter (discouraged — tokens land in logs)
 curl "http://localhost:8001/health?api_key=YOUR_TOKEN"
@@ -330,9 +330,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 | Installer says the package has no `install` | Old npm cache | The guided installer ships in `@verygoodplugins/mcp-automem` 0.15.0+; clear the npx cache or pin `@latest` |
 | Local server won't start | Port in use (`:8001`, `:6379`, `:6333`) | Stop the conflicting container (`docker ps`) or free the port, then re-run |
 | `503 Service Unavailable` | FalkorDB unreachable | Check `FALKORDB_HOST` / `FALKORDB_PORT` |
-| `"qdrant": "unavailable"` | Qdrant not configured | Expected — set `QDRANT_URL` to enable vector search |
+| `"qdrant": "disconnected"` | Qdrant not configured | Expected — set `QDRANT_URL` to enable vector search |
 | `401 Unauthorized` | Wrong/missing token | Verify `AUTOMEM_API_KEY`; provide it without a `Bearer` prefix |
-| `ECONNREFUSED` on Railway | `PORT` not set | Set `PORT=8001` on `memory-service` |
+| `ECONNREFUSED` on Railway | `PORT` overridden to a non-8001 value | Pin `PORT=8001` on `memory-service` |
 | Tools don't appear in your agent | Client not reloaded | Fully quit and reopen the agent (don't just close the window) |
 | One agent flagged "needs a manual step" | That agent's CLI was missing | Run the printed fix command; the rest of the install still succeeded |
 
