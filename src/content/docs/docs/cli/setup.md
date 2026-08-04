@@ -254,7 +254,7 @@ node dist/index.js setup
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Syncs template versions (`node scripts/sync-template-versions.mjs`)
+- `npm run prebuild` — Regenerates the shared memory-policy artifacts and syncs template versions (`tsx scripts/sync-memory-policy.ts && node scripts/sync-template-versions.mjs`)
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -283,7 +283,7 @@ sequenceDiagram
     ENV-->>CLI: File written
     CLI->>User: ✅ Saved AutoMem settings to .env
 
-    CLI->>User: Print config snippets<br/>(Claude Desktop, Claude Code)
+    CLI->>User: Print config snippets<br/>(Claude Desktop, Claude Code, Hermes)
 ```
 
 ### Setup Wizard Implementation
@@ -328,31 +328,32 @@ After writing the `.env` file, the setup wizard prints platform-specific configu
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"],
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_API_URL": "http://localhost:8001",
-        "AUTOMEM_API_KEY": "your-token"
+        "AUTOMEM_API_URL": "${AUTOMEM_API_URL}",
+        "AUTOMEM_API_KEY": "${AUTOMEM_API_KEY}"
       }
     }
   }
 }
 ```
 
-**For Cursor/Codex:**
-```json
-{
-  "mcpServers": {
-    "automem": {
-      "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"]
-    }
-  }
-}
+**For Claude Code** (shell commands, not JSON):
+```bash
+claude mcp add memory "npx -y @verygoodplugins/mcp-automem"
+export AUTOMEM_API_URL="http://127.0.0.1:8001"
+export AUTOMEM_API_KEY="your-auto-mem-api-key"
 ```
 
-These snippets can be copied directly into the respective platform configuration files. For platform-specific setup instructions, see [Platform Installers](/docs/cli/platform-installers/).
+**For Hermes Agent** (`~/.hermes/config.yaml`) — followed by a pointer to `npx @verygoodplugins/mcp-automem hermes`, which writes the file for you.
+
+The wizard closes by pointing at `npx @verygoodplugins/mcp-automem config --format=json` to reprint the JSON snippet later. It does **not** print Cursor- or Codex-specific snippets; use the dedicated `cursor` and `codex` installers for those. For platform-specific setup instructions, see [Platform Installers](/docs/cli/platform-installers/).
+
+:::caution[The MCP server key is `memory`, not `automem`]
+Every shipped snippet registers the server under the key `memory`, which is what makes the tools resolve as `mcp__memory__store_memory`, `mcp__memory__recall_memory`, and so on. Renaming the key changes every tool name and breaks the hook matchers installed by `claude-code`.
+:::
 
 ### Setup Completion
 
