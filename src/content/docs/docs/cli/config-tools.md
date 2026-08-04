@@ -20,6 +20,7 @@ The mcp-automem client uses two primary environment variables to locate and auth
 | `MCP_PROCESS_TAG` | No | (none) | Alternative process tag variable |
 | `AUTOMEM_LOG_LEVEL` | No | (none) | Set to `debug` for verbose logging |
 | `AUTOMEM_RECALL_TOKEN_BUDGET` | No | `18000` | Estimated token budget for MCP `recall_memory` responses |
+| `AUTOMEM_PARENT_WATCHDOG_MS` | No | `30000` | Parent-liveness poll interval, in ms. POSIX only; invalid, zero, or negative values fall back to the default, and the watchdog cannot be disabled |
 
 ### AUTOMEM_API_URL
 
@@ -66,12 +67,13 @@ graph TB
     subgraph Env_Resolution["Environment Variable Resolution<br/>src/env.ts + src/index.ts"]
         DOTENV["dotenv.config()<br/>.env file loading"]
 
-        ENDPOINT_CHECK{"AUTOMEM_API_URL<br/>exists?"}
+        ENDPOINT_FUNC["resolveAutoMemApiUrl()<br/>src/env.ts"]
+        ENDPOINT_CHECK["Priority:<br/>1. AUTOMEM_API_URL<br/>2. CLAUDE_PLUGIN_OPTION_API_URL<br/>3. AUTOMEM_ENDPOINT (deprecated)"]
         ENDPOINT_DEFAULT["Default:<br/>http://127.0.0.1:8001"]
-        ENDPOINT_VALUE["Use env value"]
+        ENDPOINT_VALUE["Use first non-blank value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()<br/>src/env.ts"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. CLAUDE_PLUGIN_OPTION_API_KEY<br/>4. CLAUDE_PLUGIN_OPTION_API_TOKEN"]
     end
 
     subgraph Client_Config["AutoMemClient Config<br/>src/index.ts"]
@@ -79,9 +81,10 @@ graph TB
         CLIENT_INSTANCE["new AutoMemClient(config)"]
     end
 
-    DOTENV --> ENDPOINT_CHECK
-    ENDPOINT_CHECK -->|"No"| ENDPOINT_DEFAULT
-    ENDPOINT_CHECK -->|"Yes"| ENDPOINT_VALUE
+    DOTENV --> ENDPOINT_FUNC
+    ENDPOINT_FUNC --> ENDPOINT_CHECK
+    ENDPOINT_CHECK -->|"all blank"| ENDPOINT_DEFAULT
+    ENDPOINT_CHECK -->|"match"| ENDPOINT_VALUE
     ENDPOINT_DEFAULT --> CONFIG_OBJ
     ENDPOINT_VALUE --> CONFIG_OBJ
 
@@ -143,9 +146,9 @@ Each AI platform stores MCP server configuration differently. The setup wizard a
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"],
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
         "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
@@ -155,22 +158,21 @@ Each AI platform stores MCP server configuration differently. The setup wizard a
 }
 ```
 
-The `command` and `args` launch the MCP server in stdio mode. The `env` block passes configuration to the server process. Platform launchers spawn this command when initializing MCP connections.
+The server is registered under the key `memory` — that key becomes the tool-name prefix, so the tools resolve as `mcp__memory__store_memory`, `mcp__memory__recall_memory`, and so on. The `command` and `args` launch the MCP server in stdio mode. The `env` block passes configuration to the server process. Platform launchers spawn this command when initializing MCP connections.
 
 ### TOML Configuration Example (Codex)
 
 ```toml
-[[mcp_servers]]
-name = "automem"
+[mcp_servers.memory]
 command = "npx"
-args = ["@verygoodplugins/mcp-automem"]
+args = ["-y", "@verygoodplugins/mcp-automem"]
 
-[mcp_servers.env]
+[mcp_servers.memory.env]
 AUTOMEM_API_URL = "http://localhost:8001"
 AUTOMEM_API_KEY = "your-api-key"
 ```
 
-The TOML format is semantically equivalent to JSON but uses Codex's native configuration syntax.
+The TOML format is semantically equivalent to JSON but uses Codex's native configuration syntax: the server name is the last segment of the table header (`[mcp_servers.memory]`), not a `name` key, and its environment goes in the nested `[mcp_servers.memory.env]` table. The shipped example is [`templates/codex/config.toml`](https://github.com/verygoodplugins/mcp-automem/blob/cbeb3cba35bd169de62a7f551bc838e4e8b66d1b/templates/codex/config.toml).
 
 ## Configuration Validation
 
