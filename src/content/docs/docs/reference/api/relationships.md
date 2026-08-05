@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py#L664-L743](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/memory.py#L664-L743) — Flask blueprint `/associate` endpoint
-- [automem/api/memory.py#L244-L365](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/api/memory.py#L244-L365) — Batch `/associate` helper (`_create_association_batch`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py) — FalkorDB edge operations
+- [automem/api/memory.py#L1041-L1121](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/memory.py#L1041-L1121) — Flask blueprint `/associate` endpoint
+- [automem/api/memory.py#L157-L256](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/memory.py#L157-L256) — Batch `/associate` helper (`_create_association_batch`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/stores/graph_store.py) — FalkorDB edge operations
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `associate_memories` tool
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client
 - [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts) — Relationship type definitions
@@ -51,7 +51,7 @@ Authorization: Bearer <AUTOMEM_API_TOKEN>
 |-------|------|----------|-------------|
 | `memory1_id` | string | Yes | Source memory UUID |
 | `memory2_id` | string | Yes | Target memory UUID |
-| `type` | string | Yes | Relationship type (must be in `AUTHORABLE_RELATIONS`) |
+| `type` | string | No | Relationship type (must be in `AUTHORABLE_RELATIONS`); defaults to `RELATES_TO` when omitted |
 | `strength` | float | No | Edge weight 0.0–1.0 (default: 0.5) |
 
 ### Basic Request
@@ -220,7 +220,7 @@ The `/associate` endpoint enforces the following validation:
 1. **Memory Existence**: Both `memory1_id` and `memory2_id` must reference existing Memory nodes in FalkorDB
 2. **Relationship Type**: `type` must be one of the 11 authorable relation types in `AUTHORABLE_RELATIONS`
 3. **Strength Bounds**: If provided, `strength` must be between 0.0 and 1.0 (inclusive)
-4. **Required Fields**: `memory1_id`, `memory2_id`, and `type` are mandatory
+4. **Required Fields**: `memory1_id` and `memory2_id` are mandatory; `type` is optional and falls back to `RELATES_TO`
 5. **Authentication**: Valid `AUTOMEM_API_TOKEN` required via Authorization header
 
 ### Validation Flow
@@ -334,7 +334,7 @@ MATCH (m1:Memory {id: $id1})
 MATCH (m2:Memory {id: $id2})
 MERGE (m1)-[r:LEADS_TO]->(m2)
 SET r.strength = $strength,
-    r.created_at = $created_at
+    r.updated_at = $updated_at
 ```
 
 ### FalkorDB Edge Structure
@@ -344,7 +344,7 @@ graph LR
     M1["Memory Node<br/>id: mem-1<br/>content: 'PostgreSQL'<br/>type: Decision"]
     M2["Memory Node<br/>id: mem-2<br/>content: 'MongoDB'<br/>type: Decision"]
 
-    M1 -->|"PREFERS_OVER<br/>strength: 0.9<br/>reason: 'ACID'<br/>created_at: '2025-01-15'"| M2
+    M1 -->|"PREFERS_OVER<br/>strength: 0.9<br/>reason: 'ACID'<br/>updated_at: '2025-01-15'"| M2
 ```
 
 ### Storage Characteristics
@@ -354,7 +354,7 @@ graph LR
 | Storage Layer | FalkorDB only (not replicated to Qdrant) |
 | Edge Direction | Directed (m1 → m2) |
 | Edge Label | Relationship type (e.g., `:PREFERS_OVER`) |
-| Edge Properties | `strength`, `created_at`, custom properties from `properties` field |
+| Edge Properties | `strength`, `updated_at`, plus any relation-specific properties sent as **top-level** request fields (e.g. `reason`, `context`) and allowed for that relation type |
 | Indexing | FalkorDB automatically indexes edge types for traversal |
 | Query Cost | O(1) for direct edge lookup, O(k) for k-hop traversal |
 
@@ -465,7 +465,7 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 |-----------|------|----------|-------------|-------------|
 | `memory1_id` | string | Yes | — | Source memory ID (from `store_memory` or `recall_memory` results) |
 | `memory2_id` | string | Yes | — | Target memory ID to link to |
-| `type` | string (enum) | Yes | 11 authorable types | Relationship type |
+| `type` | string (enum) | No | 11 authorable types | Relationship type; the service defaults to `RELATES_TO` when omitted |
 | `strength` | number | No | 0.0–1.0, default 0.5 | Relationship strength |
 
 **Relationship type enum values (11 authorable):**
