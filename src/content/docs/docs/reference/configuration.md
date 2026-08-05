@@ -88,7 +88,7 @@ graph TB
 ```
 
 :::caution[Railway PORT requirement]
-Railway requires `PORT=8001` explicitly set. Flask defaults to port 5000 if unset, causing `ECONNREFUSED` errors when the MCP bridge or health monitors attempt connection via `*.railway.internal:8001`.
+`run_default_server()` reads `int(os.environ.get("PORT", "8001"))`, so the service already listens on `:8001` when `PORT` is unset — matching the `PORT` default in the table above. Set `PORT` to anything else, however, and the MCP bridge and health monitors still dial `*.railway.internal:8001` and get `ECONNREFUSED`. Either leave `PORT` unset or pin it to `8001`.
 :::
 
 ### Vector Search (Optional)
@@ -150,7 +150,7 @@ Controls embedding generation with automatic provider selection:
 | FastEmbed | Good | Free | Yes (after download) | 384/768/1024 | Not required |
 | Placeholder | None | Free | Yes | Configurable | Not required |
 
-When `EMBEDDING_PROVIDER=auto`, the provider is selected by checking API key availability in order: Voyage, then OpenAI, then local/Ollama, then placeholder. If Voyage is configured but the current `VECTOR_SIZE` is incompatible, AutoMem skips Voyage and continues to the next provider. If OpenAI is selected and `VECTOR_SIZE > 1536`, the default `text-embedding-3-small` model is automatically upgraded to `text-embedding-3-large`.
+When `EMBEDDING_PROVIDER=auto`, the provider is selected by checking API key availability in order: Voyage, then OpenAI, then Ollama, then the local FastEmbed model, then placeholder. If Voyage is configured but the current `VECTOR_SIZE` is incompatible, AutoMem skips Voyage and continues to the next provider. If OpenAI is selected and `VECTOR_SIZE > 1536`, the default `text-embedding-3-small` model is automatically upgraded to `text-embedding-3-large`.
 
 :::note[OpenAI-compatible providers]
 When `OPENAI_BASE_URL` is set, AutoMem uses that base URL for both the embedding provider and the OpenAI-backed classification client. For embedding requests against non-OpenAI URLs, AutoMem omits the `dimensions` parameter to avoid compatibility issues with OpenRouter, LiteLLM, and similar proxies.
@@ -284,7 +284,7 @@ Controls automatic drift detection between FalkorDB and Qdrant:
 | `SYNC_CHECK_INTERVAL_SECONDS` | int | No | `3600` | Frequency of drift checks (1 hour) |
 | `SYNC_AUTO_REPAIR` | bool | No | `true` | Automatically queue missing embeddings |
 
-The sync worker counts memories in FalkorDB vs Qdrant and queues repair operations when drift exceeds 5%.
+The sync worker computes `missing_ids = falkor_ids - qdrant_ids` on each check. There is no percentage threshold: if that set is empty it logs "no drift detected" and returns, otherwise it queues re-embedding for **every** missing id. `SYNC_AUTO_REPAIR` is the only switch, and it is a boolean.
 
 ### Memory Type Configuration
 
@@ -378,7 +378,7 @@ graph TB
         ENDPOINT_VALUE["Use env value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. CLAUDE_PLUGIN_OPTION_API_KEY<br/>4. CLAUDE_PLUGIN_OPTION_API_TOKEN"]
     end
 
     subgraph Client_Config["AutoMemClient Config"]
@@ -462,11 +462,11 @@ The `command` and `args` launch the MCP server in stdio mode. The `env` block pa
 **TOML configuration example (Codex):**
 
 ```toml
-[mcp.servers.automem]
+[mcp_servers.memory]
 command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
-[mcp.servers.automem.env]
+[mcp_servers.memory.env]
 AUTOMEM_API_URL = "https://your-service.railway.app"
 AUTOMEM_API_KEY = "your-api-token"
 ```
