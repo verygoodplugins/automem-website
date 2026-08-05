@@ -82,15 +82,15 @@ The `mcp-automem` npm package operates as a local MCP server using stdio transpo
 graph LR
     START["npx @verygoodplugins/mcp-automem"]
 
-    subgraph Detection["Mode Detection<br/>src/index.ts:41-42"]
+    subgraph Detection["Mode Detection<br/>src/index.ts:42-43"]
         CHECK{"process.argv[2]<br/>exists?"}
     end
 
     subgraph Server_Mode["Server Mode"]
-        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:100-110"]
-        MCP_SERVER["new Server()<br/>src/index.ts:457-464"]
-        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:1715"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:1424"]
+        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:101-111"]
+        MCP_SERVER["new Server()<br/>src/index.ts:477-484"]
+        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:1735"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:1444"]
     end
 
     subgraph CLI_Mode["CLI Mode"]
@@ -344,9 +344,11 @@ graph TB
 **mcp-automem environment variable priority:**
 
 1. `AUTOMEM_API_KEY` (primary, current)
-2. `AUTOMEM_API_TOKEN` (fallback)
+2. `AUTOMEM_API_TOKEN` (deprecated alias)
+3. `CLAUDE_PLUGIN_OPTION_API_KEY` / `CLAUDE_PLUGIN_OPTION_api_key`
+4. `CLAUDE_PLUGIN_OPTION_API_TOKEN` / `CLAUDE_PLUGIN_OPTION_api_token`
 
-The `readAutoMemApiKeyFromEnv()` function in `src/env.ts` implements this priority chain.
+The `readAutoMemApiKeyFromEnv()` function in `src/env.ts` implements this priority chain. Entries 3 and 4 carry the Claude Code plugin's `userConfig` answers, which Claude Code exports as `CLAUDE_PLUGIN_OPTION_*` environment variables at enable time.
 
 ---
 
@@ -505,7 +507,7 @@ The MCP Bridge deploys as a separate service alongside the AutoMem API service.
 - FalkorDB: Internal `:6379` (Redis protocol, no public access)
 
 :::caution[Common Issue: PORT Variable]
-Without `PORT=8001` set, Flask defaults to `:5000`, causing `ECONNREFUSED` errors from the MCP bridge. Always set `PORT=8001` for the memory-service.
+`run_default_server()` reads `int(os.environ.get("PORT", "8001"))`, so the memory-service already listens on `:8001` when `PORT` is unset. The `ECONNREFUSED` failure mode is a *mismatch*: if `PORT` is set to anything other than `8001`, the bridge's `AUTOMEM_API_URL` (`…railway.internal:8001`) points at a port nothing is listening on. Either leave `PORT` unset, or set `PORT=8001` and keep `AUTOMEM_API_URL` in sync.
 :::
 
 ### Cost Optimization
