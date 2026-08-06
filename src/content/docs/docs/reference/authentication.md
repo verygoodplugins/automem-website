@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health` and `/backup` require a valid API token when `AUTOMEM_API_TOKEN` is configured. The `/backup` endpoint bypasses the API token guard and is protected by the admin token only.
+AutoMem uses a two-tier token-based authentication system to control access to different classes of operations. All endpoints except `/health`, `/backup`, and the `/viewer/*` static routes require a valid API token when `AUTOMEM_API_TOKEN` is configured; CORS `OPTIONS` preflight requests are also exempt. The `/backup` endpoint bypasses the API token guard and is protected by the admin token only.
 
 For deployment-specific token generation on Railway, see [Railway Deployment](/docs/deployment/railway/). For complete endpoint documentation with authentication requirements, see [Memory Operations](/docs/reference/api/memory-operations/).
 
@@ -127,14 +127,15 @@ graph LR
     CheckLevel -->|Standard| ProcessRequest
     CheckLevel -->|Admin endpoint| ValidateAdmin
     ValidateAdmin -->|Valid| ProcessRequest
-    ValidateAdmin -->|Invalid| Reject403["403 Forbidden"]
+    ValidateAdmin -->|"Missing/incorrect admin token"| Reject401Admin["401 Unauthorized"]
+    ValidateAdmin -->|"ADMIN_API_TOKEN not configured"| Reject403["403 Forbidden"]
 ```
 
 ---
 
 ## Admin Authentication
 
-Most admin endpoints require **both** the API token and an additional admin token. The admin token is provided in a separate `X-Admin-Token` header:
+Most admin endpoints require **both** the API token and an additional admin token. The admin token is read from the `X-Admin-Token` header, falling back to the `X-Admin-Api-Key` header and then the `admin_token` query parameter — the first of the three that is present is the one compared against `ADMIN_API_TOKEN`. Prefer `X-Admin-Token`:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_TOKEN" \
@@ -149,9 +150,11 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 | `/admin/reembed` | POST | Regenerate embeddings in batches | Yes | Yes |
 | `/admin/sync` | POST | Non-destructive drift repair | Yes | Yes |
 | `/enrichment/reprocess` | POST | Re-queue memories for enrichment | Yes | Yes |
+| `/entities/audit` | GET | Dry-run entity cleanup audit | Yes | Yes |
+| `/entity/<slug>/merge` | POST | Merge one entity into another | Yes | Yes |
 | `/backup` | GET | Export restore-compatible backup archive | **No** | Yes |
 
-Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is configured — only `/health` requires no authentication at all. The `/backup` endpoint also bypasses the API token guard but is protected by the admin token.
+Note: `/enrichment/status` requires an API token when `AUTOMEM_API_TOKEN` is configured — only `/health` and the `/viewer/*` static routes require no authentication at all. The `/backup` endpoint also bypasses the API token guard but is protected by the admin token.
 
 ---
 
@@ -179,6 +182,8 @@ graph TB
         Reembed["/admin/reembed<br/>POST"]
         Sync["/admin/sync<br/>POST"]
         Reprocess["/enrichment/reprocess<br/>POST"]
+        EntitiesAudit["/entities/audit<br/>GET"]
+        EntityMerge["/entity/&lt;slug&gt;/merge<br/>POST"]
     end
 
     subgraph "Admin Token Only (no API token)"
@@ -198,14 +203,16 @@ graph TB
     style Reembed fill:#FF6B6B
     style Sync fill:#FF6B6B
     style Reprocess fill:#FF6B6B
+    style EntitiesAudit fill:#FF6B6B
+    style EntityMerge fill:#FF6B6B
     style Backup fill:#FF6B6B
 ```
 
 | Category | Endpoints | API Token | Admin Token |
 |----------|-----------|-----------|-------------|
-| **Public** | `/health` | No | No |
+| **Public** | `/health`, `/viewer/*` | No | No |
 | **Standard** | `/memory`, `/recall`, `/associate`, `/memory/by-tag`, `/consolidate`, `/consolidate/status`, `/analyze`, `/startup-recall`, `/enrichment/status` | Yes | No |
-| **Admin** | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess` | Yes | Yes |
+| **Admin** | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess`, `/entities/audit`, `/entity/<slug>/merge` | Yes | Yes |
 | **Admin-only** | `/backup` | No | Yes |
 
 ---
@@ -380,8 +387,9 @@ curl -v -H "Authorization: Bearer YOUR_TOKEN" \
 **Common causes:**
 
 1. Missing `X-Admin-Token` header — admin endpoints require both headers
-2. `ADMIN_API_TOKEN` not configured on server
-3. Admin token mismatch between client and server
+2. Admin token mismatch between client and server
+
+If `ADMIN_API_TOKEN` is not configured on the server at all, admin endpoints return `403 Forbidden` ("Admin token not configured") rather than `401`.
 
 ### Token Exposure Response
 
