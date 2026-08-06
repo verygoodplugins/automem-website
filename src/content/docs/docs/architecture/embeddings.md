@@ -108,11 +108,11 @@ flowchart TD
 
 ### Dimension Validation and Fail-Fast
 
-The system validates embedding dimensions against the configured `VECTOR_SIZE` at two checkpoints — provider initialization and every write to Qdrant:
+Dimension reconciliation happens once, at startup, when the Qdrant client is initialised — **not** on every write:
 
-- **At init:** when the provider chain resolves, the selected provider's declared dimension is compared to the Qdrant collection's actual `VECTOR_SIZE`. A mismatch aborts startup with a clear error instead of silently truncating or padding vectors at query time.
-- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/validation.py) re-checks every embedding before `upsert`.
-- Mismatches raise `ValueError` with the observed and expected dimensions in the message.
+- **At init:** `get_effective_vector_size()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/validation.py#L36-L87) reads the existing collection's dimension. If it differs from `VECTOR_SIZE`, the default behaviour (`VECTOR_SIZE_AUTODETECT=true`) is to **adopt the collection's dimension**, log a warning, and construct the provider at that size. Set `VECTOR_SIZE_AUTODETECT=false` to opt into strict matching, which raises `VectorDimensionMismatchError` (a `RuntimeError`, not a `ValueError`) and fails startup.
+- **Provider compatibility check:** the adopted dimension is then validated against provider constraints. Voyage is the only provider with a hard constraint (`{256, 512, 1024, 2048}`); an incompatible adopted dimension raises a fatal `RuntimeError` at provider init.
+- `validate_vector_dimensions()` is a legacy compatibility shim that only logs — it no longer raises on mismatch and is not invoked per `upsert`.
 - Prevents Qdrant collection corruption from mixed dimensions when switching providers.
 - FalkorDB writes always succeed regardless of embedding status — the graph never depends on a healthy vector path.
 
@@ -224,7 +224,7 @@ The `embedding_worker()` function implements a time-boxed accumulation strategy 
 The worker accumulates jobs into a batch, then triggers processing when **either** condition is met:
 
 1. Batch size reaches `EMBEDDING_BATCH_SIZE` (default: 20 items)
-2. Timeout elapsed since first item added (default: 2.0 seconds)
+2. A queue read times out with a non-empty batch pending. The deadline is a rolling `EMBEDDING_BATCH_TIMEOUT_SECONDS` window (default: 2.0 seconds) reset after every flush — it is not measured from the moment the first item was added.
 
 This ensures low-traffic periods don't cause indefinite delays while high-traffic periods maximize API efficiency.
 
@@ -253,11 +253,11 @@ This ensures low-traffic periods don't cause indefinite delays while high-traffi
 
 ```mermaid
 graph LR
-    Batch["batch: List[Dict]<br/>(up to 20 jobs)"]
+    Batch["batch: List[Tuple[str, str]]<br/>(up to 20 jobs)"]
     Extract["Extract content<br/>text: List[str]"]
     Generate["process_embedding_batch()<br/>Provider bulk request"]
     Embeddings["embeddings: List[List[float]]<br/>(dimensions per provider)"]
-    Store["store_embedding_in_qdrant()<br/>For each (memory_id, embedding)"]
+    Store["store_embedding_in_qdrant()<br/>For each (memory_id, content, embedding)"]
     Success["Log success<br/>+ stats update"]
 
     Batch --> Extract
@@ -368,6 +368,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_BATCH_SIZE` | int | 20 | Maximum memories per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | float | 2.0 | Maximum batch accumulation time (seconds) |
 | `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection). `text-embedding-3-small` natively produces 1536d but the system passes `dimensions=VECTOR_SIZE` to OpenAI's API to truncate via Matryoshka representation learning. |
+| `VECTOR_SIZE_AUTODETECT` | bool | `true` | When an existing Qdrant collection's dimension differs from `VECTOR_SIZE`, adopt the collection's dimension and warn. Set to `false` to fail startup on mismatch instead. |
 
 ### Provider-Specific Configuration
 
