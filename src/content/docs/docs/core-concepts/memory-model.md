@@ -54,7 +54,7 @@ All memories contain the following properties:
 | `tags` | array[string] | No | Hierarchical categorization tags (e.g., `["project:automem", "decision"]`) |
 | `tag_prefixes` | array[string] | No | Pre-computed lowercase tag prefixes for fast filtering |
 | `metadata` | object | No | Flexible JSON object for custom fields |
-| `embedding` | array[float] | No | 1024-dimensional vector for semantic search |
+| `embedding` | array[float] | No | Semantic search vector, `VECTOR_SIZE`-dimensional (default 1024) |
 
 ### Temporal Properties
 
@@ -279,7 +279,7 @@ By default, `/recall` excludes memories where:
 - `now < t_valid` (not yet valid)
 - `now >= t_invalid` (expired)
 
-**Override:** Use `time_query` or explicit `start`/`end` parameters to include expired memories.
+**Override:** Pass `state_mode=history` (or the legacy `current_only=false`) to include not-yet-valid, expired, and archived memories. `time_query` and explicit `start`/`end` only move the time window — they do not lift the validity filter.
 
 **Example Scenarios:**
 
@@ -525,6 +525,6 @@ sequenceDiagram
 
 ### Embedding Validation
 
-- Must be exactly 1024 dimensions
+- Must match the effective vector dimension — `VECTOR_SIZE` (default `1024`), or the dimension of the existing Qdrant collection when `VECTOR_SIZE_AUTODETECT=true` (the default) adopts it at startup
 - All values must be numeric
-- Auto-generated if omitted (OpenAI `text-embedding-3-small` or deterministic placeholder)
+- Auto-generated if omitted, by the first available provider in the `EMBEDDING_PROVIDER=auto` chain: Voyage → OpenAI → Ollama → FastEmbed → deterministic placeholder
