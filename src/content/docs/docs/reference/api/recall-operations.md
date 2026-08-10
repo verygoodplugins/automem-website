@@ -315,7 +315,7 @@ The dedicated `SEARCH_WEIGHT_METADATA` component only applies to candidates admi
 Computed by `_compute_metadata_score()` and `_parse_metadata_field()`, each with its own independent weight in the final formula above:
 - **Importance**: Direct multiplication by weight (0.0–1.0 range)
 - **Confidence**: Classification confidence from memory type detection
-- **Recency**: `max(0, 1 - (age_days / 180))` — 6-month linear decay based on time since last access
+- **Recency**: `max(0, 1 - (age_days / SEARCH_RECENCY_WINDOW_DAYS))` — linear decay over the recency window (default 180 days), measured from the memory's `timestamp`, not its `last_accessed` value. Set `SEARCH_RECENCY_CURVE=exp` to switch to exponential half-life decay (`0.5 ** (age_days / SEARCH_RECENCY_WINDOW_DAYS)`)
 - **Tag**: `matched_tokens / total_query_tokens` — overlap ratio between query tags and memory tags
 
 ---
@@ -469,7 +469,7 @@ sequenceDiagram
         "created_at": "2025-01-15T10:30:00Z"
       },
       "final_score": 0.847,
-      "match_type": "semantic",
+      "match_type": "vector",
       "score_components": {
         "vector": 0.82,
         "keyword": 0.15,
@@ -495,7 +495,7 @@ sequenceDiagram
 **Result fields:**
 - `memory`: The stored memory object with `memory_id`, `content`, `tags`, `importance`, `created_at`
 - `final_score`: Combined relevance score
-- `match_type`: Type of match — `semantic`, `keyword`, `tag`, `relation`, or `entity`
+- `match_type`: Type of match — `vector`, `keyword`, `trending`, `metadata`, `tag`, `relation`, `entity_expansion`, `priority_id`, or `state_replacement`
 - `score_components`: Breakdown of scoring factors
 - `relations`: Connected memories (if expansion enabled)
 - `expanded_from_entity`: Entity that triggered expansion (if applicable)
@@ -621,7 +621,7 @@ The first call resolves supersession chains to their head and hides invalidated 
 
 ### Score-Based Sorting (Default)
 
-When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 9 components optimized for relevance.
+When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 10 components optimized for relevance.
 
 ### Time-Based Sorting
 
