@@ -152,7 +152,7 @@ npx @verygoodplugins/mcp-automem codex --name my-project
 npx @verygoodplugins/mcp-automem codex --dry-run
 ```
 
-This detects your project name, generates a month-aware `AGENTS.md` section, and validates your MCP config.
+This detects your project name and writes the AutoMem rules block into `AGENTS.md`, replacing any existing block between the `AUTOMEM CODEX RULES` markers.
 
 ### Step 4: Restart Codex
 
@@ -207,21 +207,31 @@ The `AGENTS.md` template assumes the server is named `memory`. If you use a diff
 
 ## AGENTS.md Rule System
 
-The `codex` CLI command generates an `AGENTS.md` section with placeholders:
+The `codex` CLI command generates an `AGENTS.md` section from `templates/codex/memory-rules.md`. The template defines exactly one placeholder:
 - `{{PROJECT_NAME}}` → detected from `package.json` or git remote
-- `{{CURRENT_MONTH}}` → current month in `YYYY-MM` format
 
 ### Memory Operation Patterns
 
-**1. Task Start Recall**
+**1. Task Start Recall (two phases, issued in parallel)**
 
-Use at the beginning of a coding session, when switching projects, or resuming work:
+Use at the beginning of a coding session, when switching projects, or resuming work. Preferences first:
 
 ```
 recall_memory(
-  queries: ["{{PROJECT_NAME}} architecture", "recent decisions"],
+  tags: ["preference"],
+  limit: 20,
+  sort: "updated_desc"
+)
+```
+
+Then one semantic task-context query built from the proper nouns in the user's message:
+
+```
+recall_memory(
+  query: "<proper nouns, products, files, tools, specific topics>",
   tags: ["{{PROJECT_NAME}}"],
-  time_query: "last 30 days"
+  time_query: "last 90 days",
+  limit: 30
 )
 ```
 
@@ -328,23 +338,22 @@ Memories persist across all three modes — store in CLI, recall in IDE, or vice
 
 ## Tagging Convention
 
-Recommended 4-part tagging strategy:
+Bare tags only. The generated rules ban namespace prefixes (`project/*`, `lang/*`), platform tags (`codex`), and date-stamped tags (`YYYY-MM`); `entity:*:*` tags are server-injected.
 
-1. **Project identifier**: your project name
-2. **Platform tag**: `codex`
-3. **Component tag**: specific area (e.g., `auth`, `api`, `frontend`)
-4. **Temporal tag**: `YYYY-MM` (e.g., `2026-02`)
+1. **Category tag**: `preference`, `decision`, `pattern`, `bugfix`, `solution`
+2. **Project identifier**: your bare project slug — drop it when the slug collides with a common word (`api`, `app`, `test`, `video`)
+3. **Language tag**: `typescript`, `python`, …
 
 **Example:**
 ```json
-["my-app", "codex", "auth", "decision", "2026-02"]
+["decision", "my-app", "typescript"]
 ```
 
 Why this structure:
-- Project tag enables cross-session filtering
-- Platform tag distinguishes Codex memories from Cursor/Claude
-- Component tag enables architecture-aware recall
-- Temporal tag enables time-based decay and recent work queries
+- Category tag is a stable gate that recall can rely on
+- Project tag enables cross-session filtering when the slug is unambiguous
+- Language tag boosts ranking without gating results
+- For facts with a shelf life, set `t_valid` / `t_invalid` instead of encoding a date in a tag
 
 ---
 
@@ -369,7 +378,7 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 
 **Tag strategy for cross-platform recall:**
 - Always include the project identifier tag
-- Platform tag (`codex`, `cursor`, `claude-code`) distinguishes source but doesn't block cross-platform recall
+- Do not add a platform tag (`codex`, `cursor`, `claude-code`) — the memory rules ban them, and memories are shared across platforms rather than partitioned by one
 - Use `tag_mode: "any"` (default) for cross-platform queries
 
 ---
@@ -380,7 +389,8 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 |------|-------------|---------|
 | `--name <name>` | Project name | Detected from `package.json` or git |
 | `--dry-run` | Preview without writing | `false` |
-| `--rules <path>` | Target rules file path | Current working directory |
+| `--rules <path>` | Target rules file path | `./AGENTS.md` |
+| `--quiet` | Suppress output | `false` |
 
 ---
 
