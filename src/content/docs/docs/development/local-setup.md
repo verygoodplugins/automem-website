@@ -105,7 +105,7 @@ graph TB
             DC["docker-compose.yml"]
             Falkor["falkordb/falkordb:latest\nPort 6379\nVolume: ./data/falkordb"]
             Qdrant["qdrant/qdrant:latest\nPort 6333\nVolume: ./data/qdrant"]
-            APIContainer["memory-service\nPort 8001\nOptional"]
+            APIContainer["flask-api\nPort 8001\nOptional"]
         end
 
         subgraph "External Services (Optional)"
@@ -212,7 +212,7 @@ sequenceDiagram
     Embed->>Embed: "Begin batch accumulator"
 
     Flask->>Sched: "Initialize scheduler"
-    Sched->>Sched: "Schedule decay (1h)\ncreative (1h)\ncluster (6h)\nforget (1d)"
+    Sched->>Sched: "Schedule decay (1d)\ncreative (7d)\ncluster (30d)\nforget (disabled)"
 
     Flask->>Flask: "Bind to 0.0.0.0:8001"
     Flask-->>Dev: "Server ready"
@@ -263,17 +263,10 @@ AUTOMEM_API_TOKEN=your-dev-token
 | `ENRICHMENT_MAX_ATTEMPTS` | `3` | Enrichment retry limit |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Semantic neighbors count |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | `0.8` | SIMILAR_TO edge threshold |
-| `FLASK_ENV` | `production` | Flask mode (`development` enables debug) |
-| `LOG_LEVEL` | `INFO` | Logging verbosity |
 
-**Enable development mode** for verbose logging and auto-reload:
-
-```bash
-FLASK_ENV=development
-LOG_LEVEL=DEBUG
-```
-
-The `FLASK_ENV=development` setting enables: detailed error pages with stack traces, auto-reload on file changes, and more verbose console output.
+:::caution[There is no Flask debug mode]
+`FLASK_ENV` and `LOG_LEVEL` are **not read anywhere** in the AutoMem source — setting them has no effect. `run_default_server()` calls `app.run(..., debug=False)` with the flag hardcoded, so there are no interactive error pages and no auto-reload on file changes. For an edit-reload loop, restart `python app.py` yourself or run it under an external watcher.
+:::
 
 ---
 
@@ -383,7 +376,7 @@ sudo chown -R $(whoami) ./data/
 
 ### Prerequisites
 
-- **Node.js**: Version 20.0.0 or higher
+- **Node.js**: `^20.19.0 || ^22.13.0 || >=24` (per `engines` — note that 20.0.0–20.18.x, 21.x, and 23.x are excluded)
 - **npm**: Comes with Node.js
 - **git**: For version control
 - **AutoMem Service**: Running instance for integration testing (local or Railway-hosted)
@@ -400,9 +393,9 @@ npm install   # Also installs Husky git hooks via "prepare" lifecycle script
 
 | Script | Command | Purpose |
 |---|---|---|
-| `prebuild` | `node scripts/sync-template-versions.mjs` | Sync template versions before build |
+| `prebuild` | `tsx scripts/sync-memory-policy.ts && node scripts/sync-template-versions.mjs` | Regenerate the shared memory-policy artifacts, then sync template versions |
 | `build` | `tsc` | Compile TypeScript to `dist/` |
-| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js` | Build OpenClaw plugin package and make binary executable |
+| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs` | Build the OpenClaw plugin package |
 | `sync-versions` | `node scripts/sync-template-versions.mjs` | Manually sync template versions without triggering a build |
 | `dev` | `tsx watch src/index.ts` | Hot-reload development server |
 | `lint` | `eslint .` | Run ESLint static analysis |
