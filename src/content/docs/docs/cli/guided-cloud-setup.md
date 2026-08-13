@@ -70,7 +70,11 @@ The AutoMem service must run on port 8001. The [Railway template](/docs/deployme
 
 ### Reuse vs. fresh deploy
 
-If your provider account already has AutoMem deployments, the installer lists them and lets you **reuse an existing one** (it fetches that deployment's credentials) instead of paying for a new deploy. An empty account goes straight to a fresh deploy. Any **billable** deploy is gated behind an explicit confirmation that names the plan.
+The installer has a reuse path — if a provider reports existing AutoMem deployments, it lists them and lets you **reuse one** (fetching that deployment's credentials) instead of paying for a new deploy. Any **billable** deploy is gated behind an explicit confirmation that names the plan.
+
+:::note[Reuse is not yet wired up for Railway]
+In the current release the Railway provider reports no existing deployments, so the reuse selector is skipped and every guided Railway run deploys fresh. Reliable reuse-detection needs to enumerate the account's projects and match the template source, which is deferred. If you already have an AutoMem instance running, choose **Other — I already have a URL + key** and paste its endpoint + token instead of deploying again.
+:::
 
 ---
 
@@ -124,7 +128,7 @@ The same flags work on the npm package, e.g. `npx @verygoodplugins/mcp-automem i
 | `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan, write nothing |
 
 :::note[Headless and CI]
-When `CI`, `CODEX`, `CLAUDE_CODE`, or `GITHUB_ACTIONS` is set, the installer assumes `--yes`. Without a TTY and without `--yes`, it prints the plan and stops — an unattended pipe can never make unreviewed changes, and a cloud deploy is never triggered without confirmation. For CI, pre-deploy with `--target existing` and pass an endpoint + key rather than provisioning inside the pipeline.
+The installer never infers `--yes` from the environment. `CI`, `CODEX`, and `CLAUDE_CODE` only suppress the animated splash — they do not approve the plan. Without a TTY and without `--yes` (or `AUTOMEM_YES=1`), it prints the plan and stops — an unattended pipe can never make unreviewed changes, and a cloud deploy is never triggered without confirmation. For CI, pre-deploy with `--target existing` and pass an endpoint + key rather than provisioning inside the pipeline.
 :::
 
 ---
@@ -148,7 +152,7 @@ curl https://your-automem-url/health \
 }
 ```
 
-`"qdrant": "unavailable"` is expected if you haven't configured Qdrant — AutoMem degrades to graph-only mode. See [Quick Start → Verify it worked](/docs/getting-started/quick-start/) for the full field reference and a first end-to-end memory test.
+`"qdrant": "disconnected"` (with `"status": "degraded"`) is expected if you haven't configured Qdrant — AutoMem degrades to graph-only mode. See [Quick Start → Verify it worked](/docs/getting-started/quick-start/) for the full field reference and a first end-to-end memory test.
 
 ---
 
@@ -159,8 +163,8 @@ curl https://your-automem-url/health \
 | Railway CLI sign-in stalls | No browser / restricted shell | The installer falls back to a browser deploy; finish there and paste the URL + key |
 | `ECONNREFUSED` after a Railway deploy | Railway assigned `memory-service` a different port than other services expect | Set `PORT=8001` explicitly on `memory-service` ([Railway guide](/docs/deployment/railway/)) |
 | `401 Unauthorized` on `/health` | Wrong/missing token | Re-check the key the provider issued; provide it without a `Bearer` prefix |
-| Installer can't find your new deploy | Credentials not ready yet | Re-run the installer and choose **reuse an existing deployment**, or use **Other** and paste the URL + key |
-| Charged for a second deploy | Picked "deploy fresh" with one already live | Re-run and choose the existing deployment to reuse its credentials |
+| Installer can't find your new deploy | Credentials not ready yet | Re-run the installer, choose **Other — I already have a URL + key**, and paste the endpoint + token |
+| Charged for a second deploy | Guided Railway runs always deploy fresh — reuse-detection is not wired up yet | Use **Other** and paste the existing deployment's URL + key instead of re-running the guided deploy |
 
 ---
 
