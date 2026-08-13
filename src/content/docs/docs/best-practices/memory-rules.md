@@ -84,7 +84,7 @@ Enable graph traversal to follow relationships from seed results:
 }
 ```
 
-API parameters exposed in `src/index.ts:764-811`:
+API parameters exposed in [`src/index.ts` L784–L831](https://github.com/verygoodplugins/mcp-automem/blob/2816beb7bb81d87bb8d592e8712fd8b4a7cc4f95/src/index.ts#L784-L831):
 - `expand_entities: true` — Enable multi-hop entity expansion
 - `expand_relations: true` — Follow graph relationships from seed results
 - `expand_min_importance: 0.5` — Filter expanded results by importance threshold
@@ -228,7 +228,7 @@ graph LR
 | **Patterns** | 0.75–0.85 | Best practices, reusable approaches | Useful across projects |
 | **Insights** | 0.7–0.8 | Bug fixes, key learnings | Important but time-sensitive |
 | **Features** | 0.7–0.8 | Implementation details | Project-specific context |
-| **Preferences** | 0.6–0.8 | Tool choices, style preferences | Stable but lower priority than corrections |
+| **Preferences** | 0.9 | Tool choices, style preferences | Stated preferences are as strong a signal as corrections |
 | **Context** | 0.5–0.7 | General information | Background knowledge |
 
 **Philosophy**: High importance scores (0.9+) are reserved for memories that should persist indefinitely and rank highly in recall. Medium scores (0.7–0.8) indicate useful patterns that should survive for months. Low scores (< 0.3) signal the memory system to let them naturally decay.
@@ -251,9 +251,9 @@ graph TB
 
         Decision{"Is this\nproject-specific?"}
 
-        ProjectTags["Project namespace:\n1. project-name\n2. platform (cursor/codex)\n3. YYYY-MM\n4. component"]
+        ProjectTags["Project namespace:\n1. category\n2. project-slug\n3. language\n4. component"]
 
-        PersonalTags["Personal namespace:\n1. 'personal'\n2. YYYY-MM\n3. category (health/workflow)"]
+        PersonalTags["Personal namespace:\n1. 'personal'\n2. category (health/workflow)"]
 
         Store["store_memory()"]
     end
@@ -270,7 +270,7 @@ graph TB
 
 ```json
 {
-  "tags": ["my-api-service", "cursor", "2026-02", "auth"]
+  "tags": ["decision", "my-api-service", "typescript", "auth"]
 }
 ```
 
@@ -278,9 +278,13 @@ graph TB
 
 ```json
 {
-  "tags": ["personal", "2026-02", "workflow"]
+  "tags": ["personal", "workflow"]
 }
 ```
+
+:::caution[Bare tags only]
+The shipped memory policy requires **bare string tags**: no `project/` or `lang/` prefixes, no platform tags (`cursor`, `claude-code`, `codex`), and no date-stamped tags. `entity:*:*` tags are injected server-side by the enrichment pipeline and should never be authored by hand.
+:::
 
 **Namespace Hierarchy**
 
@@ -304,27 +308,18 @@ project-x/
 
 From template documentation: Using `personal` instead of a project tag ensures preferences and lifestyle context aren't drowned out by high-importance technical memories. Project tags help filter technical memories, but personal memories should be discoverable across all projects.
 
-### Time Tag Conventions
+### Time Conventions
 
-**Monthly Tags** (YYYY-MM format):
-
-Always include the current month as a tag. This enables time-based filtering in recall:
+**Never date-stamp tags.** Memories already carry a `timestamp`, so a `YYYY-MM` tag adds no filtering power and pollutes the tag space. Use `time_query` (or explicit `start` / `end`) for time-bounded recall:
 
 ```json
 {
-  "tags": ["my-project", "2026-02", "auth"],
+  "tags": ["my-project", "auth"],
   "time_query": "last 30 days"
 }
 ```
 
-**Time-Based Filtering**:
-
-```json
-{
-  "tags": ["2026-01"],
-  "tag_mode": "any"
-}
-```
+**Facts with a shelf life**: use the `t_valid` / `t_invalid` validity window on `store_memory` rather than encoding a date in the tags.
 
 ---
 
@@ -439,7 +434,6 @@ Each platform template uses placeholder variables that are substituted during in
 | `{{PROJECT_DESC}}` | From package.json description | `REST API for user management` |
 | `{{MCP_TOOL_PREFIX}}` | Platform-specific tool prefix | `mcp__memory__` |
 | `{{MCP_SERVER_NAME}}` | Server name from config | `memory` |
-| `{{CURRENT_MONTH}}` | Current YYYY-MM | `2026-02` |
 
 **Tool Prefix Variations**
 
@@ -461,7 +455,7 @@ Tool names are client-specific. The prefix depends on the server name in your MC
 
 Cursor uses `.cursor/rules/automem.mdc` with `alwaysApply: true` to ensure memory tools are available in every conversation.
 
-Pattern: **3-phase lifecycle** (conversation start → during work → conversation end)
+Pattern: **Two-phase session-start recall** (preferences tag-only, task context semantic+time) plus **three mid-conversation storage triggers** (user correction, decision stabilized, pattern articulated). The template explicitly forbids end-of-conversation session summaries.
 
 **Claude Code: Permission + Rules Integration**
 
@@ -515,7 +509,7 @@ templates/
 ### Storage Best Practices
 
 1. **Keep memories atomic** — 150–300 characters target
-2. **Tag consistently** — project, platform, date, component
+2. **Tag consistently** — bare strings: category, project slug, language, component
 3. **Score appropriately** — user corrections highest (0.9)
 4. **Include context** — explain "why", not just "what"
 5. **Avoid noise** — skip trivial changes, routine operations
