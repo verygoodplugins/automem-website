@@ -32,7 +32,7 @@ graph TB
 
         subgraph services["Service Layer"]
             subgraph api["memory-service"]
-                FlaskApp["app.py<br/>Flask + Gunicorn<br/>PORT=8001"]
+                FlaskApp["app.py<br/>Flask (python app.py)<br/>PORT=8001"]
                 Workers["Background Workers<br/>enrichment_worker<br/>embedding_worker<br/>consolidation_worker<br/>sync_worker"]
             end
 
@@ -209,8 +209,7 @@ sequenceDiagram
         API->>API: Set falkordb: connected
     else FalkorDB Unavailable
         Falkor-->>API: Exception
-        API->>API: Set falkordb: unavailable
-        API-->>Client: 503 Service Unavailable
+        API->>API: Set falkordb: disconnected<br/>status: degraded
     end
 
     API->>Qdrant: Test connection<br/>get_collections()
@@ -219,7 +218,7 @@ sequenceDiagram
         API->>API: Set qdrant: connected
     else Qdrant Unavailable
         Qdrant-->>API: Exception
-        API->>API: Set qdrant: unavailable<br/>(continue anyway)
+        API->>API: Set qdrant: disconnected<br/>status: degraded (continue anyway)
     end
 
     API->>Falkor: Count memories<br/>MATCH (m:Memory) RETURN count(m)
