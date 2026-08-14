@@ -56,6 +56,8 @@ The `update_memory` tool accepts the following parameters (defined in [`src/type
 | `importance` | `number` (0-1) | No | New importance score |
 | `metadata` | `object` | No | New metadata (replaces existing entirely) |
 | `timestamp` | `string` (ISO) | No | Override creation timestamp |
+| `t_valid` | `string` (ISO) | No | Start of the memory's validity window |
+| `t_invalid` | `string` (ISO) | No | End of the memory's validity window |
 | `updated_at` | `string` (ISO) | No | Explicit update timestamp |
 | `last_accessed` | `string` (ISO) | No | Last access timestamp |
 | `type` | `string` | No | Memory type classification |
@@ -217,11 +219,16 @@ The `check_database_health` tool returns a `HealthStatus` object (defined in [`s
 |---|---|---|
 | `status` | `"healthy"` \| `"degraded"` \| `"error"` | Overall health status (`degraded` means the service is reachable but a backend or sync check needs attention) |
 | `backend` | `string` | Backend type (always `"automem"`) |
-| `statistics` | `object` | Database statistics and connection info |
-| `statistics.falkordb` | `string` | FalkorDB connection status |
-| `statistics.qdrant` | `string` | Qdrant connection status |
+| `statistics` | `object` | Database statistics and connection info — every field below is optional |
+| `statistics.falkordb` | `any` | FalkorDB connection status |
+| `statistics.qdrant` | `any` | Qdrant connection status |
 | `statistics.graph` | `string` | Graph database name |
 | `statistics.timestamp` | `string` | Health check timestamp |
+| `statistics.memory_count` | `number` | Memories stored in the graph |
+| `statistics.vector_count` | `number` | Vectors stored in Qdrant |
+| `statistics.sync_status` | `string` | FalkorDB ↔ Qdrant consistency state |
+| `statistics.vector_dimensions` | `object` | Embedding dimension diagnostics |
+| `statistics.enrichment` | `object` | Enrichment queue and worker diagnostics |
 | `error` | `string` (optional) | Error message if status is `"error"` |
 
 ### Health Check Use Cases
@@ -306,7 +313,7 @@ The `queue` CLI command processes pending memories from a local JSONL queue file
 npx @verygoodplugins/mcp-automem queue
 
 # Process a specific queue file (JSONL — one entry per line)
-npx @verygoodplugins/mcp-automem queue --file /path/to/memory-queue.jsonll
+npx @verygoodplugins/mcp-automem queue --file /path/to/memory-queue.jsonl
 
 # Preview what would be processed without writing
 npx @verygoodplugins/mcp-automem queue --dry-run
@@ -326,7 +333,7 @@ graph TB
         ConfigResolve["Config resolution<br/>AUTOMEM_API_URL → ~/.claude.json → default"]
         HealthCheck["Health check<br/>GET /health"]
         QueueEntries["Read pending entries<br/>local queue file"]
-        ProcessEntry["Process each entry<br/>POST /memory or PATCH /memory/{id}"]
+        ProcessEntry["Process each entry<br/>POST /memory, then POST /associate<br/>for entries with relatesTo"]
         Cleanup["Remove processed entries<br/>from queue file"]
     end
 
@@ -354,9 +361,7 @@ The queue command skips processing if the endpoint is unreachable — this preve
 
 ```
 $ npx @verygoodplugins/mcp-automem queue
-Checking AutoMem service at http://localhost:8001...
-❌ Service unavailable - skipping queue processing
-Queue will be retried on next run
+AutoMem endpoint unavailable; skipping queue drain.
 ```
 
 ### Error Handling Patterns
