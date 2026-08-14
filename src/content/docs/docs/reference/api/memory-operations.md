@@ -191,13 +191,15 @@ This enables prefix matching queries like `tags=slack` to match `slack:channel:g
 
 **Tagging Conventions (from platform templates):**
 
+Tags are bare strings. The shipped memory policy explicitly rules out namespace prefixes (`project/*`, `lang/*`), platform tags (`cursor`, `claude-code`), and date-stamped tags (`2025-01`) — use `t_valid` / `t_invalid` for facts with a shelf life.
+
 | Memory Type | Tag Pattern | Example |
 |-------------|-------------|--------|
-| Project Decision | `[project, platform, date, decision]` | `["ecommerce", "cursor", "2025-01", "decision"]` |
-| Bug Fix | `[project, platform, date, bug-fix, component]` | `["api-gateway", "codex", "2025-01", "bug-fix", "auth"]` |
-| Code Pattern | `[project, platform, date, pattern, component]` | `["frontend", "cursor", "2025-01", "pattern", "react"]` |
-| User Preference | `[preference, platform, date, domain]` | `["preference", "cursor", "2025-01", "code-style"]` |
-| Personal Note | `[personal, date, category]` | `["personal", "2025-01", "health"]` |
+| Project Decision | `[project, decision]` | `["ecommerce", "decision"]` |
+| Bug Fix | `[project, bug-fix, component]` | `["api-gateway", "bug-fix", "auth"]` |
+| Code Pattern | `[project, pattern, component]` | `["frontend", "pattern", "react"]` |
+| User Preference | `[preference, domain]` | `["preference", "code-style"]` |
+| Personal Note | `[personal, category]` | `["personal", "health"]` |
 
 :::tip[Project vs personal namespacing]
 Use `personal` instead of a project tag for personal memories to ensure preferences and lifestyle context aren't drowned out by high-importance technical memories when recalling across projects.
@@ -275,7 +277,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 ```json
 {
   "content": "Login failing on special characters. Root: missing input sanitization. Added validator. Files: auth/login.ts",
-  "tags": ["auth", "bug-fix", "2025-01"],
+  "tags": ["auth", "bug-fix"],
   "importance": 0.8,
   "metadata": {
     "files_modified": ["auth/login.ts", "auth/validator.ts"],
@@ -325,23 +327,25 @@ Ingests up to 500 memories in a single request. Each memory in the batch follows
 ### Request Format
 
 ```json
-[
-  {
-    "content": "First memory content",
-    "type": "Decision",
-    "tags": ["project-alpha"],
-    "importance": 0.9
-  },
-  {
-    "content": "Second memory content",
-    "type": "Context",
-    "tags": ["project-alpha"],
-    "importance": 0.5
-  }
-]
+{
+  "memories": [
+    {
+      "content": "First memory content",
+      "type": "Decision",
+      "tags": ["project-alpha"],
+      "importance": 0.9
+    },
+    {
+      "content": "Second memory content",
+      "type": "Context",
+      "tags": ["project-alpha"],
+      "importance": 0.5
+    }
+  ]
+}
 ```
 
-Send the request body as a JSON array (not an object). The `Content-Type` must be `application/json`.
+Send the request body as a JSON object with a non-empty `memories` array. A bare array is rejected with `400 Bad Request` (`JSON body with 'memories' array required`). The `Content-Type` must be `application/json`.
 
 ### Example Request
 
@@ -349,10 +353,12 @@ Send the request body as a JSON array (not an object). The `Content-Type` must b
 curl -X POST https://your-automem-instance/memory/batch \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '[
-    {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
-    {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
-  ]'
+  -d '{
+    "memories": [
+      {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
+      {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
+    ]
+  }'
 ```
 
 ### Response Format
@@ -375,16 +381,16 @@ Each memory in the batch is written to FalkorDB synchronously and queued for bac
 | Status | Condition |
 |--------|-----------|
 | 201 Created | All memories stored successfully |
-| 400 Bad Request | Validation error (invalid field, missing content, etc.) |
+| 400 Bad Request | Validation error (missing `memories` array, empty batch, batch over 500, invalid field, missing content, etc.) |
 | 401 Unauthorized | Missing or invalid API token |
-| 413 Payload Too Large | Batch exceeds 500 memories |
 
 **Validation Error Example:**
 
 ```json
 {
-  "error": "Invalid memory at index 2: content is required",
-  "index": 2
+  "status": "error",
+  "code": 400,
+  "message": "Memory at index 2 missing 'content'"
 }
 ```
 
@@ -615,7 +621,8 @@ The `delete_memory` MCP tool corresponds to `DELETE /memory/:id`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `memory_id` | string | Yes | ID of memory to delete |
+| `memory_id` | string | XOR with `tags` | Single-delete mode: ID of the memory to delete |
+| `tags` | array[string] | XOR with `memory_id` | Bulk-delete mode: removes **every** memory tagged with any of these tags (exact match, case-insensitive). No dry-run — verify with `recall_memory({ tags, exhaustive: true })` first |
 
 The tool is annotated `destructiveHint: true`. Note that the HTTP API returns 404 if the memory does not exist, but the MCP tool handles this gracefully.
 
