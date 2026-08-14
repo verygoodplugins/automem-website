@@ -128,7 +128,7 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeGraph` Class
 
-`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:35-795](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L35-L795)):
+`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:42-847](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/tests/support/fake_graph.py#L42-L847)):
 
 - **Query pattern matching**: Uses string matching to identify query type (e.g., `"COUNT(DISTINCT r)"` for relationship counts)
 - **Deterministic responses**: Returns pre-configured data from state attributes
@@ -160,7 +160,8 @@ The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a 
 
 ```python
 def iso_days_ago(days: int) -> str:
-    return (FROZEN_TIME - timedelta(days=days)).isoformat()
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    return (base - timedelta(days=days)).isoformat()
 ```
 
 ### Writing New Tests
@@ -182,11 +183,13 @@ def test_calculate_relevance_score_recent_memory():
     # 2. Execution
     consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
     score = consolidator.calculate_relevance_score(
-        memory_id="mem_001",
-        importance=0.8,
-        access_count=5,
-        last_accessed=iso_days_ago(1),
-        created_at=iso_days_ago(2),
+        {
+            "id": "mem_001",
+            "timestamp": iso_days_ago(2),
+            "last_accessed": iso_days_ago(1),
+            "importance": 0.8,
+            "confidence": 0.9,
+        }
     )
 
     # 3. Verification
@@ -247,7 +250,7 @@ def test_apply_forgetting_dry_run():
     # ... configure graph ...
     consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
     result = consolidator.apply_controlled_forgetting(dry_run=True)
-    assert len(graph.deleted_nodes) == 0  # Nothing deleted in dry run
+    assert len(graph.deleted) == 0  # Nothing deleted in dry run
 
 def test_apply_forgetting_execution():
     graph = FakeGraph()
@@ -255,8 +258,8 @@ def test_apply_forgetting_execution():
     vector_store = FakeVectorStore()
     consolidator = MemoryConsolidator(graph=graph, vector_store=vector_store)
     result = consolidator.apply_controlled_forgetting(dry_run=False)
-    assert len(graph.deleted_nodes) > 0   # Nodes deleted
-    assert len(vector_store.deleted_ids) > 0  # Vectors deleted
+    assert len(graph.deleted) > 0      # Nodes deleted
+    assert len(vector_store.deletions) > 0  # Vectors deleted
 ```
 
 #### Verifying Mock Interactions
@@ -264,21 +267,22 @@ def test_apply_forgetting_execution():
 **Query history** — check which queries were executed:
 
 ```python
-assert any("MATCH (m:Memory)" in q for q in graph.query_history)
+assert any("MATCH (m:Memory)" in query for query, _params in graph.queries)
 ```
 
 **State changes** — verify deletions, archives, and score updates:
 
 ```python
-assert "mem_001" in graph.deleted_nodes
-assert "mem_002" in graph.archived_nodes
-assert graph.updated_scores.get("mem_003") < 0.2
+assert "mem_001" in graph.deleted
+assert any(memory_id == "mem_002" for memory_id, _score in graph.archived)
+assert dict(graph.updated_scores)["mem_003"] < 0.2
 ```
 
 **Vector store interactions:**
 
 ```python
-assert "mem_001" in vector_store.deleted_ids
+collection, selector = vector_store.deletions[0]
+assert (selector.get("point_ids") or selector.get("points")) == ["mem_001"]
 ```
 
 ### Test Coverage Report
