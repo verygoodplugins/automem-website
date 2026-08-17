@@ -10,7 +10,7 @@ Key implementation files:
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants; relationship type definitions and validation
 - [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/enrichment/runtime_worker.py) — Automatic relationship creation
 - [automem/utils/entity_extraction.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/utils/entity_extraction.py) — Entity extraction for pattern linking
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Cypher query construction
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/api/memory.py) — `POST /associate` handler builds the relationship `MERGE`/`SET` Cypher inline
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `_expand_related_memories` function
 - [tests/test_api_endpoints.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/tests/test_api_endpoints.py) — Relationship type tests
 :::
@@ -163,8 +163,8 @@ The `AUTHORABLE_RELATIONS` constant contains the 11 relationship types that user
 
 **Validation Flow:**
 
-1. Client submits `POST /associate` with a `relation` field
-2. API checks `relation` against `AUTHORABLE_RELATIONS`
+1. Client submits `POST /associate` with a `type` field
+2. API checks `type` against `AUTHORABLE_RELATIONS`
 3. If invalid, returns `400 Bad Request` with the list of valid types
 4. If valid, executes Cypher `MERGE` in FalkorDB
 
@@ -215,38 +215,43 @@ The `POST /associate` endpoint creates typed relationships between two Memory no
 
 ```json
 {
-  "memory_id": "uuid-of-source-memory",
-  "related_memory_id": "uuid-of-target-memory",
-  "relation": "PREFERS_OVER",
-  "properties": {
-    "strength": 0.9,
-    "context": "production deployments",
-    "reason": "Better performance under load"
-  }
+  "memory1_id": "uuid-of-source-memory",
+  "memory2_id": "uuid-of-target-memory",
+  "type": "PREFERS_OVER",
+  "strength": 0.9,
+  "context": "production deployments",
+  "reason": "Better performance under load"
 }
 ```
 
-**Response:**
+The handler reads `memory1_id`, `memory2_id`, `type`, and `strength` from the top level of the body; relation-specific properties (`context`, `reason`, etc.) are also top-level keys, not nested under a `properties` object.
+
+**Response** (HTTP `201`):
 
 ```json
 {
-  "status": "associated",
-  "relation": "PREFERS_OVER",
-  "source_id": "uuid-of-source-memory",
-  "target_id": "uuid-of-target-memory"
+  "status": "success",
+  "message": "Association created between <memory1_id> and <memory2_id>",
+  "relation_type": "PREFERS_OVER",
+  "strength": 0.9
 }
 ```
+
+Any relation-specific properties that were supplied (e.g. `context`, `reason`) are echoed back alongside these fields.
 
 **Graph Query Pattern:**
 
 The API executes a Cypher query to create the relationship in FalkorDB:
 
 ```cypher
-MATCH (m1:Memory {id: $memory_id})
-MATCH (m2:Memory {id: $related_memory_id})
+MATCH (m1:Memory {id: $id1})
+MATCH (m2:Memory {id: $id2})
 MERGE (m1)-[r:PREFERS_OVER]->(m2)
-SET r += $properties
+SET r.strength = $strength, r.updated_at = $updated_at, r.context = $context, r.reason = $reason
+RETURN r
 ```
+
+The API builds one `SET r.<key> = $<key>` clause per prepared property (always `strength` and `updated_at`, plus any relation-specific keys), rather than a single `SET r += $properties`.
 
 ---
 
@@ -295,7 +300,7 @@ The enrichment worker queries Qdrant for semantically similar memories and creat
 - **Trigger:** Every enriched memory with an embedding
 - **Target:** Top N similar memories above threshold (default: 5 memories, 0.8 cosine similarity)
 - **Direction:** Bidirectional (symmetric links)
-- **Properties:** `similarity_score` (cosine similarity from Qdrant)
+- **Properties:** `score` (cosine similarity from Qdrant) and `updated_at`
 
 **Configuration:**
 
@@ -467,8 +472,7 @@ Higher-strength edges and higher-scoring seed memories boost the relation compon
 ### Core Modules
 
 - **Configuration:** [automem/config.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py) — Defines `AUTHORABLE_RELATIONS`, `PUBLIC_RELATIONS`, and `RELATIONSHIP_TYPES` constants
-- **API Endpoint:** [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/memory.py) — `POST /associate` handler (inside `create_memory_blueprint_full()`)
-- **Graph Store:** [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/stores/graph_store.py) — Cypher query construction for relationship creation
+- **API Endpoint:** [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/api/memory.py) — `POST /associate` handler builds the relationship `MERGE`/`SET` Cypher inline (no separate graph-store module; `automem/stores/graph_store.py` only holds the recall tag-filter helper `_build_graph_tag_predicate`)
 - **Recall Expansion:** [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/recall.py) — `_expand_related_memories` function
 
 ### Enrichment Pipeline
