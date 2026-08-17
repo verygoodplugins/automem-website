@@ -19,7 +19,7 @@ graph TB
         Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
-            API["memory-service<br/>app.py<br/>localhost:8001"]
+            API["flask-api<br/>app.py<br/>localhost:8001"]
             Falkor["falkordb<br/>localhost:6379"]
             QdrantLocal["qdrant<br/>localhost:6333"]
         end
@@ -137,7 +137,7 @@ Docker Compose manages startup order and readiness using `depends_on` conditions
 
 FalkorDB is the only service with a health check defined:
 
-- **Test command**: `redis-cli ping` (expects `PONG` response)
+- **Test command**: `redis-cli ping` when `REDIS_PASSWORD` is empty, otherwise `redis-cli -a "$REDIS_PASSWORD" ping` (expects `PONG` response)
 - **Interval**: Check every 10 seconds
 - **Timeout**: Fail if command doesn't respond within 5 seconds
 - **Retries**: Attempt 5 times before marking unhealthy
@@ -145,7 +145,7 @@ FalkorDB is the only service with a health check defined:
 
 The Flask API waits for `condition: service_healthy`, ensuring FalkorDB is accepting connections before the API attempts to connect.
 
-Qdrant uses `condition: service_started`, meaning the Flask API starts as soon as the Qdrant container starts (not waiting for full initialization). The API handles Qdrant connection failures gracefully via the graceful degradation pattern — Qdrant being unavailable results in `"qdrant": "not_configured"` in `/health` but does not prevent the service from running.
+Qdrant uses `condition: service_started`, meaning the Flask API starts as soon as the Qdrant container starts (not waiting for full initialization). The API handles Qdrant connection failures gracefully via the graceful degradation pattern — Qdrant being unavailable results in `"qdrant": "disconnected"` in `/health` but does not prevent the service from running.
 
 ## Networking
 
@@ -223,14 +223,13 @@ make clean
 `make clean` runs `docker compose down -v` which removes all named volumes. All stored memories will be permanently deleted.
 :::
 
-### Hot-Reload During Development
+### Editing Code During Development
 
-The Flask API container mounts the project directory as a volume, enabling hot-reload:
+The Flask API container mounts the project directory (`.:/app`) as a volume, so source edits are visible inside the container immediately. However, the app starts with `app.run(host="::", port=port, debug=False)` — the Flask reloader is **not** enabled — so changes only take effect after the process restarts:
 
 1. Edit any Python file in the project
-2. Flask detects the change (via `FLASK_DEBUG=1`)
-3. API automatically reloads within ~2 seconds
-4. No need to restart containers
+2. Restart the API container (`docker compose restart flask-api`) to load the change
+3. `make dev` (`docker compose up --build`) rebuilds the image when `Dockerfile` or `requirements.txt` change
 
 ## Production Considerations
 
@@ -240,7 +239,7 @@ Docker Compose is optimized for development. Production deployments require secu
 
 | Aspect | Docker Compose (Dev) | Production Recommendations |
 |---|---|---|
-| **Debug Mode** | `FLASK_DEBUG=1`, verbose logging | Disable debug, set `LOG_LEVEL=INFO` or `WARNING` |
+| **Debug Mode** | Compose sets `FLASK_DEBUG=1`, but the app always calls `app.run(debug=False)` so the value has no effect | No change needed — debug is already hard-disabled; there is no `LOG_LEVEL` env var (unread by the app) |
 | **API Tokens** | Defaults to `test-token`, `test-admin-token` | Generate cryptographically secure tokens (32+ chars) |
 | **Port Exposure** | All ports mapped to localhost | Use reverse proxy (nginx, Traefik), expose only necessary ports |
 | **Volume Backups** | Manual exports to `./backups/` | Automated backups to S3/remote storage (see [Backup & Recovery](/docs/operations/backup/)) |
