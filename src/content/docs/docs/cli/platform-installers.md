@@ -17,6 +17,7 @@ Each platform installer generates and installs appropriate configuration files f
 |---|---|---|
 | `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/` (SessionStart recall, PostToolUse store tracker; optional Stop nudge via `--profile nudged`) | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
+| `copilot` | Hook JSON in `~/.copilot/hooks/`, support scripts in `~/.copilot/scripts/`, memory rules in `~/.copilot/copilot-instructions.md` (CLI) and/or `~/.copilot/instructions/automem.instructions.md` (VS Code) | `~/.copilot/mcp-config.json` (CLI) or `.vscode/mcp.json` (VS Code) — manual |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
 | `hermes` | `mcp_servers.automem` and/or `memory.provider` in `config.yaml`, rules in `AGENTS.md`; provider plugin + `.env` (provider/both modes) | `~/.hermes/` (automatic) |
@@ -40,9 +41,9 @@ Add the `automem` entry to the `mcpServers` object in your Claude Desktop config
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"],
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
         "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
@@ -62,7 +63,7 @@ Run `npx @verygoodplugins/mcp-automem setup` and it will print the exact JSON sn
 
 ### Personal Preferences
 
-Claude Desktop also needs an instruction layer so it knows when to recall and store memories. Add the starter template from [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md) to **Claude Desktop → Settings → Profile → Personal Preferences**.
+Claude Desktop also needs an instruction layer so it knows when to recall and store memories. Add the starter template from [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/92c2e33cb932b71d0df35fdc250778c6a51257af/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md) to **Claude Desktop → Settings → Profile → Personal Preferences**.
 
 If your MCP server key is not `memory`, update the pasted tool names to match Claude Desktop's generated prefix.
 
@@ -85,9 +86,12 @@ Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"]
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
+      "env": {
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
+      }
     }
   }
 }
@@ -283,7 +287,7 @@ graph TB
     Codex --> NPX
 
     CursorInstaller["cursor command"] --> CursorRules
-    ClaudeCodeInstaller["claude-code command"] --> HookScripts["~/.claude/hooks/ + ~/.claude/scripts/"]
+    ClaudeCodeInstaller["claude-code command"] --> HookScripts["~/.claude/hooks/"]
     CodexInstaller["codex command"] --> AgentsMD
     OpenClawInstaller["openclaw command"] -->|"--mode plugin"| OpenClawPlugin
     OpenClawInstaller -->|"--mode mcp/skill"| OpenClawMCPFiles
