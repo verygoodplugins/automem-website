@@ -130,7 +130,11 @@ if [ "$HAS_CHANGES" = "true" ]; then
     git checkout -B "$BRANCH"
   fi
   git add -A -- . ':!.source-repo' ':!.source-repo/**'
-  git commit -m "$TITLE"
+  if git diff --cached --quiet; then
+    echo "Existing audit branch already has these changes; skipping commit."
+  else
+    git commit -m "$TITLE"
+  fi
   git push -u origin "$BRANCH"
 elif [ "$REMOTE_BRANCH_EXISTS" = "true" ]; then
   fetch_audit_branch
