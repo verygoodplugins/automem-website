@@ -4,12 +4,11 @@
 # on release, or manually via workflow_dispatch.
 #
 # Flow:
-# 1. Source repo creates a release via release-please
-# 2. release-please.yml dispatches a docs-update event here
-# 3. This workflow checks out the source at the release tag
-# 4. Claude Code Action reads source changes and updates doc pages
-# 5. If changes are needed, Claude creates a PR with a Cloudflare preview
-# 6. Docs Auto-Merge queues eligible docs/audit-* PRs after required checks pass
+# 1. Source repo pushes to main and docs-dispatch.yml fires a docs-update event
+# 2. This workflow checks out the source at the release/commit SHA
+# 3. Claude Code Action reads source changes and updates doc pages
+# 4. land-docs-pr.sh commits, opens/updates the PR, and sets CLEAR/HOLD marker
+# 5. Docs Auto-Merge queues eligible docs/audit-* PRs after required checks pass
 
 name: Auto-Update Docs
 run-name: Auto-Update Docs - ${{ github.event.client_payload.source_repo || inputs.source_repo }} @ ${{ github.event.client_payload.source_sha || inputs.source_sha || 'main' }}
@@ -87,9 +86,11 @@ jobs:
         run: npm ci
 
       - name: Run Claude Code
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           branch_prefix: docs/audit-
           prompt: |
             Read the file .github/prompts/update-docs.md for full instructions.
@@ -108,6 +109,9 @@ jobs:
             The source repo is checked out at .source-repo/ for you to read.
             For git inspection, use only these allowed forms: `git status --short`, `git --no-pager diff --no-ext-diff`, `git --no-pager log --no-ext-diff`, `git --no-pager show --no-ext-diff`, and `git rev-parse`.
             After making changes, run `npm run build` to verify the site compiles.
+
+            Return the structured audit JSON (confidence, title, fixes, questions).
+            Do NOT create a pull request — the workflow lands the branch.
           claude_args: >-
             --model claude-sonnet-4-6
             --max-turns 100
@@ -124,3 +128,14 @@ jobs:
             --allowedTools 'Bash(git --no-pager show --no-ext-diff:*)'
             --allowedTools 'Bash(git rev-parse:*)'
             --allowedTools 'Bash(npm run build)'
+            --json-schema '{"type":"object","properties":{"confidence":{"type":"string","enum":["CLEAR","HOLD","NO_CHANGES"]},"title":{"type":"string"},"fixes":{"type":"array","items":{"type":"object","properties":{"claim":{"type":"string"},"current":{"type":"string"},"fix":{"type":"string"},"source_sha":{"type":"string"}},"required":["claim","fix"]}},"questions":{"type":"array","items":{"type":"string"}}},"required":["confidence","title","fixes","questions"]}'
+
+      - name: Land docs PR
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          SOURCE_REPO: ${{ steps.resolve.outputs.source_repo }}
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+          STRUCTURED_OUTPUT: ${{ steps.claude.outputs.structured_output }}
+          CLAUDE_BRANCH: ${{ steps.claude.outputs.branch_name }}
+          DOCS_MAINTAINER: "@jgarturo"
+        run: bash .github/scripts/land-docs-pr.sh
