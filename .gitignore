@@ -5,6 +5,9 @@ node_modules/
 dist/
 .astro/
 
+# Docs-update workflow source checkout
+.source-repo/
+
 # Environment files
 .env
 .env.local

@@ -6,7 +6,7 @@ name: Docs Auto-Merge
 # - docs/audit-* PRs from .github/workflows/docs-update.yml require an explicit
 #   confidence marker in the PR body.
 # - source-release docs PRs from the three documented sibling repos can merge
-#   automatically once they are non-draft and CI passes, unless explicitly held.
+#   automatically once CI passes unless explicitly held (draft is OK; we mark ready).
 #
 # The auditing agent ends every PR body with a confidence marker:
 #   <!-- DOCS-AUDIT: CLEAR --> -> agent verified everything; mark ready + auto-merge.
@@ -55,7 +55,6 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           BODY="$(gh pr view "$PR_URL" --json body --jq '.body // ""')"
           # HOLD always wins: the agent flagged something for a human to decide.
@@ -77,13 +76,8 @@ jobs:
               echo "eligible=false" >> "$GITHUB_OUTPUT"
               ;;
             docs/automem-*|docs/mcp-automem-*|docs/graph-viewer-*)
-              if [ "$PR_IS_DRAFT" = "true" ]; then
-                echo "Source-release docs PR is still a draft; leaving it held."
-                echo "eligible=false" >> "$GITHUB_OUTPUT"
-              else
-                echo "Source-release docs PR is non-draft and has no HOLD marker; eligible for auto-merge."
-                echo "eligible=true" >> "$GITHUB_OUTPUT"
-              fi
+              echo "Source-release docs PR has no HOLD marker; eligible for ready + auto-merge."
+              echo "eligible=true" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Docs PR branch '$PR_BRANCH' is not an auto-merge lane."
