@@ -66,12 +66,14 @@ graph TB
     subgraph Env_Resolution["Environment Variable Resolution<br/>src/env.ts + src/index.ts"]
         DOTENV["dotenv.config()<br/>.env file loading"]
 
-        ENDPOINT_CHECK{"AUTOMEM_API_URL<br/>exists?"}
+        ENDPOINT_FUNC["resolveAutoMemApiUrl()<br/>src/env.ts"]
+        ENDPOINT_CHECK{"Any URL<br/>candidate set?"}
+        URL_PRIORITY["Priority:<br/>1. AUTOMEM_API_URL<br/>2. CLAUDE_PLUGIN_OPTION_API_URL<br/>3. AUTOMEM_ENDPOINT (deprecated)"]
         ENDPOINT_DEFAULT["Default:<br/>http://127.0.0.1:8001"]
         ENDPOINT_VALUE["Use env value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()<br/>src/env.ts"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. CLAUDE_PLUGIN_OPTION_API_KEY<br/>4. CLAUDE_PLUGIN_OPTION_API_TOKEN"]
     end
 
     subgraph Client_Config["AutoMemClient Config<br/>src/index.ts"]
@@ -79,7 +81,9 @@ graph TB
         CLIENT_INSTANCE["new AutoMemClient(config)"]
     end
 
-    DOTENV --> ENDPOINT_CHECK
+    DOTENV --> ENDPOINT_FUNC
+    ENDPOINT_FUNC --> URL_PRIORITY
+    URL_PRIORITY --> ENDPOINT_CHECK
     ENDPOINT_CHECK -->|"No"| ENDPOINT_DEFAULT
     ENDPOINT_CHECK -->|"Yes"| ENDPOINT_VALUE
     ENDPOINT_DEFAULT --> CONFIG_OBJ
@@ -143,9 +147,9 @@ Each AI platform stores MCP server configuration differently. The setup wizard a
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"],
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
         "AUTOMEM_API_URL": "http://localhost:8001",
         "AUTOMEM_API_KEY": "your-api-key"
@@ -160,12 +164,11 @@ The `command` and `args` launch the MCP server in stdio mode. The `env` block pa
 ### TOML Configuration Example (Codex)
 
 ```toml
-[[mcp_servers]]
-name = "automem"
+[mcp_servers.memory]
 command = "npx"
-args = ["@verygoodplugins/mcp-automem"]
+args = ["-y", "@verygoodplugins/mcp-automem"]
 
-[mcp_servers.env]
+[mcp_servers.memory.env]
 AUTOMEM_API_URL = "http://localhost:8001"
 AUTOMEM_API_KEY = "your-api-key"
 ```
@@ -229,10 +232,12 @@ Example CLI commands that require configuration:
 
 ```bash
 # All CLI commands use the same config resolution
-npx @verygoodplugins/mcp-automem recall "project architecture"
+npx @verygoodplugins/mcp-automem recall --query "project architecture"
 npx @verygoodplugins/mcp-automem queue
 npx @verygoodplugins/mcp-automem config
 ```
+
+`recall` reads its input from flags only — `--query`, `--tags` (comma-separated), and `--limit` (default `5`). A bare positional argument is ignored, so `recall "project architecture"` runs an empty query.
 
 ### Debug Logging
 
@@ -242,11 +247,7 @@ Set `AUTOMEM_LOG_LEVEL=debug` to enable verbose logging in server mode:
 AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 ```
 
-Debug output includes:
-- Configuration values loaded (API key is masked)
-- Each tool call with parameters
-- HTTP request/response details
-- Retry attempts and backoff timing
+The flag is narrow: it gates two stderr lines only — the resolved `process.title` when a process tag is set, and an `AutoMem MCP server running` line once the stdio transport is connected. There is no per-tool-call, HTTP, or retry logging behind it.
 
 ## Configuration Generation
 
@@ -314,10 +315,10 @@ If you receive `401 Unauthorized` errors:
 
 ### Multiple Configurations Conflict
 
-If configuration behaves unexpectedly, use debug mode to see which values are being loaded:
+If configuration behaves unexpectedly, run a `recall` and read the JSON it prints — the command resolves configuration through the same `resolveAutoMemApiUrl()` / `readAutoMemApiKeyFromEnv()` path as server mode, so a wrong endpoint or missing key surfaces as a connection or `401` error:
 
 ```bash
-AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem recall "test"
+npx @verygoodplugins/mcp-automem recall --query "test"
 ```
 
-The debug output shows the resolved `endpoint` and whether an `apiKey` was found (the actual key value is masked for security).
+`AUTOMEM_LOG_LEVEL=debug` does not add configuration output here; it only affects server mode (see [Debug Logging](#debug-logging) above). To see the endpoint the client resolved, run `npx @verygoodplugins/mcp-automem config`.
