@@ -6,7 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP server, tool definitions, and request handlers
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/0cd749887b13bfcccb42f7a294574fa61b214d88/src/index.ts) — Entry point, mode detection, CLI routing, and server startup
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/0cd749887b13bfcccb42f7a294574fa61b214d88/src/mcp-surface.ts) — Tool definitions, request handlers, and `createAutoMemMcpServer()`
 - [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
 - [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
 :::
@@ -79,8 +80,8 @@ The `mcp-automem` package (`src/index.ts`) serves two purposes from a single ent
 Mode detection occurs immediately at startup:
 
 ```typescript
-// src/index.ts lines 58-61
-const command = (process.argv[2] || "").toLowerCase();
+// src/index.ts lines 30-31
+const command = (process.argv[2] || '').toLowerCase();
 const isServerMode = command.length === 0;
 // ...
 if (isServerMode) {
@@ -104,14 +105,15 @@ console.error = (...args) => process.stderr.write(args.join(" ") + "\n");
 
 ### Process Lifecycle
 
-| Stage | Lines | Description |
+| Stage | Lines (`src/index.ts`) | Description |
 |-------|-------|-------------|
-| Entry | 1–57 | Shebang, imports, helper functions |
-| Mode Detection | 58–62 | Determine server vs CLI mode; redirect logging in server mode |
-| CLI Routing | 63–118 | Execute CLI commands and exit |
-| Configuration | 119–177 | Install stdio guards, load environment, create `AutoMemClient` |
-| Server Setup | 178–783 | Create server, register tools and handlers |
-| Main Loop | 785–795 | Connect transport, run |
+| Entry | 1–28 | Shebang, imports, helper functions |
+| Mode Detection | 30–31 | Determine server vs CLI mode |
+| Logging & Guards | 78–112 | Redirect logging in server mode; define stdio error guards |
+| CLI Routing | 115–405 | Execute CLI commands and exit |
+| Configuration | 407–433 | Resolve environment, create `AutoMemClient` |
+| Server Setup | 435–439 | Build server via `createAutoMemMcpServer()` (tools live in `src/mcp-surface.ts`) |
+| Main Loop | 441–496 | Install guards, connect transport, run shutdown layers |
 
 ### Error Resilience
 
@@ -120,10 +122,10 @@ The server guards against two classes of failures:
 **Broken pipe errors** — When the AI platform terminates the connection unexpectedly:
 
 ```typescript
-// installStdioErrorGuards() — lines 120-130
+// installStdioErrorGuards() — src/index.ts lines 102-112
 const handler = (error: unknown) => {
   const err = error as { code?: string } | undefined;
-  if (err?.code === "EPIPE" || err?.code === "ECONNRESET") {
+  if (err?.code === 'EPIPE' || err?.code === 'ECONNRESET') {
     process.exit(0);
   }
 };
@@ -139,7 +141,7 @@ process.stderr.on("error", handler);
 
 ```mermaid
 graph TB
-    subgraph tools["MCP Tools (buildMcpServer)"]
+    subgraph tools["MCP Tools (createAutoMemMcpServer)"]
         direction TB
 
         T1["store_memory<br/>Required: content<br/>Optional: tags, importance,<br/>embedding, metadata, timestamps"]
@@ -468,7 +470,7 @@ This dual format ensures:
 | Structured tool output for chat clients | Manual formatting | Built-in `content` + `structuredContent` |
 | Admin operations (reembed, reprocess) | Preferred — admin endpoints | Not available |
 | Health monitoring dashboards | Preferred — full response | Simplified output only |
-| Process supervision (stable PID) | — | Supported via `PROCESS_TITLE` env var |
+| Process supervision (stable PID) | — | Supported via `AUTOMEM_PROCESS_TAG` (or `MCP_PROCESS_TAG`) env var |
 
 :::tip[Prefer MCP for AI agents]
 AI platforms using the MCP protocol get automatic tool discovery, schema validation, structured output parsing, and content governance before requests reach the API. Recall ranking, tag handling, deduplication, and graph/entity expansion remain backend behavior, so the main difference is transport and response format, not search semantics.
@@ -478,10 +480,10 @@ AI platforms using the MCP protocol get automatic tool discovery, schema validat
 
 ## Tool Registration and Discovery
 
-The `mcp-automem` server registers tools via the MCP SDK's schema-based routing:
+The `mcp-automem` server registers tools via the MCP SDK's schema-based routing. Tool definitions and request handlers live in `src/mcp-surface.ts`; `src/index.ts` only builds the server from them via `createAutoMemMcpServer()`:
 
-**`ListToolsRequestSchema` handler (line 669):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
+**`ListToolsRequestSchema` handler (`src/mcp-surface.ts` line 1034):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
 
-**`CallToolRequestSchema` handler (lines 671–826):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
+**`CallToolRequestSchema` handler (`src/mcp-surface.ts` line 1038):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
 
-The `tools` array (lines 177–667) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
+The `tools` array (`src/mcp-surface.ts` line 85) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
