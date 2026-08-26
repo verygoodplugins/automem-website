@@ -252,17 +252,16 @@ The analyze endpoint provides comprehensive statistics about the memory graph, i
 
 #### Analytics Components
 
-The `/analyze` endpoint executes 7 independent Cypher queries against FalkorDB:
+The `/analyze` endpoint executes 6 Cypher queries against FalkorDB and returns their results nested under an `analytics` key (alongside `status` and `elapsed_ms`):
 
-1. **Total Memory Count**: `MATCH (m:Memory) RETURN count(m)`
-2. **Type Distribution**: Groups memories by `m.type` field
-3. **Entity Frequency**: Unwinds `m.entities` array and counts occurrences (top 20)
-4. **Confidence Distribution**: Buckets `m.confidence` scores by 0.1 intervals
-5. **Activity by Hour**: Extracts hour from `m.timestamp` and counts memories
-6. **Tag Frequency**: Unwinds `m.tags` array and counts occurrences (top 20)
-7. **Relationship Counts**: Counts all edges by relationship type
+1. **`memory_types`**: Groups memories by `m.type`, with a count and average confidence per type
+2. **`patterns`**: `Pattern` nodes with `confidence > 0.6`, ordered by confidence (top 10)
+3. **`preferences`**: `PREFERS_OVER` edges, ordered by relation strength (top 10)
+4. **`temporal_insights`**: Buckets the 100 most recent timestamped memories by hour-of-day, with an average importance per hour
+5. **`entity_frequency`**: Counts `entities`/`keywords`/`topics` values found in the metadata of 200 memories (top 50)
+6. **`confidence_distribution`**: Buckets `m.confidence` into `low` (&lt; 0.4), `medium` (&lt; 0.7), and `high`, over 500 memories
 
-Each query is wrapped in a try-except block — if a query fails, the corresponding field is set to `null`, `{}`, or `[]` depending on the expected type.
+Only the temporal query has its own try-except and degrades to an empty object on failure. Every other query runs inside one outer try-except, so a failure there returns HTTP 500 with `{"error": "Analyze failed", "details": ...}` rather than a partially populated response.
 
 #### Analytics Query Flow
 
@@ -307,22 +306,21 @@ sequenceDiagram
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   https://your-project.up.railway.app/analyze
 
-# Check relationship distribution
+# Check the type distribution
 curl -s -H "Authorization: Bearer YOUR_TOKEN" \
-  https://your-project.up.railway.app/analyze | jq .relationships
+  https://your-project.up.railway.app/analyze | jq .analytics.memory_types
 ```
 
 #### Use Cases
 
 | Use Case | Relevant Fields |
 |---|---|
-| Identify memory class imbalance | `memories_by_type` |
-| Find frequently discussed projects/tools | `top_entities` |
-| Assess memory quality | `confidence_distribution` |
-| Understand activity patterns | `activity_by_hour` |
-| Audit tagging consistency | `top_tags` |
-| Verify enrichment pipeline results | `relationships["SIMILAR_TO"]`, `relationships["EXEMPLIFIES"]` |
-| Detect temporal validity issues | `relationships["INVALIDATED_BY"]`, `relationships["EVOLVED_INTO"]` |
+| Identify memory class imbalance | `analytics.memory_types` |
+| Find frequently discussed projects/tools | `analytics.entity_frequency` |
+| Assess memory quality | `analytics.confidence_distribution`, the `average_confidence` inside `analytics.memory_types` |
+| Understand activity patterns | `analytics.temporal_insights` |
+| Review detected recurring patterns | `analytics.patterns` |
+| Audit recorded preferences | `analytics.preferences` |
 
 ## Startup Context Retrieval
 
@@ -334,17 +332,16 @@ The startup recall endpoint returns a curated set of memories suitable for initi
 |---|---|
 | **Path** | `/startup-recall` |
 | **Method** | `GET` |
-| **Authentication** | None required |
+| **Authentication** | Required (API token via Bearer, `X-API-Key`, or `api_key` query parameter) — only `/health`, `/backup`, `/viewer*`, and `OPTIONS` preflights are exempt from the global token guard |
 | **Query Parameters** | None |
 | **Response** | HTTP 200 with JSON memory list, or HTTP 503 if FalkorDB unavailable |
 
 #### Retrieval Strategy
 
-The startup recall endpoint filters memories by critical tags:
+The startup recall endpoint runs two fixed tag-filtered queries — there is no recency fallback and no configurable limit:
 
-- Queries memories tagged with `critical`, `lesson`, or `ai-assistant`
-- Returns matching memories up to the configured limit
-- Falls back to recent memories if tag-filtered results are insufficient
+- `critical_lessons` — memories tagged `critical`, `lesson`, or `ai-assistant`, ordered by importance descending, hard-capped at 10
+- `system_rules` — memories tagged `system` or `memory-recall`, hard-capped at 5
 
 #### Integration with AI Agents
 
@@ -352,7 +349,8 @@ The startup recall endpoint is designed for AI agent initialization. An agent ca
 
 ```bash
 # Retrieve startup context
-curl https://your-project.up.railway.app/startup-recall | jq '.memories | length'
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  https://your-project.up.railway.app/startup-recall | jq '.critical_lessons | length'
 ```
 
 ## Health Monitor Service
@@ -505,8 +503,12 @@ Deploy as a dedicated Railway service for continuous monitoring.
 ```
 AUTOMEM_API_URL=http://memory-service.railway.internal:8001
 HEALTH_MONITOR_WEBHOOK=https://hooks.slack.com/...
-HEALTH_MONITOR_AUTO_RECOVER=false
-HEALTH_MONITOR_CHECK_INTERVAL=300
+```
+
+Auto-recovery and the check interval are **command-line flags, not environment variables** — set them in the service start command:
+
+```bash
+python scripts/health_monitor.py --interval 300   # add --auto-recover to enable recovery
 ```
 
 **Pros:**
@@ -598,16 +600,10 @@ Auto-recovery will automatically rebuild your FalkorDB graph when critical drift
 
 ### Enabling Auto-Recovery
 
-**Enable via command line:**
+Auto-recovery is enabled by the `--auto-recover` command-line flag only — there is no environment variable for it:
 
 ```bash
 python scripts/health_monitor.py --auto-recover
-```
-
-**Enable via environment variable:**
-
-```
-HEALTH_MONITOR_AUTO_RECOVER=true
 ```
 
 ### Recovery Process
@@ -630,9 +626,14 @@ For detailed recovery procedures, see [Backup & Recovery](/docs/operations/backu
 |---|---|---|
 | `HEALTH_MONITOR_DRIFT_THRESHOLD` | `5` | Warning threshold (percentage) |
 | `HEALTH_MONITOR_CRITICAL_THRESHOLD` | `50` | Critical threshold (percentage) |
-| `HEALTH_MONITOR_WEBHOOK` | `None` | Slack/Discord webhook URL |
-| `HEALTH_MONITOR_AUTO_RECOVER` | `false` | Enable automatic recovery |
-| `HEALTH_MONITOR_CHECK_INTERVAL` | `300` | Seconds between health checks |
+| `HEALTH_MONITOR_WEBHOOK` | `None` | Slack/Discord webhook URL (also settable via `--webhook`) |
+
+Auto-recovery and the check interval have **no environment variable** — they are command-line flags:
+
+| Flag | Default | Description |
+|---|---|---|
+| `--auto-recover` | off | Enable automatic recovery |
+| `--interval` | `300` | Seconds between health checks |
 
 ## Monitoring Best Practices
 
@@ -721,7 +722,7 @@ Qdrant: 778 vectors
 - But recovery script not running
 
 **Solutions:**
-- Verify `HEALTH_MONITOR_AUTO_RECOVER=true` is set
+- Verify the monitor was started with the `--auto-recover` flag (there is no `HEALTH_MONITOR_AUTO_RECOVER` environment variable)
 - Check that `scripts/recover_from_qdrant.py` is accessible
 - Review health monitor logs for permission errors
 
