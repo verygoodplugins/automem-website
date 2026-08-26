@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/admin.py) — Admin endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/969755deb47934125d4face18816f3a1039766a7/automem/api/admin.py) — Admin endpoints
 - [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/enrichment.py) — Enrichment endpoints
 - [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
@@ -43,10 +43,13 @@ graph TB
     subgraph "Protected Operations"
         Reprocess["/enrichment/reprocess"]
         Reembed["/admin/reembed"]
+        Sync["/admin/sync"]
+        Backup["/backup<br/>(admin token only —<br/>exempt from Layer 1)"]
     end
 
-    subgraph "Also Public"
+    subgraph "Exempt from Layer 1"
         Health["/health<br/>(no auth)"]
+        Viewer["/viewer*<br/>and OPTIONS preflights"]
     end
 
     subgraph "API Token Required (when AUTOMEM_API_TOKEN configured)"
@@ -57,15 +60,19 @@ graph TB
     Layer1-->Status
     Layer2-->Reprocess
     Layer2-->Reembed
+    Layer2-->Sync
+    Layer2-->Backup
 ```
 
 ### Error Responses
 
+All error responses share one envelope — `{"status": "error", "code": <http status>, "message": <description>}` — emitted by the app-wide exception handler:
+
 | Status Code | Response | Meaning |
 |-------------|----------|---------|
-| `401 Unauthorized` | `{"error": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
-| `401 Admin authorization required` | `{"error": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
-| `403 Admin token not configured` | `{"error": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
+| `401` | `{"status": "error", "code": 401, "message": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
+| `401` | `{"status": "error", "code": 401, "message": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
+| `403` | `{"status": "error", "code": 403, "message": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
 
 ---
 
@@ -133,7 +140,7 @@ curl "https://your-automem-instance/enrichment/status" \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `ids` | array[string] | **Yes** | List of memory UUIDs to reprocess (non-empty) |
+| `ids` | array[string] \| string | **Yes** | Memory UUIDs to reprocess (must resolve to a non-empty set, otherwise HTTP 400). A comma-separated string is also accepted, and the handler falls back to an `?ids=` query parameter when the body has none |
 
 Reprocessing always forces re-queuing regardless of current pending/in-flight state.
 
@@ -157,8 +164,8 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Always `"queued"` |
-| `count` | integer | Number of UUIDs in the submitted `ids` array; not a success/failure count |
-| `ids` | array[string] | Memory UUIDs that were queued, sorted lexicographically |
+| `count` | integer | Number of **distinct** UUIDs queued — the handler deduplicates into a set, so repeats in the request are collapsed. Not a success/failure count |
+| `ids` | array[string] | The deduplicated memory UUIDs that were queued, sorted lexicographically |
 
 ```json
 {
