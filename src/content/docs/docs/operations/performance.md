@@ -86,7 +86,7 @@ The worker uses a timeout-based accumulation strategy:
 2. Add to `batch` list
 3. Check if `len(batch) >= EMBEDDING_BATCH_SIZE` or timeout elapsed
 4. If batch ready, call `process_embedding_batch()`
-5. Otherwise, continue accumulating with 0.1s sleep intervals
+5. Otherwise keep blocking on the queue — the worker does not poll on a sleep interval. It waits on `embedding_queue.get(timeout=EMBEDDING_BATCH_TIMEOUT_SECONDS)`, and when that times out it flushes whatever partial batch has accumulated. A 1s sleep occurs only in the error-recovery path.
 
 ### Key Functions
 
@@ -227,7 +227,7 @@ Structured logging provides machine-parseable performance data in log output, en
 Logs use the `extra={}` parameter to include structured data alongside log messages:
 
 ```python
-logger.info("Recall completed", extra={
+logger.info("recall_complete", extra={
     "query": query,
     "results": len(memories),
     "latency_ms": elapsed_ms,
@@ -250,7 +250,11 @@ logger.info("Recall completed", extra={
 | `vector_matches` | int | Semantic search hits (if applicable) |
 | `has_time_filter` | bool | Temporal filtering active |
 | `has_tag_filter` | bool | Tag filtering active |
+| `has_exclude_filter` | bool | `exclude_tags` filtering active |
 | `limit` | int | Result limit |
+| `dedup_removed` | int | Results dropped by deduplication |
+| `is_multi` | bool | Multi-query recall (`queries[]`) |
+| `context_language` | string \| null | Language hint from the context profile |
 
 ### Memory Store Logged Fields
 
@@ -270,10 +274,10 @@ logger.info("Recall completed", extra={
 
 ```bash
 # Find slow recall queries (>500ms)
-railway logs | grep "Recall completed" | jq 'select(.latency_ms > 500)'
+railway logs | grep "recall_complete" | jq 'select(.latency_ms > 500)'
 
 # Count results by query pattern
-railway logs | grep "Recall completed" | jq '.query' | sort | uniq -c
+railway logs | grep "recall_complete" | jq '.query' | sort | uniq -c
 
 # Monitor embedding queue status
 railway logs | grep "embedding_status" | jq '{status: .embedding_status, id: .memory_id}'
