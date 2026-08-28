@@ -31,4 +31,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/client --project-name automem-website --branch main
+          # Pages deploy reads a root Wrangler config when run in the workspace.
+          # The generated `previews` entry is not valid for Pages validation.
+          command: --cwd /tmp pages deploy ${{ github.workspace }}/dist/client --project-name automem-website --branch main
