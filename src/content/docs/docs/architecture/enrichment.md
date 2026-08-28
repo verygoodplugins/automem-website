@@ -13,7 +13,7 @@ Key GitHub sources:
 - [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
 - [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_queue_bindings.py) — Queue management
 - [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py) — EnrichmentJob dataclass
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/stores/graph_store.py) — Graph write operations for enrichment
+- [automem/utils/entity_extraction.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py) — `extract_entities`, `generate_summary`, `_is_valid_entity`, `_slugify`, and the spaCy loader
 - [.env.example](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/.env.example) — Enrichment configuration variables
 :::
 
@@ -125,7 +125,7 @@ The pipeline uses a two-tier approach: spaCy NLP when available, with regex fall
 
 **Tier 1: spaCy NLP**
 - Runs `en_core_web_sm` model (configurable via `ENRICHMENT_SPACY_MODEL`)
-- Model is loaded once and cached via LRU cache — eliminates repeated 5-10 second load time
+- Model is loaded once into a module-level global (`_SPACY_NLP`) guarded by a `threading.Lock`, not an LRU cache — eliminates repeated 5-10 second load time
 - Named Entity Recognition (NER) extracts `PERSON`, `ORG`, `PRODUCT`, `WORK_OF_ART`, `EVENT`, `GPE`, `LOC` labels
 
 **Tier 2: Regex Fallbacks**
@@ -142,8 +142,8 @@ Five entity categories are extracted and stored in `metadata.entities`:
 |---|---|---|---|
 | `people` | `PERSON` | `met with X`, `talked to X` | "Sarah", "John Smith" |
 | `organizations` | `ORG` | — | "Google", "NASA" |
-| `tools` | `PRODUCT`, `WORK_OF_ART` | `using X`, `deploy X` | "PostgreSQL", "Docker" |
-| `concepts` | `EVENT`, `GPE`, `LOC` | — | "Machine Learning", "New York" |
+| `tools` | `PRODUCT`, `WORK_OF_ART`, `LAW` | `using X`, `deploy X` | "PostgreSQL", "Docker" |
+| `concepts` | `EVENT`, `GPE`, `LOC`, `NORP` | — | "Machine Learning", "New York" |
 | `projects` | — | backticks, `project called "X"` | "automem", "Project Phoenix" |
 
 ### Entity Validation
@@ -296,6 +296,9 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
     "last_success_at": "2025-01-15T10:30:00Z",
     "last_error": "FalkorDB write failed",
     "last_error_at": "2025-01-14T08:15:00Z"
+  },
+  "classification": {
+    "...": "counters from ClassificationStats.to_dict()"
   }
 }
 ```
@@ -307,6 +310,7 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
 - `inflight` — Count of IDs in `enrichment_inflight` (items currently processing; `len(state.enrichment_inflight)`)
 - `max_attempts` — Configured retry limit (`ENRICHMENT_MAX_ATTEMPTS`)
 - `stats` — Lifetime counters from `EnrichmentStats.to_dict()`: `processed_total`, `successes`, `failures`, `last_success_id`, `last_success_at`, `last_error`, `last_error_at`
+- `classification` — Counters from `ClassificationStats.to_dict()`, returned alongside `stats` on the same response
 
 ### Tracking Sets
 
@@ -371,7 +375,11 @@ The backoff is a flat sleep of `ENRICHMENT_FAILURE_BACKOFF_SECONDS` on each fail
 The `POST /enrichment/reprocess` endpoint (requires `X-Admin-Token`) allows forced re-enrichment of existing memories:
 
 **Parameters:**
-- `ids` — Array of memory UUIDs to reprocess
+- `ids` — Memory UUIDs to reprocess. Accepts either a JSON array or a comma-separated string, and may be sent in the JSON body **or** as an `?ids=` query parameter.
+
+**Responses:**
+- `202 Accepted` — `{"status": "queued", "count": <n>, "ids": [<sorted ids>]}`; each id is enqueued with `forced=true`
+- `400 Bad Request` — no usable ids were supplied
 
 ---
 
