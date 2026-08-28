@@ -6,9 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/admin.py) — Admin endpoints
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/enrichment.py) — Enrichment endpoints
-- [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/backup.py#L29-L100) — `/backup` export endpoint
+- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) — API-token exemptions and HTTP error responses
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/admin.py#L61-L82) — Admin endpoints
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/enrichment.py#L37-L67) — Enrichment endpoints
+- [automem/api/backup.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/backup.py#L39-L42) — `/backup` export endpoint
 :::
 
 Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
@@ -19,10 +20,12 @@ For standard memory operations (store, recall, update, delete), see [Memory Oper
 
 ## Authentication Model
 
-Admin operations require **dual authentication**:
+Most privileged admin operations require **dual authentication**:
 
-1. **Standard API Token** (`AUTOMEM_API_TOKEN`) — Required for all endpoints except `/health`
+1. **Standard API Token** (`AUTOMEM_API_TOKEN`) — Required by the global API-token guard except for `/health`, `/backup`, `/viewer*`, and `OPTIONS` requests
 2. **Admin Token** (`ADMIN_API_TOKEN`) — Additional token for privileged operations
+
+`/backup` is the admin-only exception: it bypasses the API-token guard but still requires the admin token.
 
 ### Authentication Methods
 
@@ -36,36 +39,46 @@ Admin operations require **dual authentication**:
 ```mermaid
 graph TB
     subgraph "Authentication Layers"
-        Layer1["Layer 1: API Token<br/>AUTOMEM_API_TOKEN<br/>Guards all endpoints except /health"]
+        Layer1["Layer 1: API Token<br/>AUTOMEM_API_TOKEN"]
         Layer2["Layer 2: Admin Token<br/>ADMIN_API_TOKEN<br/>Guards privileged operations"]
     end
 
     subgraph "Protected Operations"
         Reprocess["/enrichment/reprocess"]
         Reembed["/admin/reembed"]
+        Sync["/admin/sync"]
+        Backup["/backup"]
     end
 
-    subgraph "Also Public"
-        Health["/health<br/>(no auth)"]
+    subgraph "Exempt from API-token guard"
+        Health["/health"]
+        Viewer["/viewer*"]
+        Options["OPTIONS"]
     end
 
     subgraph "API Token Required (when AUTOMEM_API_TOKEN configured)"
         Status["/enrichment/status"]
     end
 
-    Layer1-->Layer2
     Layer1-->Status
+    Layer1-->Reprocess
+    Layer1-->Reembed
+    Layer1-->Sync
     Layer2-->Reprocess
     Layer2-->Reembed
+    Layer2-->Sync
+    Layer2-->Backup
 ```
 
 ### Error Responses
 
+Authentication failures and other errors raised through Flask's HTTP exception path use this envelope. Endpoint-specific failures can return their own response bodies, so do not assume it applies to every error response.
+
 | Status Code | Response | Meaning |
 |-------------|----------|---------|
-| `401 Unauthorized` | `{"error": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
-| `401 Admin authorization required` | `{"error": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
-| `403 Admin token not configured` | `{"error": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
+| `401` | `{"status": "error", "code": 401, "message": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
+| `401` | `{"status": "error", "code": 401, "message": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
+| `403` | `{"status": "error", "code": 403, "message": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
 
 ---
 
@@ -133,9 +146,9 @@ curl "https://your-automem-instance/enrichment/status" \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `ids` | array[string] | **Yes** | List of memory UUIDs to reprocess (non-empty) |
+| `ids` | array[string] \| string | **Yes** | Memory UUIDs to reprocess. Provide a non-empty array or comma-separated string in the JSON body; `?ids=` is used when the body has no `ids` value. |
 
-Reprocessing always forces re-queuing regardless of current pending/in-flight state.
+The handler trims and deduplicates IDs before queueing each one with `forced=True`, so repeated IDs in a request collapse to one queued ID and an already pending or in-flight ID can be requeued.
 
 ### Example Request
 
@@ -157,8 +170,8 @@ curl -X POST https://your-automem-instance/enrichment/reprocess \
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Always `"queued"` |
-| `count` | integer | Number of UUIDs in the submitted `ids` array; not a success/failure count |
-| `ids` | array[string] | Memory UUIDs that were queued, sorted lexicographically |
+| `count` | integer | Number of distinct UUIDs queued; not a success/failure count |
+| `ids` | array[string] | Deduplicated memory UUIDs queued, sorted lexicographically |
 
 ```json
 {
