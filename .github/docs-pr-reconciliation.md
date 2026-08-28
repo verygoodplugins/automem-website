@@ -22,13 +22,15 @@ newer documentation or source semantics.
 
 | Source | Revision used for current validation |
 | --- | --- |
-| `verygoodplugins/automem` `origin/main` | `5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb` |
-| `verygoodplugins/mcp-automem` `origin/main` | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
+| AutoMem 0.16.2 release commit | `e147c352b100ebbf29e6555453fdde5152066138` |
+| mcp-automem 0.16.0 release commit | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
 
-The website baseline is `automem-website@7052f7b` (`docs: clarify benchmark
-comparison context (#339)`).  Replace these pins when a later cohort is
-validated; never transplant the older PR's pin just because it appears in the
-legacy diff.
+`mcp-automem@9a0bbf…` is the published 0.16.0 release.  AutoMem's 0.16.2
+release commit is `e147c…`; GitHub's release listing still labels 0.16.1 as
+latest, so do not mistake that UI lag for an older source authority.  Existing
+replacements #340–#345 were directly revalidated against a later `main`
+snapshot; all remaining work uses these release pins.  Never transplant the
+older audit SHA just because it appears in the legacy diff.
 
 ## Source-validated replacement queue
 
@@ -65,6 +67,29 @@ Eight overlap only partially: `#267 → #305`, `#270 → #320`, `#271 → #306`,
 Neither classification authorizes closure: partial pairs include extra factual
 claims that must be validated separately, and even fully overlapping legacy
 PRs need their newest successor rechecked before a fresh replacement is made.
+
+## Release-audited cohorts awaiting replacements
+
+The following legacy PRs remain open but now have release-pinned findings.
+They still require fresh replacements; an entry here is not permission to
+merge the legacy branch.
+
+| Legacy PRs | Pages / important carry-forward constraint |
+| --- | --- |
+| #330–#333 | Environment, troubleshooting, background processing, and performance all remain wrong.  Do not call relevance experimental; describe worker batching with a remaining-deadline timeout. |
+| #311, #317, #322, #324, #326 | Five MCP pages remain wrong.  Generic `config --format=json` uses `memory` **without** `-y`; Claude Desktop counts are optional; Configuration is lines 413–433. |
+| #312 | Overview remains wrong, but remove fragile configuration-prefix counts rather than replacing them. |
+| #313 | Backup semantics remain wrong: retention is a per-store count, and Qdrant artifacts wrap `points` in an object. |
+| #314 | The simple Compose/TypeScript/ESLint corrections validate; any CLI/template tree refresh must include Grok or be explicitly non-exhaustive. |
+| #315 | Hermes direct-command flags are not environment-variable mappings; `.env` is the backup exception. |
+| #318 | Quick Start needs auth, Qdrant, PORT, and noninteractive corrections.  Grok picker/list work is already in #335; only home-directory overrides remain. |
+| #319 | Docker & Local Dev needs the current Compose service, mounts, ports, provider list, and optional variables. |
+| #321 | Hybrid search needs unnormalised scoring, separate relevance/context, timestamp recency, zero fallbacks, and release-pinned links. |
+| #323 | MCP bridge needs current split-file anchors, Copilot/Grok routing, correct PORT guidance, and batch association shape. |
+
+Each of these findings is recorded in `.superpowers/reconciliation/` with
+claim-level source evidence.  Open a replacement only from the latest website
+main and the corresponding release pin.
 
 ## Remaining queue
 
