@@ -185,7 +185,7 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 | `--no-agent-install` | `AUTOMEM_NO_AGENT_INSTALL=1` | Set up the endpoint only; skip agents |
 
 :::note[Headless and CI]
-`CI`, `CODEX`, `CLAUDE_CODE`, and `GITHUB_ACTIONS` suppress animation only; they do not approve the plan. Without a TTY, the installer prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`, so an unattended pipe can never make unreviewed changes.
+`CI`, `CODEX`, and `CLAUDE_CODE` suppress animation only; they do not approve the plan. Without a TTY, the installer prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`, so an unattended pipe can never make unreviewed changes.
 :::
 
 ---

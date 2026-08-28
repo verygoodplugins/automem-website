@@ -24,6 +24,7 @@ test('quick start retains only release-validated installation and health claims'
 
   assert.match(page, /X-API-Key: YOUR_TOKEN/u);
   assert.doesNotMatch(page, /X-API-Token/u);
+  assert.match(page, /Authorization: Bearer YOUR_TOKEN" http:\/\/localhost:8001\/health/u);
 
   assert.match(page, /`qdrant`\s*\|\s*Vector store connection: `"connected"` or `"disconnected"`/u);
   assert.doesNotMatch(page, /"qdrant": "unavailable"/u);
@@ -35,7 +36,8 @@ test('quick start retains only release-validated installation and health claims'
     page,
     /Without a TTY[\s\S]*prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`/u,
   );
-  assert.match(page, /`CI`, `CODEX`, `CLAUDE_CODE`, and `GITHUB_ACTIONS`[\s\S]*suppress animation only/u);
+  assert.match(page, /`CI`, `CODEX`, and `CLAUDE_CODE`[\s\S]*suppress animation only/u);
+  assert.doesNotMatch(page, /`GITHUB_ACTIONS`[\s\S]*suppress animation only/u);
   assert.doesNotMatch(page, /assumes `--yes` automatically/u);
 
   assert.match(page, /AutoMem defaults to port `8001`/u);
