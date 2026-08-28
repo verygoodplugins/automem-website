@@ -388,7 +388,7 @@ Context hints:
 - `context_types` (string[]): Priority memory types
 - `priority_ids` (string[]): Specific IDs to boost
 
-**Output Formats** ([server.js:351-422](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L351-L422)):
+**Output Formats** ([server.js:684-714](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L684-L714)):
 - `text` (default): Single-block text with all results
 - `items`: One MCP content item per memory
 - `detailed`: Items with timestamps, relations, scores
@@ -398,9 +398,15 @@ Context hints:
 
 **`formatRecallAsItems()` Function:**
 
-[server.js:351-422](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L351-L422) transforms AutoMem API responses into MCP content items.
+[server.js:372-452](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L372-L452) transforms AutoMem API responses into MCP content items.
 
-**Relation Summarization:** [server.js:407-418](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L407-L418) — Shows up to 5 relations with type, strength, and source ID.
+**Compact (`text` and `items`):** `text` is the default single-block response and `items` returns the same compact representation as one MCP content item per memory. When a memory provides `timestamp` (the normal recall shape) or `created_at` (the ID-fetch fallback), compact output adds a standalone `Created:` line after `ID:`. That date tells a reader whether relative language in the recalled memory still refers to the current moment. ([server.js:381-398](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L381-L398))
+
+**Detailed (`detailed`):** Detailed output keeps the existing `Timestamp:` label and uses the same `timestamp` then `created_at` fallback, alongside metadata, scores, and relation details. ([server.js:401-451](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L401-L451))
+
+**Raw (`json`):** `json` bypasses result formatting and returns the raw upstream API response unchanged as a JSON string. ([server.js:684-687](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L684-L687))
+
+**Relation Summarization:** [server.js:438-449](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L438-L449) — Shows up to 5 relations with type, strength, and source ID.
 
 ---
 
