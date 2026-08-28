@@ -6,10 +6,11 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
-- [app.py](https://github.com/verygoodplugins/automem/blob/0720da2/app.py) — Thin bootstrap; `@app.before_request` delegates to `require_api_token()`
-- [automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/auth_helpers.py) — Token validation and `/health` auth exemption
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py) — Thin bootstrap; `@app.before_request` delegates to `require_api_token()`
+- [automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py) — Token validation and `/health` auth exemption
+- [automem/runtime_environment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_environment.py) — Process logging configuration
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -34,7 +35,7 @@ The health endpoint provides real-time service status, database connectivity che
 
 **Authentication:** None required
 
-**Response:** Always returns JSON. HTTP 200 if healthy, HTTP 503 if degraded.
+**Response:** Always returns JSON with HTTP 200, including when the status is `"degraded"`.
 
 ### Health Check Flow
 
@@ -48,28 +49,30 @@ sequenceDiagram
 
     Client->>Flask: GET /health
 
-    Flask->>FalkorDB: MATCH (m:Memory)<br/>RETURN count(m)
-    alt FalkorDB connected
-        FalkorDB-->>Flask: memory_count
+    Flask->>FalkorDB: Get configured graph client
+    alt FalkorDB client available
+        FalkorDB-->>Flask: connected
         Note over Flask: status.falkordb = "connected"
-    else Connection failed
-        FalkorDB-->>Flask: Exception
+    else Client unavailable
         Note over Flask: status.falkordb = "disconnected"<br/>status.status = "degraded"
     end
 
-    Flask->>Qdrant: get_collection(COLLECTION_NAME)
-    alt Qdrant available
-        Qdrant-->>Flask: points_count
+    Flask->>Qdrant: Get configured Qdrant client
+    alt Qdrant client available
+        Qdrant-->>Flask: connected
         Note over Flask: status.qdrant = "connected"
-    else Error
-        Qdrant-->>Flask: Exception
+    else Client unavailable
         Note over Flask: status.qdrant = "disconnected"<br/>status.status = "degraded"
     end
 
-    Flask->>EnrichmentQ: state.enrichment_queue.qsize()
-    EnrichmentQ-->>Flask: queue metrics
+    Flask->>FalkorDB: Count memories
+    Flask->>Qdrant: Count vectors
+    Note over Flask: vector count below memory count<br/>sets sync_status = "drift_detected"<br/>and status = "degraded"
 
-    Flask-->>Client: HTTP 200/503 + JSON status
+    Flask->>EnrichmentQ: qsize()
+    EnrichmentQ-->>Flask: queue_depth
+
+    Flask-->>Client: HTTP 200 + JSON status
 ```
 
 ### Response Schema
@@ -105,7 +108,7 @@ sequenceDiagram
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when Qdrant unavailable) |
+| `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when FalkorDB or Qdrant is unavailable, or when `sync_status` is `"drift_detected"`) |
 | `falkordb` | string | FalkorDB status: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer \| null | User-facing memories in FalkorDB, excluding `RECALL_EXCLUDED_TYPES` (default `MetaPattern`; null if query fails) |
@@ -123,7 +126,7 @@ The `enrichment` object provides visibility into the background enrichment pipel
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Worker state: `"running"` or `"stopped"` |
-| `queue_depth` | integer | Total jobs in queue (pending + inflight) |
+| `queue_depth` | integer | Current size reported by the enrichment queue; it does not equal `pending` + `inflight`, which are tracked separately |
 | `pending` | integer | Jobs waiting to be processed |
 | `inflight` | integer | Jobs currently being processed |
 | `processed` | integer | Total jobs completed since service start |
@@ -141,8 +144,9 @@ AutoMem continues operating even when some components are unavailable:
 
 | Component Failure | `status` field | HTTP code | Behavior |
 |-------------------|---------------|-----------|---------|
-| Qdrant unavailable | `"degraded"` | 503 | `qdrant` shows `"disconnected"`, vector search disabled |
-| FalkorDB unavailable | `"degraded"` | 503 | All memory operations fail |
+| Qdrant unavailable | `"degraded"` | 200 | `qdrant` shows `"disconnected"`, vector search disabled |
+| FalkorDB unavailable | `"degraded"` | 200 | All memory operations fail |
+| Vector count below memory count | `"degraded"` | 200 | `sync_status` is `"drift_detected"` |
 | Enrichment worker stopped | `"healthy"` | 200 | Service runs but enrichment pipeline stops |
 
 :::tip[Drift detection]
@@ -409,13 +413,7 @@ For production deployments, a health monitoring service polls `/health` on an in
 
 ### Structured Logging
 
-All three endpoints emit structured logs for observability. Enable detailed logging via the `AUTOMEM_LOG_LEVEL` environment variable:
-
-```bash
-AUTOMEM_LOG_LEVEL=DEBUG
-```
-
-Log entries include request context (endpoint, duration, result counts) suitable for ingestion into log aggregation platforms (Datadog, Grafana Loki, CloudWatch).
+At the current source baseline, process logging is configured at `INFO` and written to stdout. The `/health` handler returns its JSON response without adding endpoint-specific logs, so do not assume logs from other API routes describe each health check.
 
 ### Alert Thresholds
 
