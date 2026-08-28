@@ -86,6 +86,10 @@ merge the legacy branch.
 | #319 | Docker & Local Dev needs the current Compose service, mounts, ports, provider list, and optional variables. |
 | #321 | Hybrid search needs unnormalised scoring, separate relevance/context, timestamp recency, zero fallbacks, and release-pinned links. |
 | #323 | MCP bridge needs current split-file anchors, Copilot/Grok routing, correct PORT guidance, and batch association shape. |
+| #283–#287 | All semantic corrections remain needed.  #285's old MCP line anchors are stale at 0.16.0, so rewrite the source map around `mcp-surface.ts`. |
+| #288–#294 | All seven pages remain wrong, but #288, #291, and #294 need narrowly corrected wording before their fresh patches are written. |
+| #295–#302 | Thirty-three corrections remain valid.  #301's `classification` item is already fixed; #302 must use `mcp-surface.ts`, not its obsolete `index.ts` anchor. |
+| #303–#307 | All twenty-one audited claims remain active drift; no target-page correction is already on main. |
 
 Each of these findings is recorded in `.superpowers/reconciliation/` with
 claim-level source evidence.  Open a replacement only from the latest website
