@@ -96,6 +96,7 @@ Background enrichment runs after each memory is stored — it generates similari
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | No | `2` | Worker sleep duration when queue is empty |
 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | No | `5` | Delay between retry attempts |
 | `ENRICHMENT_ENABLE_SUMMARIES` | No | `true` | Auto-generate memory summaries |
+| `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker probes again |
 | `ENRICHMENT_SPACY_MODEL` | No | `en_core_web_sm` | spaCy model for NER (if installed) |
 | `JIT_ENRICHMENT_ENABLED` | No | `true` | Run enrichment inline on store (just-in-time) |
 

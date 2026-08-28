@@ -269,6 +269,7 @@ Discovers recurring themes by analyzing memories of the same type and linking th
 | `ENRICHMENT_MAX_ATTEMPTS` | `3` | Maximum retry attempts before giving up |
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | `2` | Worker sleep duration when queue is empty |
 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | `5` | Backoff delay between retry attempts |
+| `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before one recovery probe is allowed |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Maximum semantic neighbors to link |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | `0.8` | Minimum cosine similarity for `SIMILAR_TO` edges |
 | `ENRICHMENT_SPACY_MODEL` | `en_core_web_sm` | spaCy model for NER (requires `pip install spacy`) |
@@ -296,6 +297,19 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
     "last_success_at": "2025-01-15T10:30:00Z",
     "last_error": "FalkorDB write failed",
     "last_error_at": "2025-01-14T08:15:00Z"
+  },
+  "classification": {
+    "llm_attempts": 512,
+    "llm_successes": 510,
+    "fallbacks": 2,
+    "pattern_classifications": 502,
+    "last_error": null,
+    "last_error_at": null
+  },
+  "circuit": {
+    "open": false,
+    "circuit_open_skips": 0,
+    "recoveries": 0
   }
 }
 ```
@@ -307,6 +321,8 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
 - `inflight` — Count of IDs in `enrichment_inflight` (items currently processing; `len(state.enrichment_inflight)`)
 - `max_attempts` — Configured retry limit (`ENRICHMENT_MAX_ATTEMPTS`)
 - `stats` — Lifetime counters from `EnrichmentStats.to_dict()`: `processed_total`, `successes`, `failures`, `last_success_id`, `last_success_at`, `last_error`, `last_error_at`
+- `classification` — LLM type-classification counters: `llm_attempts`, `llm_successes`, `fallbacks` (LLM called but fell back to default), `pattern_classifications` (resolved by regex patterns without LLM), `last_error`, `last_error_at`. Monitors how often LLM classification is used vs. pattern matching, and the fallback rate.
+- `circuit` — Quota-circuit state: `open` (true when the circuit is tripped and LLM calls are paused), `circuit_open_skips` (total LLM calls skipped while circuit was open), `recoveries` (total times the recovery probe succeeded and the circuit closed). Controlled by `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS`.
 
 ### Tracking Sets
 

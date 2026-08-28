@@ -179,6 +179,7 @@ Controls automatic background enrichment after memory storage:
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | int | No | `2` | Worker sleep duration when queue empty |
 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | int | No | `5` | Delay between retry attempts |
 | `ENRICHMENT_ENABLE_SUMMARIES` | bool | No | `true` | Auto-generate memory summaries |
+| `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | float | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker sends one recovery probe |
 | `ENRICHMENT_SPACY_MODEL` | string | No | `en_core_web_sm` | spaCy model for NER (if installed) |
 | `JIT_ENRICHMENT_ENABLED` | bool | No | `true` | Run enrichment inline on store (just-in-time) |
 
