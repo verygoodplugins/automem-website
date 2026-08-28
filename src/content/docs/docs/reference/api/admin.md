@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/admin.py) — Admin endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/admin.py) — Admin endpoints
 - [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/enrichment.py) — Enrichment endpoints
 - [automem/api/backup.py#L29-L100](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/backup.py#L29-L100) — `/backup` export endpoint
 :::
@@ -61,11 +61,14 @@ graph TB
 
 ### Error Responses
 
+All errors are returned through the global handler, which emits `{"status": "error", "code": <http status>, "message": <description>}` — there is no `error` key.
+
 | Status Code | Response | Meaning |
 |-------------|----------|---------|
-| `401 Unauthorized` | `{"error": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
-| `401 Admin authorization required` | `{"error": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
-| `403 Admin token not configured` | `{"error": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
+| `401` | `{"status": "error", "code": 401, "message": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
+| `401` | `{"status": "error", "code": 401, "message": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
+| `403` | `{"status": "error", "code": 403, "message": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
+| `503` | `{"status": "error", "code": 503, "message": "Qdrant is not available - cannot store embeddings"}` | A dependency needed by the admin operation is down or unconfigured |
 
 ---
 
@@ -284,6 +287,7 @@ graph TB
 | `batch_size` | integer | Batch size used (from request or default 32) |
 | `metadata_preserved` | boolean | Whether existing metadata was preserved during re-embedding |
 | `failed_ids` | array[string] | *(Conditional)* Up to 10 memory IDs that failed re-embedding; only present when `failed > 0` |
+| `failed_ids_truncated` | boolean | *(Conditional)* `true` when more than 10 IDs failed and `failed_ids` was cut short |
 
 ```json
 {
@@ -293,6 +297,17 @@ graph TB
   "total": 1000,
   "batch_size": 32,
   "metadata_preserved": true
+}
+```
+
+When no memory has content to embed, the endpoint short-circuits with a different, smaller shape — `batch_size`, `failed`, and `metadata_preserved` are absent:
+
+```json
+{
+  "status": "complete",
+  "message": "No memories found to reembed",
+  "processed": 0,
+  "total": 0
 }
 ```
 
@@ -342,16 +357,18 @@ Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt
 
 The operation continues even if individual batches fail:
 
+Embedding generation and the Qdrant upsert share one `try`/`except` per batch, so **any** failure inside a batch — provider error, vector-count mismatch, or a Qdrant write error — marks the whole batch failed and adds every ID in it to `failed_ids`:
+
 | Error | Cause | Behavior |
 |-------|-------|----------|
-| Provider API rate limit | Exceeded quota | Logged; batch marked failed (provider SDK may retry internally) |
-| Missing memory content | Deleted between enumeration and fetch | Logged, skipped, processing continues |
-| Qdrant connection failure | Network issue or Qdrant down | Logged; embedding writes are skipped for this batch and the operation continues with remaining batches (FalkorDB is never modified by this operation) |
-| Invalid content format | Null or non-string content | Logged, skipped |
+| Provider API rate limit | Exceeded quota | Logged; whole batch counted in `failed` (provider SDK may retry internally) |
+| Vector count mismatch | Provider returned fewer vectors than inputs | `ValueError` raised and caught; whole batch counted in `failed` |
+| Qdrant connection failure | Network issue or Qdrant down | Logged; whole batch counted in `failed`, remaining batches still run (FalkorDB is never modified by this operation) |
+| Null or empty content | Memory has no `content` | Filtered out silently during enumeration — never reaches a batch and is not counted in `failed` |
 
-All errors are logged with structured context:
+Batch failures are logged as:
 ```python
-logger.exception("Failed to generate embeddings for batch", extra={"batch_ids": ids})
+logger.error(f"Failed to process batch starting at index {i}: {e}")
 ```
 
 ---
@@ -401,8 +418,10 @@ The archive layout matches what the restore tooling expects, so a `/backup` expo
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `batch_size` | integer | No | Number of memories to process per batch. Default: `32` |
+| `batch_size` | integer | No | Number of memories to process per batch. Default: `32`. Max: `100` |
 | `dry_run` | boolean | No | If `true`, report drift without making changes. Default: `false` |
+
+A `dry_run` returns `{"status": "dry_run", "falkordb_count", "qdrant_count", "missing_count", "orphaned_count", "missing_sample", "orphaned_sample"}`, where the two samples hold up to 10 IDs each. When nothing is missing, the endpoint returns `{"status": "already_synced", ...}` instead.
 
 ### Example Request
 
