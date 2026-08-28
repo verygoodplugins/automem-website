@@ -39,7 +39,7 @@ Use `~/.config/automem/.env` for personal API keys and secrets that should never
 | `PORT` | No | `8001` | Flask API server port |
 
 :::caution
-`PORT=8001` is mandatory on Railway. Flask defaults to port 5000 if unset, causing `ECONNREFUSED` errors from other services.
+AutoMem defaults `PORT` to `8001` when unset. If you configure `PORT`, ensure callers use that same port.
 :::
 
 ### Vector Search (Qdrant)
@@ -98,7 +98,7 @@ Background enrichment runs after each memory is stored — it generates similari
 | `ENRICHMENT_ENABLE_SUMMARIES` | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker probes again |
 | `ENRICHMENT_SPACY_MODEL` | No | `en_core_web_sm` | spaCy model for NER (if installed) |
-| `JIT_ENRICHMENT_ENABLED` | No | `true` | Run enrichment inline on store (just-in-time) |
+| `JIT_ENRICHMENT_ENABLED` | No | `true` | Run lightweight enrichment during recall for memories not yet handled by the background worker |
 
 ### Consolidation Engine
 
@@ -140,7 +140,7 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `SEARCH_WEIGHT_CONFIDENCE` | No | `0.05` | Memory confidence weight |
 | `SEARCH_WEIGHT_EXACT` | No | `0.20` | Content token overlap weight |
 | `SEARCH_WEIGHT_RELATION` | No | `0.25` | Graph relation proximity boost |
-| `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | LLM-scored relevance (disabled by default) |
+| `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | Weight on consolidation-decay `relevance_score` (access patterns + age); `0.0` disables it. |
 | `RECALL_RELATION_LIMIT` | No | `5` | Max related memories per result |
 | `RECALL_EXPANSION_LIMIT` | No | `25` | Max memories added via `expand_relations=true` |
 | `RECALL_MIN_SCORE` | No | `0.0` | Minimum score threshold for returned results |
@@ -176,15 +176,6 @@ For guidance on *when* to tune these ranking knobs, see the [Recall Tuning](/doc
 | `MEMORY_AUTO_SUMMARIZE` | No | `true` | Automatically summarize content exceeding the soft limit |
 | `MEMORY_SUMMARY_TARGET_LENGTH` | No | `300` | Target character length for auto-generated summaries |
 
-### API Server
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `LOG_LEVEL` | No | `INFO` | Python logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `FLASK_ENV` | No | `production` | Flask environment mode |
-
----
-
 ## MCP Client Variables
 
 These variables configure the `mcp-automem` client package, not the server.
@@ -199,6 +190,7 @@ These variables configure the `mcp-automem` client package, not the server.
 | `AUTOMEM_RECALL_TOKEN_BUDGET` | No | `18000` | Global estimated token budget for MCP `recall_memory` responses (applies to all formats, including `json`; `memory_id` fetches are never truncated) |
 | `AUTOMEM_PROCESS_TAG` | No | _unset_ | Process title tag for safe process management |
 | `MCP_PROCESS_TAG` | No | _unset_ | Alternative process tag variable |
+| `AUTOMEM_PARENT_WATCHDOG_MS` | No | `30000` | Parent-process heartbeat timeout in milliseconds. Invalid, zero, or negative values fall back to 30 seconds; positive values are floored at 100 ms. |
 
 The client checks endpoint variables in this priority order: `AUTOMEM_API_URL` → `AUTOMEM_ENDPOINT` (deprecated).
 The client checks API key variables in this priority order: `AUTOMEM_API_KEY` → `AUTOMEM_API_TOKEN`.
@@ -213,11 +205,17 @@ Used only for the AutoMem test suite — do not set in production.
 |----------|----------|---------|-------------|
 | `AUTOMEM_RUN_INTEGRATION_TESTS` | No | `0` | Enable integration test suite |
 | `AUTOMEM_START_DOCKER` | No | `0` | Auto-start Docker Compose before tests |
-| `AUTOMEM_STOP_DOCKER` | No | `0` | Auto-stop Docker after tests |
+| `AUTOMEM_STOP_DOCKER` | No | `1` | Auto-stop Docker Compose started by the test fixture; set `0`, `false`, or `no` to leave it running |
 | `AUTOMEM_TEST_BASE_URL` | No | `http://localhost:8001` | Test target URL |
 | `AUTOMEM_ALLOW_LIVE` | No | `0` | Allow tests against non-localhost URLs |
-| `AUTOMEM_TEST_API_TOKEN` | No | _unset_ | API token for integration tests |
-| `AUTOMEM_TEST_ADMIN_TOKEN` | No | _unset_ | Admin token for integration tests |
+| `AUTOMEM_TEST_API_TOKEN` | No | `test-token` | API token for integration tests |
+| `AUTOMEM_TEST_ADMIN_TOKEN` | No | `test-admin-token` | Admin token for integration tests |
+
+---
+
+Source-verified against AutoMem [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/runtime_wiring.py#L81-L83), [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/config.py#L119-L125), [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/utils/scoring.py#L212-L215), and [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/tests/test_integration.py#L53-L92).
+
+MCP watchdog defaults verified against `mcp-automem` [`9a0bbf754dd31db524da25638b0e97907e32ff37`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts#L478-L485) and [`9a0bbf754dd31db524da25638b0e97907e32ff37`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/lifecycle.ts#L17-L40).
 
 ---
 
