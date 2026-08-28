@@ -31,7 +31,7 @@ Run batches in order. Each semicolon-separated entry is `legacy PR group ->`
 a legacy branch.
 
 1. **Setup/install/config — batch 1:** #311 -> `cli/platform-installers`; #317, #281 -> `cli/setup`; #324, #282 -> `cli/config-tools`.
-2. **Setup/install/config — batch 2:** #272 residual unresolved before closure with #330 -> `getting-started/environment-variables`; #276, #318 -> `getting-started/quick-start`; #279 -> `getting-started/introduction`.
+2. **Setup/install/config — batch 2:** #272 residual unresolved before closure with #330 -> `getting-started/environment-variables`; #276, #318 -> `getting-started/quick-start`; #279 -> `getting-started/introduction`; #303 -> `cli/guided-cloud-setup`.
 3. **Setup/install/config — batch 3:** #307 -> `cli/queue`; #286 -> `reference/configuration`; #285, #323 -> `architecture/mcp-bridge`.
 4. **API/reference — batch 1:** #271 residual unresolved before closure with #306 -> `reference/api/memory-operations`; #275 residual after #329 -> `reference/api/admin`; #277 residual unresolved before closure with #326 -> `reference/api/direct-vs-mcp`.
 5. **API/reference — batch 2:** #284 -> `reference/api/relationships`; #287 -> `reference/authentication`; #288 -> `reference/api/consolidation`.
