@@ -23,6 +23,14 @@ test('cli setup docs match the audited 0.16.0 setup and config surfaces', async 
   assert.match(page, /npx @verygoodplugins\/mcp-automem config --format=json/);
   assert.match(page, /human-readable output/);
   assert.match(page, /raw MCP configuration object/);
+  assert.match(page, /For Claude Code:.*placeholder API key/si);
+  assert.match(page, /your-auto-mem-api-key/);
+  assert.match(page, /For Hermes:.*`mcp_servers` YAML snippet/si);
+  assert.match(page, /npx @verygoodplugins\/mcp-automem hermes/);
+  assert.doesNotMatch(
+    page,
+    /For Hermes:.*`mcp_servers`\s+or\s+`memory\.provider`/si,
+  );
   assert.doesNotMatch(page, /For Cursor\/Codex:/);
   assert.doesNotMatch(page, /exact Desktop snippet/u);
 
