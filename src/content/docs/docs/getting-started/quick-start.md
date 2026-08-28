@@ -111,9 +111,10 @@ Next, choose which agents get wired up. **Agents already detected on your machin
   ◉ Cursor       detected on this machine
   ◯ OpenClaw     not detected, still installable
   ◯ Hermes       not detected, still installable
+  ◯ Grok         not detected, still installable
 ```
 
-Detection looks for `~/.codex`, `~/.claude`, `~/.cursor`, `~/.openclaw`, and `~/.hermes`. Anything not detected is still installable — just check it.
+Detection looks for `~/.codex`, `~/.claude`, `~/.cursor`, `~/.openclaw`, `~/.hermes`, and `~/.grok`. Anything not detected is still installable — just check it.
 
 If you select **Claude Code**, it asks how to integrate:
 
@@ -173,7 +174,7 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 |---|---|---|
 | `--target` | `AUTOMEM_INSTALL_TARGET` | `local`, `cloud`, or `existing` |
 | `--cloud-provider` | `AUTOMEM_CLOUD_PROVIDER` | `instapods`, `railway`, or `other` |
-| `--clients` | `AUTOMEM_CLIENTS` | Comma-separated agents: `codex,claude-code,cursor,openclaw,hermes` |
+| `--clients` | `AUTOMEM_CLIENTS` | Comma-separated agents: `codex,claude-code,cursor,openclaw,hermes,grok` |
 | `--endpoint` | `AUTOMEM_API_URL` | AutoMem HTTP API endpoint |
 | `--api-key` | `AUTOMEM_API_KEY` | Bearer token for authenticated deployments |
 | `--local-dir` | `AUTOMEM_LOCAL_DIR` | Local backend checkout path (default `~/.automem/server`) |
