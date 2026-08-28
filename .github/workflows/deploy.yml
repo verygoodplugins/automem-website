@@ -31,7 +31,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # 4.98.0 rejects the generated Pages `previews` configuration.
-          # Keep the last proven-compatible CLI until that config is migrated.
-          wranglerVersion: 4.79.0
-          command: pages deploy dist/client --project-name automem-website --branch main
+          # Pages deploy reads a root Wrangler config when run in the workspace.
+          # The generated `previews` entry is not valid for Pages validation.
+          command: --cwd /tmp pages deploy ${{ github.workspace }}/dist/client --project-name automem-website --branch main
