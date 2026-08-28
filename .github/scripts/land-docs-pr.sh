@@ -98,7 +98,10 @@ fetch_audit_branch() {
 }
 
 stash_landing_worktree() {
-  git stash push --include-untracked -m "docs-audit-landing" -- . ':!.source-repo' ':!.source-repo/**'
+  # .source-repo is ignored, so git skips it automatically. Excluding it with
+  # an explicit pathspec makes git treat the ignored directory as an add/stash
+  # target and fails the landing step on Actions runners.
+  git stash push --include-untracked -m "docs-audit-landing" -- .
 }
 
 if [ "$HAS_CHANGES" = "false" ] && [ "$REMOTE_BRANCH_EXISTS" = "false" ]; then
@@ -129,7 +132,7 @@ if [ "$HAS_CHANGES" = "true" ]; then
   elif [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
     git checkout -B "$BRANCH"
   fi
-  git add -A -- . ':!.source-repo' ':!.source-repo/**'
+  git add -A -- .
   if git diff --cached --quiet; then
     echo "Existing audit branch already has these changes; skipping commit."
   else
