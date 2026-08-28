@@ -36,7 +36,7 @@ Unlike context windows that reset with every conversation, AutoMem maintains a p
 | `Context` | General information | "Project uses Python 3.10+" |
 
 :::tip
-If you omit `type` when storing a memory, the enrichment pipeline classifies it automatically using LLM-based classification.
+If you omit `type` when storing a memory, `MemoryClassifier` tries regex patterns first and uses an LLM only when no pattern matches. If the LLM returns no usable result or fails, AutoMem falls back to `Memory` with confidence `0.3`.
 :::
 
 ## Two-Component Architecture
@@ -104,7 +104,7 @@ graph TB
 
 ### The AutoMem Server
 
-The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~506-line orchestration file that imports from the package rather than a monolithic application. It provides:
+The server (Flask on port 8001, run via `python app.py`) is the authoritative memory store. The codebase is organized as an `automem/` Python package — `app.py` is a ~526-line orchestration file that imports from the package rather than a monolithic application. It provides:
 
 - A REST API for storing, recalling, updating, and deleting memories
 - A FalkorDB graph database for canonical memory records and relationship traversal
@@ -171,12 +171,14 @@ When an AI assistant calls `store_memory`:
 1. The MCP client validates content length (hard limit: 2000 characters; soft limit: 500 characters — above this, the backend may summarize before embedding)
 2. The Flask API receives a `POST /memory` request
 3. `MemoryClassifier` classifies the content type
-4. `EmbeddingProvider` generates a vector representation
-5. FalkorDB stores the canonical memory record via a MERGE query
-6. Qdrant stores the vector for semantic search (if available)
-7. Background enrichment is queued via `ServiceState.enrichment_queue`
+4. The canonical memory record is stored in FalkorDB via a MERGE query
+5. Background enrichment is queued via `ServiceState.enrichment_queue`
+6. When Qdrant is configured and no embedding is supplied, ordinary embedding work is queued for the embedding worker; both `embedding_status` and the Qdrant status are `queued`
+7. A caller-supplied embedding is attempted inline against Qdrant and reports `embedding_status` as `provided`; when Qdrant is unavailable for an ordinary store, `embedding_status` is `skipped` and the Qdrant status is `unconfigured`
 
-When an AI assistant calls `recall_memory`, the system runs hybrid search: parallel queries against both the semantic vector store and the graph database, then merges and re-ranks results using a 9-component relevance score.
+The enrichment response status is `queued` when its worker queue is available and `disabled` otherwise. A supplied embedding can therefore be attempted inline, but automatic embedding is not a universal synchronous path.
+
+When an AI assistant calls `recall_memory`, the system runs hybrid search: parallel queries against both the semantic vector store and the graph database, then merges and re-ranks results using a 10-component relevance score.
 
 :::note
 The `recall_memory` tool selects one of three mutually exclusive retrieval modes: ID fetch (`GET /memory/{id}`), tag enumeration (`GET /memory/by-tag`, when `exhaustive: true`), or ranked hybrid search (`GET /recall`, the default). Only one endpoint is called per request.
