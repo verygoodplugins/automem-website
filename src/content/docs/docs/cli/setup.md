@@ -254,7 +254,7 @@ node dist/index.js setup
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Syncs template versions (`node scripts/sync-template-versions.mjs`)
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.16.0 at `9a0bbf754dd31db524da25638b0e97907e32ff37`)
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -283,7 +283,7 @@ sequenceDiagram
     ENV-->>CLI: File written
     CLI->>User: ✅ Saved AutoMem settings to .env
 
-    CLI->>User: Print config snippets<br/>(Claude Desktop, Claude Code)
+    CLI->>User: Print setup snippets<br/>(Claude Desktop JSON, Claude Code env export, Hermes YAML)
 ```
 
 ### Setup Wizard Implementation
@@ -322,43 +322,53 @@ The `.env` file contains your API key and should be added to `.gitignore` to avo
 
 ### Configuration File Output
 
-After writing the `.env` file, the setup wizard prints platform-specific configuration snippets:
+After writing the `.env` file, the setup wizard prints the setup material it knows how to generate directly:
 
 **For Claude Desktop:**
 ```json
 {
   "mcpServers": {
-    "automem": {
+    "memory": {
       "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"],
+      "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_API_URL": "http://localhost:8001",
-        "AUTOMEM_API_KEY": "your-token"
+        "AUTOMEM_API_URL": "${AUTOMEM_API_URL}",
+        "AUTOMEM_API_KEY": "${AUTOMEM_API_KEY}"
       }
     }
   }
 }
 ```
 
-**For Cursor/Codex:**
-```json
-{
-  "mcpServers": {
-    "automem": {
-      "command": "npx",
-      "args": ["@verygoodplugins/mcp-automem"]
-    }
-  }
-}
-```
+**For Claude Code:** environment export lines for the current endpoint and API key.
 
-These snippets can be copied directly into the respective platform configuration files. For platform-specific setup instructions, see [Platform Installers](/docs/cli/platform-installers/).
+**For Hermes:** YAML examples for the generated `mcp_servers` or `memory.provider` setup.
+
+The setup command does **not** print Cursor or Codex snippets. For platform-specific install flows outside Claude Desktop, Claude Code, and Hermes, see [Platform Installers](/docs/cli/platform-installers/).
 
 ### Setup Completion
 
-After writing `.env`, the wizard prints a confirmation and then outputs the platform configuration snippets.
+After writing `.env`, the wizard prints a confirmation and then outputs the Claude Desktop, Claude Code, and Hermes setup material above.
 
 The wizard does **not** call the AutoMem service during setup — it writes the configuration and prints the snippets without validating reachability. To verify your connection manually after setup, use `curl http://your-endpoint/health` (see [Verification](#verification) below).
+
+## Config Output
+
+Print the current configuration for other platforms (Claude Desktop JSON, Claude Code env export, Hermes YAML):
+
+```bash
+npx @verygoodplugins/mcp-automem config
+```
+
+Use `config` when you want the CLI to reprint your current configuration later without re-running the setup wizard. This command prints human-readable output for the supported surfaces, including Claude Desktop JSON, Claude Code env export lines, and Hermes YAML.
+
+If you need machine-readable output instead, add `--format=json` (or `--json`):
+
+```bash
+npx @verygoodplugins/mcp-automem config --format=json
+```
+
+That JSON mode emits the raw MCP configuration object. It is useful for scripting, but it is not the same claim as the setup command's exact Claude Desktop snippet.
 
 ## Post-Installation File Structure
 
@@ -375,14 +385,18 @@ your-project/
             ├── dist/
             │   └── index.js      # MCP server entry point
             ├── templates/        # Platform-specific rules
-            │   ├── cursor/
-            │   ├── codex/
             │   ├── claude-code/
+            │   ├── antigravity/
+            │   ├── codex/
+            │   ├── copilot/
+            │   ├── cursor/
+            │   ├── grok/
+            │   ├── hermes/
             │   └── openclaw/
             └── package.json
 ```
 
-**Templates:** The `templates/` directory contains platform-specific instruction files used by CLI commands like `cursor`, `claude-code`, and `codex` to generate integration rules. See [Platform Installers](/docs/cli/platform-installers/) for details.
+**Templates:** In the audited `mcp-automem` 0.16.0 release (`9a0bbf754dd31db524da25638b0e97907e32ff37`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 
