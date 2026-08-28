@@ -7,18 +7,18 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [consolidation.py#L100](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L100) — `MemoryConsolidator` class
-- [consolidation.py#L1091](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L1091) — `ConsolidationScheduler` class
-- [consolidation.py#L270-L363](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L270-L363) — Relevance score calculation (decay task)
-- [consolidation.py#L365-L463](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L365-L463) — Creative association discovery
-- [consolidation.py#L464-L605](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L464-L605) — Clustering algorithm
-- [consolidation.py#L606](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L606) — Forgetting/archiving
-- [consolidation.py#L978-L1004](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L978-L1004) — Optional identity consolidation
-- [automem/consolidation/runtime_helpers.py#L59-L80](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_helpers.py#L59-L80) — Runtime schedule overrides
-- [automem/consolidation/runtime_scheduler.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_scheduler.py) — Scheduler initialization
-- [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_bindings.py) — Background thread startup
-- `automem/api/consolidation.py` — Manual trigger endpoint
-- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_consolidation_engine.py) — Test coverage
+- [consolidation.py#L121](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L121) — `MemoryConsolidator` class
+- [consolidation.py#L1118](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L1118) — `ConsolidationScheduler` class
+- [consolidation.py#L227-L332](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L227-L332) — Relevance score calculation (decay task)
+- [consolidation.py#L334-L455](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L334-L455) — Creative association discovery
+- [consolidation.py#L457-L617](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L457-L617) — Clustering algorithm
+- [consolidation.py#L619-L807](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L619-L807) — Forgetting/archiving
+- [consolidation.py#L978-L1005](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L978-L1005) — Optional identity consolidation
+- [automem/consolidation/runtime_helpers.py#L78-L99](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/consolidation/runtime_helpers.py#L78-L99) — Runtime schedule overrides
+- [automem/consolidation/runtime_scheduler.py#L82-L107](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/consolidation/runtime_scheduler.py#L82-L107) — Scheduler initialization
+- [automem/consolidation/runtime_bindings.py#L42-L176](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/consolidation/runtime_bindings.py#L42-L176) — Background thread startup
+- [automem/api/consolidation.py#L8-L71](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/consolidation.py#L8-L71) — Manual trigger endpoint
+- [tests/test_consolidation_engine.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_consolidation_engine.py) — Test coverage
 :::
 
 The Consolidation Engine maintains and optimizes the memory graph through scheduled background processing inspired by biological memory consolidation. It applies exponential decay, discovers non-obvious associations, clusters similar memories, optionally synthesizes entity identity records, and implements controlled forgetting to prevent unbounded memory growth.
@@ -272,7 +272,7 @@ graph TB
     subgraph "Meta-Memory Creation"
         Theme["Identify Dominant Type<br/>max(set(types), key=count)"]
         Span["Calculate Temporal Span<br/>max(timestamps) - min(timestamps)"]
-        Create["CREATE MetaMemory Node<br/>type: 'MetaPattern'<br/>cluster_size: N"]
+        Create["CREATE Node<br/>:Memory:MetaMemory<br/>type: 'MetaPattern'<br/>cluster_size: N"]
         Link["CREATE (meta)-[:SUMMARIZES]->(m)"]
     end
 
@@ -288,7 +288,7 @@ graph TB
 **Clustering Parameters:**
 
 - **Similarity threshold:** 0.75 (configurable via `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD`)
-- **Minimum cluster size:** 3 memories (configurable via `CONSOLIDATION_MIN_CLUSTER_SIZE`) — components smaller than this are discarded during clustering; MetaMemory nodes are created only when `cluster["size"] >= 5` (hard-coded in `consolidation.py` at automem@0720da2)
+- **Minimum cluster size:** 3 memories (configurable via `CONSOLIDATION_MIN_CLUSTER_SIZE`) — components smaller than this are discarded during clustering; MetaMemory nodes are created only when [`cluster["size"] >= 5`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L926-L927).
 - **Relevance filter:** Only clusters memories with `relevance_score > 0.3`
 
 The primary clustering path in `v0.15.1` loads memory metadata from FalkorDB and scrolls vectors from Qdrant. Reading `m.embeddings` from graph nodes remains a legacy/test fallback when no vector store is available.
@@ -297,21 +297,24 @@ The primary clustering path in `v0.15.1` loads memory metadata from FalkorDB and
 
 | Property | Type | Description |
 |---|---|---|
-| `label` | string | `"MetaPattern"` |
-| `dominant_type` | string | Most common memory type in the cluster |
+| `id` | string | Generated cluster identifier |
+| Labels | graph labels | `:Memory:MetaMemory` |
+| `type` | string | `"MetaPattern"` |
+| `confidence` | float | `0.8` |
 | `cluster_size` | integer | Number of memories in the cluster |
-| `temporal_span_days` | float | Days between oldest and newest memory |
-| `created_at` | ISO datetime | When this meta-memory was created |
+| `timestamp` | ISO datetime | Cluster creation time |
+| `relevance_score` | float | `0.9` |
 | `content` | string | Auto-generated cluster summary |
 
 :::note[Excluded from recall]
-`MetaPattern` memories are internal consolidation artifacts. They are excluded from user-facing `/recall` results and from vector sync counts via `RECALL_EXCLUDED_TYPES` (default `MetaPattern`). Query them directly by ID or via graph tools if needed for debugging.
+`MetaMemory` nodes with `type: "MetaPattern"` are internal consolidation artifacts. They are excluded from user-facing `/recall` results and from vector sync counts via `RECALL_EXCLUDED_TYPES` (default `MetaPattern`). Query them directly by ID or via graph tools if needed for debugging.
 :::
 
 MetaMemory nodes are connected to their member memories via `SUMMARIZES` relationships:
 
 ```cypher
-MATCH (meta:MetaPattern), (m:Memory {id: $member_id})
+MATCH (meta:MetaMemory {id: $meta_id})
+MATCH (m:Memory {id: $mem_id})
 CREATE (meta)-[:SUMMARIZES]->(m)
 ```
 
