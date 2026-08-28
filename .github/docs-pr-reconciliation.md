@@ -3,7 +3,7 @@
 **Status:** release audit complete. Legacy `docs/audit-*` pull requests are
 research records, not a merge queue. Create each replacement from current
 `main`, keep it page-scoped, and carry only the source-supported residuals
-recorded in `.superpowers/reconciliation/`.
+recorded in `.github/docs-pr-reconciliation/audits/`.
 
 ## Authority snapshot
 
@@ -12,10 +12,30 @@ recorded in `.superpowers/reconciliation/`.
 | AutoMem 0.16.2 | `e147c352b100ebbf29e6555453fdde5152066138` |
 | mcp-automem 0.16.0 | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
 
-The reconciliation reports are the claim-level authority. A manifest row is
-one fresh replacement PR for its one target page; grouped numbers share that
-page, and `residual` means only the still-valid work not covered by the closed
-legacy PR is carried forward.
+The tracked audit archive at `.github/docs-pr-reconciliation/audits/` is the
+claim-level authority. It retains the release evidence, explicit
+invalidations, already-landed exclusions, and any residual qualifications that
+survive into a fresh replacement. A manifest row is one fresh replacement PR
+for its one target page; grouped numbers share that page, and `residual` means
+only the still-valid work not covered by the closed legacy PR is carried
+forward.
+
+## Claim-level cohort index
+
+Audit archive:
+[259-266](./docs-pr-reconciliation/audits/release-audit-259-266.md),
+[267-272](./docs-pr-reconciliation/audits/release-audit-267-272.md),
+[273-278](./docs-pr-reconciliation/audits/release-audit-273-278.md),
+[283-287](./docs-pr-reconciliation/audits/release-audit-283-287.md),
+[288-294](./docs-pr-reconciliation/audits/release-audit-288-294.md),
+[295-302](./docs-pr-reconciliation/audits/release-audit-295-302.md),
+[303-307](./docs-pr-reconciliation/audits/release-audit-303-307.md),
+[330-333](./docs-pr-reconciliation/audits/release-audit-330-333.md),
+[architecture](./docs-pr-reconciliation/audits/release-audit-architecture.md),
+[final](./docs-pr-reconciliation/audits/release-audit-final.md),
+[mcp cohort](./docs-pr-reconciliation/audits/release-audit-mcp-cohort.md),
+[next pages](./docs-pr-reconciliation/audits/release-audit-next-pages.md),
+[Supersession map](./docs-pr-reconciliation/audits/supersession-map.md).
 
 ## Complete legacy records
 
