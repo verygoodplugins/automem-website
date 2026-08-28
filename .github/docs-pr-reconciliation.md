@@ -32,21 +32,21 @@ a legacy branch.
 
 1. **Setup/install/config — batch 1:** #311 -> `cli/platform-installers`; #317, #281 -> `cli/setup`; #324, #282 -> `cli/config-tools`.
 2. **Setup/install/config — batch 2:** #272 residual unresolved before closure with #330 -> `getting-started/environment-variables`; #276, #318 -> `getting-started/quick-start`; #279 -> `getting-started/introduction`.
-3. **Setup/install/config — batch 3:** #303 -> `cli/guided-cloud-setup`; #307 -> `cli/queue`; #286 -> `reference/configuration`.
-4. **API/reference — batch 1:** #285, #323 -> `architecture/mcp-bridge`; #271 residual unresolved before closure with #306 -> `reference/api/memory-operations`; #275 residual after #329 -> `reference/api/admin`.
+3. **Setup/install/config — batch 3:** #303 -> `cli/guided-cloud-setup`; #307 -> `cli/queue`; #300 -> `development/local-setup`.
+4. **API/reference — batch 1:** #286 -> `reference/configuration`; #271 residual unresolved before closure with #306 -> `reference/api/memory-operations`; #275 residual after #329 -> `reference/api/admin`.
 5. **API/reference — batch 2:** #277 residual unresolved before closure with #326 -> `reference/api/direct-vs-mcp`; #284 -> `reference/api/relationships`; #287 -> `reference/authentication`.
 6. **API/reference — batch 3:** #288 -> `reference/api/consolidation`; #293, #327 -> `reference/api/recall-operations`; #270 residual after #320 -> `reference/api/health`.
-7. **Operations/architecture — batch 1:** #274 residual after #328 -> `operations/health`; #273 residual unresolved before closure with #332 -> `architecture/background-processing`; #313 -> `operations/backup`.
-8. **Operations/architecture — batch 2:** #331 -> `operations/troubleshooting`; #333 -> `operations/performance`; #312 -> `architecture/overview`.
-9. **Operations/architecture — batch 3:** #289 -> `architecture/embeddings`; #292 -> `architecture/data-stores`; #301 -> `architecture/enrichment`.
-10. **Operations/architecture — batch 4:** #319 -> `getting-started/docker`; #304 -> `deployment/railway`; #300 -> `development/local-setup`.
-11. **Operations/architecture — batch 5:** #314 -> `development/structure`; #283, #325 -> `overview`; #268, #321 -> `core-concepts/hybrid-search`.
-12. **Concepts/development/platforms — batch 1:** #290 -> `core-concepts/recall-tuning`; #294 -> `core-concepts/memory-model`; #267 residual unresolved before closure with #305 -> `development/testing`.
-13. **Concepts/development/platforms — batch 2:** #269 -> `graph-viewer/overview`; #278 -> `research`; #302 -> `best-practices/memory-rules`.
-14. **Concepts/development/platforms — batch 3:** #259, #297 -> `platforms/codex`; #261, #315 -> `platforms/hermes`; #262 -> `platforms/alexa`.
-15. **Concepts/development/platforms — batch 4:** #264 -> `platforms/antigravity`; #265 -> `platforms/claude-web`; #266 -> `platforms/chatgpt`.
-16. **Concepts/development/platforms — batch 5:** #280 -> `platforms/github-copilot`; #295 -> `platforms/claude-code`; #296 -> `platforms/cursor`.
-17. **Concepts/development/platforms — batch 6:** #299 -> `platforms/openclaw`; #291 -> `platforms/elevenlabs`; #322 -> `platforms/claude-desktop`.
+7. **Operations/architecture — batch 1:** #285, #323 -> `architecture/mcp-bridge`; #274 residual after #328 -> `operations/health`; #273 residual unresolved before closure with #332 -> `architecture/background-processing`.
+8. **Operations/architecture — batch 2:** #313 -> `operations/backup`; #331 -> `operations/troubleshooting`; #333 -> `operations/performance`.
+9. **Operations/architecture — batch 3:** #312 -> `architecture/overview`; #289 -> `architecture/embeddings`; #292 -> `architecture/data-stores`.
+10. **Operations/architecture — batch 4:** #301 -> `architecture/enrichment`; #319 -> `getting-started/docker`; #304 -> `deployment/railway`.
+11. **Concepts/development/platforms — batch 1:** #283, #325 -> `overview`; #268, #321 -> `core-concepts/hybrid-search`; #290 -> `core-concepts/recall-tuning`.
+12. **Concepts/development/platforms — batch 2:** #294 -> `core-concepts/memory-model`; #267 residual unresolved before closure with #305 -> `development/testing`; #314 -> `development/structure`.
+13. **Concepts/development/platforms — batch 3:** #269 -> `graph-viewer/overview`; #278 -> `research`; #302 -> `best-practices/memory-rules`.
+14. **Concepts/development/platforms — batch 4:** #259, #297 -> `platforms/codex`; #261, #315 -> `platforms/hermes`; #262 -> `platforms/alexa`.
+15. **Concepts/development/platforms — batch 5:** #264 -> `platforms/antigravity`; #265 -> `platforms/claude-web`; #266 -> `platforms/chatgpt`.
+16. **Concepts/development/platforms — batch 6:** #280 -> `platforms/github-copilot`; #295 -> `platforms/claude-code`; #296 -> `platforms/cursor`.
+17. **Concepts/development/platforms — batch 7:** #299 -> `platforms/openclaw`; #291 -> `platforms/elevenlabs`; #322 -> `platforms/claude-desktop`.
 18. **Concepts/development/platforms — final remainder:** #263 -> `best-practices/context-engineering`.
 
 ## Completion rule
