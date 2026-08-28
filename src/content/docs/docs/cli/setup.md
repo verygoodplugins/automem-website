@@ -340,9 +340,9 @@ After writing the `.env` file, the setup wizard prints the setup material it kno
 }
 ```
 
-**For Claude Code:** environment export lines for the current endpoint and API key.
+**For Claude Code:** environment export lines for the current endpoint plus a placeholder API key (`your-auto-mem-api-key`), not your real secret.
 
-**For Hermes:** YAML examples for the generated `mcp_servers` or `memory.provider` setup.
+**For Hermes:** an `mcp_servers` YAML snippet for `~/.hermes/config.yaml`. For native provider setup (`memory.provider`), run `npx @verygoodplugins/mcp-automem hermes`.
 
 The setup command does **not** print Cursor or Codex snippets. For platform-specific install flows outside Claude Desktop, Claude Code, and Hermes, see [Platform Installers](/docs/cli/platform-installers/).
 
@@ -360,7 +360,7 @@ Print the current configuration for other platforms (Claude Desktop JSON, Claude
 npx @verygoodplugins/mcp-automem config
 ```
 
-Use `config` when you want the CLI to reprint your current configuration later without re-running the setup wizard. This command prints human-readable output for the supported surfaces, including Claude Desktop JSON, Claude Code env export lines, and Hermes YAML.
+Use `config` when you want the CLI to reprint your current configuration later without re-running the setup wizard. This command prints human-readable output for the supported surfaces, including Claude Desktop JSON, Claude Code env export lines with the `your-auto-mem-api-key` placeholder, and the Hermes `mcp_servers` YAML snippet. For Hermes provider mode, run `npx @verygoodplugins/mcp-automem hermes`.
 
 If you need machine-readable output instead, add `--format=json` (or `--json`):
 
