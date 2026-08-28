@@ -90,6 +90,10 @@ merge the legacy branch.
 | #288–#294 | All seven pages remain wrong, but #288, #291, and #294 need narrowly corrected wording before their fresh patches are written. |
 | #295–#302 | Thirty-three corrections remain valid.  #301's `classification` item is already fixed; #302 must use `mcp-surface.ts`, not its obsolete `index.ts` anchor. |
 | #303–#307 | All twenty-one audited claims remain active drift; no target-page correction is already on main. |
+| #259, #261–#266 | All semantic corrections remain valid.  #263 must use current `mcp-surface.ts` anchors. |
+| #267–#272 | #270 is mostly already addressed but retains unresolved claims; #267 and #271 contain release-inaccurate replacement details.  None is closeable without a fresh residual patch. |
+| #273–#278 | #273, #275, #276, and #278 remain largely valid; #274 needs corrected analytics wording; #277 must be rebased to `mcp-surface.ts`. |
+| #279–#282, #325, #327 | All audited claims remain source-supported.  #281 and #282 need small wording refinements in their fresh replacements. |
 
 Each of these findings is recorded in `.superpowers/reconciliation/` with
 claim-level source evidence.  Open a replacement only from the latest website
