@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/health.py) — `/health` endpoint
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
+- [automem/api/health.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/health.py) — `/health` endpoint
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/recall.py) — `/analyze` and `/startup-recall` endpoints
 - [app.py](https://github.com/verygoodplugins/automem/blob/0720da2/app.py) — Thin bootstrap; `@app.before_request` delegates to `require_api_token()`
 - [automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/auth_helpers.py) — Token validation and `/health` auth exemption
 :::
@@ -34,7 +34,7 @@ The health endpoint provides real-time service status, database connectivity che
 
 **Authentication:** None required
 
-**Response:** Always returns JSON. HTTP 200 if healthy, HTTP 503 if degraded.
+**Response:** Always returns JSON with HTTP 200 — including when `status` is `"degraded"`. Health-check tooling must inspect the `status` field rather than relying on the HTTP status code.
 
 ### Health Check Flow
 
@@ -69,7 +69,9 @@ sequenceDiagram
     Flask->>EnrichmentQ: state.enrichment_queue.qsize()
     EnrichmentQ-->>Flask: queue metrics
 
-    Flask-->>Client: HTTP 200/503 + JSON status
+    Note over Flask: If vector_count < memory_count<br/>status.status = "degraded"
+
+    Flask-->>Client: HTTP 200 + JSON status
 ```
 
 ### Response Schema
@@ -105,7 +107,7 @@ sequenceDiagram
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Overall health: `"healthy"` or `"degraded"` (degraded when Qdrant unavailable) |
+| `status` | string | Overall health: `"healthy"` or `"degraded"`. Degraded when FalkorDB is unavailable, Qdrant is unavailable, **or** `sync_status` is `"drift_detected"` |
 | `falkordb` | string | FalkorDB status: `"connected"` or `"disconnected"` |
 | `qdrant` | string | Qdrant status: `"connected"` or `"disconnected"` |
 | `memory_count` | integer \| null | User-facing memories in FalkorDB, excluding `RECALL_EXCLUDED_TYPES` (default `MetaPattern`; null if query fails) |
@@ -141,9 +143,12 @@ AutoMem continues operating even when some components are unavailable:
 
 | Component Failure | `status` field | HTTP code | Behavior |
 |-------------------|---------------|-----------|---------|
-| Qdrant unavailable | `"degraded"` | 503 | `qdrant` shows `"disconnected"`, vector search disabled |
-| FalkorDB unavailable | `"degraded"` | 503 | All memory operations fail |
+| Qdrant unavailable | `"degraded"` | 200 | `qdrant` shows `"disconnected"`, vector search disabled |
+| FalkorDB unavailable | `"degraded"` | 200 | All memory operations fail |
+| Vector drift (`vector_count` < `memory_count`) | `"degraded"` | 200 | `sync_status` shows `"drift_detected"`; recall still works, some memories lack embeddings |
 | Enrichment worker stopped | `"healthy"` | 200 | Service runs but enrichment pipeline stops |
+
+`/health` never returns a non-200 status code — the endpoint reports failures in the body, so an unreachable service (connection refused, timeout, proxy error) is distinguishable from a degraded one.
 
 :::tip[Drift detection]
 Compare `memory_count` (FalkorDB) against `vector_count` (Qdrant) to detect database drift. A significant difference indicates that some memories are missing their vector embeddings and may need `/admin/reembed`. The `sync_status` field summarizes this automatically.
@@ -231,9 +236,12 @@ The temporal activity query is guarded separately and may fail without aborting 
     },
     "entity_frequency": {"python": 87, "fastapi": 54},
     "confidence_distribution": {"low": 23, "medium": 187, "high": 1037}
-  }
+  },
+  "elapsed_ms": 0
 }
 ```
+
+The `elapsed_ms` field is currently returned as a hardcoded `0` and is not a real timing measurement.
 
 ### Example Requests
 
@@ -409,11 +417,7 @@ For production deployments, a health monitoring service polls `/health` on an in
 
 ### Structured Logging
 
-All three endpoints emit structured logs for observability. Enable detailed logging via the `AUTOMEM_LOG_LEVEL` environment variable:
-
-```bash
-AUTOMEM_LOG_LEVEL=DEBUG
-```
+All three endpoints emit structured logs for observability. The service configures logging at `INFO` level at startup (`configure_logging(level=logging.INFO)` in `app.py`) and does **not** read a log-level environment variable — `AUTOMEM_LOG_LEVEL` is an `mcp-automem` client variable and has no effect on the Python service.
 
 Log entries include request context (endpoint, duration, result counts) suitable for ingestion into log aggregation platforms (Datadog, Grafana Loki, CloudWatch).
 
