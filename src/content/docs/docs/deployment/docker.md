@@ -11,7 +11,7 @@ For cloud deployment on Railway, see [Railway Deployment](/docs/deployment/railw
 
 ## Service Architecture
 
-Docker Compose orchestrates three services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/docker-compose.yml): the Flask API, FalkorDB graph database (which includes its own browser UI on port 3000 for local graph inspection), and the Qdrant vector store.
+Docker Compose orchestrates three services defined in [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docker-compose.yml): the Flask API, FalkorDB graph database (which includes its own browser UI on port 3000 for local graph inspection), and the Qdrant vector store.
 
 ```mermaid
 graph TB
@@ -19,7 +19,7 @@ graph TB
         Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
-            API["memory-service<br/>app.py<br/>localhost:8001"]
+            API["flask-api<br/>app.py<br/>localhost:8001"]
             Falkor["falkordb<br/>localhost:6379"]
             QdrantLocal["qdrant<br/>localhost:6333"]
         end
@@ -56,14 +56,14 @@ graph TB
 | Service | Image/Build | Ports | Purpose | Health Check |
 |---|---|---|---|---|
 | `flask-api` | Built from Dockerfile | 8001 | AutoMem Flask API with background workers | None (depends on FalkorDB health) |
-| `falkordb` | `falkordb/falkordb:latest` | 6379 (Redis), 3000 (UI) | Graph database (canonical memory storage) | `redis-cli ping` every 10s |
+| `falkordb` | `falkordb/falkordb:latest` | 6379 (Redis), 3000 (UI) | Graph database (canonical memory storage) | Password-aware `redis-cli ping` every 10s |
 | `qdrant` | `qdrant/qdrant:v1.11.3` | 6333 (REST), 6334 (gRPC) | Vector search database (optional) | None (service_started) |
 
 > **Local FalkorDB UI vs `/viewer`.** The FalkorDB browser at `http://localhost:3000` is the official local graph-inspection UI shipped inside the `falkordb` container. The `/viewer` path on the AutoMem API is the production entrypoint — it redirects to the standalone [`automem-graph-viewer`](https://github.com/verygoodplugins/automem-graph-viewer) app when `GRAPH_VIEWER_URL` is set, and does not serve a local UI. Note that the standalone viewer docs also use port `3000` by default, so if you run it locally alongside this Docker stack you should change its port (for example, `PORT=3001`) to avoid a conflict with FalkorDB's built-in UI.
 
 ## Volume Configuration
 
-Docker Compose defines three named volumes for persistent data and one bind mount for source code. This ensures data survives container restarts and enables hot-reload during development.
+Docker Compose defines three named volumes for persistent data and one bind mount for source code. This ensures data survives container restarts and makes source files available inside the API container for local iteration.
 
 ### Volume Persistence Strategy
 
@@ -72,7 +72,7 @@ Docker Compose defines three named volumes for persistent data and one bind moun
 | `falkordb_data` | `/data` | RDB snapshots + AOF (append-only file) | High (every 60s or 1 key change) | Export via `redis-cli SAVE` to `/backups` |
 | `qdrant_data` | `/qdrant/storage` | Vector collections + write-ahead log | High (write-ahead log) | Export via Qdrant API to `/backups` |
 | `fastembed_models` | `/root/.config/automem/models` | Downloaded ONNX embedding models | Medium (cache, re-downloadable) | Not backed up (excluded in .gitignore) |
-| `.` (bind mount) | `/app` | Source code for hot-reload | N/A (host filesystem) | Git repository |
+| `.` (bind mount) | `/app` | Source code for local iteration | N/A (host filesystem) | Git repository |
 | `./backups/falkordb` | `/backups` | Manual RDB exports | N/A (host filesystem) | Excluded in .gitignore |
 | `./backups/qdrant` | `/backups` | Manual snapshot exports | N/A (host filesystem) | Excluded in .gitignore |
 
@@ -106,8 +106,8 @@ The Flask API service accepts environment variables for configuration. Most have
 
 | Variable | Docker Compose Default | Purpose | Notes |
 |---|---|---|---|
-| `FLASK_ENV` | `development` | Flask environment mode | Enables debug mode, hot-reload |
-| `FLASK_DEBUG` | `"1"` | Flask debug flag | Enables detailed error pages |
+| `FLASK_ENV` | `development` | Passed through by Docker Compose | The server runs with `debug=False`; this does not enable Flask debug mode or hot reload |
+| `FLASK_DEBUG` | `"1"` | Passed through by Docker Compose | The server runs with `debug=False`; this does not enable detailed Flask error pages |
 | `FALKORDB_PASSWORD` | `${FALKORDB_PASSWORD:-}` | FalkorDB authentication | Empty by default (no auth) |
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint | Docker internal URL |
 | `QDRANT_API_KEY` | `${QDRANT_API_KEY:-}` | Qdrant authentication | Not required for local Qdrant |
@@ -137,7 +137,7 @@ Docker Compose manages startup order and readiness using `depends_on` conditions
 
 FalkorDB is the only service with a health check defined:
 
-- **Test command**: `redis-cli ping` (expects `PONG` response)
+- **Test command**: If `REDIS_PASSWORD` is set, `redis-cli -a "$REDIS_PASSWORD" ping`; otherwise `redis-cli ping` (expects `PONG`)
 - **Interval**: Check every 10 seconds
 - **Timeout**: Fail if command doesn't respond within 5 seconds
 - **Retries**: Attempt 5 times before marking unhealthy
@@ -145,7 +145,7 @@ FalkorDB is the only service with a health check defined:
 
 The Flask API waits for `condition: service_healthy`, ensuring FalkorDB is accepting connections before the API attempts to connect.
 
-Qdrant uses `condition: service_started`, meaning the Flask API starts as soon as the Qdrant container starts (not waiting for full initialization). The API handles Qdrant connection failures gracefully via the graceful degradation pattern — Qdrant being unavailable results in `"qdrant": "not_configured"` in `/health` but does not prevent the service from running.
+Qdrant uses `condition: service_started`, meaning the Flask API starts as soon as the Qdrant container starts (not waiting for full initialization). The API handles Qdrant connection failures gracefully: when Qdrant is unavailable, [`/health`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/health.py#L70-L90) reports `"qdrant": "disconnected"` and the overall `"status"` is `"degraded"`; the service can continue running.
 
 ## Networking
 
@@ -223,14 +223,13 @@ make clean
 `make clean` runs `docker compose down -v` which removes all named volumes. All stored memories will be permanently deleted.
 :::
 
-### Hot-Reload During Development
+### Restart After Source Changes
 
-The Flask API container mounts the project directory as a volume, enabling hot-reload:
+The Flask API container mounts the project directory as a volume, but the [server starts with `debug=False`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py#L81-L109). It does not enable Flask debug mode or hot reload. After editing Python source, restart the `flask-api` container:
 
-1. Edit any Python file in the project
-2. Flask detects the change (via `FLASK_DEBUG=1`)
-3. API automatically reloads within ~2 seconds
-4. No need to restart containers
+```bash
+docker compose restart flask-api
+```
 
 ## Production Considerations
 
@@ -240,7 +239,7 @@ Docker Compose is optimized for development. Production deployments require secu
 
 | Aspect | Docker Compose (Dev) | Production Recommendations |
 |---|---|---|
-| **Debug Mode** | `FLASK_DEBUG=1`, verbose logging | Disable debug, set `LOG_LEVEL=INFO` or `WARNING` |
+| **Debug Mode** | Server runs with `debug=False` | Keep the production process configured without the Flask debugger |
 | **API Tokens** | Defaults to `test-token`, `test-admin-token` | Generate cryptographically secure tokens (32+ chars) |
 | **Port Exposure** | All ports mapped to localhost | Use reverse proxy (nginx, Traefik), expose only necessary ports |
 | **Volume Backups** | Manual exports to `./backups/` | Automated backups to S3/remote storage (see [Backup & Recovery](/docs/operations/backup/)) |
