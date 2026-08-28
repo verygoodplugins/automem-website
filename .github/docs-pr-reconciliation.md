@@ -1,122 +1,56 @@
 # Documentation PR reconciliation ledger
 
-**Status:** active reconciliation.  The legacy `docs/audit-*` pull requests are
-evidence of reported drift, not a merge queue.  Do not bulk-merge or bulk-close
-them.
-
-## Operating rule
-
-For every legacy claim:
-
-1. Validate it against the current authoritative source revision.
-2. Make one fresh, page-scoped replacement pull request containing only the
-   still-true correction (and a source-pinned citation where appropriate).
-3. Let the normal docs checks and auto-merge workflow land that replacement.
-4. Only then mark the legacy PR as superseded, preserving its discussion and
-   links to the replacement.
-
-This keeps useful research while preventing a stale branch from overwriting
-newer documentation or source semantics.
+**Status:** release audit complete. Legacy `docs/audit-*` pull requests are
+research records, not a merge queue. Create each replacement from current
+`main`, keep it page-scoped, and carry only the source-supported residuals
+recorded in `.superpowers/reconciliation/`.
 
 ## Authority snapshot
 
-| Source | Revision used for current validation |
+| Source | Release used by the audit |
 | --- | --- |
-| AutoMem 0.16.2 release commit | `e147c352b100ebbf29e6555453fdde5152066138` |
-| mcp-automem 0.16.0 release commit | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
+| AutoMem 0.16.2 | `e147c352b100ebbf29e6555453fdde5152066138` |
+| mcp-automem 0.16.0 | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
 
-`mcp-automem@9a0bbf…` is the published 0.16.0 release.  AutoMem's 0.16.2
-release commit is `e147c…`; GitHub's release listing still labels 0.16.1 as
-latest, so do not mistake that UI lag for an older source authority.  Existing
-replacements #340–#345 were directly revalidated against a later `main`
-snapshot; all remaining work uses these release pins.  Never transplant the
-older audit SHA just because it appears in the legacy diff.
+The reconciliation reports are the claim-level authority. A manifest row is
+one fresh replacement PR for its one target page; grouped numbers share that
+page, and `residual` means only the still-valid work not covered by the closed
+legacy PR is carried forward.
 
-## Source-validated replacement queue
+## Complete legacy records
 
-These twelve pages have been checked against the authority snapshot and need
-fresh replacement PRs.  They are deliberately one-page slices so their checks,
-review, auto-merge, and rollback remain independent.
+These seven legacy audit PRs are closed and require no replacement from their
+own branches: #257, #308, #309, #310, #320, #328, and #329. Their surviving
+same-page residuals, where any, are explicitly assigned below. #316 is a
+merged CI change, not a documentation-page audit record.
 
-| Legacy PR | Replacement page | Scope constraint |
-| --- | --- | --- |
-| #320 | `reference/api/health` | Correct health/degraded and queue semantics; do not claim endpoint-wide structured logging. |
-| #328 | `operations/health` | Document the six `/analyze` groups, startup-recall auth/limits, and monitor flags; say “up to 100 timestamped memories,” not “most recent.” |
-| #329 | `reference/api/admin` | Scope the shared envelope to HTTP/auth errors; correct admin/reprocess semantics. |
-| #330 | `getting-started/environment-variables` | Correct port, inert logging variables, relevance, test defaults, and MCP watchdog behavior. |
-| #331 | `operations/troubleshooting` | Correct recovery, vector autodetection, payload-index, and embedding-provider claims. |
-| #332 | `architecture/background-processing` | Correct health/status/auth/cache claims without inventing health blocks. |
-| #333 | `operations/performance` | Correct worker batching and `recall_complete` logging fields. |
-| #311 | `cli/platform-installers` | Keep current Copilot/Desktop/Cursor/Claude Code behavior; repin client citations. |
-| #317 | `cli/setup` | Distinguish plain `config` output from raw `config --format=json`. |
-| #322 | `platforms/claude-desktop` | Limit health claims to the MCP projection; do not infer raw backend schema or UI/asset behavior. |
-| #324 | `cli/config-tools` | Correct config precedence, templates, recall parsing, and narrow debug behavior. |
-| #326 | `reference/api/direct-vs-mcp` | Correct process tag, lifecycle, factory, and handler locations; retain raw-service schema work for its own validation. |
-| #308 | `deployment/docker` | Correct the Compose service, healthcheck, health state, and restart guidance; do not expose inert runtime variables. |
-| #309 | `core-concepts/consolidation` | Correct the current MetaMemory persistence and `SUMMARIZES` contract while retaining the five-member gate. |
-| #310 | `core-concepts/relationship-types` | Correct the associate request/response/Cypher contract, `updated_at`, and source attribution. |
-| #312 | `architecture/overview` | Correct bootstrapping, serialization, retry, and `.env` precedence; avoid volatile configuration-variable counts. |
+## Executable replacement manifest
 
-## Legacy overlap: preserve, do not discard
+Run batches in order. Each semicolon-separated entry is `legacy PR group ->`
+`target path`; it creates one replacement PR. Do not copy audit prose or merge
+a legacy branch.
 
-Six newer legacy PRs fully overlap an earlier single-page PR: `#257 → #308`,
-`#259 → #297`, `#261 → #315`, `#268 → #321`, `#276 → #318`, and `#281 → #317`.
-Eight overlap only partially: `#267 → #305`, `#270 → #320`, `#271 → #306`,
-`#272 → #330`, `#273 → #332`, `#274 → #328`, `#275 → #329`, and `#277 → #326`.
+1. **Setup/install/config — batch 1:** #311 -> `cli/platform-installers`; #317, #281 -> `cli/setup`; #324, #282 -> `cli/config-tools`.
+2. **Setup/install/config — batch 2:** #272, #330 -> `getting-started/environment-variables`; #276, #318 -> `getting-started/quick-start`; #303 -> `cli/guided-cloud-setup`.
+3. **Setup/install/config — batch 3:** #307 -> `cli/queue`; #286 -> `reference/configuration`; #285, #323 -> `architecture/mcp-bridge`.
+4. **API/reference — batch 1:** #271, #306 -> `reference/api/memory-operations`; #275 residual after #329 -> `reference/api/admin`; #277, #326 -> `reference/api/direct-vs-mcp`.
+5. **API/reference — batch 2:** #284 -> `reference/api/relationships`; #287 -> `reference/authentication`; #288 -> `reference/api/consolidation`.
+6. **API/reference — batch 3:** #293, #327 -> `reference/api/recall-operations`; #270 residual after #320 -> `reference/api/health`; #274 residual after #328 -> `operations/health`.
+7. **Operations/architecture — batch 1:** #273, #332 -> `architecture/background-processing`; #313 -> `operations/backup`; #331 -> `operations/troubleshooting`.
+8. **Operations/architecture — batch 2:** #333 -> `operations/performance`; #312 -> `architecture/overview`; #289 -> `architecture/embeddings`.
+9. **Operations/architecture — batch 3:** #292 -> `architecture/data-stores`; #301 -> `architecture/enrichment`; #319 -> `getting-started/docker`.
+10. **Operations/architecture — batch 4:** #304 -> `deployment/railway`; #300 -> `development/local-setup`; #314 -> `development/structure`.
+11. **Concepts/development/platforms — batch 1:** #283, #325 -> `overview`; #268, #321 -> `core-concepts/hybrid-search`; #290 -> `core-concepts/recall-tuning`.
+12. **Concepts/development/platforms — batch 2:** #294 -> `core-concepts/memory-model`; #267, #305 -> `development/testing`; #269 -> `graph-viewer/overview`.
+13. **Concepts/development/platforms — batch 3:** #278 -> `research`; #302 -> `best-practices/memory-rules`; #259, #297 -> `platforms/codex`.
+14. **Concepts/development/platforms — batch 4:** #261, #315 -> `platforms/hermes`; #262 -> `platforms/alexa`; #264 -> `platforms/antigravity`.
+15. **Concepts/development/platforms — batch 5:** #265 -> `platforms/claude-web`; #266 -> `platforms/chatgpt`; #280 -> `platforms/github-copilot`.
+16. **Concepts/development/platforms — batch 6:** #295 -> `platforms/claude-code`; #296 -> `platforms/cursor`; #299 -> `platforms/openclaw`.
+17. **Concepts/development/platforms — batch 7:** #291 -> `platforms/elevenlabs`; #322 -> `platforms/claude-desktop`.
 
-Neither classification authorizes closure: partial pairs include extra factual
-claims that must be validated separately, and even fully overlapping legacy
-PRs need their newest successor rechecked before a fresh replacement is made.
+## Completion rule
 
-## Release-audited cohorts awaiting replacements
-
-The following legacy PRs remain open but now have release-pinned findings.
-They still require fresh replacements; an entry here is not permission to
-merge the legacy branch.
-
-| Legacy PRs | Pages / important carry-forward constraint |
-| --- | --- |
-| #330–#333 | Environment, troubleshooting, background processing, and performance all remain wrong.  Do not call relevance experimental; describe worker batching with a remaining-deadline timeout. |
-| #311, #317, #322, #324, #326 | Five MCP pages remain wrong.  Generic `config --format=json` uses `memory` **without** `-y`; Claude Desktop counts are optional; Configuration is lines 413–433. |
-| #312 | Overview remains wrong, but remove fragile configuration-prefix counts rather than replacing them. |
-| #313 | Backup semantics remain wrong: retention is a per-store count, and Qdrant artifacts wrap `points` in an object. |
-| #314 | The simple Compose/TypeScript/ESLint corrections validate; any CLI/template tree refresh must include Grok or be explicitly non-exhaustive. |
-| #315 | Hermes direct-command flags are not environment-variable mappings; `.env` is the backup exception. |
-| #318 | Quick Start needs auth, Qdrant, PORT, and noninteractive corrections.  Grok picker/list work is already in #335; only home-directory overrides remain. |
-| #319 | Docker & Local Dev needs the current Compose service, mounts, ports, provider list, and optional variables. |
-| #321 | Hybrid search needs unnormalised scoring, separate relevance/context, timestamp recency, zero fallbacks, and release-pinned links. |
-| #323 | MCP bridge needs current split-file anchors, Copilot/Grok routing, correct PORT guidance, and batch association shape. |
-| #283–#287 | All semantic corrections remain needed.  #285's old MCP line anchors are stale at 0.16.0, so rewrite the source map around `mcp-surface.ts`. |
-| #288–#294 | All seven pages remain wrong, but #288, #291, and #294 need narrowly corrected wording before their fresh patches are written. |
-| #295–#302 | Thirty-three corrections remain valid.  #301's `classification` item is already fixed; #302 must use `mcp-surface.ts`, not its obsolete `index.ts` anchor. |
-| #303–#307 | All twenty-one audited claims remain active drift; no target-page correction is already on main. |
-| #259, #261–#266 | All semantic corrections remain valid.  #263 must use current `mcp-surface.ts` anchors. |
-| #267–#272 | #270 is mostly already addressed but retains unresolved claims; #267 and #271 contain release-inaccurate replacement details.  None is closeable without a fresh residual patch. |
-| #273–#278 | #273, #275, #276, and #278 remain largely valid; #274 needs corrected analytics wording; #277 must be rebased to `mcp-surface.ts`. |
-| #279–#282, #325, #327 | All audited claims remain source-supported.  #281 and #282 need small wording refinements in their fresh replacements. |
-
-Each of these findings is recorded in `.superpowers/reconciliation/` with
-claim-level source evidence.  Open a replacement only from the latest website
-main and the corresponding release pin.
-
-## Remaining queue
-
-All other open `docs/audit-*` PRs remain in the ledger as **pending
-current-source validation**.  Group them by source and page rather than merge
-order, and treat each PR body as a list of candidate claims:
-
-- Automem service/docs pages: #257, #262–#280, #283–#294, #300–#310,
-  #312–#315, #318–#321, #323, #325, #327.
-- MCP client/platform pages: #259, #261, #281–#282, #295–#297, #299,
-  #311, #315, #317, #319, #321–#326.
-
-Some numbers appear in both streams because their page combines service and
-client behavior.  Resolve that by recording which repository proves each
-individual assertion; do not infer a claim from the other repository.
-
-## Completion record for a legacy PR
-
-Before a legacy PR is closed, record its replacement PR URL, the source SHA
-used, and any rejected assertion.  If a claim is no longer true or already
-covered on `main`, close it only with a short explanation—not by silently
-abandoning the work.
+After a replacement merges, close its listed legacy PRs with the replacement
+URL, release SHA, and any rejected claim. For a residual row, retain that
+qualification in the closing comment; a closed overlapping PR never implies
+that its uncarried claims were accepted.
