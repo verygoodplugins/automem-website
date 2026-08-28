@@ -104,11 +104,11 @@ graph TB
     CONFIG_OBJ --> CLIENT_INSTANCE
 ```
 
-### Configuration File Locations
+### CLI Configuration File Locations
 
 ```mermaid
 graph TB
-    subgraph "Configuration Resolution Priority"
+    subgraph "Queue CLI Resolution Priority"
         direction TB
         ENV["1. Environment variables<br/>AUTOMEM_API_URL / AUTOMEM_ENDPOINT<br/>+ API key (.env or shell)"]
         CLAUDE_JSON["2. ~/.claude.json<br/>scans mcpServers entries"]
@@ -126,7 +126,7 @@ graph TB
    - Direct shell environment: `export AUTOMEM_API_URL=...`
    - `.env` file in current directory (loaded via `dotenv`)
    - Platform-specific MCP server `env` blocks
-   - Resolution order: `AUTOMEM_API_URL` → `CLAUDE_PLUGIN_OPTION_API_URL` → `AUTOMEM_ENDPOINT`
+   - For MCP server startup, endpoint resolution is `AUTOMEM_API_URL` → `CLAUDE_PLUGIN_OPTION_API_URL` → `AUTOMEM_ENDPOINT` → default
 2. **`~/.claude.json` configuration**
    - Used by CLI commands when environment is not set
    - Fallback for queue processing and other utilities
@@ -135,7 +135,7 @@ graph TB
    - `endpoint`: `http://127.0.0.1:8001`
    - `apiKey`: `undefined`
 
-The resolution is implemented in `resolveAutoMemConfig()` in `src/cli/queue.ts`.
+The queue CLI uses `resolveAutoMemConfig()` in `src/cli/queue.ts`, which checks `AUTOMEM_API_URL`, then the deprecated `AUTOMEM_ENDPOINT`, then `~/.claude.json`, then the default. The Claude plugin URL tier shown in the diagram above applies to MCP server startup, not queue CLI fallback.
 
 ## Platform-Specific Configuration Files
 
@@ -257,7 +257,7 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 At the audited release, debug stderr is narrow:
 
 - `AUTOMEM_PROCESS_TAG` or `MCP_PROCESS_TAG` can add a tagged process-title line in interactive sessions.
-- Server mode logs `AutoMem server running on stdio transport`.
+- Server mode logs `AutoMem MCP server running`.
 
 ## Configuration Generation
 

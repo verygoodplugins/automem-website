@@ -19,7 +19,15 @@ test('config tools docs match the audited 0.16.0 config surfaces', async () => {
   assert.match(page, new RegExp(releaseSha, 'u'));
   assert.match(
     page,
-    /AUTOMEM_API_URL[\s\S]*CLAUDE_PLUGIN_OPTION_API_URL[\s\S]*AUTOMEM_ENDPOINT[\s\S]*http:\/\/127\.0\.0\.1:8001/i,
+    /For MCP server startup, endpoint resolution is `AUTOMEM_API_URL` → `CLAUDE_PLUGIN_OPTION_API_URL` → `AUTOMEM_ENDPOINT` → default/i,
+  );
+  assert.match(
+    page,
+    /The queue CLI uses `resolveAutoMemConfig\(\)`[\s\S]*AUTOMEM_API_URL`, then the deprecated `AUTOMEM_ENDPOINT`, then `~\/\.claude\.json`, then the default/i,
+  );
+  assert.doesNotMatch(
+    page,
+    /The queue CLI uses `resolveAutoMemConfig\(\)`[\s\S]*CLAUDE_PLUGIN_OPTION_API_URL/i,
   );
   assert.match(page, /CLAUDE_PLUGIN_OPTION_API_KEY/);
   assert.match(page, /CLAUDE_PLUGIN_OPTION_API_TOKEN/);
@@ -44,7 +52,8 @@ test('config tools docs match the audited 0.16.0 config surfaces', async () => {
   assert.doesNotMatch(page, /mcp-automem recall "project architecture"/);
 
   assert.match(page, /AUTOMEM_PROCESS_TAG=cursor-session-1/);
-  assert.match(page, /AutoMem server running on stdio transport/);
+  assert.match(page, /AutoMem MCP server running/);
+  assert.doesNotMatch(page, /AutoMem server running on stdio transport/);
   assert.doesNotMatch(page, /HTTP request\/response details/i);
   assert.doesNotMatch(page, /Retry attempts and backoff timing/i);
   assert.doesNotMatch(page, /Each tool call with parameters/i);
