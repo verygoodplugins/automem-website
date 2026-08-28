@@ -21,9 +21,17 @@
 - `npm run build` completed successfully. It emitted existing Astro markdown-plugin deprecation and Vite unused-import warnings.
 - `git diff --check` passed.
 
+### Fix round 1
+
+- Expanded the focused static test to require the full fallback trigger: no usable LLM result **or** LLM failure, both falling back to `Memory` at `0.3`.
+- Added exact assertions for `embedding_status: skipped` with `qdrant: unconfigured`, plus enrichment's `queued` and `disabled` outcomes; negative assertions reject the former incomplete status claims.
+- `node --test tests/introduction-docs.test.mjs` passed (1 passed, 0 failed).
+- `git diff --check` passed.
+
 ## Commit
 
 - `docs: reconcile introduction release behavior`
+- `docs: guard introduction status semantics`
 
 ## Self-review
 
