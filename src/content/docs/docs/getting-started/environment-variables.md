@@ -215,7 +215,7 @@ Used only for the AutoMem test suite — do not set in production.
 
 Source-verified against AutoMem [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/runtime_wiring.py#L81-L83), [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/config.py#L119-L125), [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/utils/scoring.py#L212-L215), and [`e147c352b100ebbf29e6555453fdde5152066138`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/tests/test_integration.py#L53-L92).
 
-MCP watchdog defaults verified against `mcp-automem` [`9a0bbf754dd31db524da25638b0e97907e32ff37`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts#L478-L485) and [`9a0bbf754dd31db524da25638b0e97907e32ff37`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/lifecycle.ts#L17-L40).
+MCP watchdog defaults verified against `mcp-automem` [`9a0bbf754dd31db524da25638b0e97907e32ff37`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts#L478-L485).
 
 ---
 
