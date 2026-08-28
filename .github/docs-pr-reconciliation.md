@@ -50,6 +50,10 @@ review, auto-merge, and rollback remain independent.
 | #322 | `platforms/claude-desktop` | Limit health claims to the MCP projection; do not infer raw backend schema or UI/asset behavior. |
 | #324 | `cli/config-tools` | Correct config precedence, templates, recall parsing, and narrow debug behavior. |
 | #326 | `reference/api/direct-vs-mcp` | Correct process tag, lifecycle, factory, and handler locations; retain raw-service schema work for its own validation. |
+| #308 | `deployment/docker` | Correct the Compose service, healthcheck, health state, and restart guidance; do not expose inert runtime variables. |
+| #309 | `core-concepts/consolidation` | Correct the current MetaMemory persistence and `SUMMARIZES` contract while retaining the five-member gate. |
+| #310 | `core-concepts/relationship-types` | Correct the associate request/response/Cypher contract, `updated_at`, and source attribution. |
+| #312 | `architecture/overview` | Correct bootstrapping, serialization, retry, and `.env` precedence; avoid volatile configuration-variable counts. |
 
 ## Legacy overlap: preserve, do not discard
 
