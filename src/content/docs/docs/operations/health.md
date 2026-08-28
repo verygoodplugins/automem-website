@@ -252,17 +252,16 @@ The analyze endpoint provides comprehensive statistics about the memory graph, i
 
 #### Analytics Components
 
-The `/analyze` endpoint executes 7 independent Cypher queries against FalkorDB:
+The `/analyze` endpoint runs 6 Cypher queries against FalkorDB and returns their results under a top-level `analytics` object:
 
-1. **Total Memory Count**: `MATCH (m:Memory) RETURN count(m)`
-2. **Type Distribution**: Groups memories by `m.type` field
-3. **Entity Frequency**: Unwinds `m.entities` array and counts occurrences (top 20)
-4. **Confidence Distribution**: Buckets `m.confidence` scores by 0.1 intervals
-5. **Activity by Hour**: Extracts hour from `m.timestamp` and counts memories
-6. **Tag Frequency**: Unwinds `m.tags` array and counts occurrences (top 20)
-7. **Relationship Counts**: Counts all edges by relationship type
+1. **`memory_types`**: Groups memories by `m.type`, with a per-type count and average confidence
+2. **`patterns`**: Memories of type `Pattern`
+3. **`preferences`**: Memories of type `Preference`
+4. **`temporal_insights`**: Extracts the hour from `m.timestamp`, keyed `hour_00`…`hour_23`
+5. **`entity_frequency`**: Counts `entities`, `keywords`, and `topics` values from each memory's `metadata` (top 50)
+6. **`confidence_distribution`**: Buckets `m.confidence` into `low` (&lt; 0.4), `medium` (&lt; 0.7), and `high`
 
-Each query is wrapped in a try-except block — if a query fails, the corresponding field is set to `null`, `{}`, or `[]` depending on the expected type.
+There is no total-memory count, tag-frequency, or relationship-count component. All 6 queries share a single try-except: if any one of them raises, the endpoint returns HTTP 500 with `{"error": "Analyze failed", "details": "..."}` rather than a partial result. On success the response is `{"status": "success", "analytics": {...}, "elapsed_ms": 0}` — `elapsed_ms` is currently hardcoded to `0`.
 
 #### Analytics Query Flow
 
@@ -276,28 +275,25 @@ sequenceDiagram
 
     API->>API: Validate token
 
-    API->>FalkorDB: MATCH (m:Memory) RETURN count(m)
-    FalkorDB-->>API: total_count
-
     API->>FalkorDB: Group by m.type
-    FalkorDB-->>API: type_distribution
+    FalkorDB-->>API: memory_types
 
-    API->>FalkorDB: Unwind entities, count occurrences
-    FalkorDB-->>API: top_entities (top 20)
+    API->>FalkorDB: Match type = Pattern
+    FalkorDB-->>API: patterns
+
+    API->>FalkorDB: Match type = Preference
+    FalkorDB-->>API: preferences
+
+    API->>FalkorDB: Extract hour from timestamp
+    FalkorDB-->>API: temporal_insights
+
+    API->>FalkorDB: Read metadata entities/keywords/topics
+    FalkorDB-->>API: entity_frequency (top 50)
 
     API->>FalkorDB: Bucket confidence scores
     FalkorDB-->>API: confidence_distribution
 
-    API->>FalkorDB: Extract hour from timestamp
-    FalkorDB-->>API: activity_by_hour
-
-    API->>FalkorDB: Unwind tags, count occurrences
-    FalkorDB-->>API: top_tags (top 20)
-
-    API->>FalkorDB: Count edges by type
-    FalkorDB-->>API: relationship_counts
-
-    API-->>Client: 200 OK {analytics object}
+    API-->>Client: 200 OK {status, analytics, elapsed_ms}
 ```
 
 #### Example Requests
@@ -316,13 +312,13 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" \
 
 | Use Case | Relevant Fields |
 |---|---|
-| Identify memory class imbalance | `memories_by_type` |
-| Find frequently discussed projects/tools | `top_entities` |
-| Assess memory quality | `confidence_distribution` |
-| Understand activity patterns | `activity_by_hour` |
-| Audit tagging consistency | `top_tags` |
-| Verify enrichment pipeline results | `relationships["SIMILAR_TO"]`, `relationships["EXEMPLIFIES"]` |
-| Detect temporal validity issues | `relationships["INVALIDATED_BY"]`, `relationships["EVOLVED_INTO"]` |
+| Identify memory class imbalance | `analytics.memory_types` |
+| Find frequently discussed projects/tools | `analytics.entity_frequency` |
+| Assess memory quality | `analytics.confidence_distribution` |
+| Understand activity patterns | `analytics.temporal_insights` |
+| Review captured patterns and preferences | `analytics.patterns`, `analytics.preferences` |
+
+For relationship counts by type, use `GET /graph/stats` (`totals.edges`, `by_relationship`) — `/analyze` does not report edges.
 
 ## Startup Context Retrieval
 
@@ -340,11 +336,14 @@ The startup recall endpoint returns a curated set of memories suitable for initi
 
 #### Retrieval Strategy
 
-The startup recall endpoint filters memories by critical tags:
+The startup recall endpoint runs two fixed tag queries and returns both result sets:
 
-- Queries memories tagged with `critical`, `lesson`, or `ai-assistant`
-- Returns matching memories up to the configured limit
-- Falls back to recent memories if tag-filtered results are insufficient
+- `critical_lessons` — memories tagged `critical`, `lesson`, or `ai-assistant`, ordered by `importance` descending, hard-limited to 10
+- `system_rules` — memories tagged `system` or `memory-recall`, hard-limited to 5
+
+Neither limit is configurable, and there is no fallback to recent memories when the tag queries come back empty.
+
+The response also carries `lesson_count`, `has_critical` (true when any returned lesson has `importance >= 0.9`), and a `summary` string.
 
 #### Integration with AI Agents
 
@@ -352,7 +351,7 @@ The startup recall endpoint is designed for AI agent initialization. An agent ca
 
 ```bash
 # Retrieve startup context
-curl https://your-project.up.railway.app/startup-recall | jq '.memories | length'
+curl https://your-project.up.railway.app/startup-recall | jq '.critical_lessons | length'
 ```
 
 ## Health Monitor Service
@@ -505,8 +504,12 @@ Deploy as a dedicated Railway service for continuous monitoring.
 ```
 AUTOMEM_API_URL=http://memory-service.railway.internal:8001
 HEALTH_MONITOR_WEBHOOK=https://hooks.slack.com/...
-HEALTH_MONITOR_AUTO_RECOVER=false
-HEALTH_MONITOR_CHECK_INTERVAL=300
+```
+
+Auto-recovery and the check interval are **command-line only** — set them in the service start command, not the environment:
+
+```bash
+python scripts/health_monitor.py --interval 300 --auto-recover
 ```
 
 **Pros:**
@@ -556,14 +559,22 @@ Health monitor sends JSON payloads to configured webhooks:
 
 ```json
 {
-  "alert_type": "drift_warning",
-  "drift_percent": 12.3,
-  "falkordb_count": 884,
-  "qdrant_count": 778,
-  "timestamp": "2025-10-20T14:30:00Z",
-  "service_url": "https://your-project.up.railway.app"
+  "level": "critical",
+  "title": "Data Loss Detected - Manual Recovery Required",
+  "message": "FalkorDB count dropped below Qdrant count. Drift: 52.3%",
+  "details": {
+    "drift_percent": 52.3,
+    "auto_recover_enabled": false,
+    "recovery_command": "python scripts/recover_from_qdrant.py"
+  },
+  "timestamp": "2025-10-20T14:30:00",
+  "system": "AutoMem Health Monitor"
 }
 ```
+
+`level` is one of `info`, `warning`, or `critical`. Alert-specific values (such as `drift_percent`) are nested under `details`, not at the top level, and the payload shape is the same for every alert type.
+
+`level` is one of `info`, `warning`, or `critical`. Alert-specific values (such as `drift_percent`) are nested under `details`, not at the top level.
 
 ### Slack Integration
 
@@ -598,16 +609,10 @@ Auto-recovery will automatically rebuild your FalkorDB graph when critical drift
 
 ### Enabling Auto-Recovery
 
-**Enable via command line:**
+Auto-recovery is enabled by the `--auto-recover` command-line flag only. There is no environment-variable equivalent:
 
 ```bash
 python scripts/health_monitor.py --auto-recover
-```
-
-**Enable via environment variable:**
-
-```
-HEALTH_MONITOR_AUTO_RECOVER=true
 ```
 
 ### Recovery Process
@@ -628,11 +633,12 @@ For detailed recovery procedures, see [Backup & Recovery](/docs/operations/backu
 
 | Variable | Default | Description |
 |---|---|---|
-| `HEALTH_MONITOR_DRIFT_THRESHOLD` | `5` | Warning threshold (percentage) |
-| `HEALTH_MONITOR_CRITICAL_THRESHOLD` | `50` | Critical threshold (percentage) |
-| `HEALTH_MONITOR_WEBHOOK` | `None` | Slack/Discord webhook URL |
-| `HEALTH_MONITOR_AUTO_RECOVER` | `false` | Enable automatic recovery |
-| `HEALTH_MONITOR_CHECK_INTERVAL` | `300` | Seconds between health checks |
+| `HEALTH_MONITOR_DRIFT_THRESHOLD` | `5` | Warning threshold (percentage). Overridden by `--drift-threshold` |
+| `HEALTH_MONITOR_CRITICAL_THRESHOLD` | `50` | Critical threshold (percentage). Overridden by `--critical-threshold` |
+| `HEALTH_MONITOR_WEBHOOK` | `None` | Slack/Discord webhook URL. Overridden by `--webhook` |
+| `HEALTH_MONITOR_EMAIL` | `None` | Alert email address (logged only — email sending is not implemented) |
+
+Two settings have **no** environment variable and must be passed as flags: `--auto-recover` (default: alert only) and `--interval` (default: `300` seconds).
 
 ## Monitoring Best Practices
 
@@ -721,7 +727,7 @@ Qdrant: 778 vectors
 - But recovery script not running
 
 **Solutions:**
-- Verify `HEALTH_MONITOR_AUTO_RECOVER=true` is set
+- Verify the monitor was started with the `--auto-recover` flag (there is no environment-variable equivalent)
 - Check that `scripts/recover_from_qdrant.py` is accessible
 - Review health monitor logs for permission errors
 
