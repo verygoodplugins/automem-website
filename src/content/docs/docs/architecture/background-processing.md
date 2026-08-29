@@ -13,7 +13,7 @@ Key GitHub sources:
 - [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing
 - [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/consolidation/runtime_bindings.py) — Consolidation scheduler
 - [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/sync/runtime_bindings.py) — Sync worker
-- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/runtime_wiring.py) — Startup sequence and worker initialization
+- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/runtime_wiring.py) — Startup sequence and worker initialization
 - [.env.example](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/.env.example) — Background processing configuration variables
 :::
 
@@ -167,7 +167,7 @@ All background workers run in daemon threads started during Flask application in
 
 ### Application Startup Sequence
 
-Startup is orchestrated by [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/runtime_wiring.py):
+Startup is orchestrated by [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/runtime_wiring.py):
 
 1. `init_falkordb()` — Establish FalkorDB connection
 2. `init_qdrant()` — Establish optional Qdrant connection
@@ -229,26 +229,26 @@ All background threads are daemon threads, meaning they terminate automatically 
 
 ### Health Endpoint Statistics
 
-The `/health` endpoint exposes real-time statistics for all background systems:
+The `/health` endpoint exposes real-time statistics for the enrichment pipeline only — it has no `embedding` or `consolidation` section:
 
 | Metric | Source | Interpretation |
 |---|---|---|
+| `enrichment.status` | `ServiceState.enrichment_thread` | `running` if the worker thread is alive, else `stopped` |
 | `enrichment.queue_depth` | `ServiceState.enrichment_queue` | Items waiting in queue |
-| `enrichment.pending` | `ServiceState.enrichment_pending` | Memories not yet enriched in graph |
+| `enrichment.pending` | `ServiceState.enrichment_pending` | Enqueued but not yet picked up by the worker |
 | `enrichment.inflight` | `ServiceState.enrichment_inflight` | Currently processing |
 | `enrichment.processed` | `EnrichmentStats.successes` | Total completed |
 | `enrichment.failed` | `EnrichmentStats.failures` | Total failed |
-| `embedding.queue_depth` | `ServiceState.embedding_queue` | Embeddings queued for generation |
-| `consolidation.last_runs` | `ConsolidationScheduler` | Last execution timestamps |
-| `consolidation.next_runs` | `ConsolidationScheduler.get_next_runs()` | Time until next run |
 
-### Admin Endpoints
+Embedding-queue depth is not published by `/health`. Consolidation last-run and next-run times come from `GET /consolidate/status`, which calls `ConsolidationScheduler.get_next_runs()`.
 
-Advanced monitoring available via admin token:
+### Monitoring Endpoints
+
+Additional monitoring endpoints. Only `/enrichment/reprocess` requires the admin token (`X-Admin-Token`); the others are covered by the standard API token guard:
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/enrichment/status` | GET | Detailed enrichment stats + sample pending IDs |
+| `/enrichment/status` | GET | Enrichment counters plus classification stats (no pending-ID samples) |
 | `/enrichment/reprocess` | POST | Re-enqueue specific memory IDs |
 | `/consolidate` | POST | Manually trigger consolidation tasks |
 | `/consolidate/status` | GET | Consolidation history and next run times |
@@ -306,7 +306,7 @@ Consolidation tasks catch exceptions and continue:
 **Relationship Count Caching (80% consolidation speedup):**
 - LRU cache with 10,000 entry capacity
 - Hourly cache invalidation via timestamp key
-- Dramatically reduces graph queries during decay cycles ([consolidation.py:152](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L152))
+- Dramatically reduces graph queries during decay cycles ([consolidation.py:201](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/consolidation.py#L201))
 
 ---
 
