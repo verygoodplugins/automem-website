@@ -38,6 +38,14 @@ test('configuration reference matches the audited AutoMem and MCP release behavi
     page,
     /1\.\s*`AUTOMEM_API_KEY`[\s\S]*2\.\s*`AUTOMEM_API_TOKEN`[\s\S]*3\.\s*`CLAUDE_PLUGIN_OPTION_API_KEY` \(or `claude_plugin_option_api_key`\)[\s\S]*4\.\s*`CLAUDE_PLUGIN_OPTION_API_TOKEN` \(or `claude_plugin_option_api_token`\)/i,
   );
+  assert.match(
+    page,
+    /KEY_PRIORITY\["Priority:<br\/>1\. AUTOMEM_API_KEY<br\/>2\. AUTOMEM_API_TOKEN<br\/>3\. CLAUDE_PLUGIN_OPTION_API_KEY \/ claude_plugin_option_api_key<br\/>4\. CLAUDE_PLUGIN_OPTION_API_TOKEN \/ claude_plugin_option_api_token"\]/,
+  );
+  assert.doesNotMatch(
+    page,
+    /KEY_PRIORITY\["Priority:<br\/>1\. AUTOMEM_API_KEY<br\/>2\. AUTOMEM_API_TOKEN"\]/,
+  );
 
   assert.match(page, /\[mcp_servers\.memory\]/);
   assert.match(page, /\[mcp_servers\.memory\.env\]/);

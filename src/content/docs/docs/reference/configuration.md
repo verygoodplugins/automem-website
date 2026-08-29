@@ -381,7 +381,7 @@ graph TB
         ENDPOINT_VALUE["Use env value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. CLAUDE_PLUGIN_OPTION_API_KEY / claude_plugin_option_api_key<br/>4. CLAUDE_PLUGIN_OPTION_API_TOKEN / claude_plugin_option_api_token"]
     end
 
     subgraph Client_Config["AutoMemClient Config"]

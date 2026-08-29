@@ -41,3 +41,14 @@ The diff is limited to the requested page plus its focused static test and this 
 ## Commit
 
 `docs(reference): reconcile configuration behavior` (this report is committed with the documentation and regression test).
+
+## Fix round 1 — Mermaid API-key priority
+
+The `KEY_PRIORITY` node in the API-key resolution Mermaid diagram had retained only `AUTOMEM_API_KEY` and `AUTOMEM_API_TOKEN`, despite the adjacent resolution list documenting the plugin fallbacks. It now presents one complete sequence:
+
+1. `AUTOMEM_API_KEY`
+2. `AUTOMEM_API_TOKEN`
+3. `CLAUDE_PLUGIN_OPTION_API_KEY / claude_plugin_option_api_key`
+4. `CLAUDE_PLUGIN_OPTION_API_TOKEN / claude_plugin_option_api_token`
+
+The focused static test asserts this exact `KEY_PRIORITY` node and rejects the former partial two-entry node. RED verification failed against the partial diagram; GREEN verification passed with `node --test tests/reference-configuration-docs.test.mjs`. `git diff --check` also passed.
