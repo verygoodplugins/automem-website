@@ -238,20 +238,22 @@ The `/health` endpoint exposes real-time statistics for all background systems:
 | `enrichment.inflight` | `ServiceState.enrichment_inflight` | Currently processing |
 | `enrichment.processed` | `EnrichmentStats.successes` | Total completed |
 | `enrichment.failed` | `EnrichmentStats.failures` | Total failed |
-| `embedding.queue_depth` | `ServiceState.embedding_queue` | Embeddings queued for generation |
-| `consolidation.last_runs` | `ConsolidationScheduler` | Last execution timestamps |
-| `consolidation.next_runs` | `ConsolidationScheduler.get_next_runs()` | Time until next run |
+| `memory_count` / `vector_count` | FalkorDB / Qdrant counts | Records in each store |
+| `sync_status` | Derived from the two counts | `synced`, `drift_detected`, or `orphaned_vectors` |
+| `vector_dimensions` | `VECTOR_SIZE` + collection schema | `configured`, `effective`, `collection`, `mismatch` |
 
-### Admin Endpoints
+`/health` does not report embedding-queue or consolidation statistics. For consolidation scheduling and run history, use `GET /consolidate/status`, which returns `next_runs`, `history`, `thread_alive`, and `tick_seconds`.
 
-Advanced monitoring available via admin token:
+### Operational Endpoints
 
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/enrichment/status` | GET | Detailed enrichment stats + sample pending IDs |
-| `/enrichment/reprocess` | POST | Re-enqueue specific memory IDs |
-| `/consolidate` | POST | Manually trigger consolidation tasks |
-| `/consolidate/status` | GET | Consolidation history and next run times |
+Advanced monitoring and manual triggers. Only `/enrichment/reprocess` requires the admin token; the rest are covered by the standard API token:
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/enrichment/status` | GET | API token | Detailed enrichment stats + sample pending IDs |
+| `/enrichment/reprocess` | POST | Admin token | Re-enqueue specific memory IDs |
+| `/consolidate` | POST | API token | Manually trigger consolidation tasks |
+| `/consolidate/status` | GET | API token | Consolidation history and next run times |
 
 ---
 
@@ -306,7 +308,7 @@ Consolidation tasks catch exceptions and continue:
 **Relationship Count Caching (80% consolidation speedup):**
 - LRU cache with 10,000 entry capacity
 - Hourly cache invalidation via timestamp key
-- Dramatically reduces graph queries during decay cycles ([consolidation.py:152](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L152))
+- Dramatically reduces graph queries during decay cycles ([consolidation.py:201-216](https://github.com/verygoodplugins/automem/blob/969755deb47934125d4face18816f3a1039766a7/consolidation.py#L201-L216))
 
 ---
 
