@@ -100,12 +100,13 @@ The core backup script at [`scripts/backup_automem.py`](https://github.com/veryg
 
 **FalkorDB Export Structure:**
 
-The FalkorDB export captures the entire Redis keyspace including:
+The FalkorDB export is a Cypher-driven graph dump — not a Redis keyspace dump. It is a JSON object with `timestamp`, `graph_name`, `nodes`, `relationships`, and `stats` keys, containing:
 
-- Memory nodes with all properties
-- Relationship edges
-- Metadata and indices
-- Graph structure information
+- Every node, with its labels and all properties
+- Every relationship edge, as `source_id` / `type` / `target_id` / `properties`
+- `stats` with `node_count` and `relationship_count`
+
+Indices and other Redis-level structures are not part of the export.
 
 **Qdrant Export Structure:**
 
@@ -124,7 +125,7 @@ Both exports are compressed using `gzip` with `.json.gz` extension, typically ac
 # Basic backup - creates timestamped backups in ./backups/falkordb/ and ./backups/qdrant/
 python scripts/backup_automem.py
 
-# With retention policy - deletes backups older than 7 days after creating new ones
+# With retention policy - keeps the 7 most recent backup files per store, deleting the rest
 python scripts/backup_automem.py --cleanup --keep 7
 
 # Custom directory
@@ -151,7 +152,7 @@ backups/
     └── ...
 ```
 
-The `--cleanup --keep N` flag removes backups older than N days based on filename timestamp parsing.
+The `--cleanup --keep N` flag is a file count, not an age: it keeps the N most recent `.json.gz` files in each of `backups/falkordb/` and `backups/qdrant/` (ranked by file modification time) and deletes the rest. `N` defaults to 7.
 
 ### S3 Cloud Storage
 
@@ -255,9 +256,10 @@ The TCP proxy endpoint is found in Railway Dashboard → FalkorDB service → Se
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `FALKORDB_HOST` | No | `localhost` | FalkorDB hostname or IP |
-| `FALKORDB_PORT` | Yes | `6379` | FalkorDB Redis port |
-| `FALKORDB_PASSWORD` | Yes | - | FalkorDB authentication password |
+| `FALKORDB_PORT` | No | `6379` | FalkorDB Redis port |
+| `FALKORDB_PASSWORD` | No | - | FalkorDB authentication password (required only for password-protected instances) |
 | `FALKORDB_GRAPH` | No | `memories` | Graph database name |
+| `AUTOMEM_BACKUP_DIR` | No | `./backups` | Default output directory (overridden by `--backup-dir`) |
 | `QDRANT_URL` | Yes* | `http://localhost:6333` | Qdrant endpoint URL |
 | `QDRANT_API_KEY` | Yes* | - | Qdrant API authentication |
 | `QDRANT_COLLECTION` | No | `memories` | Qdrant collection name |
@@ -409,7 +411,7 @@ backups/
     └── qdrant_20251020_083000.json.gz
 ```
 
-Each Qdrant backup contains an array of point objects with `id`, `vector` (float array, dimensions match `VECTOR_SIZE` config), and `payload` (content, memory_id, tags, importance, type, created_at).
+Each Qdrant backup is a JSON object with `timestamp`, `collection_name`, `stats`, and a `points` array. Each entry in `points` has `id`, `vector` (float array, dimensions match `VECTOR_SIZE` config), and `payload` (content, memory_id, tags, importance, type, created_at).
 
 ### Restoration Flow
 
@@ -673,8 +675,8 @@ Never test recovery procedures on production without a current backup. Always te
 # Check backup files exist and have reasonable sizes
 ls -lh backups/falkordb/ backups/qdrant/
 
-# Validate memory counts from backup
-zcat backups/qdrant/qdrant_latest.json.gz | jq 'length'
+# Validate memory counts from backup (the file is an object, so count .points)
+zcat backups/qdrant/qdrant_latest.json.gz | jq '.stats.points_count, (.points | length)'
 
 # Test decompression
 gunzip -t backups/falkordb/falkordb_latest.json.gz && echo "OK"
