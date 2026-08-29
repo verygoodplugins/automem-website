@@ -18,33 +18,45 @@ test('queue docs match the audited mcp-automem 0.16.0 queue and type surfaces', 
 
   assert.match(page, new RegExp(releaseSha, 'u'));
   assert.doesNotMatch(page, /538721c/u);
+  const typeSourceLinks = [
+    ...page.matchAll(/\[[^\]]*src\/types\.ts[^\]]*\]\(([^)]+)\)/gu),
+  ].map((match) => match[1]);
+  assert.deepEqual(typeSourceLinks, [
+    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
+    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
+    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
+  ]);
   assert.match(page, /memory-queue\.jsonl/u);
   assert.doesNotMatch(page, /\.jsonll/u);
 
   const queueSection = page.split('## Queue Processing CLI Command')[1];
   assert.ok(queueSection, 'queue section is present');
-  assert.match(queueSection, /storeMemory[\s\S]*associateMemories/i);
+  assert.match(
+    queueSection,
+    /calls `storeMemory\(\)` for each valid record\. When a queued record includes `relatesTo`, the command optionally follows the successful store with `associateMemories\(\)`\./u,
+  );
   assert.doesNotMatch(queueSection, /POST \/memory or PATCH \/memory\/\{id\}/u);
   assert.doesNotMatch(queueSection, /PATCH \/memory\/\{id\}/u);
   assert.match(queueSection, /AutoMem endpoint unavailable; skipping queue drain\./u);
   assert.doesNotMatch(queueSection, /Service unavailable - skipping queue processing/u);
   assert.doesNotMatch(queueSection, /Queue will be retried on next run/u);
 
-  for (const field of [
-    'falkordb',
-    'qdrant',
-    'graph',
-    'timestamp',
-    'memory_count',
-    'vector_count',
-    'sync_status',
-    'vector_dimensions',
-    'enrichment',
+  for (const [field, type] of [
+    ['falkordb', 'any'],
+    ['qdrant', 'any'],
+    ['graph', 'string'],
+    ['timestamp', 'string'],
+    ['memory_count', 'number'],
+    ['vector_count', 'number'],
+    ['sync_status', 'string'],
+    ['vector_dimensions', 'Record<string, any>'],
+    ['enrichment', 'Record<string, any>'],
   ]) {
-    assert.match(page, new RegExp('statistics\\.' + field, 'u'));
+    assert.ok(
+      page.includes(`| \`statistics.${field}\` | \`${type}\` (optional) |`),
+      `statistics.${field} has exact ${type} optional table row`,
+    );
   }
-  assert.match(page, /`statistics\.falkordb`[\s\S]*`any`/u);
-  assert.match(page, /`statistics\.qdrant`[\s\S]*`any`/u);
 
   assert.match(page, /\| `t_valid` \| `string` \(ISO\) \| No \|/u);
   assert.match(page, /\| `t_invalid` \| `string` \(ISO\) \| No \|/u);
