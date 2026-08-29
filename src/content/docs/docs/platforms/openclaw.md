@@ -103,9 +103,9 @@ npx @verygoodplugins/mcp-automem openclaw --dry-run  # Preview without writing
 | `--mode <plugin\|mcp\|skill>` | Integration mode | `plugin` |
 | `--scope <workspace\|shared>` | Install scope for mcp/skill modes | `workspace` |
 | `--workspace <path>` | OpenClaw workspace directory | Auto-detected |
-| `--endpoint <url>` | AutoMem service endpoint | `http://127.0.0.1:8001` |
-| `--api-key <key>` | AutoMem API key | None (optional) |
-| `--plugin-source <spec>` | npm spec or local path for plugin installs | `@verygoodplugins/mcp-automem` |
+| `--endpoint <url>` | AutoMem service endpoint | `$AUTOMEM_API_URL`, then `$AUTOMEM_ENDPOINT`, then `http://127.0.0.1:8001` |
+| `--api-key <key>` | AutoMem API key | `$AUTOMEM_API_KEY`, then `$AUTOMEM_API_TOKEN` (optional) |
+| `--plugin-source <spec>` | npm spec or local path for plugin installs | The bundled plugin package (`dist/openclaw-plugin-package`) when present, else this package's own name, else `@verygoodplugins/mcp-automem` |
 | `--name <name>` | Project name for memory tags | Auto-detected |
 | `--dry-run` | Preview changes without modifying files | Off |
 | `--quiet` | Suppress non-error output | Off |
@@ -125,7 +125,7 @@ npx @verygoodplugins/mcp-automem openclaw --dry-run  # Preview without writing
 
 **Skill mode (legacy):**
 1. Installs the curl-based `automem` skill to `<workspace>/skills/automem/SKILL.md`
-2. Configures `skills.entries.automem.env` with endpoint and API key
+2. Configures `skills.entries.automem` — endpoint as `env.AUTOMEM_API_URL` (plus `env.AUTOMEM_DEFAULT_TAGS` when a project tag resolves) and the API key as a top-level `apiKey` on the entry, not inside `env`
 
 ### Workspace Detection
 
@@ -156,7 +156,7 @@ In plugin mode, the installer writes to `~/.openclaw/openclaw.json` under `plugi
           "debugRecallLimit": 20,
           "contextRecallWindowDays": 90,
           "exposure": "dm-only",
-          "defaultTags": ["platform/openclaw", "project/my-project"]
+          "defaultTags": ["my-project"]
         }
       }
     }
@@ -192,9 +192,10 @@ In MCP and skill modes, the installer writes to `skills.entries.automem` instead
     "entries": {
       "automem": {
         "enabled": true,
+        "apiKey": "your-token-here",
         "env": {
           "AUTOMEM_API_URL": "http://127.0.0.1:8001",
-          "AUTOMEM_API_KEY": "your-token-here"
+          "AUTOMEM_DEFAULT_TAGS": "my-project"
         }
       }
     }
@@ -237,7 +238,7 @@ curl -s -X POST "$AUTOMEM_API_URL/memory" \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"} \
   -d '{
     "content": "Brief title. Context and details. Impact/outcome.",
-    "tags": ["openclaw"],
+    "tags": ["project-slug", "decision"],
     "importance": 0.7
   }'
 ```
@@ -295,9 +296,9 @@ Skip recall for:
 
 ### Tags
 
-Tags use namespace-style formatting:
-- `platform/openclaw` — automatically added
-- `project/<name>` — derived from project name (auto-detected or `--name` flag)
+Tags are bare slugs — no platform prefix and no `project/` namespace. The installer derives a single default tag from the project name (auto-detected or `--name` flag), lowercased with non-alphanumeric runs collapsed to `-` and truncated to 64 characters. If the resulting slug is ambiguous (`api`, `app`, `test`, `video`), no default tag is written at all and recall stays purely semantic.
+
+The shipped skills state the rule directly: tags are a hard gate, so use bare tags only and avoid platform tags like `openclaw`.
 
 ### Memory Layers
 
