@@ -48,15 +48,17 @@ Hermes is also one of the agents offered by the [guided installer](/docs/getting
 
 | Flag | Environment variable | Description | Default |
 |---|---|---|---|
-| `--mode <mode>` | `AUTOMEM_HERMES_MODE` | `mcp`, `provider`, or `both` | `mcp` |
+| `--mode <mode>` | — | `mcp`, `provider`, or `both` | `mcp` |
 | `--endpoint <url>` | `AUTOMEM_API_URL` | AutoMem HTTP API endpoint | `http://127.0.0.1:8001` |
 | `--api-key <token>` | `AUTOMEM_API_KEY` | Bearer token for authenticated endpoints | — |
 | `--rules <path>` | — | Rules file to update | `$HERMES_HOME/AGENTS.md` |
-| `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan; write nothing | Off |
-| `--yes` / `-y` | `AUTOMEM_YES=1` | Skip prompts (CI) | Off |
+| `--dry-run` | — | Print the plan; write nothing | Off |
+| `--yes` / `-y` | — | Skip prompts (CI) | Off |
 | `--quiet` | — | Suppress output | Off |
 
-Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and every changed file keeps a `.bak` copy.
+`AUTOMEM_HERMES_MODE`, `AUTOMEM_DRY_RUN`, and `AUTOMEM_YES` are read by the [guided installer](/docs/cli/guided-cloud-setup/) (`get.automem.ai`), not by the `hermes` subcommand — pass the flags above when running `hermes` directly.
+
+Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and `config.yaml`, your rules file, and the provider plugin files each keep a `.bak` copy. `$HERMES_HOME/.env` is the exception — AutoMem keys are merged into it in place, with no backup.
 
 ---
 
@@ -146,7 +148,7 @@ In **MCP / both** modes, Hermes exposes five tools under the `mcp_automem_*` pre
 
 `delete_memory` is intentionally **not** included in Hermes' default tool surface. For the full tool semantics, see [Memory Operations](/docs/reference/api/memory-operations/) and [Recall Operations](/docs/reference/api/recall-operations/).
 
-In **provider** mode there are no explicit tools — recall is ambient. Provider explicit recall is capped at 10 results to keep accidental broad recalls from flooding a turn.
+In **provider** mode recall is ambient, and the provider also exposes its own explicit tools under the `automem_*` prefix (`automem_recall_memory`, `automem_store_memory`, `automem_associate_memories`, `automem_update_memory`, `automem_check_database_health`) — the installer writes `AUTOMEM_HERMES_PROVIDER_TOOLS=true` for `--mode provider`. Provider explicit recall is capped at 10 results to keep accidental broad recalls from flooding a turn.
 
 ---
 
