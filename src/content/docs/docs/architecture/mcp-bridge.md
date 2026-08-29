@@ -10,8 +10,9 @@ Key GitHub sources:
 - [mcp-sse-server/server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Express app, transport handlers, tool definitions, session management
 - [docs/MCP_SSE.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/docs/MCP_SSE.md) — Transport protocol documentation
 - [mcp-sse-server/README.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/README.md) — Deployment quickstart
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — mcp-automem package entry point (stdio client)
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client implementation
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/0cd749887b13bfcccb42f7a294574fa61b214d88/src/index.ts) — mcp-automem package entry point (mode detection, CLI routing, stdio transport wiring)
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/0cd749887b13bfcccb42f7a294574fa61b214d88/src/mcp-surface.ts) — `createAutoMemMcpServer()`: tool definitions and the `CallToolRequestSchema` handler
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/0cd749887b13bfcccb42f7a294574fa61b214d88/src/automem-client.ts) — HTTP client implementation
 :::
 
 The MCP Bridge connects AI platforms to AutoMem's memory service. It exists in two forms that serve different integration scenarios:
@@ -82,15 +83,15 @@ The `mcp-automem` npm package operates as a local MCP server using stdio transpo
 graph LR
     START["npx @verygoodplugins/mcp-automem"]
 
-    subgraph Detection["Mode Detection<br/>src/index.ts:41-42"]
+    subgraph Detection["Mode Detection<br/>src/index.ts:30-31"]
         CHECK{"process.argv[2]<br/>exists?"}
     end
 
     subgraph Server_Mode["Server Mode"]
-        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:100-110"]
-        MCP_SERVER["new Server()<br/>src/index.ts:457-464"]
-        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:1715"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:1424"]
+        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:102-112"]
+        MCP_SERVER["new Server()<br/>src/mcp-surface.ts:1026"]
+        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:448"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/mcp-surface.ts:1038"]
     end
 
     subgraph CLI_Mode["CLI Mode"]
@@ -99,9 +100,11 @@ graph LR
         CONFIG["runConfig()<br/>src/cli/setup.ts"]
         CURSOR["runCursorSetup()<br/>src/cli/cursor.ts"]
         CLAUDE_CODE["runClaudeCodeSetup()<br/>src/cli/claude-code.ts"]
+        COPILOT["runCopilotSetup()<br/>src/cli/copilot.ts"]
         CODEX["runCodexSetup()<br/>src/cli/codex.ts"]
         OPENCLAW["runOpenClawSetup()<br/>src/cli/openclaw.ts"]
         HERMES["runHermesSetup()<br/>src/cli/hermes.ts"]
+        GROK["runGrokSetup()<br/>src/cli/grok.ts"]
         MIGRATE["runMigrateCommand()<br/>src/cli/migrate.ts"]
         UNINSTALL["runUninstallCommand()<br/>src/cli/uninstall.ts"]
         QUEUE["runQueueCommand()<br/>src/cli/queue.ts"]
@@ -120,9 +123,11 @@ graph LR
     CHECK --> CONFIG
     CHECK --> CURSOR
     CHECK --> CLAUDE_CODE
+    CHECK --> COPILOT
     CHECK --> CODEX
     CHECK --> OPENCLAW
     CHECK --> HERMES
+    CHECK --> GROK
     CHECK --> MIGRATE
     CHECK --> UNINSTALL
     CHECK --> QUEUE
@@ -287,7 +292,7 @@ sequenceDiagram
 |---|---|---|---|
 | `storeMemory()` | POST | `/memory` | All Memory fields |
 | `recallMemory()` | GET | `/recall?{params}` | URLSearchParams encoding |
-| `associateMemories()` | POST | `/associate` | Two IDs + type/strength |
+| `associateMemories()` | POST | `/associate` | Two IDs + type/strength, or an `associations` array (1-500) for batch |
 | `updateMemory()` | PATCH | `/memory/{id}` | Partial updates |
 | `deleteMemory()` | DELETE | `/memory/{id}` | ID in URL |
 | `checkHealth()` | GET | `/health` | No body |
@@ -511,7 +516,7 @@ The MCP Bridge deploys as a separate service alongside the AutoMem API service.
 - FalkorDB: Internal `:6379` (Redis protocol, no public access)
 
 :::caution[Common Issue: PORT Variable]
-Without `PORT=8001` set, Flask defaults to `:5000`, causing `ECONNREFUSED` errors from the MCP bridge. Always set `PORT=8001` for the memory-service.
+The AutoMem service already defaults to `:8001` — `run_default_server()` reads `int(os.environ.get("PORT", "8001"))` ([runtime_wiring.py:82](https://github.com/verygoodplugins/automem/blob/969755deb47934125d4face18816f3a1039766a7/automem/runtime_wiring.py#L82)). The failure mode is a *mismatch*: set `PORT` to anything other than `8001` on the memory-service while the bridge's `AUTOMEM_API_URL` still points at `:8001`, and every bridge request fails with `ECONNREFUSED`. Change both together, or leave `PORT` unset.
 :::
 
 ### Cost Optimization
