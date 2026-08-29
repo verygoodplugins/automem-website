@@ -23,7 +23,7 @@ AutoMem provides two REST endpoints for consolidation operations:
 | Endpoint | Method | Purpose | Auth |
 |----------|--------|---------|------|
 | `/consolidate` | POST | Manually trigger consolidation tasks | API token |
-| `/consolidate/status` | GET | Query scheduler state and last run times | None required |
+| `/consolidate/status` | GET | Query scheduler state and last run times | API token |
 
 The consolidation system runs automatically on scheduled intervals (configurable via environment variables), but these endpoints allow manual triggers for testing, debugging, or forcing immediate execution.
 
@@ -75,7 +75,7 @@ Manually trigger one or more consolidation tasks.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, or `full` |
+| `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, `identity`, or `full` |
 | `dry_run` | boolean | No | `true` | If `true`, simulate without making changes |
 
 ### Task Types
@@ -86,7 +86,8 @@ Manually trigger one or more consolidation tasks.
 | `creative` | 604800s (7 days) | Discover hidden associations (REM-like) | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` |
 | `cluster` | 2592000s (30 days) | Group semantically similar memories | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` |
 | `forget` | 0 (disabled) | Archive/delete low-relevance memories | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` |
-| `full` | N/A | Execute all four tasks in sequence | N/A |
+| `identity` | 604800s (7 days) when `IDENTITY_SYNTHESIS_ENABLED=true`, otherwise 0 (disabled) | Entity dedup + identity synthesis (requires an OpenAI client) | `CONSOLIDATION_IDENTITY_INTERVAL_SECONDS` |
+| `full` | N/A | Execute `decay`, `creative`, `cluster` and `forget` in sequence, plus `identity` when `IDENTITY_SYNTHESIS_ENABLED=true` | N/A |
 
 ### Execution Flow
 
@@ -120,29 +121,47 @@ sequenceDiagram
 
 #### Success (200 OK)
 
-```json
-{
-  "status": "success",
-  "consolidation": {
-    "updates": 42,
-    "duration_seconds": 1.23
-  }
-}
-```
-
-For `mode="full"`, the `consolidation` object contains combined metrics from all four tasks:
+The `consolidation` object is the return value of `MemoryConsolidator.consolidate()`. It echoes `mode` and `dry_run`, carries `started_at` / `completed_at` timestamps and a `success` flag, and nests per-task statistics under `steps` keyed by task name — the stats are not spread at the top level:
 
 ```json
 {
   "status": "success",
   "consolidation": {
-    "decay": { "updates": 42, "duration_seconds": 1.23 },
-    "creative": { "associations": 8, "duration_seconds": 2.45 },
-    "cluster": { "clusters": 3, "duration_seconds": 5.67 },
-    "forget": { "forgotten": 2, "duration_seconds": 0.89 }
+    "mode": "decay",
+    "dry_run": false,
+    "started_at": "2025-01-15T08:00:00+00:00",
+    "steps": {
+      "decay": { "processed": 42, "avg_relevance_before": 0.61, "avg_relevance_after": 0.59, "distribution": {} }
+    },
+    "completed_at": "2025-01-15T08:00:01+00:00",
+    "success": true
   }
 }
 ```
+
+For `mode="full"`, `steps` carries one entry per task that ran. Each task reports its own keys:
+
+```json
+{
+  "status": "success",
+  "consolidation": {
+    "mode": "full",
+    "dry_run": false,
+    "started_at": "2025-01-15T08:00:00+00:00",
+    "steps": {
+      "decay": { "processed": 42, "avg_relevance_before": 0.61, "avg_relevance_after": 0.59, "distribution": {} },
+      "creative": { "discovered": 8, "created": 8, "sample_associations": [] },
+      "cluster": { "clusters_found": 3, "meta_memories_created": 3, "sample_clusters": [] },
+      "forget": { "examined": 120, "archived": [], "deleted": [], "preserved": 118, "protected": [] },
+      "identity": { "skipped": true, "reason": "Identity synthesis is disabled" }
+    },
+    "completed_at": "2025-01-15T08:00:10+00:00",
+    "success": true
+  }
+}
+```
+
+On an internal failure the endpoint still returns `200` with `success: false` and an `error` string inside `consolidation`; only an exception raised outside `consolidate()` produces the `500` shape below.
 
 #### Error (500 Internal Server Error)
 
@@ -177,7 +196,7 @@ curl -X POST https://your-automem-instance/consolidate \
 
 ## GET /consolidate/status
 
-**Authentication:** None required
+**Authentication:** API token (same as every other endpoint — the global `before_request` guard exempts only `/health`, `/backup`, and `/viewer/*`)
 
 Query the current state of the consolidation scheduler and retrieve execution history.
 
@@ -234,7 +253,8 @@ The number of history records returned is controlled server-side by `CONSOLIDATI
 **Check last run times and history:**
 
 ```bash
-curl "https://your-automem-instance/consolidate/status"
+curl "https://your-automem-instance/consolidate/status" \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ---
@@ -264,7 +284,9 @@ Consolidation behavior is controlled via environment variables:
 | `CONSOLIDATION_CREATIVE_INTERVAL_SECONDS` | 604800 | Minimum time between creative runs |
 | `CONSOLIDATION_CLUSTER_INTERVAL_SECONDS` | 2592000 | Minimum time between cluster runs |
 | `CONSOLIDATION_FORGET_INTERVAL_SECONDS` | 0 | Minimum time between forget runs (0 = disabled) |
-| `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Skip decay for memories above this importance |
+| `IDENTITY_SYNTHESIS_ENABLED` | `false` | Enables the `identity` step inside `mode="full"` |
+| `CONSOLIDATION_IDENTITY_INTERVAL_SECONDS` | 604800 when `IDENTITY_SYNTHESIS_ENABLED=true`, else 0 | Minimum time between identity runs (0 = disabled) |
+| `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` | 0.3 | Restricts scheduled `decay` runs to memories whose `importance` is **at or above** this value; lower-importance memories are skipped. Applied only by the background scheduler — a manual `POST /consolidate` passes no threshold and decays everything |
 | `CONSOLIDATION_PROTECTED_TYPES` | `"Decision,Insight"` | Memory types exempt from forget task |
 | `CONSOLIDATION_GRACE_PERIOD_DAYS` | 90 | Days before a memory is eligible for forgetting |
 | `CONSOLIDATION_DELETE_THRESHOLD` | 0.0 | Relevance score below which memories are deleted |
@@ -287,7 +309,7 @@ CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD=0.4
 
 ## Authentication
 
-`POST /consolidate` requires authentication using the `AUTOMEM_API_TOKEN`. `GET /consolidate/status` is unauthenticated. Three authentication methods are supported for authenticated endpoints:
+Both `POST /consolidate` and `GET /consolidate/status` require authentication using the `AUTOMEM_API_TOKEN`. Three authentication methods are supported:
 
 1. **Bearer Token** (recommended): `Authorization: Bearer <token>`
 2. **Custom Header**: `X-API-Key: <token>`
@@ -304,6 +326,12 @@ Requests to authenticated endpoints without valid authentication receive a `401 
 | Status | Condition | Response |
 |--------|-----------|----------|
 | 401 Unauthorized | Missing or invalid token | `{"error": "Unauthorized"}` |
+
+### Service Unavailable (503)
+
+| Status | Condition | Response |
+|--------|-----------|----------|
+| 503 Service Unavailable | FalkorDB is unreachable (both endpoints abort before doing any work) | `{"error": "FalkorDB is unavailable"}` |
 
 ### Server Errors (5xx)
 
@@ -325,6 +353,6 @@ The `/consolidate` endpoint triggers immediate execution of consolidation tasks 
 :::tip[When to trigger manual consolidation]
 Manually trigger consolidation after:
 - Importing a large batch of memories (run `full` to build initial associations)
-- Changing `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` (run `decay` to reapply)
+- Changing decay tuning such as `CONSOLIDATION_BASE_DECAY_RATE` (run `decay` to reapply). Note that a manual `decay` run does not apply `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD` — that filter is only passed by the background scheduler
 - Debugging consolidation behavior (individual task runs)
 :::
