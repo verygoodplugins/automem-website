@@ -10,7 +10,7 @@ Key GitHub sources:
 - [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/service_state.py) — ServiceState dataclass and shared state
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/config.py) — Centralized configuration and constants
 - [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/runtime_wiring.py) — Application startup and worker initialization
-- [automem/api/](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, admin.py, health.py, enrichment.py, consolidation.py, viewer.py)
+- [automem/api/](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, entity.py, admin.py, backup.py, health.py, enrichment.py, consolidation.py, stream.py, viewer.py)
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/graph_store.py) — FalkorDB operations
 - [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/vector_store.py) — Qdrant operations
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/provider.py) — Embedding provider abstraction
@@ -296,8 +296,11 @@ The `automem/stores/graph_store.py` module encapsulates FalkorDB operations:
 
 Key functions:
 - `_build_graph_tag_predicate(tag_mode, tag_match)` — Generates Cypher WHERE clauses for tag filtering
+
+Node and relationship serialization lives alongside it in [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/utils/graph.py):
+
 - `_serialize_node(node)` — Converts FalkorDB node to dictionary with property extraction
-- `_summarize_relation_node(rel)` — Extracts relationship metadata (type, strength, context)
+- `_summarize_relation_node(data)` — Extracts relationship metadata (type, strength, context)
 
 ### Vector Store Module
 
@@ -379,9 +382,9 @@ Configuration is centralized in `automem/config.py` which loads environment vari
 | **Vector Store** | `QDRANT_URL`, `QDRANT_API_KEY`, `COLLECTION_NAME`, `VECTOR_SIZE` | Optional semantic search |
 | **Authentication** | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | API access control |
 | **Embedding** | `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, `VOYAGE_API_KEY`, `OPENAI_API_KEY` | Embedding generation |
-| **Enrichment** | `ENRICHMENT_*` (12 variables) | Entity extraction, linking |
-| **Consolidation** | `CONSOLIDATION_*` (15 variables) | Schedule, thresholds |
-| **Search** | `SEARCH_WEIGHT_*` (8 variables) | Hybrid scoring weights |
+| **Enrichment** | `ENRICHMENT_*` (7 variables) | Entity extraction, linking |
+| **Consolidation** | `CONSOLIDATION_*` (18 variables) | Schedule, thresholds |
+| **Search** | `SEARCH_WEIGHT_*` (11 variables) | Hybrid scoring weights |
 | **Memory** | `MEMORY_TYPES`, `RELATIONSHIP_TYPES`, `TYPE_ALIASES` | Type system |
 
 ### Configuration Loading Priority
@@ -389,9 +392,11 @@ Configuration is centralized in `automem/config.py` which loads environment vari
 The `automem/config.py` module loads configuration in this order:
 
 1. **Environment variables** — Highest priority
-2. **~/.config/automem/.env** — User-level defaults
-3. **Project .env** — Development defaults
+2. **Project .env** — Development defaults, loaded first
+3. **~/.config/automem/.env** — User-level defaults, loaded second
 4. **Hardcoded defaults** — Fallback values in config.py
+
+`config.py` calls `load_dotenv()` for the project `.env` before `load_dotenv(~/.config/automem/.env)`. Because `load_dotenv` does not overwrite names that are already set, whichever file is loaded first wins — so a value in the project `.env` takes precedence over the same key in the user-level file.
 
 ### Memory Type System
 
@@ -413,11 +418,11 @@ AutoMem implements defense-in-depth error handling to maximize availability.
 
 ### Background Worker Resilience
 
-Each worker implements retry logic with exponential backoff:
+Each worker implements retry logic with a bounded attempt count:
 
 | Worker | Max Retries | Backoff | Failure Handling |
 |---|---|---|---|
-| Enrichment | 3 | 5s, 10s, 15s | Log error, update stats, discard job |
+| Enrichment | 3 (`ENRICHMENT_MAX_ATTEMPTS`) | Flat `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default 5s) before each re-enqueue | Log error, update stats, discard job |
 | Embedding | Built into provider | Provider-specific | Queue retries, mark failed after max attempts |
 | Consolidation | Infinite (scheduled) | None | Log error, continue to next cycle |
 | Sync | Infinite (interval) | None | Log error, retry on next interval |
