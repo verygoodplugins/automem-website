@@ -7,15 +7,15 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
-- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_keywords.py) — Keyword matching logic
-- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_relations.py) — Relationship expansion
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Search weight and recall tuning configuration
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/graph.py) — Graph traversal utilities
-- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/time.py) — Temporal expression parsing
-- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/tags.py) — Tag prefix utilities
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
+- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/search/runtime_keywords.py) — Keyword matching logic
+- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/search/runtime_relations.py) — Relationship expansion
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/api/recall.py) — Recall endpoint orchestration
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/config.py) — Search weight and recall tuning configuration
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/utils/scoring.py) — Score computation
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/utils/time.py) — Temporal expression parsing
+- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/42ba8b61b7d0b24ecaeb7feb4ceef59f09fc7cd0/automem/utils/tags.py) — Tag prefix utilities
 :::
 
 This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the experiment log and methodology links.
@@ -182,13 +182,13 @@ tags=project&tags=decision&tag_mode=all
 
 Three metadata fields contribute to the final score: importance, confidence, and recency.
 
-**Recency calculation:** Recency uses a linear decay over 180 days: `max(0.0, 1.0 - (age_days / 180.0))`, based on the time since last access (or creation if never accessed). Memories older than 180 days score 0.0.
+**Recency calculation:** Recency decays from the memory's `timestamp` (creation), **not** from `last_accessed` — the scoring path never reads `last_accessed`. The default curve is linear over a 180-day window: `max(0.0, 1.0 - (age_days / SEARCH_RECENCY_WINDOW_DAYS))`, so memories older than the window score 0.0. Both the window (`SEARCH_RECENCY_WINDOW_DAYS`, default `180`) and the curve (`SEARCH_RECENCY_CURVE`, `linear` or `exp`, default `linear`) are configurable; under `exp` the window acts as a half-life instead.
 
-**Default behavior:**
+**Default behavior when a field is absent:**
 
-- Missing `importance` defaults to 0.5
-- Missing `confidence` defaults to 0.7
-- Missing `last_accessed` falls back to `timestamp`
+- Missing or non-numeric `importance` scores 0.0
+- Missing or non-numeric `confidence` scores 0.0
+- Missing or unparseable `timestamp` scores 0.0 for recency
 
 ---
 
@@ -209,10 +209,11 @@ final_score =
   + recency_score        × SEARCH_WEIGHT_RECENCY      (default: 0.10)
   + exact_match_score    × SEARCH_WEIGHT_EXACT        (default: 0.20)
   + relation_strength    × SEARCH_WEIGHT_RELATION     (default: 0.25)
-  + context_bonus        × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
+  + relevance_score      × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
+  + context_bonus                                     (added unweighted)
 ```
 
-**Note:** Component weights are relative contributions that sum to 1.95. Raw combined scores are normalized to the range [0.0, 1.0] during final ranking.
+**Note:** The weights are relative contributions summing to 1.95, so `final_score` is a raw weighted sum that is **not** normalized to [0.0, 1.0] — with every component saturated it can exceed 1.0. Scores are comparable within a single result set for ranking, but should not be read as probabilities or compared across queries.
 
 ### Component Weights
 
@@ -227,9 +228,10 @@ final_score =
 | Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Linear decay over 180 days |
 | Exact | 20% | `SEARCH_WEIGHT_EXACT` | Exact phrase match boost |
 | Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
-| Context | 0% | `SEARCH_WEIGHT_RELEVANCE` | Context profile scoring bonus |
+| Relevance | 0% | `SEARCH_WEIGHT_RELEVANCE` | Consolidation decay relevance (`relevance_score`); disabled by default |
+| Context | — | not weighted | Context profile bonus, added to the sum unweighted |
 
-> **Note:** Weights are relative contributions (sum = 1.95) normalized to [0.0, 1.0] during score computation.
+> **Note:** Weights are relative contributions (sum = 1.95). The weighted sum is **not** normalized to [0.0, 1.0] — it is used directly for ranking.
 
 ### Score Combination Flow
 
@@ -246,7 +248,7 @@ flowchart TD
         TagSrc["Query tags vs<br/>memory tags"]
         ImpSrc["memory.importance<br/>field"]
         ConfSrc["memory.confidence<br/>field"]
-        RecSrc["memory.timestamp /<br/>last_accessed"]
+        RecSrc["memory.timestamp"]
         ExSrc["Query phrase vs<br/>memory content"]
     end
 
@@ -264,8 +266,7 @@ flowchart TD
     end
 
     subgraph combination ["Score Combination"]
-        Sum["SUM all weighted<br/>components"]
-        Normalize["Normalize to 0.0 - 1.0"]
+        Sum["SUM all weighted components<br/>+ unweighted context_bonus"]
     end
 
     subgraph output ["Final Ranking"]
@@ -298,8 +299,7 @@ flowchart TD
     RW --> Sum
     CtxW --> Sum
 
-    Sum --> Normalize
-    Normalize --> Sort
+    Sum --> Sort
     Sort --> Dedup
     Dedup --> Limit
     Limit --> Results
@@ -386,9 +386,9 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution (linear over 180 days) |
 | `SEARCH_WEIGHT_EXACT` | 0.20 | Exact phrase match boost |
 | `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
-| `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Context profile scoring bonus |
+| `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Consolidation decay relevance contribution (off by default) |
 
-**Note on weight configuration:** Default weights are relative contributions that sum to 1.95. Final scores are normalized to [0.0, 1.0] during ranking. To customize, maintain relative proportions.
+**Note on weight configuration:** Default weights are relative contributions that sum to 1.95. Final scores are the raw weighted sum and are **not** normalized to [0.0, 1.0]. To customize, maintain relative proportions.
 
 ### Expansion and Limit Configuration
 
