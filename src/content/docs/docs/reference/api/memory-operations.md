@@ -7,8 +7,10 @@ sidebar:
 
 :::note[Source files]
 - [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/memory.py) — Flask API endpoints
+- [app.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/app.py) — shared HTTP error envelope
 - [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP transport layer
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — MCP request validation and HTTP transport
+- [src/memory-policy/shared.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/memory-policy/shared.ts) — platform and date-tag policy
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -376,7 +378,7 @@ curl -X POST https://your-automem-instance/memory/batch \
 }
 ```
 
-Each memory in the batch is written to FalkorDB synchronously. The handler synchronously generates embeddings and upserts successful vectors to Qdrant; only embedding failures are queued for retry. Batch `qdrant` values are `stored (N)`, `queued`, or `queued (fallback)` (and `unconfigured` when Qdrant is absent).
+Each memory in the batch is written to FalkorDB synchronously. The handler synchronously generates embeddings and upserts successful vectors to Qdrant; only embedding failures are queued for retry. Batch `qdrant` values are `stored (N)`, `stored (N), queued (M)`, `queued`, `queued (fallback)`, or `unconfigured`.
 
 Validation responses use `status`, `code`, and `message`.
 

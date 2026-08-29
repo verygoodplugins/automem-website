@@ -26,3 +26,9 @@
 - `npm test`: 101 passed, 0 failed, 1 skipped (missing local CMS database).
 - `npm run build`: passed. Existing Vite deprecation/chunk-size warnings remain non-blocking.
 - `git diff --check`: passed.
+
+## Review round 1
+
+- Completed the batch Qdrant status set with the mixed `stored (N), queued (M)` result.
+- Added pinned `app.py` and `src/memory-policy/shared.ts` source links, and verified every cited source link in the static test.
+- Added a positive assertion that a missing single-delete ID preserves the HTTP 404 rather than being swallowed by MCP.

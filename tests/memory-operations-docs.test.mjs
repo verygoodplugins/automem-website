@@ -14,11 +14,14 @@ async function readPage() {
   return readFile(pagePath, 'utf8');
 }
 
-test('memory operations links to the pinned API and MCP surface sources', async () => {
+test('memory operations links to every pinned source that defines its contracts', async () => {
   const page = await readPage();
 
   assert.match(page, new RegExp(`/automem/blob/${automemSha}/automem/api/memory\\.py`));
+  assert.match(page, new RegExp(`/automem/blob/${automemSha}/app\\.py`));
   assert.match(page, new RegExp(`/mcp-automem/blob/${mcpSha}/src/mcp-surface\\.ts`));
+  assert.match(page, new RegExp(`/mcp-automem/blob/${mcpSha}/src/automem-client\\.ts`));
+  assert.match(page, new RegExp(`/mcp-automem/blob/${mcpSha}/src/memory-policy/shared\\.ts`));
   assert.doesNotMatch(page, /mcp-automem\/blob\/[^\n)]*\/src\/index\.ts/);
 });
 
@@ -41,7 +44,10 @@ test('batch ingestion reflects its object body, validation contract, and inline 
   assert.match(batch, /`status`, `code`, and `message`/);
   assert.match(batch, /synchronously generates embeddings and upserts successful vectors/i);
   assert.match(batch, /only embedding failures are queued for retry/i);
-  assert.match(batch, /`stored \(N\)`, `queued`, or `queued \(fallback\)`/);
+  assert.match(
+    batch,
+    /`stored \(N\)`, `stored \(N\), queued \(M\)`, `queued`, `queued \(fallback\)`, or `unconfigured`/,
+  );
   assert.doesNotMatch(batch, /413 Payload Too Large/);
   assert.doesNotMatch(batch, /background embedding/i);
 });
@@ -59,6 +65,7 @@ test('updates, tag enumeration, and MCP deletion retain their actual contracts',
   assert.doesNotMatch(byTag, /score.*importance/i);
   assert.match(deletion, /XOR with `tags`/);
   assert.match(deletion, /exact, case-insensitive/i);
+  assert.match(deletion, /preserves the HTTP API's 404 response when the memory does not exist/i);
   assert.doesNotMatch(deletion, /handles this gracefully/i);
 });
 
