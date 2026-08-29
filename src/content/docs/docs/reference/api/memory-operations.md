@@ -6,10 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py) — Flask API endpoints
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP transport layer
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts) — TypeScript type definitions
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/memory.py) — Flask API endpoints
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP transport layer
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
@@ -56,9 +55,10 @@ Creates a new memory node in FalkorDB and optionally stores its embedding in Qdr
 | `metadata` | object | Arbitrary JSON metadata |
 | `timestamp` | string | ISO 8601 timestamp (default: current UTC time) |
 | `embedding` | array | Vector matching `VECTOR_SIZE` config (auto-generated if omitted) |
-| `id` | string | Custom UUID (auto-generated if omitted) |
 | `t_valid`, `t_invalid` | string | Temporal validity bounds |
 | `updated_at`, `last_accessed` | string | Tracking timestamps |
+
+The API ignores any caller-supplied `id` and generates a UUID server-side for every new memory.
 
 **Memory Data Model:**
 
@@ -176,7 +176,7 @@ sequenceDiagram
 3. **Tag Processing**: Compute hierarchical tag prefixes for efficient filtering
 4. **Graph Write**: Execute `MERGE` operation in FalkorDB (immediate, blocking)
 5. **Enrichment Queue**: Add to background queue for entity extraction and relationship building
-6. **Embedding Handling**: Store provided embedding or queue for generation
+6. **Embedding Handling**: Store a provided embedding or queue generation when Qdrant is configured
 7. **Response**: Return immediately with memory ID and enrichment status
 
 ### Tag Processing
@@ -191,13 +191,15 @@ This enables prefix matching queries like `tags=slack` to match `slack:channel:g
 
 **Tagging Conventions (from platform templates):**
 
+Tags are bare strings. The shipped memory policy forbids platform and date-stamped tags; use a project/domain tag plus a category instead, and use `t_valid` / `t_invalid` for facts with a shelf life.
+
 | Memory Type | Tag Pattern | Example |
 |-------------|-------------|--------|
-| Project Decision | `[project, platform, date, decision]` | `["ecommerce", "cursor", "2025-01", "decision"]` |
-| Bug Fix | `[project, platform, date, bug-fix, component]` | `["api-gateway", "codex", "2025-01", "bug-fix", "auth"]` |
-| Code Pattern | `[project, platform, date, pattern, component]` | `["frontend", "cursor", "2025-01", "pattern", "react"]` |
-| User Preference | `[preference, platform, date, domain]` | `["preference", "cursor", "2025-01", "code-style"]` |
-| Personal Note | `[personal, date, category]` | `["personal", "2025-01", "health"]` |
+| Project Decision | `[project, decision]` | `["ecommerce", "decision"]` |
+| Bug Fix | `[project, bug-fix, component]` | `["api-gateway", "bug-fix", "auth"]` |
+| Code Pattern | `[project, pattern, component]` | `["frontend", "pattern", "react"]` |
+| User Preference | `[preference, domain]` | `["preference", "code-style"]` |
+| Personal Note | `[personal, category]` | `["personal", "health"]` |
 
 :::tip[Project vs personal namespacing]
 Use `personal` instead of a project tag for personal memories to ensure preferences and lifestyle context aren't drowned out by high-importance technical memories when recalling across projects.
@@ -237,7 +239,7 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
   "stored_at": "2025-01-15T10:30:00Z",
   "type": "Decision",
   "confidence": 0.9,
-  "qdrant": "ok",
+  "qdrant": "queued",
   "embedding_status": "queued",
   "enrichment": "queued",
   "metadata": {},
@@ -247,6 +249,8 @@ When content exceeds the soft limit, the backend AutoMem service may automatical
   "query_time_ms": 12.5
 }
 ```
+
+For a single store, `qdrant` is `stored`, `failed`, `queued`, `unconfigured`, or `null`: it is `stored` when a supplied embedding is upserted, `failed` when that upsert fails, `queued` when generation is queued, `unconfigured` when no Qdrant client is configured, and `null` when an embedding is supplied while Qdrant is unavailable.
 
 ### MCP Tool: `store_memory`
 
@@ -275,7 +279,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 ```json
 {
   "content": "Login failing on special characters. Root: missing input sanitization. Added validator. Files: auth/login.ts",
-  "tags": ["auth", "bug-fix", "2025-01"],
+  "tags": ["auth", "bug-fix"],
   "importance": 0.8,
   "metadata": {
     "files_modified": ["auth/login.ts", "auth/validator.ts"],
@@ -320,28 +324,30 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 
 ## POST /memory/batch — Batch Ingest
 
-Ingests up to 500 memories in a single request. Each memory in the batch follows the same field schema as the single `POST /memory` endpoint.
+Ingests up to 500 memories in a single request. Batch items accept `content`, `tags`, `importance`, `metadata`, `timestamp`, `type`, and `confidence`; batch mode does not accept `id`, `embedding`, `t_valid`, or `t_invalid`.
 
 ### Request Format
 
 ```json
-[
-  {
-    "content": "First memory content",
-    "type": "Decision",
-    "tags": ["project-alpha"],
-    "importance": 0.9
-  },
-  {
-    "content": "Second memory content",
-    "type": "Context",
-    "tags": ["project-alpha"],
-    "importance": 0.5
-  }
-]
+{
+  "memories": [
+    {
+      "content": "First memory content",
+      "type": "Decision",
+      "tags": ["project-alpha"],
+      "importance": 0.9
+    },
+    {
+      "content": "Second memory content",
+      "type": "Context",
+      "tags": ["project-alpha"],
+      "importance": 0.5
+    }
+  ]
+}
 ```
 
-Send the request body as a JSON array (not an object). The `Content-Type` must be `application/json`.
+Send the request body as a JSON object with a non-empty `memories` array. A bare array is rejected with `400 Bad Request`. The `Content-Type` must be `application/json`.
 
 ### Example Request
 
@@ -349,10 +355,12 @@ Send the request body as a JSON array (not an object). The `Content-Type` must b
 curl -X POST https://your-automem-instance/memory/batch \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '[
-    {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
-    {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
-  ]'
+  -d '{
+    "memories": [
+      {"content": "Prefer PostgreSQL for transactional workloads", "type": "Preference", "importance": 0.9},
+      {"content": "Redis used for session caching layer", "type": "Context", "importance": 0.6}
+    ]
+  }'
 ```
 
 ### Response Format
@@ -362,29 +370,31 @@ curl -X POST https://your-automem-instance/memory/batch \
   "status": "success",
   "stored": 2,
   "memory_ids": ["abc-123", "def-456"],
-  "qdrant": "ok",
+  "qdrant": "stored (2)",
   "enrichment": "queued",
   "query_time_ms": 45.2
 }
 ```
 
-Each memory in the batch is written to FalkorDB synchronously and queued for background embedding and enrichment. Embeddings are generated in batches by the background worker (see [Performance Tuning](/docs/operations/performance/)).
+Each memory in the batch is written to FalkorDB synchronously. The handler synchronously generates embeddings and upserts successful vectors to Qdrant; only embedding failures are queued for retry. Batch `qdrant` values are `stored (N)`, `queued`, or `queued (fallback)` (and `unconfigured` when Qdrant is absent).
+
+Validation responses use `status`, `code`, and `message`.
 
 ### Status Codes
 
 | Status | Condition |
 |--------|-----------|
 | 201 Created | All memories stored successfully |
-| 400 Bad Request | Validation error (invalid field, missing content, etc.) |
+| 400 Bad Request | Malformed, empty, and over-500 requests return `400 Bad Request`, as do invalid items and missing content |
 | 401 Unauthorized | Missing or invalid API token |
-| 413 Payload Too Large | Batch exceeds 500 memories |
 
 **Validation Error Example:**
 
 ```json
 {
-  "error": "Invalid memory at index 2: content is required",
-  "index": 2
+  "status": "error",
+  "code": 400,
+  "message": "Memory at index 2 missing 'content'"
 }
 ```
 
@@ -447,13 +457,9 @@ Updates an existing memory node in FalkorDB and synchronizes changes to Qdrant. 
 | `metadata` | Replaces existing metadata entirely (not merged) |
 | `t_valid`, `t_invalid` | Update temporal bounds |
 | `timestamp` | Override original creation time |
+| `updated_at`, `last_accessed` | Explicit tracking timestamps |
 
-**Non-updatable Fields:**
-
-| Field | Reason |
-|-------|--------|
-| `id` | Immutable identifier |
-| `updated_at` | Auto-set to current UTC time |
+`id` remains immutable.
 
 ### Update Data Flow
 
@@ -462,7 +468,6 @@ sequenceDiagram
     participant Client
     participant PATCH_endpoint as "PATCH /memory/:id"
     participant Graph as "state.memory_graph"
-    participant EmbedQ as "state.embedding_queue"
     participant Qdrant as "state.qdrant"
 
     Client->>PATCH_endpoint: PATCH /memory/:id<br/>{content?, tags?, importance?}
@@ -477,16 +482,16 @@ sequenceDiagram
     PATCH_endpoint->>PATCH_endpoint: Validate update fields
     PATCH_endpoint->>PATCH_endpoint: _compute_tag_prefixes(tags)
 
-    PATCH_endpoint->>Graph: MATCH (m:Memory {id: $id})<br/>SET m.content = $content,<br/>m.tags = $tags,<br/>m.tag_prefixes = $prefixes,<br/>m.updated_at = $now
+    PATCH_endpoint->>Graph: MATCH (m:Memory {id: $id})<br/>SET m.content = $content,<br/>m.tags = $tags,<br/>m.tag_prefixes = $prefixes
     Graph-->>PATCH_endpoint: Updated
 
     alt Content Changed
-        PATCH_endpoint->>EmbedQ: Queue re-embedding
+        PATCH_endpoint->>Qdrant: generate fresh embedding and upsert it
     end
 
     alt Qdrant Available
-        PATCH_endpoint->>Qdrant: set_payload(id, updated_fields)
-        Qdrant-->>PATCH_endpoint: Payload updated
+        PATCH_endpoint->>Qdrant: retrieve existing vector or regenerate, then upsert
+        Qdrant-->>PATCH_endpoint: Vector and payload synchronized
     end
 
     PATCH_endpoint->>Graph: MATCH (m:Memory {id: $id})<br/>RETURN m
@@ -499,9 +504,9 @@ sequenceDiagram
 1. **Validation**: Verify memory exists (404 if not found)
 2. **Field Processing**: Normalize tags, compute prefixes, validate types
 3. **Graph Update**: Execute Cypher `SET` operation with changed fields
-4. **Re-embedding**: Queue if `content` changed
-5. **Qdrant Sync**: Update payload fields (non-blocking failure)
-6. **Refresh**: Fetch updated node and return to client
+4. **Re-embedding**: A content change synchronously generates a fresh embedding and upserts it to Qdrant
+5. **Qdrant Sync**: Without a content change, retrieve the existing vector (or regenerate it) and upsert the refreshed payload
+6. **Response**: Return the successful update after the synchronous graph write; Qdrant upsert failures are logged
 
 ### Metadata Replace Behavior
 
@@ -611,13 +616,14 @@ curl -X DELETE https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef12
 
 ### MCP Tool: `delete_memory`
 
-The `delete_memory` MCP tool corresponds to `DELETE /memory/:id`.
+The `delete_memory` MCP tool supports either `DELETE /memory/:id` or bulk deletion through `DELETE /memory/by-tag`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `memory_id` | string | Yes | ID of memory to delete |
+| `memory_id` | string | XOR with `tags` | ID of memory to delete |
+| `tags` | array[string] | XOR with `memory_id` | Delete every memory matching any tag; matching is exact, case-insensitive, and any-of |
 
-The tool is annotated `destructiveHint: true`. Note that the HTTP API returns 404 if the memory does not exist, but the MCP tool handles this gracefully.
+The tool is annotated `destructiveHint: true`. A single delete preserves the HTTP API's 404 response when the memory does not exist.
 
 ---
 
@@ -658,12 +664,9 @@ Results are ordered by `importance DESC, timestamp DESC, id ASC` — determinist
 **Query Strategy:**
 1. **FalkorDB Direct**: Queries FalkorDB graph directly using tag filters — does not use Qdrant vector search
 2. **Ordering**: Sort by `importance DESC, timestamp DESC, id ASC` (deterministic for pagination)
-3. **Relations**: Fetch connected memories for context
-4. **Format**: Return in same format as `/recall` for consistency
+3. **Format**: Return paginated stored-memory records; it does not hydrate related memories or include recall scoring
 
 The query leverages tag arrays with direct index usage on the `tags` property in FalkorDB — no vector search or keyword extraction required, making it more efficient than `/recall` for tag-only filtering.
-
-The `score` field in the response reflects the memory's `importance` when filtering by tags only.
 
 ---
 
@@ -707,16 +710,17 @@ The handler pages through matching memories in batches of 200, deletes each batc
 
 ## Error Responses
 
-All endpoints follow consistent error formatting:
+All endpoints use the shared error envelope:
 
 ```json
 {
-  "error": "Description of what went wrong",
-  "field": "field_name"
+  "status": "error",
+  "code": 400,
+  "message": "Description of what went wrong"
 }
 ```
 
-Validation errors include specific field names and expected formats to aid debugging.
+Validation failures use the same `status` / `code` / `message` shape; the message identifies the offending field or batch item where applicable.
 
 | Status Code | Meaning |
 |-------------|--------|
@@ -731,9 +735,9 @@ Validation errors include specific field names and expected formats to aid debug
 
 ### Embedding Generation
 
-- **Batching**: Embeddings queue for batch generation (20 items or 2s timeout)
-- **Async Processing**: POST returns immediately, embedding happens in background
-- **Fallback**: System generates placeholder vectors if OpenAI unavailable
+- **Single stores**: A supplied embedding is upserted immediately; otherwise generation is queued when Qdrant is configured.
+- **Batch stores**: Embeddings and Qdrant upserts run synchronously; failed embeddings are queued for retry.
+- **Fallback**: A failed batch Qdrant upsert queues all batch embeddings as a fallback.
 
 ### Relationship Limits
 
