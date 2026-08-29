@@ -39,13 +39,13 @@ graph TB
         Make["make dev<br/>docker compose up"]
 
         subgraph docker["Docker Network<br/>automem_default"]
-            API["memory-service<br/>app.py<br/>localhost:8001"]
+            API["flask-api<br/>app.py<br/>localhost:8001"]
             Falkor["falkordb<br/>localhost:6379"]
             QdrantLocal["qdrant<br/>localhost:6333"]
         end
 
         subgraph volumes["Docker Volumes"]
-            FalkorVol["falkordb_data<br/>/var/lib/falkordb/data"]
+            FalkorVol["falkordb_data<br/>/data"]
             QdrantVol["qdrant_data<br/>/qdrant/storage"]
         end
     end
@@ -151,7 +151,9 @@ Optional variables with defaults:
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint | Docker internal URL |
 | `QDRANT_API_KEY` | `${QDRANT_API_KEY:-}` | Qdrant authentication | Not required for local Qdrant |
 | `OPENAI_API_KEY` | `${OPENAI_API_KEY:-}` | OpenAI API access | Falls back to placeholder embeddings |
-| `EMBEDDING_PROVIDER` | `${EMBEDDING_PROVIDER:-auto}` | Provider selection | `auto\|openai\|voyage\|local\|placeholder` |
+| `EMBEDDING_PROVIDER` | `${EMBEDDING_PROVIDER:-auto}` | Provider selection | `auto\|voyage\|openai\|ollama\|local\|placeholder` |
+| `VOYAGE_API_KEY` | `${VOYAGE_API_KEY:-}` | Voyage AI API access | First provider tried under `auto` |
+| `VECTOR_SIZE` | `${VECTOR_SIZE:-1024}` | Embedding dimensions | `1024` matches the default `voyage-4` provider |
 | `AUTOMEM_MODELS_DIR` | `/root/.config/automem/models` | FastEmbed model cache | Must match volume mount path |
 
 Environment variable resolution order inside Docker Compose:
@@ -176,6 +178,9 @@ Docker Compose manages startup order using `depends_on` conditions:
 | 6379 | 6379 | falkordb | TCP (Redis) | FalkorDB graph queries |
 | 3000 | 3000 | falkordb | HTTP | FalkorDB built-in web UI |
 | 6333 | 6333 | qdrant | HTTP | Qdrant vector search API |
+| 6334 | 6334 | qdrant | gRPC | Qdrant gRPC API |
+
+Every host port is overridable without editing the compose file: `AUTOMEM_API_HOST_PORT`, `FALKORDB_HOST_PORT`, `FALKORDB_BROWSER_HOST_PORT`, `QDRANT_HOST_PORT`, and `QDRANT_GRPC_HOST_PORT` default to the values above.
 
 Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`, `QDRANT_URL=http://qdrant:6333`). Docker Compose automatically creates DNS entries for each service name on the `automem_default` bridge network.
 
