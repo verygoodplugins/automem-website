@@ -131,7 +131,7 @@ Every memory stored through Alexa receives contextual tags automatically:
 | `user:<id>` | `user:amzn1.ask.account.ABC123` | User-specific filtering |
 | `device:<id>` | `device:amzn1.ask.device.XYZ789` | Device-specific filtering |
 
-**Why this matters:** The `user:<id>` tag enables different family members' memories to remain separate even when using the same device. The primary recall scope uses both user and device tags, falling back to just the user tag if no device-specific results are found.
+**Why this matters:** The `user:<id>` tag enables different family members' memories to remain separate even when using the same device. The primary recall scope uses the `alexa`, user, and device tags together; if that returns nothing, the fallback search drops **all** tags and searches the whole store rather than narrowing to just the user tag.
 
 ---
 
@@ -210,7 +210,7 @@ User: "Ask AutoMem what are my preferences"
 Alexa: "Item 1: I prefer dark mode in all applications. Item 2: I use Python 3.11 for all projects."
 ```
 
-**Cross-device recall (using user-scoped fallback):**
+**Cross-device recall (using the untagged fallback):**
 ```
 # Stored on Kitchen Echo:
 User: "Tell AutoMem to remember buy milk"
@@ -220,8 +220,8 @@ Alexa: "Saved to memory."
 # Recalled on Bedroom Echo:
 User: "Ask AutoMem what should I buy"
 Alexa: "Item 1: Buy milk."
-# Primary search (device:bedroom-echo) finds nothing
-# Fallback search (user:abc123) finds the memory
+# Primary search (alexa + user:abc123 + device:bedroom-echo) finds nothing
+# Fallback search (no tags at all) finds the memory
 ```
 
 ---
