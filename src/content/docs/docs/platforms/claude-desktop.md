@@ -58,8 +58,8 @@ Download the AutoMem Claude Desktop Extension and double-click it to install —
 **[Download AutoMem for Claude Desktop (.mcpb)](https://github.com/verygoodplugins/mcp-automem/releases/latest/download/mcp-automem.mcpb)**
 
 After opening the file, Claude Desktop prompts you to:
-1. Enter your **AutoMem Endpoint** (`http://127.0.0.1:8001` for local, or your Railway URL for cloud)
-2. Optionally enter your **API Key** (required for Railway/cloud deployments, skip for local)
+1. Enter your **AutoMem API URL** (pre-filled with `http://127.0.0.1:8001`; replace with your Railway URL for cloud)
+2. Optionally enter your **API Key** (required for Railway deployments, skip for local)
 3. Click **Enable**
 
 This installs the same `@verygoodplugins/mcp-automem` server as Method 2 below. Use Method 2 if you need to run multiple server instances or prefer manual JSON configuration.
@@ -193,7 +193,7 @@ Navigate to: **Settings → Profile → Personal Preferences**.
 
 Paste the starter template from the mcp-automem repo:
 
-- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/main/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
+- [`templates/CLAUDE_DESKTOP_INSTRUCTIONS.md`](https://github.com/verygoodplugins/mcp-automem/blob/64161c53b076b5cf44b1f721f757f33e860f63bb/templates/CLAUDE_DESKTOP_INSTRUCTIONS.md)
 
 The template assumes your MCP server key is `memory`, so examples use tool names such as `mcp__memory__recall_memory`. If your `claude_desktop_config.json` uses a different server key, update the tool prefix after pasting.
 
@@ -250,7 +250,7 @@ User: Check the health of the AutoMem service
 Expected response includes:
 - FalkorDB connection status
 - Qdrant connection status
-- Service version
+- Overall service status (`healthy` or `degraded`) and memory/vector counts
 
 ---
 
@@ -294,6 +294,6 @@ Claude Desktop's configuration is similar to other MCP-enabled platforms but use
 - **Cursor IDE** — uses `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc`
 - **Claude Code** — uses `~/.claude.json` + `~/.claude/settings.json`
 - **OpenAI Codex** — uses `~/.codex/config.toml` (TOML format)
-- **Google AntiGravity** — uses `mcp_config.json` via built-in MCP Store
+- **Google Antigravity** — uses `~/.gemini/antigravity/mcp_config.json`, reachable via the built-in MCP Store
 
 All platforms share the same AutoMem MCP server package but with platform-specific configuration and optional rule files.
