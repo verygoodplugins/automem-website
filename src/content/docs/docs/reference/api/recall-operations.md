@@ -315,7 +315,7 @@ The dedicated `SEARCH_WEIGHT_METADATA` component only applies to candidates admi
 Computed by `_compute_metadata_score()` and `_parse_metadata_field()`, each with its own independent weight in the final formula above:
 - **Importance**: Direct multiplication by weight (0.0–1.0 range)
 - **Confidence**: Classification confidence from memory type detection
-- **Recency**: `max(0, 1 - (age_days / 180))` — 6-month linear decay based on time since last access
+- **Recency**: `max(0, 1 - (age_days / SEARCH_RECENCY_WINDOW_DAYS))` — linear decay over the recency window (default 180 days), measured from the memory's `timestamp` (creation time), not its last access. Set `SEARCH_RECENCY_CURVE=exp` to switch to exponential decay, where the window acts as the half-life
 - **Tag**: `matched_tokens / total_query_tokens` — overlap ratio between query tags and memory tags
 
 ---
@@ -621,7 +621,7 @@ The first call resolves supersession chains to their head and hides invalidated 
 
 ### Score-Based Sorting (Default)
 
-When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 9 components optimized for relevance.
+When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 10 components optimized for relevance.
 
 ### Time-Based Sorting
 
