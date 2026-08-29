@@ -38,9 +38,11 @@ This installs the plugin to `~/.claude/plugins/automem@marketplace-name/` with t
 │   ├── memory-recall.md
 │   └── memory-store.md
 ├── hooks/
-│   └── hooks.json           # SessionStart hook config
+│   └── hooks.json           # SessionStart + PostToolUse hook config
 ├── scripts/
-│   └── session-start.sh     # Session initialization script
+│   ├── session-start.sh     # Session initialization script
+│   ├── stop-nudge.sh        # Bundled but not registered by the plugin
+│   └── track-store.sh       # PostToolUse store tracker
 └── skills/
     └── memory-management/
         ├── SKILL.md
@@ -171,13 +173,13 @@ The `~/.claude/CLAUDE.md` file instructs Claude when and how to use memory tools
 
 **Phase 1 — Tag-only preference recall:**
 ```
-recall_memory(tags: ["preference"], limit: 10)
+recall_memory(tags: ["preference"], limit: 20, sort: "updated_desc")
 ```
 Preferences are stable knowledge that doesn't expire. Tag-only queries return clean results without semantic noise.
 
 **Phase 2 — Semantic + time-limited recent work:**
 ```
-recall_memory(queries: ["current task"], time_query: "last 30 days", limit: 10)
+recall_memory(query: "current task", time_query: "last 90 days", limit: 30)
 ```
 Recent work is dynamic and time-sensitive. Semantic search finds relevant context even with different terminology.
 
@@ -192,7 +194,7 @@ Do not mix tag-based preference recall with semantic task recall — combining t
 | `Preference` | 0.9 | User preferences, explicit choices | "User prefers early returns over nested conditionals" |
 | `Decision` | 0.9 | Architectural decisions, library choices | "Chose Redis for caching due to performance needs" |
 | `Insight` | 0.8 | Bug root causes, key learnings | "Auth failing on null input. Root: missing validation" |
-| `Pattern` | 0.7 | Reusable approaches, best practices | "Using early returns for validation in all API routes" |
+| `Pattern` | 0.8 | Reusable approaches, best practices | "Using early returns for validation in all API routes" |
 | `Style` | 0.7 | Code style, formatting preferences | "Using 2-space indents with Prettier, enforced via pre-commit" |
 | `Context` | 0.5–0.7 | General information, feature notes | "Added JWT auth with refresh token rotation" |
 | `Habit` | 0.6 | Regular workflows, behaviors | "Run tests before committing" |
@@ -235,7 +237,7 @@ If more detail is needed: split into multiple atomic memories, use `metadata` fo
 | Memory Type | Trigger | Association |
 |-------------|---------|-------------|
 | User correction | Search for what's being corrected | `INVALIDATED_BY` |
-| Bug fix | Link to original bug discovery | `DERIVED_FROM` |
+| Bug fix | Link to original bug discovery | `LEADS_TO` |
 | Decision | Link to alternatives considered | `PREFERS_OVER` |
 | Evolution | When knowledge supersedes old | `EVOLVED_INTO` |
 
@@ -278,13 +280,15 @@ Store a decision, insight, or pattern:
 
 ## Tagging Strategy
 
-1. Always include project name
-2. Add platform tag (`claude-code`)
-3. Include current month (`YYYY-MM` format)
-4. Add component/domain tag
-5. Add memory type tag
+Use bare tags only. Do **not** add a platform tag (`claude-code`) or a date-stamped tag (`YYYY-MM`) — the memory policy explicitly bans both, and `entity:*:*` tags are server-injected rather than authored.
 
-**Example:** `["my-app", "claude-code", "auth", "decision", "2025-01"]`
+1. One category tag when applicable (`preference`, `decision`, `pattern`, `bugfix`, `solution`, ...)
+2. The bare project slug when the memory is project-specific (omit it when the slug collides with a common word)
+3. A language tag when relevant (`typescript`, `python`, ...)
+
+**Example:** `["decision", "my-app", "typescript"]`
+
+For facts with a shelf life, set `t_valid` / `t_invalid` instead of encoding a date in a tag.
 
 ---
 
