@@ -166,8 +166,8 @@ The graph-vector hybrid is AutoMem's foundational design decision, directly impl
 
 | Database | Role | Failure Mode | Code Reference |
 |---|---|---|---|
-| FalkorDB | Source of truth, relationships, consolidation | Service unavailable | [`app.py:1422-1449`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1422-L1449) |
-| Qdrant | Semantic search acceleration | Degrades to keyword search | [`app.py:1452-1471`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1452-L1471) |
+| FalkorDB | Source of truth, relationships, consolidation | Service unavailable | [`automem/stores/runtime_clients.py:7-48`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/stores/runtime_clients.py#L7-L48) `init_falkordb()` |
+| Qdrant | Semantic search acceleration | Degrades to keyword search | [`automem/stores/runtime_clients.py:49-107`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/stores/runtime_clients.py#L49-L107) `init_qdrant()` |
 
 FalkorDB stores the canonical memory record and all relationships. Qdrant is a performance optimization that can be disabled — AutoMem degrades gracefully to FalkorDB-only keyword search when Qdrant is unavailable.
 
@@ -199,20 +199,20 @@ ReadAgent and A-MEM both emphasize that memories must be reorganized over time. 
 
 HippoRAG 2 requires relational structure. AutoMem's enrichment pipeline automatically constructs this graph after each memory is stored.
 
-**Auto-tagging strategy** — entity extraction creates a searchable taxonomy:
+**Auto-tagging strategy** — entity extraction creates a searchable taxonomy. Enrichment builds every tag as `entity:{category}:{slug}` ([`automem/enrichment/runtime_orchestration.py:84-91`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/enrichment/runtime_orchestration.py#L84-L91)), where the category is one of the plural buckets returned by `extract_entities()`:
 
 | Entity Type | Tag Format | Example | Code Reference |
 |---|---|---|---|
-| Tool | `entity:tool:postgresql` | PostgreSQL → `entity:tool:postgresql` | [`app.py:1254-1262`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1254-L1262) |
-| Project | `entity:project:automem` | AutoMem → `entity:project:automem` | [`app.py:1268-1284`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1268-L1284) |
-| Person | `entity:person:jack-ross` | Jack Ross → `entity:person:jack-ross` | [`app.py:1251-1252`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1251-L1252) |
-| Concept | `entity:concept:reliability` | Reliability → `entity:concept:reliability` | [`app.py:1244-1246`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1244-L1246) |
+| Tool | `entity:tools:postgresql` | PostgreSQL → `entity:tools:postgresql` | [`automem/utils/entity_extraction.py:151-160`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py#L151-L160) `extract_entities()` |
+| Project | `entity:projects:automem` | AutoMem → `entity:projects:automem` | [`automem/utils/entity_extraction.py:151-160`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py#L151-L160) `extract_entities()` |
+| Person | `entity:people:jack-ross` | Jack Ross → `entity:people:jack-ross` | [`automem/utils/entity_extraction.py:151-160`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py#L151-L160) `extract_entities()` |
+| Concept | `entity:concepts:reliability` | Reliability → `entity:concepts:reliability` | [`automem/utils/entity_extraction.py:151-160`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py#L151-L160) `extract_entities()` |
 
-This creates a searchable taxonomy that enables queries like `tags=entity:tool&tag_match=prefix` to find all tool-related memories.
+This creates a searchable taxonomy that enables queries like `tags=entity:tools&tag_match=prefix` to find all tool-related memories.
 
 ### Hybrid Search: Parallel Retrieval Pathways
 
-HippoRAG 2's key innovation is parallel search across vector and graph spaces. AutoMem implements this in the `/recall` endpoint ([app.py:476-520](https://github.com/verygoodplugins/automem/blob/main/app.py#L476-L520)).
+HippoRAG 2's key innovation is parallel search across vector and graph spaces. AutoMem implements this in the `/recall` endpoint ([automem/api/recall.py:1703](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/recall.py#L1703) `handle_recall()`, registered as a route at [L2653](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/recall.py#L2653)).
 
 **Score calculation** uses configurable weights combining: vector similarity score, keyword match score, graph traversal score, recency decay, and stored importance. This multi-factor scoring implements HippoRAG 2's finding that human memory uses multiple retrieval pathways, not just semantic similarity.
 
@@ -264,9 +264,9 @@ The [blog post on benchmarking honesty](/blog/benchmarking-honesty/) walks throu
 
 | Research Paper | Core Finding | AutoMem Implementation | Code Location |
 |---|---|---|---|
-| **HippoRAG 2** | Graph-vector hybrid | FalkorDB + Qdrant dual storage | [`app.py:1422-1471`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1422-L1471) |
-| **A-MEM** | Dynamic organization | ConsolidationScheduler tasks | [`consolidation.py:791-1033`](https://github.com/verygoodplugins/automem/blob/main/consolidation.py#L791-L1033) |
-| **MELODI** | 8x compression | `generate_summary()` for gist storage | [`app.py:1195-1214`](https://github.com/verygoodplugins/automem/blob/main/app.py#L1195-L1214) |
-| **ReadAgent** | Episodic memory | Temporal queries + recency scoring | [`app.py:363-425`](https://github.com/verygoodplugins/automem/blob/main/app.py#L363-L425) |
+| **HippoRAG 2** | Graph-vector hybrid | FalkorDB + Qdrant dual storage | [`automem/stores/runtime_clients.py:7-107`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/stores/runtime_clients.py#L7-L107) |
+| **A-MEM** | Dynamic organization | ConsolidationScheduler tasks | [`consolidation.py:1118`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/consolidation.py#L1118) |
+| **MELODI** | 8x compression | `generate_summary()` for gist storage | [`automem/utils/entity_extraction.py:127-150`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/entity_extraction.py#L127-L150) |
+| **ReadAgent** | Episodic memory | Temporal queries + recency scoring | [`automem/utils/time.py:89`](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/time.py#L89) |
 
 AutoMem is not a research prototype — it is a production system that implements peer-reviewed findings from neuroscience, graph theory, and memory compression research. The architecture choices are validated by academic papers, not engineering intuition.
