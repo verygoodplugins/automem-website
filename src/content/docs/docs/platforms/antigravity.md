@@ -192,11 +192,13 @@ AntiGravity's AI agent benefits from explicit instructions on when and how to us
 
 ```json
 {
-  "tags": ["project-name", "antigravity", "YYYY-MM", "component-name"],
+  "tags": ["project-name", "component-name"],
   "type": "Decision",
   "importance": 0.9
 }
 ```
+
+Use bare tag strings. AutoMem's memory policy explicitly excludes platform tags (`antigravity`, `cursor`, …), namespace prefixes (`project/*`, `lang/*`), and date-stamped tags (`2026-07`). For facts with a shelf life, set `t_valid` / `t_invalid` instead of encoding a date in a tag.
 
 ---
 
@@ -220,9 +222,9 @@ Check the health of the AutoMem service
 ```
 
 Expected response includes:
-- FalkorDB connection status
-- Qdrant connection status
-- Service version
+- FalkorDB connection status (`connected` / `disconnected`)
+- Qdrant connection status (`connected` / `disconnected`)
+- Memory and vector counts, plus a `sync_status` comparing the two stores
 
 ---
 
