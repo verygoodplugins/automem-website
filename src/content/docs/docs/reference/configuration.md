@@ -9,6 +9,8 @@ This page provides a complete reference for all environment variables and config
 
 For a quick-reference table grouped by category, see [Environment Variables](/docs/getting-started/environment-variables/). For deployment-specific setup, see [Docker & Local Dev](/docs/getting-started/docker/) or [Railway Deployment](/docs/deployment/railway/).
 
+The server and MCP behaviors corrected here are verified against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/tree/e147c352b100ebbf29e6555453fdde5152066138) and [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37).
+
 ---
 
 ## Configuration Loading
@@ -87,8 +89,8 @@ graph TB
     FlaskApp -->|"Redis Protocol<br/>falkordb.railway.internal:6379"| FalkorDB
 ```
 
-:::caution[Railway PORT requirement]
-Railway requires `PORT=8001` explicitly set. Flask defaults to port 5000 if unset, causing `ECONNREFUSED` errors when the MCP bridge or health monitors attempt connection via `*.railway.internal:8001`.
+:::caution[PORT compatibility]
+AutoMem defaults `PORT` to `8001` when unset. A platform-set non-`8001` `PORT` can conflict with callers using `:8001`; keep the service and its internal callers on the same port.
 :::
 
 ### Vector Search (Optional)
@@ -150,7 +152,7 @@ Controls embedding generation with automatic provider selection:
 | FastEmbed | Good | Free | Yes (after download) | 384/768/1024 | Not required |
 | Placeholder | None | Free | Yes | Configurable | Not required |
 
-When `EMBEDDING_PROVIDER=auto`, the provider is selected by checking API key availability in order: Voyage, then OpenAI, then local/Ollama, then placeholder. If Voyage is configured but the current `VECTOR_SIZE` is incompatible, AutoMem skips Voyage and continues to the next provider. If OpenAI is selected and `VECTOR_SIZE > 1536`, the default `text-embedding-3-small` model is automatically upgraded to `text-embedding-3-large`.
+When `EMBEDDING_PROVIDER=auto`, the provider ladder is Voyage → OpenAI → Ollama (when configured) → FastEmbed → placeholder. If Voyage is configured but the current `VECTOR_SIZE` is incompatible, AutoMem skips Voyage and continues to the next provider. If OpenAI is selected and `VECTOR_SIZE > 1536`, the default `text-embedding-3-small` model is automatically upgraded to `text-embedding-3-large`.
 
 :::note[OpenAI-compatible providers]
 When `OPENAI_BASE_URL` is set, AutoMem uses that base URL for both the embedding provider and the OpenAI-backed classification client. For embedding requests against non-OpenAI URLs, AutoMem omits the `dimensions` parameter to avoid compatibility issues with OpenRouter, LiteLLM, and similar proxies.
@@ -285,7 +287,7 @@ Controls automatic drift detection between FalkorDB and Qdrant:
 | `SYNC_CHECK_INTERVAL_SECONDS` | int | No | `3600` | Frequency of drift checks (1 hour) |
 | `SYNC_AUTO_REPAIR` | bool | No | `true` | Automatically queue missing embeddings |
 
-The sync worker counts memories in FalkorDB vs Qdrant and queues repair operations when drift exceeds 5%.
+The sync worker computes `missing_ids = falkor_ids - qdrant_ids`. When `SYNC_AUTO_REPAIR` is enabled, it queues every missing ID for repair.
 
 ### Memory Type Configuration
 
@@ -379,7 +381,7 @@ graph TB
         ENDPOINT_VALUE["Use env value"]
 
         API_KEY_FUNC["readAutoMemApiKeyFromEnv()"]
-        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN"]
+        KEY_PRIORITY["Priority:<br/>1. AUTOMEM_API_KEY<br/>2. AUTOMEM_API_TOKEN<br/>3. CLAUDE_PLUGIN_OPTION_API_KEY / claude_plugin_option_api_key<br/>4. CLAUDE_PLUGIN_OPTION_API_TOKEN / claude_plugin_option_api_token"]
     end
 
     subgraph Client_Config["AutoMemClient Config"]
@@ -400,6 +402,11 @@ graph TB
 
     CONFIG_OBJ --> CLIENT_INSTANCE
 ```
+
+1. `AUTOMEM_API_KEY`
+2. `AUTOMEM_API_TOKEN`
+3. `CLAUDE_PLUGIN_OPTION_API_KEY` (or `claude_plugin_option_api_key`)
+4. `CLAUDE_PLUGIN_OPTION_API_TOKEN` (or `claude_plugin_option_api_token`)
 
 ### Configuration Resolution Priority
 
@@ -463,11 +470,11 @@ The `command` and `args` launch the MCP server in stdio mode. The `env` block pa
 **TOML configuration example (Codex):**
 
 ```toml
-[mcp.servers.automem]
+[mcp_servers.memory]
 command = "npx"
 args = ["-y", "@verygoodplugins/mcp-automem"]
 
-[mcp.servers.automem.env]
+[mcp_servers.memory.env]
 AUTOMEM_API_URL = "https://your-service.railway.app"
 AUTOMEM_API_KEY = "your-api-token"
 ```
