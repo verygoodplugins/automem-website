@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-The [guided installer](/docs/getting-started/quick-start/) can provision a hosted AutoMem backend for you and capture its endpoint and API key automatically — no dashboards, no copy-pasting tokens between terminals. This page covers that **Hosted Cloud** path in depth: how each provider flow works, what the installer captures, and how to script it.
+The [guided installer](/docs/getting-started/quick-start/) can help you provision a hosted AutoMem backend and then configure your selected agents. This page covers the **Hosted Cloud** path in depth: how each provider flow works, what the installer captures, and how to script the supported options.
 
 Reach it by running the installer and choosing **Hosted Cloud** at the first prompt:
 
@@ -33,17 +33,17 @@ After choosing Hosted Cloud, the installer asks how to stand it up:
 ```text
 ?  How should we stand up your hosted AutoMem?
 ❯  InstaPods                      open the setup page — it deploys AutoMem and emails your URL + key
-   Railway (guided)              sign in with the railway CLI, deploy from the terminal, then auto-capture keys
+   Railway (guided)              sign in with the railway CLI and create a fresh deployment
    Other — I already have a URL + key   already deployed somewhere; just paste your endpoint + token
 ```
 
 ![The AutoMem installer asking how to stand up hosted AutoMem, with InstaPods, Railway (guided), and an existing-URL option](/img/docs/installer-cloud-provider.png)
 
-| Provider | How it deploys | Billing | Best for |
-|---|---|---|---|
-| **InstaPods** | Opens the setup page; it deploys AutoMem and emails your endpoint + key | $15/mo flat ([details](/docs/deployment/instapods/)) | Fastest hosted path, HTTPS + custom domains, zero infra |
-| **Railway (guided)** | Signs in with the `railway` CLI and deploys the template from the terminal | Usage-based ([details](/docs/deployment/railway/)) | Terminal-native deploys, fine-grained control |
-| **Other** | You paste an endpoint + token you already have | — | An AutoMem instance you already run |
+| Provider | How it deploys | Credential flow |
+|---|---|---|
+| **InstaPods** | Opens the setup page | Paste the endpoint and key you receive |
+| **Railway (guided)** | Signs in with the `railway` CLI and creates a fresh AutoMem deployment | The installer reads the endpoint and key after the deployment is available |
+| **Other** | Uses an AutoMem instance you already run | Paste its endpoint and key |
 
 ### InstaPods
 
@@ -60,25 +60,21 @@ The installer verifies the endpoint's `/health` before touching any agent config
 
 ### Railway (guided)
 
-1. The installer signs you in through the `railway` CLI (it installs/uses the CLI and opens a browser to authenticate).
-2. It deploys the AutoMem template straight from the terminal, then **auto-captures the endpoint and token** once the service is healthy.
-3. If the CLI can't finish in your environment, it **falls back to a browser deploy** and then asks you to paste the URL + key, exactly like the InstaPods flow.
+1. The installer uses the `railway` CLI and its authenticated session to create a fresh AutoMem deployment.
+2. It waits for the deployment's generated domain, reads the AutoMem API token, and verifies the endpoint before it configures agents.
+3. If the guided flow cannot complete, provide the endpoint and key manually instead.
 
-:::caution[Railway requires `PORT=8001`]
-The AutoMem service must run on port 8001. The [Railway template](/docs/deployment/railway/) sets `PORT=8001` for you. AutoMem's own default already falls back to `8001` when `PORT` is unset (Flask's bare `5000` default is never reached), but Railway assigns its own `PORT` per service — so other services can only reach `memory-service` reliably if `PORT` is set to `8001` explicitly.
-:::
+### Existing Railway deployments
 
-### Reuse vs. fresh deploy
-
-If your provider account already has AutoMem deployments, the installer lists them and lets you **reuse an existing one** (it fetches that deployment's credentials) instead of paying for a new deploy. An empty account goes straight to a fresh deploy. Any **billable** deploy is gated behind an explicit confirmation that names the plan.
+Railway (guided) does not discover or reuse an existing Railway deployment in this release. If you already run AutoMem on Railway, choose **Other** and paste its endpoint and key; that connects the installer without provisioning another deployment.
 
 ---
 
 ## What the installer captures
 
-Once the backend is healthy, the installer:
+Once it has an endpoint, the installer:
 
-1. **Captures the endpoint + token** from the provider (or from what you pasted).
+1. **Uses the endpoint + token** it read from guided Railway setup or that you pasted for InstaPods/Other.
 2. **Writes them to a `.env`** in the current directory (`AUTOMEM_API_URL`, plus `AUTOMEM_API_KEY` if the endpoint needs one).
 3. **Wires your agents** — review the plan, approve, and it registers the MCP server for each selected agent, backing up every file it changes with a `.bak`.
 
@@ -88,7 +84,7 @@ Nothing is written until you approve the plan, so a cloud run is as safe to prev
 
 ## Customize and script it
 
-Every prompt has a flag and an environment variable, so you can pre-answer the cloud questions or run the whole thing unattended.
+Use these supported flags and environment variables to pre-answer the installer:
 
 ```bash
 # Deploy to a hosted provider, fully interactive
@@ -124,7 +120,9 @@ The same flags work on the npm package, e.g. `npx @verygoodplugins/mcp-automem i
 | `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan, write nothing |
 
 :::note[Headless and CI]
-When `CI`, `CODEX`, `CLAUDE_CODE`, or `GITHUB_ACTIONS` is set, the installer assumes `--yes`. Without a TTY and without `--yes`, it prints the plan and stops — an unattended pipe can never make unreviewed changes, and a cloud deploy is never triggered without confirmation. For CI, pre-deploy with `--target existing` and pass an endpoint + key rather than provisioning inside the pipeline.
+Without a TTY, the installer prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`. Only `CI`, `CODEX`, and `CLAUDE_CODE` suppress the installer animation. `GITHUB_ACTIONS` is not a separate approval or animation trigger.
+
+For CI, use `--target existing` with an endpoint and key rather than provisioning inside the pipeline.
 :::
 
 ---
@@ -148,7 +146,7 @@ curl https://your-automem-url/health \
 }
 ```
 
-`"qdrant": "unavailable"` is expected if you haven't configured Qdrant — AutoMem degrades to graph-only mode. See [Quick Start → Verify it worked](/docs/getting-started/quick-start/) for the full field reference and a first end-to-end memory test.
+If Qdrant is unavailable, health reports `"qdrant": "disconnected"` and the top-level `"status": "degraded"`. See [Quick Start → Verify it worked](/docs/getting-started/quick-start/) for the full field reference and a first end-to-end memory test.
 
 ---
 
@@ -156,11 +154,9 @@ curl https://your-automem-url/health \
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Railway CLI sign-in stalls | No browser / restricted shell | The installer falls back to a browser deploy; finish there and paste the URL + key |
-| `ECONNREFUSED` after a Railway deploy | Railway assigned `memory-service` a different port than other services expect | Set `PORT=8001` explicitly on `memory-service` ([Railway guide](/docs/deployment/railway/)) |
+| Railway guided setup does not complete | The CLI flow could not finish in this environment | Choose **Other** and paste the endpoint + key for an existing AutoMem deployment |
 | `401 Unauthorized` on `/health` | Wrong/missing token | Re-check the key the provider issued; provide it without a `Bearer` prefix |
-| Installer can't find your new deploy | Credentials not ready yet | Re-run the installer and choose **reuse an existing deployment**, or use **Other** and paste the URL + key |
-| Charged for a second deploy | Picked "deploy fresh" with one already live | Re-run and choose the existing deployment to reuse its credentials |
+| You already run AutoMem on Railway | Railway (guided) creates a fresh deployment in this release | Choose **Other** and paste the existing endpoint + key |
 
 ---
 
@@ -169,3 +165,9 @@ curl https://your-automem-url/health \
 - **Connect more agents** — [Platform Installers](/docs/cli/platform-installers/) and the [Platform Guides](/docs/platforms/claude-desktop/).
 - **Deep deployment docs** — [InstaPods](/docs/deployment/instapods/) and [Railway](/docs/deployment/railway/).
 - **Production hardening** — [Backup & Recovery](/docs/operations/backup/) and [Health Monitoring](/docs/operations/health/).
+
+---
+
+## Release scope
+
+The installer behavior on this page is validated against [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37). The health-response vocabulary is validated against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/health.py).
