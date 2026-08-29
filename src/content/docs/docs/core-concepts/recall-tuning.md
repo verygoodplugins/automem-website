@@ -32,7 +32,7 @@ flowchart TD
     Gate -->|"no / on-topic"| Rerank{"recency_bias<br/>active?"}
     Damp --> Rerank
     Rerank -->|"yes"| Temporal["+ SEARCH_WEIGHT_TEMPORAL<br/>× relative recency"]
-    Rerank -->|"no"| Norm["Normalize to 0.0–1.0"]
+    Rerank -->|"no"| Norm["final_score<br/>(raw weighted sum)"]
     Temporal --> Norm
     Norm --> Out["Ranked results"]
 ```
@@ -43,7 +43,7 @@ Three stages are tunable independently: the **component weights** (what evidence
 
 ## Component weights
 
-The base score is a weighted sum of ten components. Defaults (relative contributions, summing to 1.95, then normalized to `[0.0, 1.0]`):
+The base score is a weighted sum of ten components. Defaults (relative contributions, summing to 1.95 — each component is individually in `[0.0, 1.0]`, but the weighted sum is returned as `final_score` without renormalization, so a result matching every signal can score above `1.0`):
 
 | Weight variable | Default | Contribution |
 | --- | --- | --- |
@@ -56,9 +56,11 @@ The base score is a weighted sum of ten components. Defaults (relative contribut
 | `SEARCH_WEIGHT_RECENCY` | `0.10` | Age decay (see below) |
 | `SEARCH_WEIGHT_IMPORTANCE` | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_CONFIDENCE` | `0.05` | Classification certainty |
-| `SEARCH_WEIGHT_RELEVANCE` | `0.00` | Context-profile bonus (opt-in via `context_tags`) |
+| `SEARCH_WEIGHT_RELEVANCE` | `0.00` | Consolidation-decay relevance (`relevance_score`: access patterns + age) |
 
-Raise a weight to make that signal dominate; lower it to mute noise. The weights are *relative* — changing one shifts the balance, and the sum is renormalized, so you rarely need to rescale the others.
+The `context_tags` soft boost is *not* one of these ten: it is a separate additive `context_bonus` term added to the final score outside the weight table, and it is never gated.
+
+Raise a weight to make that signal dominate; lower it to mute noise. The weights are *relative* — changing one shifts the balance against the others, so raising one is equivalent to lowering all the rest.
 
 ---
 
@@ -90,7 +92,7 @@ The re-rank is **inert by default** — `SEARCH_WEIGHT_TEMPORAL` changes nothing
 
 ## The relevance gate
 
-`RECALL_RELEVANCE_GATE` (default `0.0` = disabled) addresses [issue #130](https://github.com/verygoodplugins/automem/issues/130): a high-importance but **off-topic** memory riding query-independent score (importance, confidence, recency, tag overlap) to the top of a tag-scoped pool.
+`RECALL_RELEVANCE_GATE` (default `0.0` = disabled) addresses [issue #130](https://github.com/verygoodplugins/automem/issues/130): a high-importance but **off-topic** memory riding query-independent score (importance, confidence, recency, tag overlap, consolidation relevance) to the top of a tag-scoped pool.
 
 When the gate is set and a result's best query-topical evidence — the max of its vector, keyword, metadata, and exact-match components — falls **below** the threshold, the query-independent components are scaled by `evidence / gate`. This is a **linear ramp, not a cliff**: a barely-relevant result is dampened a little, a wholly off-topic one a lot. The context bonus is never gated, so `context_tags` remains the explicit soft-boost channel.
 
