@@ -24,7 +24,7 @@ Before setting up the development environment, ensure the following tools are in
 | git | Any recent version | Source control |
 
 :::tip[One-shot bootstrap]
-The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv and installs dev requirements in one command. Prefer it over the manual steps below unless you need a custom setup.
+The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv and installs dev requirements in one command. Prefer it over the manual steps below unless you need a custom setup.
 :::
 
 ### Repository Contents
@@ -105,7 +105,7 @@ graph TB
             DC["docker-compose.yml"]
             Falkor["falkordb/falkordb:latest\nPort 6379\nVolume: ./data/falkordb"]
             Qdrant["qdrant/qdrant:latest\nPort 6333\nVolume: ./data/qdrant"]
-            APIContainer["memory-service\nPort 8001\nOptional"]
+            APIContainer["flask-api\nPort 8001\nOptional"]
         end
 
         subgraph "External Services (Optional)"
@@ -137,7 +137,7 @@ This starts all services in the foreground (attached), rebuilding images if `Doc
 - **FalkorDB** on port `6379` with volume mount at `./data/falkordb`
 - **Qdrant** on port `6333` with volume mount at `./data/qdrant`
 
-The `docker-compose.yml` defines these services with persistent storage, ensuring data survives container restarts.
+The [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/docker-compose.yml) file defines these services with persistent storage, ensuring data survives container restarts. Its API service is named `flask-api`.
 
 ```bash
 # Stop services
@@ -212,7 +212,7 @@ sequenceDiagram
     Embed->>Embed: "Begin batch accumulator"
 
     Flask->>Sched: "Initialize scheduler"
-    Sched->>Sched: "Schedule decay (1h)\ncreative (1h)\ncluster (6h)\nforget (1d)"
+    Sched->>Sched: "Schedule decay (1d)\ncreative (7d)\ncluster (30d)\nforget disabled"
 
     Flask->>Flask: "Bind to 0.0.0.0:8001"
     Flask-->>Dev: "Server ready"
@@ -224,6 +224,8 @@ sequenceDiagram
     Qdrant-->>Flask: "Collection exists"
     Flask-->>Dev: '{"status": "healthy"}'
 ```
+
+The [scheduler defaults](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/config.py) run decay daily, creative consolidation weekly, and clustering every 30 days. Forgetting defaults to `0` seconds, which disables it until explicitly configured.
 
 ---
 
@@ -263,17 +265,17 @@ AUTOMEM_API_TOKEN=your-dev-token
 | `ENRICHMENT_MAX_ATTEMPTS` | `3` | Enrichment retry limit |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Semantic neighbors count |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | `0.8` | SIMILAR_TO edge threshold |
-| `FLASK_ENV` | `production` | Flask mode (`development` enables debug) |
+| `FLASK_ENV` | _unset_ | Docker Compose exports `development`; it does not control the runtime debug setting. |
+| `FLASK_DEBUG` | _unset_ | Docker Compose exports `1`; it does not control the runtime debug setting. |
 | `LOG_LEVEL` | `INFO` | Logging verbosity |
 
-**Enable development mode** for verbose logging and auto-reload:
+**Enable verbose application logging** when diagnosing local behavior:
 
 ```bash
-FLASK_ENV=development
 LOG_LEVEL=DEBUG
 ```
 
-The `FLASK_ENV=development` setting enables: detailed error pages with stack traces, auto-reload on file changes, and more verbose console output.
+Docker Compose exports `FLASK_ENV=development` and `FLASK_DEBUG=1` for the `flask-api` container, but the [runtime entry point](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/runtime_wiring.py) hardcodes `debug=False`. Those exports therefore do not enable Flask debug mode or the autoreloader; restart the process or container after changing source files.
 
 ---
 
@@ -383,7 +385,7 @@ sudo chown -R $(whoami) ./data/
 
 ### Prerequisites
 
-- **Node.js**: Version 20.0.0 or higher
+- **Node.js**: `^20.19.0 || ^22.13.0 || >=24`
 - **npm**: Comes with Node.js
 - **git**: For version control
 - **AutoMem Service**: Running instance for integration testing (local or Railway-hosted)
@@ -398,11 +400,13 @@ npm install   # Also installs Husky git hooks via "prepare" lifecycle script
 
 ### npm Scripts Reference
 
+At this release, the [`package.json`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/package.json) scripts below run as shown.
+
 | Script | Command | Purpose |
 |---|---|---|
-| `prebuild` | `node scripts/sync-template-versions.mjs` | Sync template versions before build |
+| `prebuild` | `tsx scripts/sync-memory-policy.ts && node scripts/sync-template-versions.mjs` | Sync memory policy and template versions before build |
 | `build` | `tsc` | Compile TypeScript to `dist/` |
-| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs && chmod +x dist/index.js` | Build OpenClaw plugin package and make binary executable |
+| `postbuild` | `node scripts/build-openclaw-plugin-package.mjs` | Build OpenClaw plugin package |
 | `sync-versions` | `node scripts/sync-template-versions.mjs` | Manually sync template versions without triggering a build |
 | `dev` | `tsx watch src/index.ts` | Hot-reload development server |
 | `lint` | `eslint .` | Run ESLint static analysis |
