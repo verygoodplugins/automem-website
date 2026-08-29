@@ -36,3 +36,14 @@
   only the assigned page, its focused test, and this implementation report;
   no stale service name, schedule, debug/autoreload claim, engine range, or
   `chmod +x` postbuild claim remains.
+
+## SDD fix round 1
+
+- Extended the static guard to require the e147 bootstrap-script source link
+  and reject the stale ed36 pin.
+- Added negative checks for the old Flask configuration-table row, a
+  standalone `FLASK_ENV=development` shell instruction, the old Node minimum,
+  individual stale scheduler intervals, and the stale standalone prebuild
+  command.
+- The deferred Mermaid `Optional` label remains unchanged because it is
+  outside the assigned #300 scope.
