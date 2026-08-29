@@ -15,7 +15,7 @@ For basic setup and configuration, see [Getting Started](/docs/getting-started/i
 
 The system implements two-tier content size limits to prevent embedding quality degradation.
 
-**Implementation** in `src/index.ts:205-225` within the `store_memory` tool handler:
+**Implementation** in `src/index.ts:1435-1463` within the `store_memory` tool handler:
 
 - **Target**: 150–300 characters (optimal for embeddings)
 - **Soft limit**: 500 characters (passes with warning)
@@ -143,7 +143,7 @@ associate_memories({
 
 Entity expansion enables multi-hop graph traversal for complex queries:
 
-**API parameters** (exposed in `src/index.ts:350-355`):
+**API parameters** (exposed in `src/index.ts:764-805`):
 
 - `expand_entities: true` — Enable multi-hop entity expansion
 - `expand_relations: true` — Follow graph relationships from seed results
@@ -207,12 +207,10 @@ Templates support variable substitution for platform-specific customization:
 | Variable | Resolution | Example Value |
 |---|---|---|
 | `{{PROJECT_NAME}}` | From package.json, git remote, or directory name | `my-api-service` |
-| `{{PROJECT_DESC}}` | From package.json description | `REST API for user management` |
-| `{{MCP_TOOL_PREFIX}}` | Platform-specific tool prefix | `mcp__memory__` |
-| `{{MCP_SERVER_NAME}}` | Server name from config | `memory` |
-| `{{CURRENT_MONTH}}` | Current YYYY-MM | `2026-02` |
+| `{{MCP_TOOL_PREFIX}}` | Platform-specific tool prefix | `mcp_automem_` |
+| `{{MCP_SERVER_NAME}}` | Server name from config | `automem` |
 
-**Implementation**: Template processing occurs in CLI command handlers (`src/cli/commands/cursor.ts`, etc.).
+**Implementation**: `replaceTemplateVars()` in `src/cli/host-toolkit.ts` performs the substitution; each CLI command handler (`src/cli/cursor.ts`, etc.) supplies the variable map. Only the variables a given handler passes are substituted — `{{PROJECT_NAME}}` is the one every handler provides, while `{{MCP_TOOL_PREFIX}}` and `{{MCP_SERVER_NAME}}` are supplied by the Cursor installer.
 
 ### Building a New Platform Integration
 
@@ -221,7 +219,7 @@ To add support for a new MCP-compatible platform:
 1. **Create template directory**: `templates/[platform-name]/`
 2. **Add configuration template**: Platform-specific MCP server config format
 3. **Create rule/instruction file**: Memory-first instructions adapted to platform conventions
-4. **Implement CLI command**: Add installer in `src/cli/commands/[platform].ts`
+4. **Implement CLI command**: Add installer in `src/cli/[platform].ts`
 5. **Update documentation**: Add section to `INSTALLATION.md`
 
 **Example structure**:
@@ -279,7 +277,7 @@ The `AutoMemClient` class in `src/automem-client.ts` wraps all AutoMem HTTP API 
 | POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{success, message}` | `associateMemories()` |
 | PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{memory_id, message}` | `updateMemory()` |
 | DELETE | `/memory/:id` | N/A | `{memory_id, message}` | `deleteMemory()` |
-| GET | `/memory/by-tag?tags=...` | N/A | `{memories[], count}` | `searchByTag()` |
+| GET | `/memory/by-tag?tags=...` | N/A | `{memories[], count, has_more, limit, offset}` | `recallMemory({tags, exhaustive: true})` |
 | GET | `/health` | N/A | `{status, falkordb, qdrant, graph, timestamp}` | `checkHealth()` |
 
 **Query parameter encoding**:
@@ -315,7 +313,7 @@ Environment variables are resolved in this order:
 
 The MCP server implementation in `src/index.ts` uses the `@modelcontextprotocol/sdk` library:
 
-**Tool registration** in `src/index.ts:145-180`:
+**Tool registration** in the `tools` array at `src/index.ts:466`:
 - Each tool defines `inputSchema` (JSON Schema for parameters)
 - Each tool defines `outputSchema` (JSON Schema for response)
 - Tools include `annotations` for MCP hints:
@@ -451,7 +449,7 @@ If migrating from a different MCP memory implementation:
 | **Authentication failures** | 401/403 errors | Set `AUTOMEM_API_KEY` in server environment variables, not client-side. Verify API key format matches backend requirements. |
 | **Recall returns empty** | Queries return 0 results despite stored memories | Check tags match exactly. Verify time filters aren't too restrictive. Try query without tags first. Check backend health. |
 | **Content too large errors** | Store operations rejected | Enforce 500-char soft limit, 2000-char hard limit before calling API. Split long content into multiple memories with associations. |
-| **Timeout errors** | Operations fail after ~25 seconds | Reduce `limit` parameter in recall queries. Check backend performance. Consider using `searchByTag` instead of semantic search for simple tag queries. |
+| **Timeout errors** | Operations fail after ~25 seconds | Reduce `limit` parameter in recall queries. Check backend performance. Consider `recall_memory({tags, exhaustive: true})` (tag enumeration) instead of semantic search for simple tag queries. |
 
 ### Debugging Techniques
 
