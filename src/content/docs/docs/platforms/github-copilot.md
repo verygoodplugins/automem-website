@@ -127,11 +127,13 @@ Unlike Cursor (which uses `.cursor/rules/automem.mdc`) or Claude Code (which use
 
 ```json
 {
-  "tags": ["repo-name", "copilot", "YYYY-MM", "component-name"],
+  "tags": ["repo-name", "component-name", "decision"],
   "type": "Decision",
   "importance": 0.9
 }
 ```
+
+Tags are bare strings. The shipped memory policy rules out platform tags (`copilot`, `cursor`, `claude-code`), namespace prefixes (`project/*`, `lang/*`), and date-stamped tags (`YYYY-MM`) — recency comes from the top-level `timestamp` field, and facts with a shelf life should use `t_valid` / `t_invalid` instead of a date tag.
 
 **Repository-level memory patterns:**
 - Store decisions made during code review
@@ -150,7 +152,7 @@ Memories stored by GitHub Copilot are accessible from any other AutoMem-connecte
 **Cross-platform workflow example:**
 1. Store architectural decision via GitHub Copilot while reviewing a PR
 2. Recall that decision in Cursor IDE during implementation
-3. Memory includes context: tagged with `copilot`, project name, timestamp
+3. Memory includes context: tagged with the repository and component names, plus the stored `timestamp`
 
 ---
 
@@ -181,7 +183,7 @@ The Copilot coding agent cannot reach `localhost` or `127.0.0.1`. Deploy AutoMem
 ### Authentication failures
 
 For `"local"` type configurations, env vars are passed to the spawned process. Verify that:
-1. `AUTOMEM_API_KEY` matches the `API_TOKEN` set in your AutoMem service
+1. `AUTOMEM_API_KEY` matches the `AUTOMEM_API_TOKEN` set in your AutoMem service
 2. The token value doesn't contain characters that need escaping in the config
 
 For `"http"` or `"sse"` type, ensure the token is URL-encoded in the query parameter.
