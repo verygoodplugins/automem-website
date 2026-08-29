@@ -7,15 +7,15 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
-- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_keywords.py) — Keyword matching logic
-- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_relations.py) — Relationship expansion
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint orchestration
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Search weight and recall tuning configuration
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/graph.py) — Graph traversal utilities
-- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/time.py) — Temporal expression parsing
-- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/tags.py) — Tag prefix utilities
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/search/runtime_recall_helpers.py) — Vector and keyword search implementations
+- [automem/search/runtime_keywords.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/search/runtime_keywords.py) — Keyword matching logic
+- [automem/search/runtime_relations.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/search/runtime_relations.py) — Relationship expansion
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/recall.py) — Recall endpoint orchestration
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/config.py) — Search weight and recall tuning configuration
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/scoring.py) — Score computation
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/time.py) — Temporal expression parsing
+- [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/utils/tags.py) — Tag prefix utilities
 :::
 
 This document explains AutoMem's hybrid search system, which combines semantic, lexical, graph, temporal, and metadata signals to retrieve and rank memories. Current canonical benchmark claims are **87.00% on LongMemEval full** with **97.00% recall@5**, and **84.74% on LoCoMo full**. See [Benchmarks](/benchmarks/) for the experiment log and methodology links.
@@ -75,7 +75,7 @@ graph TB
         Tag["Tag Overlap<br/>Prefix/exact matching<br/>Weight: 0.20"]
         Importance["Importance Score<br/>User-assigned value<br/>Weight: 0.10"]
         Confidence["Confidence Score<br/>Classification confidence<br/>Weight: 0.05"]
-        Recency["Recency Score<br/>Linear decay 180 days<br/>Weight: 0.10"]
+        Recency["Recency Score<br/>Configurable decay curve<br/>Weight: 0.10"]
         Exact["Exact Match<br/>Query in metadata<br/>Weight: 0.20"]
     end
 
@@ -182,13 +182,13 @@ tags=project&tags=decision&tag_mode=all
 
 Three metadata fields contribute to the final score: importance, confidence, and recency.
 
-**Recency calculation:** Recency uses a linear decay over 180 days: `max(0.0, 1.0 - (age_days / 180.0))`, based on the time since last access (or creation if never accessed). Memories older than 180 days score 0.0.
+**Recency calculation:** Recency decays from the memory's `timestamp`. The curve and window are configurable: with the defaults (`SEARCH_RECENCY_CURVE=linear`, `SEARCH_RECENCY_WINDOW_DAYS=180`) the score is `max(0.0, 1.0 - (age_days / 180.0))`, so memories older than 180 days score 0.0. Setting `SEARCH_RECENCY_CURVE=exp` switches to `0.5 ** (age_days / window)`, treating the window as a half-life.
 
 **Default behavior:**
 
-- Missing `importance` defaults to 0.5
-- Missing `confidence` defaults to 0.7
-- Missing `last_accessed` falls back to `timestamp`
+- Missing or non-numeric `importance` contributes 0.0
+- Missing or non-numeric `confidence` contributes 0.0
+- Recency reads `timestamp`; a missing or unparseable `timestamp` contributes 0.0
 
 ---
 
@@ -209,10 +209,11 @@ final_score =
   + recency_score        × SEARCH_WEIGHT_RECENCY      (default: 0.10)
   + exact_match_score    × SEARCH_WEIGHT_EXACT        (default: 0.20)
   + relation_strength    × SEARCH_WEIGHT_RELATION     (default: 0.25)
-  + context_bonus        × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
+  + relevance_score      × SEARCH_WEIGHT_RELEVANCE    (default: 0.0)
+  + context_bonus                                     (unweighted)
 ```
 
-**Note:** Component weights are relative contributions that sum to 1.95. Raw combined scores are normalized to the range [0.0, 1.0] during final ranking.
+**Note:** Component weights are relative contributions that sum to 1.95, so the raw weighted sum can exceed 1.0. It is **not** renormalized — `final_score` is stored and sorted as computed, and the context bonus is added on top of it without a weight. Treat scores as a ranking signal, not a probability.
 
 ### Component Weights
 
@@ -224,12 +225,14 @@ final_score =
 | Tag | 20% | `SEARCH_WEIGHT_TAG` | Tag filter matching |
 | Importance | 10% | `SEARCH_WEIGHT_IMPORTANCE` | User-assigned priority |
 | Confidence | 5% | `SEARCH_WEIGHT_CONFIDENCE` | Classification certainty |
-| Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Linear decay over 180 days |
+| Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Age decay from `timestamp` (linear over 180 days by default) |
 | Exact | 20% | `SEARCH_WEIGHT_EXACT` | Exact phrase match boost |
 | Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
-| Context | 0% | `SEARCH_WEIGHT_RELEVANCE` | Context profile scoring bonus |
+| Relevance | 0% | `SEARCH_WEIGHT_RELEVANCE` | Consolidation decay `relevance_score` (experimental, off by default) |
 
-> **Note:** Weights are relative contributions (sum = 1.95) normalized to [0.0, 1.0] during score computation.
+The context-profile bonus is an eleventh, **unweighted** term: when `context_tags`, `context_types`, `priority_ids`, or `context` keywords are supplied, `_compute_context_bonus()` adds its own fixed sub-weights (tag 0.45, type 0.25, keyword 0.2, anchor 0.9) directly to the total.
+
+> **Note:** Weights are relative contributions (sum = 1.95). The weighted sum is used as-is — there is no renormalization step.
 
 ### Score Combination Flow
 
@@ -246,8 +249,10 @@ flowchart TD
         TagSrc["Query tags vs<br/>memory tags"]
         ImpSrc["memory.importance<br/>field"]
         ConfSrc["memory.confidence<br/>field"]
-        RecSrc["memory.timestamp /<br/>last_accessed"]
+        RecSrc["memory.timestamp"]
         ExSrc["Query phrase vs<br/>memory content"]
+        RelSrc["memory.relevance_score<br/>from consolidation"]
+        CtxSrc["context_tags / context_types /<br/>priority_ids / context"]
     end
 
     subgraph weights ["Weight Application"]
@@ -260,12 +265,12 @@ flowchart TD
         RecW["× SEARCH_WEIGHT_RECENCY<br/>0.10"]
         ExW["× SEARCH_WEIGHT_EXACT<br/>0.20"]
         RW["× SEARCH_WEIGHT_RELATION<br/>0.25"]
-        CtxW["× SEARCH_WEIGHT_RELEVANCE<br/>0.0"]
+        RelW["× SEARCH_WEIGHT_RELEVANCE<br/>0.0"]
+        CtxW["context bonus<br/>added unweighted"]
     end
 
     subgraph combination ["Score Combination"]
         Sum["SUM all weighted<br/>components"]
-        Normalize["Normalize to 0.0 - 1.0"]
     end
 
     subgraph output ["Final Ranking"]
@@ -285,7 +290,8 @@ flowchart TD
     RecSrc --> RecW
     ExSrc --> ExW
     GS --> RW
-    GS --> CtxW
+    RelSrc --> RelW
+    CtxSrc --> CtxW
 
     VW --> Sum
     KW --> Sum
@@ -296,10 +302,10 @@ flowchart TD
     RecW --> Sum
     ExW --> Sum
     RW --> Sum
+    RelW --> Sum
     CtxW --> Sum
 
-    Sum --> Normalize
-    Normalize --> Sort
+    Sum --> Sort
     Sort --> Dedup
     Dedup --> Limit
     Limit --> Results
@@ -383,12 +389,14 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `SEARCH_WEIGHT_TAG` | 0.20 | Tag match contribution |
 | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 | Importance field contribution |
 | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 | Confidence field contribution |
-| `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution (linear over 180 days) |
+| `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution |
 | `SEARCH_WEIGHT_EXACT` | 0.20 | Exact phrase match boost |
 | `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
-| `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Context profile scoring bonus |
+| `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Consolidation decay `relevance_score` contribution (experimental; 0.0 = no-op) |
+| `SEARCH_RECENCY_WINDOW_DAYS` | 180 | Recency window — decay reaches zero (linear) or halves (exp) at this age |
+| `SEARCH_RECENCY_CURVE` | `linear` | Recency decay shape: `linear` or `exp` |
 
-**Note on weight configuration:** Default weights are relative contributions that sum to 1.95. Final scores are normalized to [0.0, 1.0] during ranking. To customize, maintain relative proportions.
+**Note on weight configuration:** Default weights are relative contributions that sum to 1.95, and the sum is not renormalized. To customize, maintain relative proportions.
 
 ### Expansion and Limit Configuration
 
