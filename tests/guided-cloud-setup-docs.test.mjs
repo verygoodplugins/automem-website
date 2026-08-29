@@ -37,6 +37,11 @@ test('guided cloud setup keeps Railway on its supported fresh-deploy and Other f
   const page = await readPage();
 
   assert.match(page, /Railway [(]guided[)].*fresh AutoMem deployment/si);
+  assert.match(
+    page,
+    /waits for the deployment's generated domain, reads the AutoMem API token, and verifies the endpoint before it configures agents/i,
+  );
+  assert.match(page, /If the guided flow cannot complete, provide the endpoint and key manually instead\./);
   assert.match(page, /does not discover or reuse an existing Railway deployment in this release/i);
   assert.ok(page.includes('choose **Other** and paste its endpoint and key'));
   assert.doesNotMatch(page, /Reuse vs\. fresh deploy/i);
@@ -45,6 +50,32 @@ test('guided cloud setup keeps Railway on its supported fresh-deploy and Other f
   assert.doesNotMatch(page, /Usage-based/i);
   assert.doesNotMatch(page, /every service shows green/i);
   assert.doesNotMatch(page, /service → Variables/i);
+});
+
+test('guided cloud setup distinguishes manual InstaPods credentials from Railway capture', async () => {
+  const page = await readPage();
+
+  assert.match(page, /description: .*provider-specific credential setup\./i);
+  assert.match(page, /\*\*InstaPods\*\*.*Paste the endpoint and key you receive/s);
+  assert.match(
+    page,
+    /\*\*Railway [(]guided[)]\*\*.*The installer reads the endpoint and key after the deployment is available/s,
+  );
+  assert.match(page, /the installer does not read InstaPods credentials automatically/i);
+  assert.match(page, /AutoMem API URL.*AutoMem API key/s);
+  assert.doesNotMatch(page, /automatic endpoint and token capture/i);
+  assert.doesNotMatch(page, /Choose the \*\*Grow\*\* plan/i);
+  assert.doesNotMatch(page, /\$15\/mo flat/i);
+  assert.doesNotMatch(page, /complete checkout/i);
+});
+
+test('guided cloud setup rejects unsupported Railway platform and billing claims', async () => {
+  const page = await readPage();
+
+  assert.doesNotMatch(page, /PORT=8001/i);
+  assert.doesNotMatch(page, /memory-service/i);
+  assert.doesNotMatch(page, /Any \*\*billable\*\* deploy is gated behind an explicit confirmation/i);
+  assert.doesNotMatch(page, /names the plan/i);
 });
 
 test('guided cloud setup uses the release health vocabulary and supported CLI surface', async () => {

@@ -1,6 +1,6 @@
 ---
 title: Guided Cloud Setup
-description: Stand up a hosted AutoMem backend from the terminal — InstaPods or Railway — with automatic endpoint and token capture.
+description: Stand up a hosted AutoMem backend from the terminal — InstaPods or Railway — with provider-specific credential setup.
 sidebar:
   order: 3
 ---
@@ -47,9 +47,9 @@ After choosing Hosted Cloud, the installer asks how to stand it up:
 
 ### InstaPods
 
-1. The installer opens the [InstaPods AutoMem setup page](/docs/deployment/instapods/). Choose the **Grow** plan ($15/mo flat) and complete checkout.
-2. InstaPods deploys AutoMem and **emails your API URL + key**.
-3. Paste them back at the prompt:
+1. The installer opens the [InstaPods AutoMem setup page](/docs/deployment/instapods/). Complete the provider setup there.
+2. Return when you have the API URL and key.
+3. Paste them at the prompt — the installer does not read InstaPods credentials automatically:
 
 ```text
 ?  AutoMem API URL  ›  https://your-automem.instapods.app
