@@ -46,7 +46,7 @@ graph TB
 
 ### UpdateMemoryArgs Parameters
 
-The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)):
+The `update_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/types.ts)):
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -56,6 +56,8 @@ The `update_memory` tool accepts the following parameters (defined in [`src/type
 | `importance` | `number` (0-1) | No | New importance score |
 | `metadata` | `object` | No | New metadata (replaces existing entirely) |
 | `timestamp` | `string` (ISO) | No | Override creation timestamp |
+| `t_valid` | `string` (ISO) | No | Time when the memory becomes valid |
+| `t_invalid` | `string` (ISO) | No | Time when the memory expires or becomes invalid |
 | `updated_at` | `string` (ISO) | No | Explicit update timestamp |
 | `last_accessed` | `string` (ISO) | No | Last access timestamp |
 | `type` | `string` | No | Memory type classification |
@@ -136,7 +138,7 @@ graph TB
 
 ### DeleteMemoryArgs Parameters
 
-The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
+The `delete_memory` tool accepts the following parameters (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/types.ts)). Use either `memory_id` or `tags` — they are mutually exclusive deletion modes:
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -211,17 +213,22 @@ graph TB
 
 ### HealthStatus Response Structure
 
-The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts)):
+The `check_database_health` tool returns a `HealthStatus` object (defined in [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/types.ts)):
 
 | Field | Type | Description |
 |---|---|---|
 | `status` | `"healthy"` \| `"degraded"` \| `"error"` | Overall health status (`degraded` means the service is reachable but a backend or sync check needs attention) |
 | `backend` | `string` | Backend type (always `"automem"`) |
-| `statistics` | `object` | Database statistics and connection info |
-| `statistics.falkordb` | `string` | FalkorDB connection status |
-| `statistics.qdrant` | `string` | Qdrant connection status |
-| `statistics.graph` | `string` | Graph database name |
-| `statistics.timestamp` | `string` | Health check timestamp |
+| `statistics` | `object` | Optional database statistics and diagnostics |
+| `statistics.falkordb` | `any` (optional) | FalkorDB statistics or diagnostics when supplied by the service |
+| `statistics.qdrant` | `any` (optional) | Qdrant statistics or diagnostics when supplied by the service |
+| `statistics.graph` | `string` (optional) | Graph database name |
+| `statistics.timestamp` | `string` (optional) | Health check timestamp |
+| `statistics.memory_count` | `number` (optional) | Number of stored memories |
+| `statistics.vector_count` | `number` (optional) | Number of stored vectors |
+| `statistics.sync_status` | `string` (optional) | Vector synchronization status |
+| `statistics.vector_dimensions` | `Record<string, any>` (optional) | Vector dimension diagnostics |
+| `statistics.enrichment` | `Record<string, any>` (optional) | Enrichment diagnostics |
 | `error` | `string` (optional) | Error message if status is `"error"` |
 
 ### Health Check Use Cases
@@ -306,7 +313,7 @@ The `queue` CLI command processes pending memories from a local JSONL queue file
 npx @verygoodplugins/mcp-automem queue
 
 # Process a specific queue file (JSONL — one entry per line)
-npx @verygoodplugins/mcp-automem queue --file /path/to/memory-queue.jsonll
+npx @verygoodplugins/mcp-automem queue --file /path/to/memory-queue.jsonl
 
 # Preview what would be processed without writing
 npx @verygoodplugins/mcp-automem queue --dry-run
@@ -326,7 +333,7 @@ graph TB
         ConfigResolve["Config resolution<br/>AUTOMEM_API_URL → ~/.claude.json → default"]
         HealthCheck["Health check<br/>GET /health"]
         QueueEntries["Read pending entries<br/>local queue file"]
-        ProcessEntry["Process each entry<br/>POST /memory or PATCH /memory/{id}"]
+        ProcessEntry["Process each entry<br/>storeMemory(), then optional associateMemories()"]
         Cleanup["Remove processed entries<br/>from queue file"]
     end
 
@@ -350,13 +357,11 @@ graph TB
 
 ### Service Unavailability Handling
 
-The queue command skips processing if the endpoint is unreachable — this prevents queue operations from blocking when the service is down. The queue entries are preserved for the next run.
+The queue command reads records from a local `.jsonl` file, then calls `storeMemory()` for each valid record. When a queued record includes `relatesTo`, the command optionally follows the successful store with `associateMemories()`. It does not update queued records through a queue-specific PATCH path. If the endpoint is unreachable, it skips processing and preserves the entries for the next run.
 
 ```
 $ npx @verygoodplugins/mcp-automem queue
-Checking AutoMem service at http://localhost:8001...
-❌ Service unavailable - skipping queue processing
-Queue will be retried on next run
+AutoMem endpoint unavailable; skipping queue drain.
 ```
 
 ### Error Handling Patterns
