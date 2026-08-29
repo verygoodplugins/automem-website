@@ -119,11 +119,13 @@ The CLI installer automatically detects the server name and generates the `.mdc`
 
 After running the installer, `.cursor/rules/automem.mdc` is created with `alwaysApply: true` so Cursor applies the rules to all conversations in the project.
 
-### Three-Phase Memory Pattern
+### Two-Phase Recall, Then Storage Triggers
 
-The rule file prescribes a three-phase memory workflow:
+The rule file prescribes a two-phase recall at session start, followed by storage that fires on specific mid-conversation triggers:
 
 **Phase 1: Conversation Start**
+
+Two independent recalls, issued in parallel in a single message — preferences (`tags: ["preference"], limit: 20, sort: "updated_desc"`) and one semantic task-context query (`time_query: "last 90 days", limit: 30`, project slug gate optional).
 
 Recall context for most questions. Skip only for:
 - Pure syntax questions ("How does Array.map work?")
@@ -144,21 +146,19 @@ Adaptive recall logic:
 
 **Phase 2: During Conversation — Storage Triggers**
 
+Three triggers, and only three: a user correction or override (`Preference`), a decision that stabilized after at least one round of discussion (`Decision`), and a pattern the user articulated rather than one you inferred (`Pattern`). Every store runs the full ritual — pre-recall, store, verify by recalling a distinctive phrase, then associate.
+
 | Type | Importance | Use Case | Example |
 |------|-----------|---------|---------|
 | Decision | 0.9 | Architecture choices, library selections | "Chose Redis for caching due to sub-millisecond latency requirements" |
-| Insight | 0.8 | Root cause discoveries, problem resolutions | "UserAuth failing on null input. Root: missing validation. Added checks" |
-| Pattern | 0.7 | Reusable patterns, best practices | "Using early returns for validation. Reduces nesting, improves readability" |
-| Preference | 0.6–0.8 | Configuration choices, style preferences | "Using Prettier with 2-space indents and single quotes" |
+| Insight | 0.75 | Root cause discoveries, problem resolutions | "UserAuth failing on null input. Root: missing validation. Added checks" |
+| Pattern | 0.8 | Reusable patterns, best practices | "Using early returns for validation. Reduces nesting, improves readability" |
+| Preference | 0.9 | Configuration choices, style preferences | "Using Prettier with 2-space indents and single quotes" |
 | Context | 0.5–0.7 | General information, new features | "Added JWT authentication with refresh tokens" |
 
-**Phase 3: Conversation End — Summary**
+**No end-of-conversation summary**
 
-Summarize when:
-- Multiple files were modified
-- Significant refactoring occurred
-- New features were implemented
-- Important decisions were made
+The rule file's storage discipline explicitly forbids storing session summaries, progress reports, confirmations, and speculative context. Durable facts are stored the moment a trigger fires, not batched into a wrap-up at session end.
 
 ---
 
@@ -197,16 +197,18 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 
 ## Tagging Conventions
 
+Bare tags only. The rule file bans namespace prefixes (`project/*`, `lang/*`), platform tags (`cursor`), and date-stamped tags (`YYYY-MM`); `entity:*:*` tags are server-injected and should never be authored.
+
 **Project-specific memories** (code, architecture, decisions):
-1. `{{PROJECT_NAME}}` — Detected from `package.json` or git
-2. `cursor` — Platform tag
-3. `YYYY-MM` — Current month
-4. Component tag — Specific area (auth, api, frontend)
+1. Category tag — `preference`, `decision`, `pattern`, `bugfix`, `solution`
+2. `{{PROJECT_NAME}}` — Detected from `package.json` or git; drop it when the slug collides with a common word (`api`, `app`, `test`, `video`)
+3. Language tag — `typescript`, `python`, …
 
 **Personal/cross-project memories** (preferences, style):
 1. `personal` — Use instead of project tag for portability
-2. `YYYY-MM` — Current month
-3. Category tag (health, preferences, workflow)
+2. Category tag (health, preferences, workflow)
+
+For facts with a shelf life, set `t_valid` / `t_invalid` rather than encoding a date in a tag.
 
 Using `personal` instead of the project name ensures style preferences and personal notes are discoverable across all projects, not buried under project-specific memories.
 
