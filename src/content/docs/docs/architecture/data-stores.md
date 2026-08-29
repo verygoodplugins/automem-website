@@ -110,7 +110,7 @@ FalkorDB uses Redis AOF (Append-Only File) and RDB snapshots for durability. Con
 
 **Memory Node Creation**
 
-Memories are created via `MERGE` to ensure idempotency ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
+Memories are created via `MERGE` to ensure idempotency ([automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/api/memory.py#L615)).
 
 **Relationship Creation**
 
@@ -118,7 +118,7 @@ The `/associate` endpoint creates typed edges between memory nodes ([automem/api
 
 **Keyword Search**
 
-The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
+The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/search/runtime_recall_helpers.py#L595)); `automem/stores/graph_store.py` supplies the tag predicate it builds into those queries.
 
 ---
 
@@ -141,7 +141,9 @@ Qdrant is optional. If unavailable, AutoMem falls back to keyword-based search i
 
 | Environment Variable | Default | Description |
 |---|---|---|
-| `QDRANT_URL` | _(none)_ | Full URL (e.g., `https://xyz.cloud.qdrant.io`) |
+| `QDRANT_URL` | _(none)_ | Full URL (e.g., `https://xyz.cloud.qdrant.io`). Takes precedence over `QDRANT_HOST`/`QDRANT_PORT` |
+| `QDRANT_HOST` | _(none)_ | Hostname for self-hosted Qdrant. When set and `QDRANT_URL` is not, the URL is built as `http://QDRANT_HOST:QDRANT_PORT` |
+| `QDRANT_PORT` | `6333` | Port used when constructing the URL from `QDRANT_HOST` |
 | `QDRANT_API_KEY` | _(none)_ | API key for authentication |
 | `QDRANT_COLLECTION` | `memories` | Collection name |
 | `VECTOR_SIZE` | `1024` | Embedding dimensions (must match collection and provider) |
@@ -197,7 +199,7 @@ Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR
 
 ### Vector Search Implementation
 
-The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/vector_store.py)).
+The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/8ff266e62e65cb2e81719a765b05f64a2361a127/automem/search/runtime_recall_helpers.py#L940)); `automem/stores/vector_store.py` supplies the Qdrant tag filter it applies.
 
 ---
 
