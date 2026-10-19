@@ -346,7 +346,7 @@ graph TB
 2. `X-API-Key` or `X-API-Token` header
 3. Query parameters: `api_key`, `apiKey`, or `api_token`
 
-**Environment Fallback:** If client doesn't provide token, uses `process.env.AUTOMEM_API_TOKEN` from [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) (Alexa, Streamable HTTP, and SSE endpoints).
+**Environment Fallback:** If client doesn't provide token, uses `process.env.AUTOMEM_API_TOKEN` from [server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) (Streamable HTTP and SSE endpoints).
 
 **mcp-automem environment variable priority:**
 
@@ -459,31 +459,6 @@ SSE — [server.js:1041-1072](https://github.com/verygoodplugins/automem/blob/eb
 
 ## Additional Features
 
-### Alexa Integration (mcp-sse-server)
-
-The bridge includes a custom Alexa skill endpoint separate from MCP protocol handling.
-
-**Implementation Details:**
-
-| Component | File Location | Purpose |
-|---|---|---|
-| Endpoint handler | [server.js:907-985](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L907-L985) | Routes Alexa JSON to AutoMem API |
-| `speech()` helper | [server.js:859-870](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L859-L870) | Builds Alexa response JSON |
-| `getSlot()` | [server.js:875-878](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L875-L878) | Extracts intent slot values |
-| `buildAlexaTags()` | [server.js:883-890](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L883-L890) | Adds `alexa`, `user:{id}`, `device:{id}` tags |
-| `formatRecallSpeech()` | [server.js:895-904](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L895-L904) | Converts memories to spoken text (240 char limit) |
-
-**Supported Intents:**
-
-| Intent | Slot | Action | Response |
-|---|---|---|---|
-| `RememberIntent` | `note` | Store memory with Alexa tags | "Saved to memory." |
-| `RecallIntent` | `query` | Search with tags, fallback without | Speak up to 3 results |
-| `AMAZON.HelpIntent` | — | — | Usage instructions |
-| `LaunchRequest` | — | — | Welcome message |
-
-**Tag Scoping:** [server.js:954-973](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L954-L973) — Recall tries user-specific tags first, falls back to unscoped search.
-
 ### Health Endpoint
 
 **Route:** `GET /health` — [server.js:806-822](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L806-L822)
@@ -563,7 +538,6 @@ If only using Cursor or Claude Desktop (local MCP clients via mcp-automem packag
 |---|---|
 | Claude Desktop, Cursor, Claude Code, Codex | `mcp-automem` npm package (local stdio) |
 | ChatGPT, Claude.ai, ElevenLabs, any cloud AI | `mcp-sse-server` (Railway deployment) |
-| Alexa voice interface | `mcp-sse-server` Alexa endpoint |
 | Self-hosted local AI with network access | Either approach depending on platform support |
 
 For platform-specific integration guides, see [Platform Integrations](/docs/platforms/claude-desktop/).

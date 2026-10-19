@@ -86,7 +86,7 @@ graph TB
 
 ### MCP Bridge Position
 
-The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, GitHub Copilot, AntiGravity, Grok) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients such as OpenClaw plugin mode and Alexa can bypass the bridge entirely.
+The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, GitHub Copilot, AntiGravity, Grok) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients such as OpenClaw plugin mode can bypass the bridge entirely.
 
 ```mermaid
 graph TB
@@ -495,7 +495,6 @@ Cloud platforms connect via HTTP/SSE sidecar:
 ### Direct API Integration
 
 - **[OpenClaw](/docs/platforms/openclaw/)**: Native plugin (recommended) or legacy curl; also supports [MCP via mcporter](/docs/platforms/openclaw/#mcp-mode-architecture)
-- **[Alexa](/docs/platforms/alexa/)**: Custom Alexa skill with direct API calls
 
 ---
 

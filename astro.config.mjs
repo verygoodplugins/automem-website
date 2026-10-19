@@ -207,7 +207,6 @@ export default defineConfig({
 
             { label: 'GitHub Copilot', slug: 'docs/platforms/github-copilot' },
             { label: 'ElevenLabs Agents', slug: 'docs/platforms/elevenlabs' },
-            { label: 'Alexa', slug: 'docs/platforms/alexa' },
             { label: 'OpenClaw', slug: 'docs/platforms/openclaw' },
             { label: 'Hermes', slug: 'docs/platforms/hermes' },
             { label: 'Google AntiGravity', slug: 'docs/platforms/antigravity' },
