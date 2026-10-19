@@ -152,7 +152,7 @@ npx @verygoodplugins/mcp-automem codex --name my-project
 npx @verygoodplugins/mcp-automem codex --dry-run
 ```
 
-This detects your project name, generates a month-aware `AGENTS.md` section, and validates your MCP config.
+This detects your project name and writes the AutoMem rules block into `AGENTS.md` in the current directory. The block sits between `<!-- BEGIN AUTOMEM CODEX RULES -->` and `<!-- END AUTOMEM CODEX RULES -->` markers: a new file gets just the block, a file without markers gets the block appended, and a file with one marker pair has that block replaced in place. Any other marker layout is refused with an error instead of being rewritten. The command does not edit `~/.codex/config.toml`, so add the MCP server there yourself (Step 2).
 
 ### Step 4: Restart Codex
 
@@ -207,21 +207,32 @@ The `AGENTS.md` template assumes the server is named `memory`. If you use a diff
 
 ## AGENTS.md Rule System
 
-The `codex` CLI command generates an `AGENTS.md` section with placeholders:
-- `{{PROJECT_NAME}}` → detected from `package.json` or git remote
-- `{{CURRENT_MONTH}}` → current month in `YYYY-MM` format
+The `codex` CLI command generates an `AGENTS.md` section from `templates/codex/memory-rules.md`. The template has one placeholder:
+- `{{PROJECT_NAME}}` → the `--name` value, otherwise detected from `package.json`, the git remote, or the directory name
 
 ### Memory Operation Patterns
 
-**1. Task Start Recall**
+**1. Task Start Recall (two phases, issued in parallel)**
 
-Use at the beginning of a coding session, when switching projects, or resuming work:
+Run at the start of a session. Preferences and task context are independent recalls, so the rules issue both in a single message. The defaults are `limit: 20` for preferences, `limit: 30` for task context, and a 90-day task window. The preferences query:
 
 ```
 recall_memory(
-  queries: ["{{PROJECT_NAME}} architecture", "recent decisions"],
-  tags: ["{{PROJECT_NAME}}"],
-  time_query: "last 30 days"
+  tags: ["preference"],
+  limit: 20,
+  sort: "updated_desc"
+)
+```
+
+The task-context query is one semantic query built from the proper nouns, products, files, error strings, tools, and specific topics in the user's message:
+
+```
+recall_memory(
+  query: "<proper nouns, product names, people, tools, specific topics from the user's message>",
+  tags: ["{{PROJECT_NAME}}"],  // drop if the name collides with a common word
+  time_query: "last 90 days",
+  limit: 30,
+  language: "<typescript|python|go|rust|...>"  // optional ranker
 )
 ```
 
@@ -328,23 +339,24 @@ Memories persist across all three modes — store in CLI, recall in IDE, or vice
 
 ## Tagging Convention
 
-Recommended 4-part tagging strategy:
+Use bare tags only. The generated rules say to use `automem`, not `project/automem`, and to avoid `lang/` prefixes, platform tags (such as `codex`), and date-stamped tags (such as `YYYY-MM`). `entity:*:*` tags are injected by the server.
 
-1. **Project identifier**: your project name
-2. **Platform tag**: `codex`
-3. **Component tag**: specific area (e.g., `auth`, `api`, `frontend`)
-4. **Temporal tag**: `YYYY-MM` (e.g., `2026-02`)
+The generated rules treat tags as a hard gate on recall: memories without a matching tag are excluded before scoring. The rules therefore use stable categories and the project name instead of guessed topic tags:
+
+1. **Category tag**: a stable category such as `preference`, `bugfix`, `solution`, or `correction`
+2. **Project identifier**: your project name (`{{PROJECT_NAME}}` in the rules template)
+3. **Language tag**: for example `typescript` or `python`
 
 **Example:**
 ```json
-["my-app", "codex", "auth", "decision", "2026-02"]
+["bugfix", "my-app", "typescript"]
 ```
 
 Why this structure:
-- Project tag enables cross-session filtering
-- Platform tag distinguishes Codex memories from Cursor/Claude
-- Component tag enables architecture-aware recall
-- Temporal tag enables time-based decay and recent work queries
+- A category tag is a stable gate that recall can rely on
+- The project tag enables cross-session filtering. When the name collides with a common topic word (`api`, `app`, `test`, `video`), the rules drop the project tag gate on recall and rely on the semantic query alone
+- A language tag is not a gate: at recall time the rules pass the language as the optional `language` parameter, which boosts memories carrying that language tag without excluding the rest
+- For facts with a shelf life, set `t_valid` and `t_invalid` instead of encoding a date in a tag
 
 ---
 
@@ -368,8 +380,8 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 **Requirement:** Use consistent project names and tags across platforms.
 
 **Tag strategy for cross-platform recall:**
-- Always include the project identifier tag
-- Platform tag (`codex`, `cursor`, `claude-code`) distinguishes source but doesn't block cross-platform recall
+- Store the same bare project tag on every platform
+- Do not add a platform tag (`codex`, `cursor`, `claude-code`). The generated rules ban platform tags, and memories are not partitioned by platform
 - Use `tag_mode: "any"` (default) for cross-platform queries
 
 ---
@@ -378,9 +390,10 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--name <name>` | Project name | Detected from `package.json` or git |
+| `--name <name>` | Project name | Detected from `package.json`, the git remote, or the directory name |
 | `--dry-run` | Preview without writing | `false` |
-| `--rules <path>` | Target rules file path | Current working directory |
+| `--rules <path>` | Target rules file path | `./AGENTS.md` |
+| `--quiet` | Suppress output | `false` |
 
 ---
 
