@@ -321,7 +321,7 @@ redis-cli -h monorail.proxy.rlwy.net -p 12345 -a your-password ping
 
 ```mermaid
 flowchart TD
-    Monitor["Health Monitor<br/>health_monitor.py"]
+    Monitor["Health Monitor<br/>scripts/health_monitor.py"]
 
     Monitor --> Count["Count memories:<br/>FalkorDB vs Qdrant"]
 
@@ -365,9 +365,11 @@ Qdrant upsert logic is in [`automem/api/memory.py`](https://github.com/verygoodp
 
 **Option 1: Auto-Recovery (if enabled)**
 
+Auto-recovery is off by default: the monitor only sends alerts. Enable it by starting the monitor with the `--auto-recover` flag. There is no environment variable for this.
+
 ```bash
-# Set on health monitor service
-HEALTH_MONITOR_AUTO_RECOVER=true
+# Run the health monitor with automatic recovery enabled
+python scripts/health_monitor.py --auto-recover --interval 300
 ```
 
 **Option 2: Manual Recovery**
@@ -484,7 +486,7 @@ Failed to upsert memory to Qdrant
 
 #### Root Cause: Changed Provider or Model
 
-- **Scenario 1:** Switching from OpenAI (768d) to Voyage (1024d)
+- **Scenario 1:** Switching from a 768d setup (`VECTOR_SIZE=768`, for example FastEmbed or OpenAI `text-embedding-3-small` truncated to 768d) to Voyage (1024d)
 - **Scenario 2:** Changing `EMBEDDING_MODEL` to different dimensions
 - **Scenario 3:** Existing Qdrant collection has different dimensions
 
@@ -492,7 +494,9 @@ Failed to upsert memory to Qdrant
 
 **Option 1: Auto-detect existing dimensions (safe)**
 
-The auto-detection logic in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py) checks the existing collection schema. Set `EMBEDDING_PROVIDER=auto` and restart the service — it will detect the existing dimensions.
+The auto-detection logic in [`automem/utils/validation.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py#L64-L85) compares the existing collection's dimension with `VECTOR_SIZE`. It is controlled by `VECTOR_SIZE_AUTODETECT`, which defaults to `true`: leave it enabled and restart the service, and it adopts the existing collection's dimension (with a warning in the logs) instead of failing. Auto-detection only keeps the existing dimension. It does not convert vectors from a different model, so after changing providers or models use Option 2 or 3 to re-embed.
+
+Setting `VECTOR_SIZE_AUTODETECT=false` enforces strict matching instead. A mismatch then raises `VectorDimensionMismatchError` (logged as `FATAL: Vector dimension mismatch detected!`), but in this release [`ensure_qdrant_collection`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py#L179-L183) catches it, logs `Failed to ensure Qdrant collection; disabling client`, and the API keeps starting with the Qdrant client disabled, so vector search is unavailable until you fix the mismatch.
 
 **Option 2: Reset Qdrant collection (data loss)**
 
@@ -587,7 +591,7 @@ The LRU cache in [`consolidation.py:201-217`](https://github.com/verygoodplugins
 
 **2. Verify indexes:**
 
-Ensure the Qdrant keyword index is set up correctly. The index setup is in [`automem/stores/vector_store.py`](https://github.com/verygoodplugins/automem/blob/main/automem/stores/vector_store.py).
+Ensure the Qdrant payload indexes are set up correctly. The index setup is in [`automem/stores/runtime_clients.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py#L161-L178), which creates keyword payload indexes on `tags`, `tag_prefixes`, and `type` at startup. It runs by default; set `QDRANT_ENSURE_PAYLOAD_INDEXES` to `false` to skip it.
 
 **3. Limit expansion:**
 
