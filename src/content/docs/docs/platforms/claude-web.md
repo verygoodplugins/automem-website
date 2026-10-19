@@ -26,10 +26,12 @@ graph TB
 ```
 
 The sidecar service (`mcp-sse-server`) is included in the AutoMem server repository. It implements:
-- **Streamable HTTP** (recommended): `POST /mcp` — full-duplex MCP-over-HTTP, MCP protocol version 2025-03-26
+- **Streamable HTTP** (recommended): `POST /mcp` — stateless MCP-over-HTTP, MCP protocol version 2025-03-26
 - **SSE** (legacy): `GET /mcp/sse` — server→client event stream, MCP protocol version 2024-11-05
 
-Sessions are maintained server-side with a 1-hour TTL and 5-minute sweep interval. The Streamable HTTP transport supports `Last-Event-ID` for resumability.
+Only the SSE transport keeps server-side sessions: each connection is registered in memory under a `sessionId`, and the client sends that ID with every `POST /mcp/messages`. Streamable HTTP is stateless. Every `/mcp` request builds a new server and transport with no session ID generator and no event store, any `Mcp-Session-Id` header is ignored, and the sidecar does not resume streams or replay events after a reconnect, so a `Last-Event-ID` header has no effect.
+
+Source: [server.js:1051-1085](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L1051-L1085) (Streamable HTTP), [server.js:1119-1128](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L1119-L1128) (SSE sessions)
 
 ---
 
@@ -59,16 +61,16 @@ Sessions are maintained server-side with a 1-hour TTL and 5-minute sweep interva
 3. Your sidecar URL will be: `https://your-mcp-bridge.up.railway.app`
 
 :::caution
-The memory service **must** have `PORT=8001` set. Without it, Flask defaults to port 5000, causing connection refused errors from the sidecar.
+The sidecar's `AUTOMEM_API_URL` must point at the port the memory service listens on. The memory service reads `PORT` and falls back to `8001` only when it is unset ([runtime_wiring.py:82](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py#L82)). Keep the memory service's `PORT` and the port in `AUTOMEM_API_URL` identical; a mismatch makes the sidecar's tool calls fail with connection errors.
 
-On Railway, use internal DNS for `AUTOMEM_API_URL`: `http://memory-service.railway.internal:8001`
+On Railway, set `PORT=8001` on the memory service (see the [Railway guide](/docs/deployment/railway/)) and use internal DNS for `AUTOMEM_API_URL`: `http://memory-service.railway.internal:8001`
 :::
 
 **Sidecar endpoints:**
 
 | Endpoint | Method | Transport | Purpose |
 |----------|--------|-----------|---------|
-| `/mcp` | POST | Streamable HTTP | Full-duplex MCP (recommended) |
+| `/mcp` | POST | Streamable HTTP | Stateless MCP over HTTP (recommended) |
 | `/mcp/sse` | GET | SSE | Server→client event stream (legacy) |
 | `/mcp/messages?sessionId=<id>` | POST | SSE | Client→server JSON-RPC (legacy) |
 | `/health` | GET | HTTP | Health probe |
@@ -133,7 +135,10 @@ Prefer header-based authentication when the Claude.ai interface supports it — 
 4. `?api_key=<token>` query parameter
 5. `?apiKey=<token>` query parameter
 6. `?api_token=<token>` query parameter
-7. `AUTOMEM_API_TOKEN` environment variable (fallback)
+
+`getAuthToken()` checks only those six sources. When it finds none, the `/mcp` and `/mcp/sse` route handlers fall back to the sidecar's `AUTOMEM_API_TOKEN` environment variable, and they answer `401` if that is unset too. A token sent by the client therefore takes precedence over the environment variable. The sidecar only checks that a token is present; whichever one it uses is forwarded to AutoMem as a `Bearer` token, which AutoMem checks against its own API token when one is configured (on every endpoint except `/health`, so `check_database_health` does not test the token).
+
+Source: [getAuthToken()](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L908-L916), [`/mcp` fallback](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L1067-L1071), [`/mcp/sse` fallback](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L1106-L1109)
 
 ---
 
@@ -189,11 +194,10 @@ https://your-mcp-bridge.up.railway.app/mcp?api_token=<token>
 ```
 
 Benefits of Streamable HTTP:
-- Lower latency (fewer round-trips)
-- No `sessionId` management needed
-- Full-duplex communication
-- Better error handling
-- Supports `Last-Event-ID` for stream resumability
+- Each JSON-RPC request is answered in the body of its own `POST /mcp`, with no `GET /mcp/sse` stream to open first
+- No `sessionId` management needed: the endpoint keeps no session and ignores any `Mcp-Session-Id` header
+
+Streamable HTTP on this sidecar cannot resume a stream with `Last-Event-ID` (see [Reconnecting](#reconnecting-streamable-http)).
 
 ---
 
@@ -210,7 +214,7 @@ Benefits of Streamable HTTP:
 
 1. Verify `AUTOMEM_API_TOKEN` in sidecar environment variables
 2. Check that the token matches between sidecar and memory service
-3. Test token: `curl -H "Authorization: Bearer $TOKEN" https://your-automem.up.railway.app/health`
+3. Test token against an endpoint that checks it (`/health` does not): `curl -H "Authorization: Bearer $TOKEN" "https://your-automem.up.railway.app/recall?query=test&limit=1"`
 
 ### SSE connection drops
 
@@ -219,9 +223,9 @@ The sidecar sends heartbeats every 20 seconds to maintain SSE connections. If Cl
 - The sidecar sets anti-buffering headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache`)
 - Consider switching to Streamable HTTP transport
 
-### Stream replay (Streamable HTTP)
+### Reconnecting (Streamable HTTP)
 
-The sidecar's `InMemoryEventStore` persists events for 1 hour with a maximum of 1000 events per stream. If Claude.ai sends a `Last-Event-ID` header on reconnect, the sidecar replays missed events automatically.
+The sidecar does not replay missed events. Each `/mcp` request gets its own transport, created without an event store, so a `Last-Event-ID` header has no effect and there is no stream to resume. The `InMemoryEventStore` class in `server.js` is defined but never attached to a transport ([server.js:223-263](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L223-L263)). A client that reconnects simply sends a new `POST /mcp`; the sidecar keeps no session between requests.
 
 ---
 
