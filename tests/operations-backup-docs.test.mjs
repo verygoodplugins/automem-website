@@ -29,7 +29,9 @@ function between(page, startHeading, endHeading) {
 test('FalkorDB export is documented as a Cypher graph dump, not a Redis keyspace dump', async () => {
   const page = await readBackupPage();
   const format = between(page, '### Backup Format', '### Command-Line Usage');
-  const falkor = format.slice(0, format.indexOf('**Qdrant Export Structure:**'));
+  const qdrantMarker = format.indexOf('**Qdrant Export Structure:**');
+  assert.notEqual(qdrantMarker, -1, 'expected a Qdrant Export Structure block in Backup Format');
+  const falkor = format.slice(0, qdrantMarker);
 
   assertAbsent(falkor, /entire Redis keyspace/i);
   assertAbsent(falkor, /Metadata and indices/i);
@@ -52,9 +54,12 @@ test('--cleanup --keep N is documented as a per-store file count ranked by modif
   const usage = between(page, '### Command-Line Usage', '### Local Filesystem Storage');
   const storage = between(page, '### Local Filesystem Storage', '### S3 Cloud Storage');
 
-  assertAbsent(page, /older than/i);
-  assertAbsent(page, /filename timestamp parsing/i);
-  assertAbsent(page, /N days/);
+  for (const [name, slice] of [['usage', usage], ['storage', storage]]) {
+    assertAbsent(slice, /older than/i);
+    assertAbsent(slice, /filename timestamp parsing/i);
+    assertAbsent(slice, /N days/);
+    assert.ok(slice.length > 0, `expected non-empty ${name} slice`);
+  }
 
   assert.match(
     usage,
@@ -105,8 +110,46 @@ test('Qdrant backup files are documented as a JSON object whose points array hol
     /Each Qdrant backup is a JSON object with `timestamp`, `collection_name`, `points`, and `stats`/,
   );
   assert.match(method2, /`stats` holds `points_count` and `vector_size`/);
-  assert.match(method2, /Each entry in `points` has `id`, `vector`/);
+  assert.match(method2, /Each entry in `points` has `id` \(the memory ID\), `vector`/);
   assert.match(method2, /Restore->>Restore: Parse JSON object<br\/>json\.load\(\)/);
+});
+
+test('Qdrant export block in Backup Format describes the object shape without invented fields', async () => {
+  const page = await readBackupPage();
+  const format = between(page, '### Backup Format', '### Command-Line Usage');
+  const qdrantMarker = format.indexOf('**Qdrant Export Structure:**');
+  assert.notEqual(qdrantMarker, -1, 'expected a Qdrant Export Structure block in Backup Format');
+  const qdrant = format.slice(qdrantMarker);
+
+  assertAbsent(qdrant, /Collection configuration/i);
+  assertAbsent(qdrant, /Point IDs mapped to memory IDs/i);
+
+  for (const key of ['timestamp', 'collection_name', 'points', 'stats']) {
+    assert.ok(qdrant.includes(`\`${key}\``), `expected Qdrant top-level key ${key}`);
+  }
+  for (const key of ['id', 'vector', 'payload', 'points_count', 'vector_size']) {
+    assert.ok(qdrant.includes(`\`${key}\``), `expected Qdrant field ${key}`);
+  }
+  assert.match(qdrant, /`id` \(the memory ID\)/);
+  assert.match(qdrant, /`VECTOR_SIZE`/);
+});
+
+test('Qdrant payload description does not claim keys the write path never stores', async () => {
+  const page = await readBackupPage();
+  const method2 = between(
+    page,
+    '## Method 2: Backup File Restoration',
+    '## Method 3: Railway Volume Restore',
+  );
+  const sentence = method2.split('\n').find((line) => line.includes('Each entry in `points`'));
+  assert.ok(sentence, 'expected the Method 2 sentence describing each entry in `points`');
+
+  assertAbsent(sentence, /memory_id/);
+  assertAbsent(sentence, /created_at/);
+  assert.match(sentence, /`id` \(the memory ID\)/);
+  for (const key of ['content', 'tags', 'tag_prefixes', 'importance', 'timestamp', 'type', 'confidence', 'metadata']) {
+    assert.ok(sentence.includes(`\`${key}\``), `expected payload key ${key}`);
+  }
 });
 
 test('backup integrity check counts points inside the Qdrant backup object', async () => {

@@ -110,12 +110,12 @@ Indexes and other Redis-level structures are not part of the export.
 
 **Qdrant Export Structure:**
 
-The Qdrant export includes:
+The Qdrant export is a JSON object with `timestamp`, `collection_name`, `points`, and `stats` keys, containing:
 
-- Vector embeddings (dimensions depend on the configured `VECTOR_SIZE`, embedding provider, and any adopted existing Qdrant collection dimension)
-- Payload data (memory content, metadata, tags)
-- Point IDs mapped to memory IDs
-- Collection configuration
+- `points`, one entry per Qdrant point, each with `id` (the memory ID), `vector`, and `payload`
+- Vector embeddings in `vector` (dimensions depend on the configured `VECTOR_SIZE`, embedding provider, and any adopted existing Qdrant collection dimension)
+- Payload data in `payload` (memory content, metadata, tags)
+- `stats` with `points_count` and `vector_size`
 
 Both exports are compressed using `gzip` with `.json.gz` extension, typically achieving 70-80% compression ratio.
 
@@ -411,7 +411,7 @@ backups/
     └── qdrant_20251020_083000.json.gz
 ```
 
-Each Qdrant backup is a JSON object with `timestamp`, `collection_name`, `points`, and `stats`. `stats` holds `points_count` and `vector_size`. Each entry in `points` has `id`, `vector` (float array, dimensions match `VECTOR_SIZE` config), and `payload` (content, memory_id, tags, importance, type, created_at).
+Each Qdrant backup is a JSON object with `timestamp`, `collection_name`, `points`, and `stats`. `stats` holds `points_count` and `vector_size`. Each entry in `points` has `id` (the memory ID), `vector` (float array, dimensions match `VECTOR_SIZE` config), and `payload` (the memory's stored fields, such as `content`, `tags`, `tag_prefixes`, `importance`, `timestamp`, `type`, `confidence`, and `metadata`).
 
 ### Restoration Flow
 
