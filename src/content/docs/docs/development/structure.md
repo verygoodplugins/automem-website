@@ -190,9 +190,11 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 #### Environment Variable Load Order (`automem/config.py`)
 
-1. Load `.env` from repository root
-2. Load `~/.config/automem/.env` (user-specific overrides)
-3. Railway injects secrets as environment variables
+`automem/config.py` calls `load_dotenv` twice and never sets `override=True`, so a value that is already set is never replaced. In order of precedence, highest first:
+
+1. Variables already in the process environment, for example secrets that Railway injects
+2. The project `.env`, loaded first by `load_dotenv()` with no path (in a normal, non-interactive run python-dotenv searches upward from the `automem/` package directory)
+3. `~/.config/automem/.env`, loaded second; it only fills in variables that are still unset
 
 #### Key Configuration Categories
 
@@ -215,7 +217,7 @@ All scripts connect directly to FalkorDB and Qdrant, bypassing the Flask API. Th
 
 **Docker Compose services:**
 
-- `memory-service`: Flask API (port 8001)
+- `flask-api`: Flask API (port 8001)
 - `falkordb`: Graph database (port 6379)
 - `qdrant`: Vector database (port 6333)
 
@@ -283,6 +285,8 @@ The mcp-automem package uses a TypeScript project structure with distinct direct
 
 ### Directory Layout
 
+This is a selected layout, not an exhaustive listing. `src/` and `src/cli/` contain further helper modules, and `templates/` also holds shared root-level files.
+
 ```mermaid
 graph TB
     ROOT["."]
@@ -300,17 +304,28 @@ graph TB
     SRC --> CLI["cli/"]
 
     CLI --> SETUP["setup.ts"]
+    CLI --> INSTALL["install.ts"]
+    CLI --> CLIENTS["clients.ts"]
     CLI --> CLAUDECODE["claude-code.ts"]
-    CLI --> QUEUE["queue.ts"]
     CLI --> CURSOR["cursor.ts"]
     CLI --> CODEX["codex.ts"]
+    CLI --> COPILOT["copilot.ts"]
+    CLI --> HERMES["hermes.ts"]
+    CLI --> GROK["grok.ts"]
     CLI --> OPENCLAW["openclaw.ts"]
+    CLI --> QUEUE["queue.ts"]
+    CLI --> MIGRATE["migrate.ts"]
+    CLI --> UNINSTALL["uninstall.ts"]
+    CLI --> CLOUD["cloud/"]
 
-    TEMPLATES --> TCCLI["claude-code/\nhooks, scripts, settings"]
-    TEMPLATES --> TCUR["cursor/\n.mdc rule files"]
-    TEMPLATES --> TCODEX["codex/\nAGENTS.md"]
-    TEMPLATES --> TOCLAW["openclaw/\nSKILL.md"]
-    TEMPLATES --> TWARP["warp/\nwarp-rules.md"]
+    TEMPLATES --> TCCLI["claude-code/\nhooks, settings"]
+    TEMPLATES --> TCUR["cursor/\n.mdc rule template, user rules"]
+    TEMPLATES --> TCODEX["codex/\nconfig.toml, memory-rules.md"]
+    TEMPLATES --> TCOPILOT["copilot/\ninstructions, hooks, profiles, scripts"]
+    TEMPLATES --> THERMES["hermes/\nmemory-rules.md, provider/"]
+    TEMPLATES --> TGROK["grok/\nconfig.toml, memory-rules.md"]
+    TEMPLATES --> TOCLAW["openclaw/\nSKILL.md variants, setup guide"]
+    TEMPLATES --> TANTI["antigravity/\nmcp_config.json"]
 
     PLUGINS --> PAUTOMEM["automem/"]
     PAUTOMEM --> PCCLI[".claude-plugin/\nplugin.json"]
@@ -372,37 +387,54 @@ Each CLI command is implemented as a separate module with a main `run*()` functi
 
 The `templates/` directory contains platform-specific integration files that are copied to user systems during installation. These files are included in the published npm package.
 
-```
+Selected layout of `templates/` (not exhaustive: the root-level Markdown files are omitted, and the contents of the `copilot/` subdirectories and `hermes/provider/` are summarized):
+
+```text
 templates/
+├── antigravity/
+│   └── mcp_config.json
 ├── claude-code/
 │   ├── hooks/               # Shell scripts triggered by Claude events
 │   │   ├── automem-session-start.sh   # SessionStart recall
 │   │   ├── automem-track-store.sh     # PostToolUse store tracking
 │   │   └── automem-stop-nudge.sh      # Optional Stop nudge (--profile nudged)
-│   ├── settings.json        # Base hook configuration (lean profile)
-│   ├── settings.stop-nudge.json  # Adds Stop nudge hook registration
-│   └── profiles/            # (retired — use --profile nudged on CLI instead)
-├── cursor/
-│   ├── automem.mdc          # Cursor rule template
-│   └── mcp-config.json      # MCP server config snippet
+│   ├── settings.json        # Base hook configuration (default silent profile)
+│   └── settings.stop-nudge.json  # Adds Stop nudge hook registration
 ├── codex/
-│   ├── AGENTS.md            # Codex agent rules
-│   └── config.toml.snippet  # Server config for ~/.codex/
+│   ├── config.toml
+│   └── memory-rules.md
+├── copilot/
+│   ├── automem.instructions.md
+│   ├── hooks/               # JSON hook definitions
+│   ├── profiles/            # full.json, lean.json
+│   └── scripts/             # .sh and .ps1 hook scripts
+├── cursor/
+│   ├── automem.mdc.template # Cursor rule template
+│   ├── rule-evals.md
+│   └── user-rules.md
+├── grok/
+│   ├── config.toml
+│   └── memory-rules.md
+├── hermes/
+│   ├── memory-rules.md
+│   └── provider/            # Python provider files and plugin.yaml
 ├── openclaw/
-│   └── SKILL.md             # OpenClaw skill definition
-└── warp/
-    └── warp-rules.md        # Warp terminal rules
+│   ├── OPENCLAW_SETUP.md
+│   ├── skill/               # SKILL.md
+│   ├── skill-legacy/        # SKILL.md
+│   └── skill-mcp/           # SKILL.md
+├── claude_desktop_config.json
+└── cursor_mcp.json
 ```
 
 **Template file types:**
 
 | Type | Extension | Purpose | Target Platform |
 |---|---|---|---|
-| Hook Scripts | `.sh` | Event-driven automation | Claude Code |
-| Rule Files | `.md`, `.mdc` | AI assistant instructions | Cursor, Codex, Warp, OpenClaw |
-| Config Snippets | `.json`, `.toml` | MCP server configuration | All platforms |
+| Hook Scripts | `.sh`, `.ps1` | Event-driven automation | Claude Code (`.sh`), Copilot (`.sh`, `.ps1`) |
+| Rule Files | `.md`, `.mdc.template` | AI assistant instructions | Claude Code, Claude Desktop, Cursor, Codex, Copilot, Grok, Hermes, OpenClaw |
+| Config Snippets | `.json`, `.toml` | MCP server configuration | Claude Desktop, Cursor, Antigravity, Codex, Grok |
 | Settings | `.json` | Hook permissions & matchers | Claude Code |
-| Filter Configs | `.json` | Memory significance rules | Claude Code |
 
 ### Build Artifacts (`dist/`)
 
@@ -412,13 +444,13 @@ The `dist/` directory is generated by TypeScript compilation (`tsc`) and contain
 2. **Type declarations** (`.d.ts`) — For TypeScript consumers
 3. **Source maps** (`.js.map`) — For debugging compiled code
 
-**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/tsconfig.json)):
+**TypeScript configuration** ([`tsconfig.json`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/tsconfig.json#L2-L18)):
 
-- `outDir: "./dist"` — Output location
+- `outDir: "dist"` — Output location
 - `declaration: true` — Generate `.d.ts` files
 - `sourceMap: true` — Generate source maps
-- `module: "ES2020"` — ES module format
-- `target: "ES2020"` — JavaScript target version
+- `module: "NodeNext"` — Node.js module format; `package.json` sets `"type": "module"`, so the output is ES modules
+- `target: "ES2022"` — JavaScript target version
 
 **Build scripts:**
 
@@ -444,7 +476,7 @@ The repository root contains multiple configuration files:
 |---|---|
 | `package.json` | npm scripts, dependencies, package metadata |
 | `tsconfig.json` | TypeScript compiler options |
-| `eslint.config.js` | ESLint flat config (ESLint 9+) |
+| `eslint.config.mjs` | ESLint flat config (ESLint 9+) |
 | `.commitlintrc.cjs` | Conventional commit message validation |
 | `.prettierrc` | Code formatting rules |
 | `release-please-config.json` | Automated release configuration |
