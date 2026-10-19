@@ -10,7 +10,7 @@ Key GitHub sources:
 - [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/service_state.py) — ServiceState dataclass and shared state
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/config.py) — Centralized configuration and constants
 - [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/runtime_wiring.py) — Application startup and worker initialization
-- [automem/api/](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, admin.py, health.py, enrichment.py, consolidation.py, viewer.py)
+- [automem/api/](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, entity.py, admin.py, backup.py, health.py, enrichment.py, consolidation.py, stream.py, viewer.py)
 - [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/graph_store.py) — FalkorDB operations
 - [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/vector_store.py) — Qdrant operations
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/provider.py) — Embedding provider abstraction
@@ -292,12 +292,15 @@ AutoMem uses two abstraction modules to isolate database-specific logic:
 
 ### Graph Store Module
 
-The `automem/stores/graph_store.py` module encapsulates FalkorDB operations:
+The `automem/stores/graph_store.py` module holds the FalkorDB (Cypher) tag-filter helper:
 
 Key functions:
 - `_build_graph_tag_predicate(tag_mode, tag_match)` — Generates Cypher WHERE clauses for tag filtering
+
+Node serialization lives in [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/graph.py):
+
 - `_serialize_node(node)` — Converts FalkorDB node to dictionary with property extraction
-- `_summarize_relation_node(rel)` — Extracts relationship metadata (type, strength, context)
+- `_summarize_relation_node(data)` — Reduces a serialized related memory to a compact summary (id, type, timestamp, summary or a trimmed content snippet, importance, confidence, up to five tags)
 
 ### Vector Store Module
 
@@ -326,12 +329,14 @@ The `extract_api_token()` function ([automem/api/auth_helpers.py](https://github
 
 Admin operations require a separate token checked by `require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/auth_helpers.py)):
 
-| Endpoint | Purpose | Admin Token Required |
+| Endpoint | Purpose | Tokens Required |
 |---|---|---|
-| `POST /admin/reembed` | Regenerate all embeddings | Yes |
-| `POST /enrichment/reprocess` | Force re-enrichment | Yes |
-| `GET /consolidate/status` | View scheduler state | No |
-| `POST /consolidate` | Trigger consolidation | No |
+| `POST /admin/reembed` | Regenerate all embeddings | API token + admin token |
+| `POST /enrichment/reprocess` | Force re-enrichment | API token + admin token |
+| `GET /consolidate/status` | View scheduler state | API token |
+| `POST /consolidate` | Trigger consolidation | API token |
+
+When `AUTOMEM_API_TOKEN` is set, a [`before_request` guard](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) and [`require_api_token()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py#L45-L61) apply it to every route except `/health`, `/viewer*`, `/backup` (admin token only), and `OPTIONS` requests.
 
 **Configuration:**
 - `AUTOMEM_API_TOKEN` — Standard API access ([automem/config.py:622](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L622))
@@ -379,9 +384,9 @@ Configuration is centralized in `automem/config.py` which loads environment vari
 | **Vector Store** | `QDRANT_URL`, `QDRANT_API_KEY`, `COLLECTION_NAME`, `VECTOR_SIZE` | Optional semantic search |
 | **Authentication** | `AUTOMEM_API_TOKEN`, `ADMIN_API_TOKEN` | API access control |
 | **Embedding** | `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, `VOYAGE_API_KEY`, `OPENAI_API_KEY` | Embedding generation |
-| **Enrichment** | `ENRICHMENT_*` (12 variables) | Entity extraction, linking |
-| **Consolidation** | `CONSOLIDATION_*` (15 variables) | Schedule, thresholds |
-| **Search** | `SEARCH_WEIGHT_*` (8 variables) | Hybrid scoring weights |
+| **Enrichment** | `ENRICHMENT_MAX_ATTEMPTS`, `ENRICHMENT_SIMILARITY_LIMIT`, `ENRICHMENT_SIMILARITY_THRESHOLD`, `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | Entity extraction, linking |
+| **Consolidation** | `CONSOLIDATION_TICK_SECONDS`, `CONSOLIDATION_DECAY_INTERVAL_SECONDS`, `CONSOLIDATION_DECAY_IMPORTANCE_THRESHOLD`, `CONSOLIDATION_GRACE_PERIOD_DAYS` | Schedule, thresholds |
+| **Search** | `SEARCH_WEIGHT_VECTOR`, `SEARCH_WEIGHT_KEYWORD`, `SEARCH_WEIGHT_TAG`, `SEARCH_WEIGHT_RECENCY` | Hybrid scoring weights |
 | **Memory** | `MEMORY_TYPES`, `RELATIONSHIP_TYPES`, `TYPE_ALIASES` | Type system |
 
 ### Configuration Loading Priority
@@ -389,9 +394,11 @@ Configuration is centralized in `automem/config.py` which loads environment vari
 The `automem/config.py` module loads configuration in this order:
 
 1. **Environment variables** — Highest priority
-2. **~/.config/automem/.env** — User-level defaults
-3. **Project .env** — Development defaults
+2. **Project .env** — Development defaults, loaded first
+3. **~/.config/automem/.env** — User-level defaults, loaded second
 4. **Hardcoded defaults** — Fallback values in config.py
+
+`config.py` calls `load_dotenv()` for the project `.env` before the user file, and `load_dotenv` does not override names that are already set, so a key set in the environment or the project `.env` wins over the same key in `~/.config/automem/.env`.
 
 ### Memory Type System
 
@@ -413,14 +420,18 @@ AutoMem implements defense-in-depth error handling to maximize availability.
 
 ### Background Worker Resilience
 
-Each worker implements retry logic with exponential backoff:
+Failure handling differs by worker:
 
 | Worker | Max Retries | Backoff | Failure Handling |
 |---|---|---|---|
-| Enrichment | 3 | 5s, 10s, 15s | Log error, update stats, discard job |
+| Enrichment | Up to 2, forced jobs only (`ENRICHMENT_MAX_ATTEMPTS` defaults to 3 attempts; see note) | Flat `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default 5s) before each re-enqueue | Log error, update stats, discard job |
 | Embedding | Built into provider | Provider-specific | Queue retries, mark failed after max attempts |
 | Consolidation | Infinite (scheduled) | None | Log error, continue to next cycle |
 | Sync | Infinite (interval) | None | Log error, retry on next interval |
+
+:::note[Enrichment retries]
+After a failure the worker sleeps the flat backoff, then [calls `enqueue_enrichment` again](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_worker.py#L149-L151) with the attempt counter incremented. That call goes through the same [duplicate check](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_worker.py#L24-L44) as a new job, and the failed memory ID is still marked in flight, so a non-forced job (the kind `POST /memory` queues) is not re-queued. Forced jobs from `POST /enrichment/reprocess` are re-queued until `ENRICHMENT_MAX_ATTEMPTS` is used up.
+:::
 
 ### API Error Responses
 
