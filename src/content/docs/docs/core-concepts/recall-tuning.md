@@ -32,7 +32,7 @@ flowchart TD
     Gate -->|"no / on-topic"| Rerank{"recency_bias<br/>active?"}
     Damp --> Rerank
     Rerank -->|"yes"| Temporal["+ SEARCH_WEIGHT_TEMPORAL<br/>× relative recency"]
-    Rerank -->|"no"| Norm["Normalize to 0.0–1.0"]
+    Rerank -->|"no"| Norm["final_score<br/>(not normalized)"]
     Temporal --> Norm
     Norm --> Out["Ranked results"]
 ```
@@ -43,7 +43,7 @@ Three stages are tunable independently: the **component weights** (what evidence
 
 ## Component weights
 
-The base score is a weighted sum of ten components. Defaults (relative contributions, summing to 1.95, then normalized to `[0.0, 1.0]`):
+The base `final_score` is a weighted sum of ten components plus an unweighted context bonus (below). It is not normalized to `[0.0, 1.0]`, so a strong match can score above `1.0`. Default weights (they sum to 1.95):
 
 | Weight variable | Default | Contribution |
 | --- | --- | --- |
@@ -56,9 +56,13 @@ The base score is a weighted sum of ten components. Defaults (relative contribut
 | `SEARCH_WEIGHT_RECENCY` | `0.10` | Age decay (see below) |
 | `SEARCH_WEIGHT_IMPORTANCE` | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_CONFIDENCE` | `0.05` | Classification certainty |
-| `SEARCH_WEIGHT_RELEVANCE` | `0.00` | Context-profile bonus (opt-in via `context_tags`) |
+| `SEARCH_WEIGHT_RELEVANCE` | `0.00` | Consolidation decay `relevance_score` (age, access, relationships, importance, confidence); opt-in |
 
-Raise a weight to make that signal dominate; lower it to mute noise. The weights are *relative* — changing one shifts the balance, and the sum is renormalized, so you rarely need to rescale the others.
+The context bonus is not one of these ten weights. The `context_tags` soft boost, together with the `context_types` and `priority_ids` hints and the automatic language, style, and `context`-label hints, feeds a separate additive `context_bonus` term that is added to the sum outside the weight table and is never gated. Its per-signal amounts are hardcoded rather than configurable: 0.45 for a tag hit, 0.25 for a type hit, 0.2 for a keyword hit, and 0.9 for a `priority_ids` match.
+
+Two more additive terms also sit outside the ten weights: the recency re-rank below adds `SEARCH_WEIGHT_TEMPORAL` × relative recency when it runs, and memories added by entity expansion (`expand_entities`) get a flat `+0.15`.
+
+Raise a weight to make that signal dominate; lower it to mute noise. Changing one weight shifts the balance against the others. Because the weighted sum is not normalized, it also changes the absolute scores, so re-check any `min_score` or `RECALL_MIN_SCORE` threshold after tuning.
 
 ---
 
@@ -90,7 +94,7 @@ The re-rank is **inert by default** — `SEARCH_WEIGHT_TEMPORAL` changes nothing
 
 ## The relevance gate
 
-`RECALL_RELEVANCE_GATE` (default `0.0` = disabled) addresses [issue #130](https://github.com/verygoodplugins/automem/issues/130): a high-importance but **off-topic** memory riding query-independent score (importance, confidence, recency, tag overlap) to the top of a tag-scoped pool.
+`RECALL_RELEVANCE_GATE` (default `0.0` = disabled) addresses [issue #130](https://github.com/verygoodplugins/automem/issues/130): a high-importance but **off-topic** memory riding query-independent score (importance, confidence, recency, tag overlap, consolidation relevance) to the top of a tag-scoped pool.
 
 When the gate is set and a result's best query-topical evidence — the max of its vector, keyword, metadata, and exact-match components — falls **below** the threshold, the query-independent components are scaled by `evidence / gate`. This is a **linear ramp, not a cliff**: a barely-relevant result is dampened a little, a wholly off-topic one a lot. The context bonus is never gated, so `context_tags` remains the explicit soft-boost channel.
 
