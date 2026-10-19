@@ -229,29 +229,32 @@ All background threads are daemon threads, meaning they terminate automatically 
 
 ### Health Endpoint Statistics
 
-The `/health` endpoint exposes real-time statistics for all background systems:
+The `/health` endpoint reports the enrichment pipeline's queue state alongside store and sync status. It has no `embedding` or `consolidation` block:
 
 | Metric | Source | Interpretation |
 |---|---|---|
+| `enrichment.status` | `ServiceState.enrichment_thread` | `running` if the worker thread is alive, else `stopped` |
 | `enrichment.queue_depth` | `ServiceState.enrichment_queue` | Items waiting in queue |
-| `enrichment.pending` | `ServiceState.enrichment_pending` | Memories not yet enriched in graph |
+| `enrichment.pending` | `ServiceState.enrichment_pending` | Enqueued but not yet claimed by the worker; a job moves to `enrichment.inflight` when the worker picks it up |
 | `enrichment.inflight` | `ServiceState.enrichment_inflight` | Currently processing |
 | `enrichment.processed` | `EnrichmentStats.successes` | Total completed |
 | `enrichment.failed` | `EnrichmentStats.failures` | Total failed |
-| `embedding.queue_depth` | `ServiceState.embedding_queue` | Embeddings queued for generation |
-| `consolidation.last_runs` | `ConsolidationScheduler` | Last execution timestamps |
-| `consolidation.next_runs` | `ConsolidationScheduler.get_next_runs()` | Time until next run |
+| `memory_count` / `vector_count` | FalkorDB / Qdrant counts | Records in each store, excluding `RECALL_EXCLUDED_TYPES`; `null` when a store is unavailable |
+| `sync_status` | Derived from the two counts | `synced`, `drift_detected`, `orphaned_vectors`, or `unknown` |
+| `vector_dimensions` | `VECTOR_SIZE`, `ServiceState.effective_vector_size`, Qdrant collection | `configured`, `effective`, `collection`, `mismatch` |
 
-### Admin Endpoints
+Embedding-queue depth is not published by `/health`. Consolidation scheduling and run history come from `GET /consolidate/status`, which returns `next_runs`, `history`, `thread_alive`, and `tick_seconds`.
 
-Advanced monitoring available via admin token:
+### Operational Endpoints
 
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/enrichment/status` | GET | Detailed enrichment stats + sample pending IDs |
-| `/enrichment/reprocess` | POST | Re-enqueue specific memory IDs |
-| `/consolidate` | POST | Manually trigger consolidation tasks |
-| `/consolidate/status` | GET | Consolidation history and next run times |
+Monitoring endpoints and manual triggers. The global API-token guard covers all four whenever `AUTOMEM_API_TOKEN` is set (`/health` is exempt from it). Only `/enrichment/reprocess` also requires the admin token (`ADMIN_API_TOKEN`, sent in the `X-Admin-Token` or `X-Admin-Api-Key` header, or as `?admin_token`); see [Admin Operations](/docs/reference/api/admin/).
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/enrichment/status` | GET | API token | Enrichment worker status and processing stats (no pending-ID samples) |
+| `/enrichment/reprocess` | POST | API token + admin token | Re-enqueue specific memory IDs |
+| `/consolidate` | POST | API token | Manually trigger consolidation tasks |
+| `/consolidate/status` | GET | API token | Consolidation history and next run times |
 
 ---
 
@@ -306,7 +309,7 @@ Consolidation tasks catch exceptions and continue:
 **Relationship Count Caching (80% consolidation speedup):**
 - LRU cache with 10,000 entry capacity
 - Hourly cache invalidation via timestamp key
-- Dramatically reduces graph queries during decay cycles ([consolidation.py:152](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/consolidation.py#L152))
+- Dramatically reduces graph queries during decay cycles ([consolidation.py:201-216](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L201-L216))
 
 ---
 
@@ -347,7 +350,7 @@ AutoMem's background processing architecture achieves:
 2. **Cost efficiency** — Batched embedding generation reduces API calls by 40-50%
 3. **Automatic maintenance** — Scheduled consolidation keeps graph healthy over time
 4. **Fault tolerance** — Independent systems with retry logic and error isolation
-5. **Observability** — Rich metrics via `/health` and admin endpoints
+5. **Observability** — Rich metrics via `/health` and the operational endpoints
 
 For implementation details of each subsystem:
 
