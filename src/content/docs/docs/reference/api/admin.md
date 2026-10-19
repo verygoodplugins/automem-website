@@ -113,7 +113,7 @@ Authentication failures and other errors raised through Flask's HTTP exception p
 | `queue_size` | integer | Current number of jobs in the enrichment queue |
 | `pending` | integer | Count of memories waiting to be processed |
 | `inflight` | integer | Count of memories currently being processed |
-| `max_attempts` | integer | Maximum retry attempts per memory before marking failed (from `ENRICHMENT_MAX_ATTEMPTS`) |
+| `max_attempts` | integer | Maximum attempts for a forced job before giving up; non-forced jobs are not retried (from `ENRICHMENT_MAX_ATTEMPTS`) |
 | `stats` | object | Lifetime enrichment statistics (nested object with processing counters) |
 | `classification` | object | Classification service counters (LLM vs regex usage statistics) |
 

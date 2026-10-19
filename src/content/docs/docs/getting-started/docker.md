@@ -14,7 +14,7 @@ AutoMem provides two local development paths: Docker Compose (recommended) for a
 | Feature | Docker Compose | Bare Metal |
 |---------|---------------|-----------|
 | Setup Time | 5 minutes | 2 minutes |
-| External Access | Local only | Local only |
+| External Access | Ports published on all host interfaces by default ([see below](#restricting-network-exposure)) | `app.py` listens on all interfaces |
 | Data Persistence | Named volumes (manual backup) | External DB dependent |
 | Cost | Free | Free |
 | Use Case | Full-stack development | API development only |
@@ -150,7 +150,7 @@ Optional variables with defaults:
 | `FALKORDB_PASSWORD` | `${FALKORDB_PASSWORD:-}` | FalkorDB authentication | Empty by default (no auth) |
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint | Docker internal URL |
 | `QDRANT_API_KEY` | `${QDRANT_API_KEY:-}` | Qdrant authentication | Not required for local Qdrant |
-| `OPENAI_API_KEY` | `${OPENAI_API_KEY:-}` | OpenAI API access | Falls back to placeholder embeddings |
+| `OPENAI_API_KEY` | `${OPENAI_API_KEY:-}` | OpenAI API access | Optional. `auto` tries it after Voyage; without it, `auto` tries configured Ollama, then FastEmbed, then placeholder embeddings |
 | `VOYAGE_API_KEY` | `${VOYAGE_API_KEY:-}` | Voyage AI API access | Used when `EMBEDDING_PROVIDER=voyage` or auto-selected |
 | `EMBEDDING_PROVIDER` | `${EMBEDDING_PROVIDER:-auto}` | Provider selection | `auto\|voyage\|openai\|ollama\|local\|placeholder` |
 | `VECTOR_SIZE` | `${VECTOR_SIZE:-1024}` | Embedding vector dimension | Reported as `vector_dimensions.configured` in `/health` |
@@ -181,6 +181,8 @@ Docker Compose manages startup order using `depends_on` conditions:
 | 6334 | 6334 | qdrant | gRPC | Qdrant gRPC API |
 
 Each host port can be overridden with an environment variable (set in your shell or `.env`): `AUTOMEM_API_HOST_PORT` (API), `FALKORDB_HOST_PORT` (Redis), `FALKORDB_BROWSER_HOST_PORT` (FalkorDB UI), `QDRANT_HOST_PORT` (Qdrant REST), and `QDRANT_GRPC_HOST_PORT` (Qdrant gRPC). Only the host side changes: container ports and the service-to-service addresses below stay the same. If you change `AUTOMEM_API_HOST_PORT`, use that port instead of `8001` when you call the Compose stack from the host.
+
+These mappings name no host IP, so Docker publishes every port on all host interfaces, not only on `localhost`. See [Restricting Network Exposure](#restricting-network-exposure) before you run the stack anywhere other than a trusted machine.
 
 Flask API connects to dependencies using service names (`FALKORDB_HOST=falkordb`, `QDRANT_URL=http://qdrant:6333`). Docker Compose automatically creates DNS entries for each service name on the `automem_default` bridge network.
 
@@ -363,14 +365,24 @@ Docker Compose is optimized for development. Production deployments require addi
 
 | Aspect | Docker Compose (Dev) | Production Recommendations |
 |--------|---------------------|--------------------------|
-| **Debug Mode** | `FLASK_DEBUG=1`, verbose logging | Disable debug, set `LOG_LEVEL=INFO` or `WARNING` |
+| **Debug Mode** | Compose exports `FLASK_DEBUG=1`; the server runs with `debug=False` | Remove the debug exports from the compose file. AutoMem has no log-level variable: the server logs at `INFO` |
 | **API Tokens** | Defaults to `test-token`, `test-admin-token` | Generate cryptographically secure tokens (32+ chars) |
-| **Port Exposure** | All ports mapped to localhost | Use reverse proxy (nginx, Traefik); expose only necessary ports |
+| **Port Exposure** | Ports published on all host interfaces (no host IP in the mappings) | Bind to `127.0.0.1`; to filter instead, use Docker's `DOCKER-USER` iptables chain or an external firewall (on Linux, ufw and firewalld rules do not apply to Docker-published ports); use a reverse proxy (nginx, Traefik) and expose only necessary ports |
 | **Volume Backups** | Manual exports to `./backups/` | Automated backups to S3/remote storage |
 | **Resource Limits** | Unlimited | Set `deploy.resources.limits` in docker-compose.yml |
 | **Restart Policy** | `restart: unless-stopped` | Use `restart: always` with health checks |
 | **SSL/TLS** | HTTP only | Terminate SSL at reverse proxy or use Traefik |
 | **Monitoring** | Docker logs | External monitoring (Prometheus, health checks) |
+
+### Restricting Network Exposure
+
+`docker-compose.yml` lists each published port without a host IP (for example `"${AUTOMEM_API_HOST_PORT:-8001}:8001"`), so Docker binds it on all host interfaces. That is standard Docker behavior: other machines that can reach this host can reach the stack, not only `localhost`. The compose file also falls back to `test-token` and `test-admin-token` when `AUTOMEM_API_TOKEN` and `ADMIN_API_TOKEN` are unset, and it sets no FalkorDB password or Qdrant API key by default.
+
+Before you use the stack on a shared network or a server:
+
+- **Bind to loopback.** Add `127.0.0.1:` to each port mapping you keep, for example `"127.0.0.1:${AUTOMEM_API_HOST_PORT:-8001}:8001"`. If you filter the ports instead, use rules in Docker's `DOCKER-USER` iptables chain or a firewall outside the host, such as a cloud security group. On Linux, ufw and firewalld rules do not apply to Docker-published ports, so `ufw deny 6379` does not close the FalkorDB port.
+- **Drop ports you do not use.** The Flask API reaches FalkorDB and Qdrant over the Compose network (`FALKORDB_HOST=falkordb`, `QDRANT_URL=http://qdrant:6333`), so only your own tools need the `6379`, `3000`, `6333`, and `6334` host ports.
+- **Set real secrets.** Put strong `AUTOMEM_API_TOKEN` and `ADMIN_API_TOKEN` values in `.env`, and set `FALKORDB_PASSWORD`, before you expose any port.
 
 **When to use Docker Compose vs. Railway:**
 

@@ -133,7 +133,7 @@ Unlike Cursor (which uses `.cursor/rules/automem.mdc`) or Claude Code (which use
 }
 ```
 
-Tags are bare strings: a category such as `decision` plus the repository slug. The shared mcp-automem memory policy (the source of the Cursor, Codex, and Claude rules) rules out platform tags (for example `copilot`), date-stamped tags (for example `YYYY-MM`), and namespace prefixes (for example `project/` or `lang/`). Every memory already carries a `timestamp`, and for facts with a shelf life you set `t_valid` and `t_invalid` instead of adding a date tag.
+Tags are bare strings: a category such as `decision` plus the repository slug. The shared mcp-automem memory policy (the source of the Cursor, Codex, and Claude rules) rules out platform tags (for example `copilot`), date-stamped tags (for example `YYYY-MM`), and namespace prefixes (for example `project/` or `lang/`). Those bans are spelled out in the Cursor, Codex, Grok, and Claude Desktop rules and in the Claude Code and OpenClaw plugins; the Copilot instructions template itself says `automem`, not `project/automem`, and not to author `entity:*:*` tags, and does not mention platform or date tags. Every memory already carries a `timestamp`, and for facts with a shelf life you set `t_valid` and `t_invalid` instead of adding a date tag.
 
 **Repository-level memory patterns:**
 - Store decisions made during code review
@@ -160,7 +160,7 @@ Memories stored by GitHub Copilot are accessible from any other AutoMem-connecte
 
 | Variable | Required | Purpose |
 |----------|---------|---------|
-| `AUTOMEM_API_URL` | Yes | AutoMem service URL (must be public) |
+| `AUTOMEM_API_URL` | Yes for the cloud agent | AutoMem service URL (must be public). It defaults to `http://127.0.0.1:8001`, which the Copilot agent cannot reach |
 | `AUTOMEM_API_KEY` | Yes* | API authentication token |
 
 \*Required for cloud deployments. Not needed for local AutoMem (but Copilot agent can't reach localhost anyway).

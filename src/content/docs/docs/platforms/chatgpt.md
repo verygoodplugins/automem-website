@@ -144,7 +144,7 @@ What are my preferences?
 1. Check `AUTOMEM_API_TOKEN` is set in the sidecar's environment variables
 2. Verify the token in the URL matches exactly (no extra spaces)
 3. Ensure the token is URL-encoded if it contains special characters
-4. Test token directly: `curl -H "Authorization: Bearer $TOKEN" https://your-automem.up.railway.app/health`
+4. Test the token directly against an endpoint that checks it (`/health` does not): `curl -i -H "Authorization: Bearer $TOKEN" "https://your-automem.up.railway.app/recall?limit=1"`. A `401` means AutoMem rejected the token.
 
 ### Memory service connection errors (502/504)
 

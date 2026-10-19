@@ -68,11 +68,17 @@ For platform-specific config locations, see [Setup & Installation](/docs/cli/set
 Check the health endpoint from your local machine:
 
 ```bash
-curl https://your-instapods-automem-url/health \
-  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+curl https://your-instapods-automem-url/health
 ```
 
 A healthy deployment returns `status: "healthy"` and confirms FalkorDB connectivity.
+
+`/health` skips the API token check, so a healthy response does not prove that your token is accepted. To test the token, send it to an endpoint that checks it. A `401 Unauthorized` response means the token was rejected:
+
+```bash
+curl -i "https://your-instapods-automem-url/recall?limit=1" \
+  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+```
 
 ## Next Steps
 

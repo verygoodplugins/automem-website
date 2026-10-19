@@ -15,7 +15,7 @@ Variables are loaded from multiple sources in priority order:
 
 1. **Process environment** — `export VAR=value` or variables injected by the platform (Railway, Docker)
 2. **Project `.env`** — File in repository root
-3. **User config** — `~/.config/automem/.env` (personal overrides, never committed)
+3. **User config** — `~/.config/automem/.env` (personal defaults, never committed; it only fills in variables the first two sources leave unset)
 
 Variables set earlier in this list take precedence over later sources.
 
@@ -90,11 +90,11 @@ Background enrichment runs after each memory is stored — it generates similari
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `ENRICHMENT_MAX_ATTEMPTS` | No | `3` | Retry limit before marking a job failed |
+| `ENRICHMENT_MAX_ATTEMPTS` | No | `3` | Max attempts for a forced job before giving up; non-forced jobs are not retried |
 | `ENRICHMENT_SIMILARITY_LIMIT` | No | `5` | Number of semantic neighbors to link |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | No | `0.8` | Min cosine similarity for `SIMILAR_TO` edge |
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | No | `2` | Worker sleep duration when queue is empty |
-| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | No | `5` | Delay between retry attempts |
+| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | No | `5` | Flat delay the worker sleeps after a failed attempt, before it re-enqueues |
 | `ENRICHMENT_ENABLE_SUMMARIES` | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker probes again |
 | `ENRICHMENT_SPACY_MODEL` | No | `en_core_web_sm` | spaCy model for NER (if installed) |
@@ -182,7 +182,7 @@ These variables configure the `mcp-automem` client package, not the server.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem server (canonical name) |
+| `AUTOMEM_API_URL` | No | `http://127.0.0.1:8001` | HTTP URL of the AutoMem server (canonical name). Defaults to the local URL; set it for cloud |
 | `AUTOMEM_ENDPOINT` | No | _unset_ | Deprecated alias for `AUTOMEM_API_URL`; still accepted but logs a warning |
 | `AUTOMEM_API_KEY` | No | _unset_ | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | _unset_ | Alternative name for the API key |

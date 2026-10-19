@@ -151,7 +151,7 @@ All six AutoMem tools are available via remote MCP:
 | `store_memory` | Write | Store content with tags, importance, metadata |
 | `recall_memory` | Read | Hybrid search (semantic + keyword + tags + time) |
 | `associate_memories` | Write | Create typed relationships between memories |
-| `update_memory` | Write/Destructive | Modify existing memory fields |
+| `update_memory` | Write | Modify existing memory fields |
 | `delete_memory` | Write/Destructive | Permanently remove a memory |
 | `check_database_health` | Read | Check FalkorDB and Qdrant connection status |
 
@@ -220,7 +220,7 @@ Streamable HTTP on this sidecar cannot resume a stream with `Last-Event-ID` (see
 
 The sidecar sends heartbeats every 20 seconds to maintain SSE connections. If Claude.ai drops the connection before 20 seconds:
 - Check if a reverse proxy is buffering the SSE stream
-- The sidecar sets anti-buffering headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache`)
+- The sidecar sets anti-buffering headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache, no-transform`)
 - Consider switching to Streamable HTTP transport
 
 ### Reconnecting (Streamable HTTP)

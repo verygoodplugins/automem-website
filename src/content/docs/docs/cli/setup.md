@@ -106,7 +106,7 @@ Best for: enterprise deployments, custom infrastructure, air-gapped environments
 
 | Deployment | Ports Used | Accessibility |
 |---|---|---|
-| **Local** | `8001` (AutoMem API) | Localhost only |
+| **Local** | `8001` (AutoMem API); the Compose stack also publishes `6379`, `3000`, `6333`, and `6334` (FalkorDB and Qdrant) | Published on all host interfaces by default (Docker Compose port mapping); see [Restricting Network Exposure](/docs/getting-started/docker/#restricting-network-exposure) |
 | **InstaPods** | `443` (HTTPS) | Internet |
 | **Railway** | `443` (HTTPS) | Internet |
 | **Self-hosted** | `8001` or custom | Depends on configuration |

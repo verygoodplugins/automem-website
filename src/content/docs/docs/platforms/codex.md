@@ -417,8 +417,10 @@ Memories stored via Codex are accessible from Cursor, Claude Code, and Claude De
 curl http://127.0.0.1:8001/health
 
 # Test cloud service
-curl -H "Authorization: Bearer $KEY" https://your-automem.up.railway.app/health
+curl https://your-automem.up.railway.app/health
 ```
+
+`/health` skips the API token check, so these commands only show whether the service is reachable. They succeed even if `AUTOMEM_API_KEY` is wrong. To test the key, send it to an endpoint that checks it: `curl -i -H "Authorization: Bearer $KEY" "https://your-automem.up.railway.app/recall?limit=1"`. A `401 Unauthorized` response means the service rejected the key.
 
 For cloud agent mode, ensure `AUTOMEM_API_URL` points to a publicly accessible URL.
 

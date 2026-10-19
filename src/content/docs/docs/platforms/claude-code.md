@@ -291,7 +291,7 @@ Store a decision, insight, or pattern:
 
 ## Tagging Strategy
 
-Use bare tags only. Do not add a platform tag (such as `claude-code`) or date tags, and do not author `entity:*:*` tags, which the server injects.
+Use bare tags only. Do not add a platform tag (such as `claude-code`) or date tags, and do not author `entity:*:*` tags, which the server injects. The plugin's memory-management skill and `/memory-store` command state the platform-tag and date-tag ban. The `CLAUDE.md` rules template says `automem`, not `project/automem`, and not to author `entity:*:*` tags, and does not mention platform or date tags.
 
 1. One category tag when applicable: `preference`, `decision`, `pattern`, `bugfix`, `solution`, `milestone`, `deployment`, `build`, or `test`
 2. The bare project slug when the memory is project-specific (omit it when the slug collides with a common topic word)
@@ -375,8 +375,10 @@ The plugin path bundles the current SessionStart + PostToolUse hooks and does no
 curl http://127.0.0.1:8001/health
 
 # For cloud deployments
-curl -H "Authorization: Bearer $KEY" https://your-automem.example.com/health
+curl https://your-automem.example.com/health
 ```
+
+`/health` skips the API token check, so these commands only show whether the service is reachable. They succeed even if `AUTOMEM_API_KEY` is wrong. To test the key, send it to an endpoint that checks it: `curl -i -H "Authorization: Bearer $KEY" "https://your-automem.example.com/recall?limit=1"`. A `401 Unauthorized` response means the service rejected the key.
 
 ### Memories not storing
 

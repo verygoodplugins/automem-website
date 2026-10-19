@@ -15,7 +15,7 @@ The mcp-automem client uses two primary environment variables to locate and auth
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service |
+| `AUTOMEM_API_URL` | No | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service. Defaults to the local URL; set it for cloud or any non-default port |
 | `AUTOMEM_API_KEY` | No | (none) | API key for authenticated instances |
 | `AUTOMEM_API_TOKEN` | No | (none) | Alternative name for API key |
 | `AUTOMEM_PROCESS_TAG` | No | (none) | Process title tag for safe cleanup |

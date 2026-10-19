@@ -199,8 +199,7 @@ Once the installer finishes, confirm the backend is healthy:
 curl http://localhost:8001/health
 
 # Hosted / existing endpoint
-curl https://your-automem-url/health \
-  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+curl https://your-automem-url/health
 ```
 
 A healthy response looks like this:
@@ -224,6 +223,13 @@ A healthy response looks like this:
 | `memory_count` | Total memories in the graph |
 | `enrichment.status` | Background worker state: `"running"` or `"stopped"` |
 | `graph` | FalkorDB graph name (default `memories`) |
+
+`/health` skips the API token check, so a healthy response does not prove that your key is accepted. For a hosted endpoint, confirm the key with a request to an endpoint that checks it. A `401 Unauthorized` response means the key was rejected:
+
+```bash
+curl -i "https://your-automem-url/recall?limit=1" \
+  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+```
 
 :::note
 `"qdrant": "disconnected"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
@@ -312,6 +318,8 @@ curl -H "X-API-Key: YOUR_TOKEN" http://localhost:8001/health
 # 3. Query parameter (discouraged — tokens land in logs)
 curl "http://localhost:8001/health?api_key=YOUR_TOKEN"
 ```
+
+These examples show the header and query forms only. `/health` accepts any token or none, so a `200` from it does not mean the token is valid. To check a token, send it to an endpoint that requires one, such as `/recall?limit=1` (see [Verify it worked](#verify-it-worked)).
 
 Admin operations need an extra header:
 

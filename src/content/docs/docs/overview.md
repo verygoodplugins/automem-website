@@ -86,7 +86,7 @@ graph TB
 
 ### MCP Bridge Position
 
-The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, GitHub Copilot, AntiGravity, Grok) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients such as OpenClaw plugin mode can bypass the bridge entirely.
+The mcp-automem package implements a **bridge pattern** between AI platforms and the AutoMem service. Standard MCP platforms (Claude Desktop, Cursor, Claude Code, Codex, GitHub Copilot, Antigravity, Grok) connect via stdio transport. Cloud platforms (ChatGPT, Claude.ai, ElevenLabs) connect via HTTP/SSE sidecar. Direct API clients such as OpenClaw plugin mode can bypass the bridge entirely.
 
 ```mermaid
 graph TB
@@ -95,7 +95,7 @@ graph TB
         CC["Claude Code"]
         CUR["Cursor IDE"]
         COD["OpenAI Codex"]
-        AG["Google AntiGravity"]
+        AG["Google Antigravity"]
         CGIT["GitHub Copilot"]
         CGP["ChatGPT<br/>(Developer Mode)"]
     end
@@ -319,7 +319,7 @@ AutoMem is designed to continue operating even when components fail. The most cr
 | **Qdrant fails during write** | Logs error, memory persists in FalkorDB, enrichment queued | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/memory.py) |
 | **Qdrant fails during recall** | Falls back to keyword/graph search only, returns results without vector scoring | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/recall.py) |
 | **Embedding provider unavailable** | Falls back to `PlaceholderEmbeddingProvider`, generates deterministic hash-based vectors | [`automem/embedding/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding) |
-| **Enrichment worker crashes** | Failed jobs remain in queue with retry tracking, manual reprocess available via `POST /enrichment/reprocess` | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/enrichment) |
+| **Enrichment worker crashes** | Failed jobs are logged and counted in `enrichment_stats`; only forced jobs are retried, and `POST /enrichment/reprocess` re-queues memories that were not enriched | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/enrichment) |
 | **Consolidation scheduler fails** | Logs error, scheduler continues on next tick, control node tracks last successful runs | [`automem/consolidation/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/consolidation) |
 
 ---
@@ -480,7 +480,7 @@ Platforms connect via MCP protocol using stdio transport:
 - **[Cursor IDE](/docs/platforms/cursor/)**: `.cursor/rules/automem.mdc` + `~/.cursor/mcp.json`
 - **[Claude Code](/docs/platforms/claude-code/)**: `~/.claude.json` MCP config
 - **[OpenAI Codex](/docs/platforms/codex/)**: `~/.codex/config.toml` MCP config
-- **[Google AntiGravity](/docs/platforms/antigravity/)**: MCP Store custom server config
+- **[Google Antigravity](/docs/platforms/antigravity/)**: MCP Store custom server config
 - **[GitHub Copilot](/docs/platforms/github-copilot/)**: Repository MCP configuration
 - **Grok Build**: `~/.grok/config.toml` MCP config
 

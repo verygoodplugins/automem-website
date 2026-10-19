@@ -462,8 +462,10 @@ DEBUG=automem:* npx @verygoodplugins/mcp-automem
 **Test backend directly:**
 
 ```bash
-curl -H "Authorization: Bearer $AUTOMEM_API_KEY" "$AUTOMEM_API_URL/health"
+curl -i -H "Authorization: Bearer $AUTOMEM_API_KEY" "$AUTOMEM_API_URL/recall?limit=1"
 ```
+
+A `401 Unauthorized` response means the service rejected the key. Do not use `/health` for this: it skips the API token check, so it only shows that the service is reachable.
 
 **Verify template variable substitution:**
 

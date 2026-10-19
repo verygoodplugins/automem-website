@@ -279,11 +279,15 @@ flowchart TD
 
 ### Error Responses
 
+Errors from `abort()` use the shared envelope, `{"status": "error", "code": <http status>, "message": <description>}`.
+
 **404 Not Found** — One or both memories don't exist:
 
 ```json
 {
-  "error": "One or both memories do not exist"
+  "status": "error",
+  "code": 404,
+  "message": "One or both memories do not exist"
 }
 ```
 
@@ -291,15 +295,19 @@ flowchart TD
 
 ```json
 {
-  "error": "Cannot associate a memory with itself"
+  "status": "error",
+  "code": 400,
+  "message": "Cannot associate a memory with itself"
 }
 ```
 
-**400 Bad Request** — Invalid relationship type:
+**400 Bad Request** — Invalid relationship type (the message lists the sorted authorable types):
 
 ```json
 {
-  "error": "Invalid relationship type: INVALID_TYPE. Must be one of: RELATES_TO, LEADS_TO, ..."
+  "status": "error",
+  "code": 400,
+  "message": "Relation type must be one of ['CONTRADICTS', 'DERIVED_FROM', 'EVOLVED_INTO', ...]"
 }
 ```
 
@@ -307,7 +315,9 @@ flowchart TD
 
 ```json
 {
-  "error": "Missing required field: memory2_id"
+  "status": "error",
+  "code": 400,
+  "message": "'memory1_id' and 'memory2_id' are required"
 }
 ```
 
@@ -315,7 +325,9 @@ flowchart TD
 
 ```json
 {
-  "error": "Graph database unavailable"
+  "status": "error",
+  "code": 503,
+  "message": "FalkorDB is unavailable"
 }
 ```
 
@@ -466,7 +478,11 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 | `memory1_id` | string | Yes | — | Source memory ID (from `store_memory` or `recall_memory` results) |
 | `memory2_id` | string | Yes | — | Target memory ID to link to |
 | `type` | string (enum) | Yes | 11 authorable types | Relationship type |
-| `strength` | number | No | 0.0–1.0, default 0.5 | Relationship strength |
+| `strength` | number | Yes | 0.0–1.0 | Relationship strength. The MCP tool has no default |
+
+:::note[Strength is required over MCP]
+The tool's input schema has no top-level `required` list, but the mcp-automem client throws before it sends anything when `type` is missing, or when `strength` is missing or outside 0–1 (for example `associate_memories: single association strength is required`). Each item in a batch `associations` array needs the same four fields. The HTTP API behaves differently: `POST /associate` uses `strength` 0.5 and `type` `RELATES_TO` when you omit them.
+:::
 
 **Relationship type enum values (11 authorable):**
 1. `RELATES_TO` — General relationship

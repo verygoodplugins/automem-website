@@ -50,7 +50,7 @@ Copy `.env.example` to `.env` and configure:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `VITE_API_TARGET` | `http://localhost:8001` | AutoMem API URL for the Vite dev proxy. **Dev only** — do not set on production Railway viewer services. |
-| `VITE_BASE_PATH` | `/` | Base path prefix when hosting under a subpath (e.g. `/viewer/` on the AutoMem API origin). Keep `/` for standalone viewer deployments. |
+| `VITE_BASE_PATH` | `/` | Base path prefix when hosting under a subpath. Keep `/` for standalone viewer deployments. Use `/viewer/` only if you serve the built assets yourself from the AutoMem API origin under that subpath; AutoMem's own `/viewer` route does not serve them. |
 
 :::caution[Obsolete variables]
 `VITE_ENABLE_HAND_CONTROLS` is no longer used — hand gesture controls are toggled from the toolbar at runtime. `VITE_BASE` is not a supported variable; use `VITE_BASE_PATH` instead.
@@ -68,9 +68,15 @@ The graph viewer needs an API token to authenticate with your AutoMem instance. 
 2. **URL hash** — `#token=your-token` (also accepts `#api_token=your-token`; stays client-side, never sent to server)
 3. **localStorage** — The viewer stores the token in `automem_token` after first entry via the **TokenPrompt** UI
 
+### Opening the Viewer from AutoMem
+
+AutoMem's `/viewer` path is a compatibility redirect, not a copy of the viewer ([`viewer.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/viewer.py#L94-L106)). When `GRAPH_VIEWER_URL` is set to your deployed viewer, `GET /viewer/` returns a small page that sends the browser there. It keeps the query string and the `#token=` hash, and adds `?server=<automem-origin>` when the URL has no `server` parameter. Asset-style paths such as `/viewer/assets/app.js` get a `302` redirect to the same path on the viewer. If `GRAPH_VIEWER_URL` is not set, `/viewer` answers `503`. The route exists while `ENABLE_GRAPH_VIEWER` is enabled, which is the default, and it skips the API-token guard.
+
+A link like `https://your-automem.example.com/viewer/#token=xxx` therefore lands on the standalone viewer, which reads the token from the hash and sends its API calls to the `server` origin.
+
 ### Embedded Mode
 
-When the viewer is served from AutoMem's `/viewer` path (same origin), it detects embedded mode automatically and uses relative API URLs. The token can be passed via the URL hash: `/viewer/#token=xxx`.
+The viewer treats itself as embedded when its own page path starts with `/viewer` ([`client.ts`](https://github.com/verygoodplugins/automem-graph-viewer/blob/c6338d13b8a80e8c7b5f24e96a60ce983ed1482b/src/api/client.ts#L9-L11)). The check looks at the path only, so it applies wherever the built assets are served under `/viewer/` (built with `VITE_BASE_PATH=/viewer/`), for example from the AutoMem API origin. In embedded mode it uses relative API URLs, unless a `?server=` parameter overrides them, and reads the token from the URL hash: `/viewer/#token=xxx`. AutoMem does not serve those assets itself, so this is not the default hosted setup.
 
 ### Standalone Mode
 

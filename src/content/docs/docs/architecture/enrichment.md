@@ -72,7 +72,7 @@ Jobs enqueued for processing contain the memory ID, retry attempt counter, and a
 
 Fields:
 - `memory_id` — UUID of the memory to enrich
-- `attempt` — Retry counter (0-indexed), incremented on each failure
+- `attempt` — Attempt counter (0-indexed), incremented when a forced job is re-enqueued after a failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
 ([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py))
@@ -93,22 +93,24 @@ Enrichment jobs are enqueued in three scenarios:
 
 ### Retry Logic
 
-Jobs that fail during processing are retried up to `ENRICHMENT_MAX_ATTEMPTS` times with flat backoff:
+Only forced jobs are retried. After a failure that has attempts left, the worker sleeps `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (a flat delay, 5 seconds by default) and calls `enqueue_enrichment` again with the attempt counter incremented. That call goes through the same duplicate check as a new job, and the failed memory ID is still marked in flight, so a non-forced job (the kind `POST /memory` queues) is not re-queued. Forced jobs from `POST /enrichment/reprocess` skip the check and are re-queued until `ENRICHMENT_MAX_ATTEMPTS` is used up:
 
-| Attempt | Backoff | Behavior |
+| Attempt (forced job) | Backoff before it | Behavior |
 |---|---|---|
 | 1 | 0s | Immediate first attempt |
 | 2 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | Default 5 seconds |
 | 3 | `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | Default 5 seconds |
-| Final | — | Record failure in `enrichment_stats` |
+| Final | — | Worker logs `Giving up on enrichment`; each failure is already counted in `enrichment_stats` |
+
+A non-forced job gets one attempt. The worker still sleeps the backoff after a failure that has attempts left, but the re-enqueue is dropped, so the worker does not retry it. `POST /enrichment/reprocess` queues the memory again.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Queued
     Queued --> Processing: dequeue
     Processing --> Success: enrichment complete
-    Processing --> Retry: error (attempt < max)
-    Processing --> Failed: error (attempt >= max)
+    Processing --> Retry: error (forced job, attempts left)
+    Processing --> Failed: error (non-forced job, or no attempts left)
 
     Retry --> Queued: re-enqueue with attempt++
     Success --> [*]
@@ -266,9 +268,9 @@ Discovers recurring themes by analyzing memories of the same type and linking th
 | Variable | Default | Description |
 |---|---|---|
 | `ENRICHMENT_ENABLE_SUMMARIES` | `true` | Enable automatic summary generation |
-| `ENRICHMENT_MAX_ATTEMPTS` | `3` | Maximum retry attempts before giving up |
+| `ENRICHMENT_MAX_ATTEMPTS` | `3` | Maximum attempts for a forced job before giving up (non-forced jobs are not retried) |
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | `2` | Worker sleep duration when queue is empty |
-| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | `5` | Backoff delay between retry attempts |
+| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | `5` | Flat delay the worker sleeps after a failure, before it re-enqueues |
 | `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before one recovery probe is allowed |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Maximum semantic neighbors to link |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | `0.8` | Minimum cosine similarity for `SIMILAR_TO` edges |
@@ -319,7 +321,7 @@ The `GET /enrichment/status` endpoint exposes real-time worker metrics:
 - `queue_size` — Items in the underlying queue (`enrichment_queue.qsize()`)
 - `pending` — Count of IDs in `enrichment_pending` (items not yet dequeued; `len(state.enrichment_pending)`)
 - `inflight` — Count of IDs in `enrichment_inflight` (items currently processing; `len(state.enrichment_inflight)`)
-- `max_attempts` — Configured retry limit (`ENRICHMENT_MAX_ATTEMPTS`)
+- `max_attempts` — Configured attempt limit for forced jobs (`ENRICHMENT_MAX_ATTEMPTS`)
 - `stats` — Lifetime counters from `EnrichmentStats.to_dict()`: `processed_total`, `successes`, `failures`, `last_success_id`, `last_success_at`, `last_error`, `last_error_at`
 - `classification` — LLM type-classification counters: `llm_attempts`, `llm_successes`, `fallbacks` (LLM called but fell back to default), `pattern_classifications` (resolved by regex patterns without LLM), `last_error`, `last_error_at`. Monitors how often LLM classification is used vs. pattern matching, and the fallback rate.
 - `circuit` — Quota-circuit state: `open` (true when the circuit is tripped and LLM calls are paused), `circuit_open_skips` (total LLM calls skipped while circuit was open), `recoveries` (total times the recovery probe succeeded and the circuit closed). Controlled by `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS`.
@@ -331,7 +333,7 @@ Thread-safe sets prevent duplicate processing:
 - `enrichment_pending` — Set of memory IDs awaiting enrichment (not yet dequeued)
 - `enrichment_inflight` — Set of memory IDs currently being processed
 
-When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment_inflight`. When processing completes (success or final failure), it is removed from `enrichment_inflight`. New enqueues check both sets to prevent duplicates.
+When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment_inflight`. It is removed from `enrichment_inflight` when the attempt ends, after any retry re-enqueue has been attempted, so a failed memory is still in flight when the worker re-enqueues it. Non-forced enqueues check both sets and are dropped when the ID is present; forced enqueues skip the check.
 
 ---
 
@@ -342,20 +344,20 @@ When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment
 | Scenario | Behavior | Recovery |
 |---|---|---|
 | spaCy model unavailable | Log warning, use regex fallbacks | Graceful degradation |
-| FalkorDB write failure | Retry with flat backoff | Max 3 attempts |
+| FalkorDB write failure | Forced jobs retry with flat backoff; non-forced jobs are not retried | Up to `ENRICHMENT_MAX_ATTEMPTS` attempts (forced jobs) |
 | Qdrant unavailable | Skip semantic linking, log warning | Continue enrichment |
 | Invalid memory ID | Log error, record failure | No retry |
-| Extraction exception | Catch, log, retry | Max 3 attempts |
+| Extraction exception | Catch and log; forced jobs retry, non-forced jobs are not retried | Up to `ENRICHMENT_MAX_ATTEMPTS` attempts (forced jobs) |
 
 ### Retry Mechanics
 
-Jobs increment their `attempt` counter on each retry. When `attempt >= ENRICHMENT_MAX_ATTEMPTS`, the job is marked as failed and removed from the queue.
+Forced jobs increment their `attempt` counter on each retry. A non-forced job is never re-queued, because the in-flight duplicate check drops its re-enqueue. When a forced job's `attempt + 1` reaches `ENRICHMENT_MAX_ATTEMPTS`, the worker logs `Giving up on enrichment` and does not re-queue it.
 
-The backoff is a flat sleep of `ENRICHMENT_FAILURE_BACKOFF_SECONDS` on each failure:
+The backoff is a flat sleep of `ENRICHMENT_FAILURE_BACKOFF_SECONDS` after each failure that is re-enqueued. For a forced job with the defaults:
 - Attempt 1 → immediate
 - Attempt 2 → sleep 5 seconds
 - Attempt 3 → sleep 5 seconds
-- After 3 failures → discard, record in `enrichment_stats`
+- After 3 failures → give up (each failure is already counted in `enrichment_stats`)
 
 ---
 
