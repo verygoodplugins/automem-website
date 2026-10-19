@@ -320,6 +320,7 @@ When using AutoMem via MCP, the `store_memory` tool corresponds to `POST /memory
 - Network errors: Retried up to 3 times (500ms, 1s, 2s delays)
 - 5xx server errors: Retried up to 3 times
 - 4xx client errors: Not retried (auth/validation issues)
+- Truncated/invalid JSON on 2xx or 5xx: retried for `GET` requests only; `POST`, `PATCH`, and `DELETE` are not retried on JSON parse failures to prevent duplicate stores
 - Timeout: 25 seconds (to fit within Claude Desktop's 30s MCP timeout)
 
 ---
@@ -540,6 +541,8 @@ curl -X PATCH https://your-automem-instance/memory/a1b2c3d4-e5f6-7890-abcd-ef123
 ### MCP Tool: `update_memory`
 
 The `update_memory` MCP tool corresponds to `PATCH /memory/:id`.
+
+The MCP client validates `memory_id` values before making any request: IDs are checked for compatibility with Python's `uuid.UUID()` parser (accepts standard hyphenated UUIDs, bare 32-char hex, URN/brace forms, and uppercase variants). An invalid ID raises `memory_id must be a valid UUID` without sending any network request. The same validation applies to `delete_memory`, `recall_memory({ memory_id })`, and `store_memory({ supersedes_memory_id })`.
 
 **Input Schema:**
 
