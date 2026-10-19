@@ -6,10 +6,10 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
-- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Score weight and recall tuning configuration
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py) — Recall endpoint and graph expansion logic (`_expand_related_memories`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — Score weight and recall tuning configuration
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `recall_memory` tool
 - [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and formatting
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
@@ -79,7 +79,7 @@ Time queries are parsed by `_parse_time_expression()` from `automem/utils/time.p
 | `context_types` | array[string] | — | Memory types to prioritize |
 | `priority_ids` | array[string] | — | Memory IDs to boost during scoring |
 
-Context hints influence the 10-component scoring system but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
+Context hints add an unweighted context bonus to the final score (see the formula under [Hybrid Scoring System](#hybrid-scoring-system)) but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
 
 :::note[`priority_ids` semantics]
 `priority_ids` adds a relevance boost to matching memories during scoring — it does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints, it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
@@ -101,16 +101,16 @@ Graph expansion operates in two phases: seed results from hybrid search, then ex
 
 ### State Filtering Parameters
 
-State filtering is the largest behavior change in 0.16: **recall now returns current state only by default.** Expired, not-yet-valid, archived, and invalidated/evolved memories are suppressed unless you explicitly ask for history. Supersession chains resolve to their head — if memory A was superseded by B and B by C (`INVALIDATED_BY` / `EVOLVED_INTO`), a recall that would surface A returns C instead. Resolution is bounded at 5 hops and is cycle-safe.
+State filtering is the largest behavior change in 0.16: **recall now returns current state only by default.** The current-state filter suppresses expired, not-yet-valid, archived, and invalidated/evolved memories, and `state_mode=history` turns that filter off. Supersession chains resolve to their head — if memory A was superseded by B and B by C (`INVALIDATED_BY` / `EVOLVED_INTO`), a recall that would surface A returns C instead. Resolution is bounded at 5 hops and is cycle-safe.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `state_mode` | string | `current` | `current` returns active memories only; `history` returns the full set including superseded/expired/archived memories |
+| `state_mode` | string | `current` | `current` returns active memories only; `history` skips the current-state filter, so superseded, expired, and not-yet-valid memories can be returned. Archived memories stay excluded from the vector, keyword, trending, tag-only, and metadata candidate searches. Any other value returns 400 |
 | `current_only` | boolean | — | Legacy flag. `true` == `state_mode=current`, `false` == `state_mode=history`. When both are set and resolve, `current_only` **wins** |
-| `state_debug` | boolean | false | Adds suppression and replacement detail (which memories were hidden and what replaced them) under a `state_filter` object in the response |
+| `state_debug` | boolean | false | Adds suppression and replacement detail (which memories were hidden and what replaced them) under a `state_filter` object in the response. Only has an effect when the current-state filter runs; a `history` response has no `state_filter` |
 
 :::note[Default changed in 0.16]
-Before 0.16, recall returned every matching memory regardless of lifecycle state. As of 0.16 the default is `state_mode=current` — to retrieve superseded, expired, or archived memories you must pass `state_mode=history` (or the legacy `current_only=false`).
+Before 0.16, recall returned every matching memory regardless of lifecycle state. As of 0.16 the default is `state_mode=current` — to retrieve superseded, expired, or not-yet-valid memories you must pass `state_mode=history` (or the legacy `current_only=false`).
 :::
 
 ### Metadata Sidecar Search
@@ -131,7 +131,7 @@ Tag-scoped queries with text or an explicit embedding may widen the pool further
 
 ### Internal Artifact Type Exclusion
 
-User-facing `/recall` results exclude internal artifact memory types (for example consolidation `MetaPattern` cluster summaries). Filtering is controlled by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). At automem@0720da2 this exclusion applies to ranked recall only — `/health`, `/admin/sync`, and background drift repair still count all `Memory` nodes, including internal artifacts.
+User-facing `/recall` results exclude internal artifact memory types (for example consolidation `MetaPattern` cluster summaries). Filtering is controlled by `RECALL_EXCLUDED_TYPES` (default `MetaPattern`, comma-separated). At AutoMem 0.16.2 the same list also applies to the `/health` memory and vector counts, `/admin/sync`, and the background sync worker's drift repair, so internal artifacts are not counted there either.
 
 ### Relative-Recency Bias
 
@@ -272,8 +272,11 @@ final_score = (vector_score × SEARCH_WEIGHT_VECTOR) +
               (recency_score × SEARCH_WEIGHT_RECENCY) +
               (tag_score × SEARCH_WEIGHT_TAG) +
               (relation_score × SEARCH_WEIGHT_RELATION) +
-              (relevance_score × SEARCH_WEIGHT_RELEVANCE)
+              (relevance_score × SEARCH_WEIGHT_RELEVANCE) +
+              context_bonus
 ```
+
+`context_bonus` is added without a weight and is 0 when no context profile applies (see [Context Hint Parameters](#context-hint-parameters)). The sum is not normalized, so `final_score` can exceed 1.0. When [`recency_bias`](#relative-recency-bias) activates, a separate re-rank then adds `SEARCH_WEIGHT_TEMPORAL * relative_recency` (default weight 0.1) to `final_score`; it is off by default.
 
 **Default weight configuration (all configurable via environment variables):**
 
@@ -316,8 +319,8 @@ The dedicated `SEARCH_WEIGHT_METADATA` component only applies to candidates admi
 Computed by `_compute_metadata_score()` and `_parse_metadata_field()`, each with its own independent weight in the final formula above:
 - **Importance**: Direct multiplication by weight (0.0–1.0 range)
 - **Confidence**: Classification confidence from memory type detection
-- **Recency**: `max(0, 1 - (age_days / 180))` — 6-month linear decay based on time since last access
-- **Tag**: `matched_tokens / total_query_tokens` — overlap ratio between query tags and memory tags
+- **Recency**: `max(0, 1 - (age_days / SEARCH_RECENCY_WINDOW_DAYS))` — linear decay that reaches zero at the recency window (default 180 days), measured from the memory's `timestamp` rather than `last_accessed`. Set `SEARCH_RECENCY_CURVE=exp` for exponential decay, `0.5 ** (age_days / SEARCH_RECENCY_WINDOW_DAYS)`, where the window is the half-life. A missing or unparseable `timestamp` scores 0.0
+- **Tag**: `min(1, matched_tokens / total_query_tokens)` — the share of query keywords that exactly match one of the memory's tags or metadata terms
 
 ---
 
@@ -362,7 +365,7 @@ graph TB
     AddToResults --> FinalResults
 ```
 
-The `_expand_related_memories()` function implements multi-hop graph traversal using Cypher `MATCH` patterns to follow typed relationship edges (e.g., `RELATES_TO`, `PREFERS_OVER`, `LEADS_TO`).
+The `_expand_related_memories()` function expands each seed memory by one hop, using a Cypher `MATCH` to follow typed relationship edges (e.g., `RELATES_TO`, `PREFERS_OVER`, `LEADS_TO`). Edges are ordered by update time (falling back to the related memory's `timestamp`), newest first, and capped at `relation_limit` per seed.
 
 **Key configuration constants:**
 - `RECALL_RELATION_LIMIT` (default: 5) — Max edges per seed memory
@@ -370,7 +373,7 @@ The `_expand_related_memories()` function implements multi-hop graph traversal u
 - `RECALL_MIN_SCORE` — Minimum score threshold for results to be returned
 - `RECALL_ADAPTIVE_FLOOR` — Adaptive floor that adjusts minimum score based on result quality
 
-**Edge types traversed:** `RELATES_TO`, `LEADS_TO`, `DERIVED_FROM`, `EVOLVED_INTO`, `REINFORCES`, `EXEMPLIFIES`, and all other relationship types. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
+**Edge types traversed:** the relationship types flagged `default_expand` in the relationship registry: `RELATES_TO`, `LEADS_TO`, `OCCURRED_BEFORE`, `PREFERS_OVER`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `EVOLVED_INTO`, `DERIVED_FROM`, and `PART_OF`. The system-generated `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` edges are not followed. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
 
 ### Entity Expansion Flow
 
@@ -462,20 +465,31 @@ sequenceDiagram
   "query": "PostgreSQL database decisions",
   "results": [
     {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "memory": {
-        "memory_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "content": "Chose PostgreSQL over MongoDB...",
+        "content": "Chose PostgreSQL over MongoDB for the primary database.",
         "tags": ["project-alpha", "database"],
         "importance": 0.9,
-        "created_at": "2025-01-15T10:30:00Z"
+        "confidence": 0.9,
+        "type": "Decision",
+        "timestamp": "2025-01-15T10:30:00+00:00"
       },
-      "final_score": 0.847,
-      "match_type": "semantic",
+      "final_score": 0.792,
+      "match_type": "vector",
       "score_components": {
         "vector": 0.82,
-        "keyword": 0.15,
+        "keyword": 0.6667,
+        "metadata": 0.0,
+        "relation": 0.0,
+        "tag": 0.3333,
         "importance": 0.9,
-        "recency": 0.71
+        "confidence": 0.9,
+        "recency": 0.7,
+        "exact": 0.0,
+        "relevance": 0.0,
+        "context": 0.0,
+        "evidence": 0.82,
+        "relevance_gated": false
       },
       "relations": []
     }
@@ -483,6 +497,13 @@ sequenceDiagram
   "count": 1,
   "dedup_removed": 0,
   "sort": "score",
+  "state_mode": "current",
+  "state_filter": {
+    "current_only": true,
+    "suppressed_count": 0,
+    "replacement_count": 0
+  },
+  "keywords": ["postgresql", "database", "decisions"],
   "vector_search": {
     "enabled": true,
     "matched": true
@@ -493,11 +514,14 @@ sequenceDiagram
 }
 ```
 
+The sample's numbers follow from the default weights. The query keywords are `postgresql`, `database`, and `decisions`; the content contains two of them (`keyword` 0.6667) and the tags match one (`tag` 0.3333). The vector hit scored 0.82, and the memory is 54 days old when queried, so `recency` is 0.7 on the default 180-day window. `final_score` is then 0.35 × 0.82 + 0.35 × 0.6667 + 0.2 × 0.3333 + 0.1 × 0.9 + 0.05 × 0.9 + 0.1 × 0.7 = 0.792, with no context bonus. Each result also carries bookkeeping fields (`source`, `match_score`, `original_score`, `score`, `_query`) that the sample leaves out.
+
 **Result fields:**
-- `memory`: The stored memory object with `memory_id`, `content`, `tags`, `importance`, `created_at`
+- `id`: The memory's ID
+- `memory`: The stored memory record (Qdrant payload or FalkorDB node properties) with fields such as `content`, `tags`, `importance`, `timestamp`, `type`, `confidence`, and `metadata`. The memory ID is the result-level `id` (vector hits carry no ID inside `memory`) and the creation time is stored as `timestamp`; the MCP tool presents them as `memory_id` and `created_at`
 - `final_score`: Combined relevance score
-- `match_type`: Type of match — `semantic`, `keyword`, `tag`, `relation`, or `entity`
-- `score_components`: Breakdown of scoring factors
+- `match_type`: Type of match — `vector`, `keyword`, `trending`, `metadata`, `tag`, `relation`, `entity_expansion`, `priority_id`, or `state_replacement`
+- `score_components`: Breakdown of scoring factors: the ten weighted components plus `context` (the context bonus), `evidence` (the strongest of the vector, keyword, metadata, and exact scores), and `relevance_gated`
 - `relations`: Connected memories (if expansion enabled)
 - `expanded_from_entity`: Entity that triggered expansion (if applicable)
 - `deduped_from`: IDs of duplicate results removed
@@ -605,16 +629,16 @@ curl "https://your-automem-instance/recall?query=Sarah%27s+sister%27s+job&expand
 ### Current-State Recall (Default)
 
 ```bash
-# Default: only current memories — superseded/expired/archived are suppressed
-curl "https://your-automem-instance/recall?query=database+choice" \
+# Default: only current memories — superseded, expired, and not-yet-valid memories are suppressed
+curl "https://your-automem-instance/recall?query=database+choice&state_debug=true" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
-# Opt into the full history, including superseded and archived memories
-curl "https://your-automem-instance/recall?query=database+choice&state_mode=history&state_debug=true" \
+# Opt into history: skip the current-state filter so superseded and expired memories can be returned
+curl "https://your-automem-instance/recall?query=database+choice&state_mode=history" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-The first call resolves supersession chains to their head and hides invalidated memories. The second returns the full lifecycle and, with `state_debug=true`, reports what was suppressed and what replaced it under `state_filter`.
+The first call resolves supersession chains to their head and hides invalidated memories; with `state_debug=true` it reports what was suppressed and what replaced it under `state_filter`. The second skips that filter, so its response has no `state_filter` object.
 
 ---
 
@@ -622,7 +646,7 @@ The first call resolves supersession chains to their head and hides invalidated 
 
 ### Score-Based Sorting (Default)
 
-When `sort=score` (or unspecified with query), results are ordered by the final weighted hybrid score combining all 9 components optimized for relevance.
+When `sort=score` (or unspecified with query), results are ordered by the final hybrid score: the sum of all 10 weighted components plus the unweighted context bonus (plus the re-rank term when [`recency_bias`](#relative-recency-bias) is active).
 
 ### Time-Based Sorting
 
@@ -775,7 +799,7 @@ The MCP response also includes `structuredContent` with the (possibly budget-tri
 
 | Condition | Behavior | HTTP Status |
 |-----------|----------|------------|
-| FalkorDB unavailable | Returns 503 error | 503 |
+| FalkorDB unavailable | Graph-backed steps (keyword, trending, metadata, relation expansion) are skipped; vector search still runs | 200 |
 | Qdrant unavailable | Graph-only mode (keyword + metadata) | 200 |
 | Embedding generation fails | Falls back to keyword search | 200 |
 | No query and no tags | Returns trending memories | 200 |
@@ -787,9 +811,12 @@ The system implements graceful degradation where vector search failures don't bl
 | Error | HTTP Status | Condition |
 |-------|-------------|-----------|
 | Invalid embedding dimensions | 400 | Vector size doesn't match `VECTOR_SIZE` |
-| Invalid time query | 400 | Unparseable time expression |
+| Invalid `start` or `end` | 400 | Not a valid ISO 8601 timestamp |
+| Invalid `state_mode` | 400 | Not `current` or `history` |
 | Limit exceeds maximum | 200 | Clamped to `RECALL_MAX_LIMIT` |
 | Missing authentication | 401 | No valid token provided |
+
+An unrecognized `time_query` expression is not an error: it is ignored, and only `start` and `end`, if given, set the time window. Error responses use the body `{"status": "error", "code": <HTTP status>, "message": "<description>"}`.
 
 ---
 
