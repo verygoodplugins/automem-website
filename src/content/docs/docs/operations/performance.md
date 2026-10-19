@@ -86,7 +86,7 @@ The worker uses a timeout-based accumulation strategy:
 2. Add to `batch` list
 3. Check if `len(batch) >= EMBEDDING_BATCH_SIZE` or timeout elapsed
 4. If batch ready, call `process_embedding_batch()`
-5. Otherwise, continue accumulating with 0.1s sleep intervals
+5. Otherwise keep blocking on the queue until the batch deadline. The worker calls `get()` with the time remaining until that deadline (minimum 0.1s) and flushes any partial batch when the call times out. It does not poll on a sleep interval: the worker sleeps 1s only while the queue is not initialized or after an unexpected error in the loop
 
 ### Key Functions
 
@@ -215,7 +215,7 @@ Selected API endpoints track query execution time using `time.perf_counter()` an
 
 ### Purpose
 
-Structured logging provides machine-parseable performance data in log output, enabling:
+Structured logging attaches machine-parseable performance data to log records. With a JSON log formatter that renders `extra` fields (stock AutoMem does not ship one), this enables:
 
 - Automated performance analysis
 - Bottleneck identification
@@ -227,7 +227,7 @@ Structured logging provides machine-parseable performance data in log output, en
 Logs use the `extra={}` parameter to include structured data alongside log messages:
 
 ```python
-logger.info("Recall completed", extra={
+logger.info("recall_complete", extra={
     "query": query,
     "results": len(memories),
     "latency_ms": elapsed_ms,
@@ -235,7 +235,11 @@ logger.info("Recall completed", extra={
     "vector_matches": vector_hit_count,
     "has_time_filter": bool(time_filter),
     "has_tag_filter": bool(tag_filter),
-    "limit": limit
+    "has_exclude_filter": bool(exclude_tags),
+    "limit": limit,
+    "dedup_removed": dedup_removed,
+    "is_multi": is_multi,
+    "context_language": context_language
 })
 ```
 
@@ -250,7 +254,11 @@ logger.info("Recall completed", extra={
 | `vector_matches` | int | Semantic search hits (if applicable) |
 | `has_time_filter` | bool | Temporal filtering active |
 | `has_tag_filter` | bool | Tag filtering active |
+| `has_exclude_filter` | bool | `exclude_tags` filtering active |
 | `limit` | int | Result limit |
+| `dedup_removed` | int | Results dropped as duplicates (same memory ID or content fingerprint) |
+| `is_multi` | bool | Multi-query mode: `queries` supplied, or `auto_decompose` generated sub-queries |
+| `context_language` | string \| null | Language from the context profile |
 
 ### Memory Store Logged Fields
 
@@ -268,12 +276,14 @@ logger.info("Recall completed", extra={
 
 ### Log Parsing and Analysis
 
+These commands need a JSON log formatter that renders `extra` fields. Stock AutoMem does not ship one: its default format prints only the message, so the fields never appear in the output.
+
 ```bash
 # Find slow recall queries (>500ms)
-railway logs | grep "Recall completed" | jq 'select(.latency_ms > 500)'
+railway logs | grep "recall_complete" | jq 'select(.latency_ms > 500)'
 
 # Count results by query pattern
-railway logs | grep "Recall completed" | jq '.query' | sort | uniq -c
+railway logs | grep "recall_complete" | jq '.query' | sort | uniq -c
 
 # Monitor embedding queue status
 railway logs | grep "embedding_status" | jq '{status: .embedding_status, id: .memory_id}'
