@@ -127,7 +127,9 @@ graph TB
         CUR["Cursor IDE"]
         CC["Claude Code"]
         COD["OpenAI Codex"]
-        WARP["Warp Terminal"]
+        CGIT["GitHub Copilot"]
+        GROK["Grok Build"]
+        AG["Google Antigravity"]
         OC["OpenClaw"]
         HERM["Hermes"]
     end
@@ -154,7 +156,10 @@ graph TB
     CUR -->|"MCP Protocol<br/>stdio"| SERVER
     CC -->|"MCP Protocol<br/>stdio"| SERVER
     COD -->|"MCP Protocol<br/>stdio"| SERVER
-    WARP -->|"MCP Protocol<br/>stdio"| SERVER
+    CGIT -->|"MCP Protocol<br/>stdio"| SERVER
+    GROK -->|"MCP Protocol<br/>stdio"| SERVER
+    AG -->|"MCP Protocol<br/>stdio"| SERVER
+    HERM -->|"MCP Protocol<br/>stdio"| SERVER
     OC -->|"HTTP<br/>Direct API"| API
 
     CLIENT -->|"HTTP<br/>POST /memory<br/>GET /recall<br/>etc."| API
@@ -243,7 +248,9 @@ The MCP client supports the following AI platforms via stdio:
 - Cursor IDE
 - Claude Code
 - OpenAI Codex
-- Warp Terminal
+- [GitHub Copilot](/docs/platforms/github-copilot/)
+- Grok Build
+- [Google Antigravity](/docs/platforms/antigravity/)
 - OpenClaw
 - [Hermes](/docs/platforms/hermes/) (Nous Research terminal agent — MCP tools, native memory provider, or both)
 
