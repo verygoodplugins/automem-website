@@ -11,7 +11,7 @@ sidebar:
 
 The AutoMem Graph Viewer is a standalone web application that renders your memory graph as an interactive 3D layout. It connects to the AutoMem API to fetch a bounded graph overview and lets you visually explore memories, relationships, clusters, and temporal patterns.
 
-The `automem` API exposes `/viewer` compatibility routes that redirect into the graph viewer, so users can access it directly from a running AutoMem instance.
+The `automem` API keeps a [`/viewer` compatibility route](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/viewer.py#L94-L113) that forwards the browser to the standalone viewer, so users can reach it from a running AutoMem instance. It needs `GRAPH_VIEWER_URL` set to your deployed viewer (without it, `/viewer` answers 503) and is registered while `ENABLE_GRAPH_VIEWER` is enabled, which is the default. The route itself skips the API-token guard, but the viewer's own API calls do not: when `AUTOMEM_API_TOKEN` is set, they need that token.
 
 ![AutoMem Graph Viewer overview with 3D memory graph, search bar, stats, minimap, and timeline controls](/img/docs/graph-viewer-overview.png)
 
@@ -36,16 +36,17 @@ The **StatsBar** uses honest scope language throughout the app:
 | **In view** | Memories loaded into the 3D scene (bounded overview + any expansions) |
 | **In store** | Total memories on the server |
 
-The overview loads the most important memories first (default 2,000 nodes). Completeness comes from exploration, not loading the entire corpus at once.
+The overview loads the most important memories first, up to 2,000 nodes by default. That default is a client-side limit (`MAX_SNAPSHOT` in the viewer), set by what the browser's main-thread physics simulation can handle. **Overview size** under Settings → Filters offers 500, 1,000, or 2,000 nodes. There is no control for going higher; to test a larger overview on capable hardware, open the viewer with `?cap=10000` in the URL or set `localStorage.automem_snapshot_cap = '10000'`. The URL parameter wins over `localStorage`, a value that is non-numeric or below 1 falls back to 2,000, and an override that is not one of the presets shows up as an extra **Overview size** button. Past roughly 2,000 nodes the simulation can stutter. Completeness comes from exploration, not loading the entire corpus at once.
 
-Force layout configuration options include:
+The **Forces** section of the Settings panel has five sliders, plus Reheat and Reset buttons:
 
-| Parameter | Description |
-|-----------|-------------|
-| Charge strength | Repulsion between nodes |
-| Link distance | Preferred edge length |
-| Center gravity | Pull toward origin |
-| Collision radius | Minimum node spacing |
+| Setting | `ForceConfig` field | Effect | Range | Default |
+|---------|---------------------|--------|-------|---------|
+| Center Force | `centerStrength` | Keeps the graph centered on the origin | 0.01 to 0.2 | 0.05 |
+| Repel Force | `chargeStrength` | Repulsion between nodes | -200 to -20 | -100 |
+| Link Force | `linkStrength` | How strongly each edge holds its preferred length, scaled by each relationship's own strength | 0.1 to 1 | 0.5 |
+| Link Distance | `linkDistance` | Preferred edge length (weaker relationships sit farther apart) | 20 to 100 | 50 |
+| Collision Radius | `collisionRadius` | Collision radius around each node, as a multiple of the node's own radius | 1 to 4 | 2 |
 
 ### Expandable Graph
 
@@ -85,7 +86,23 @@ The `useClusterDetection` hook drives **ClusterBoundaries** and **ClusterLabels*
 
 - **Breadcrumbs** — Back/forward through your node selection history (`useBreadcrumbs`)
 - **MiniMap** — Viewport overview with zoom indicator
-- **Keyboard navigation** via `useKeyboardNavigation`: arrow keys to traverse nodes, Enter to select, `/` to focus search, `?` for shortcuts help
+- **Keyboard navigation** via `useKeyboardNavigation`. Press `?` for the in-app shortcuts panel, which lists:
+
+| Key | Action |
+|-----|--------|
+| `↑` `↓` `←` `→` | Navigate between nodes |
+| `Shift` + `↑` `↓` | Navigate in the Z axis |
+| `Tab` | Next node |
+| `Shift` + `Tab` | Previous node |
+| `Esc` | Deselect, or cancel pathfinding |
+| `P` | Find a path from the selected node |
+| `R` | Reheat the simulation |
+| `Shift` + `R` | Reset the view |
+| `,` | Toggle settings |
+| `L` | Toggle labels |
+| `?` | Show the shortcuts panel |
+
+Other keys work outside that panel's list. `/` or `Cmd`/`Ctrl` + `K` focuses the search box (the **SearchBar** handles both, and neither fires while you are typing in a text field). `T` toggles the tag cloud. `Cmd`/`Ctrl` + `[` and `Cmd`/`Ctrl` + `]` step back and forward through the breadcrumbs. While time travel is active, `Space` plays or pauses the timeline and `←` `→` step it (hold `Shift` to jump to the start or end).
 
 ### Hand Tracking Controls
 
