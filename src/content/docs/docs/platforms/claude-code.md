@@ -40,16 +40,18 @@ This installs the plugin to `~/.claude/plugins/automem@marketplace-name/` with t
 │   ├── memory-recall.md
 │   └── memory-store.md
 ├── hooks/
-│   └── hooks.json           # SessionStart hook config
+│   └── hooks.json           # SessionStart + PostToolUse hook config
 ├── scripts/
-│   └── session-start.sh     # Session initialization script
+│   ├── session-start.sh     # Session initialization script
+│   ├── stop-nudge.sh        # Stop nudge script (not registered by hooks.json)
+│   └── track-store.sh       # PostToolUse store tracker
 └── skills/
     └── memory-management/
         ├── SKILL.md
         └── patterns.md
 ```
 
-The plugin registers three slash commands and configures the MCP server automatically.
+The plugin registers three slash commands and configures the MCP server automatically. Its `hooks.json` registers two hooks: SessionStart (the recall prompt) and PostToolUse (tracks `store_memory` calls). `stop-nudge.sh` ships with the plugin, but `hooks.json` does not register a Stop hook.
 
 :::note
 The plugin bundles the MCP server, hooks, and skill and **auto-updates** through the marketplace. Prefer to manage `~/.claude/settings.json` yourself? Use the CLI installer in Method 2. To move an existing settings-level install onto the plugin, see the [migration guide](https://github.com/verygoodplugins/mcp-automem/blob/main/DEPRECATION.md).
@@ -173,18 +175,27 @@ The `~/.claude/CLAUDE.md` file instructs Claude when and how to use memory tools
 
 **Phase 1 — Tag-only preference recall:**
 ```
-recall_memory(tags: ["preference"], limit: 10)
+recall_memory({
+  tags: ["preference"],
+  limit: 20,
+  sort: "updated_desc"
+})
 ```
-Preferences are stable knowledge that doesn't expire. Tag-only queries return clean results without semantic noise.
+Preferences are stable knowledge that doesn't expire. The call has no query and no time filter, so it returns clean results without semantic noise, and `sort: "updated_desc"` puts the freshest preferences first.
 
 **Phase 2 — Semantic + time-limited recent work:**
 ```
-recall_memory(queries: ["current task"], time_query: "last 30 days", limit: 10)
+recall_memory({
+  query: "<proper nouns, specific tools, exact topics from the user's message>",
+  tags: ["<project-slug>"],
+  time_query: "last 90 days",
+  limit: 30
+})
 ```
-Recent work is dynamic and time-sensitive. Semantic search finds relevant context even with different terminology.
+Recent work is dynamic and time-sensitive. Semantic search finds relevant context even with different terminology. Build the one `query` from the specific things the user named, and gate with the working-directory project slug only when it is unambiguous. Drop the `tags` line when the slug collides with a common topic word such as `video` or `test`.
 
 :::tip
-Do not mix tag-based preference recall with semantic task recall — combining them dilutes results.
+The two recalls are independent, so issue them in parallel in a single message. Keep them as separate calls: Phase 1 is tag-only with no query or time filter, and Phase 2 is one semantic query. Use `queries[]` with `auto_decompose` only for genuinely multi-topic questions.
 :::
 
 ### Storage Patterns by Type
@@ -194,7 +205,7 @@ Do not mix tag-based preference recall with semantic task recall — combining t
 | `Preference` | 0.9 | User preferences, explicit choices | "User prefers early returns over nested conditionals" |
 | `Decision` | 0.9 | Architectural decisions, library choices | "Chose Redis for caching due to performance needs" |
 | `Insight` | 0.8 | Bug root causes, key learnings | "Auth failing on null input. Root: missing validation" |
-| `Pattern` | 0.7 | Reusable approaches, best practices | "Using early returns for validation in all API routes" |
+| `Pattern` | 0.8 | Reusable approaches, best practices | "Using early returns for validation in all API routes" |
 | `Style` | 0.7 | Code style, formatting preferences | "Using 2-space indents with Prettier, enforced via pre-commit" |
 | `Context` | 0.5–0.7 | General information, feature notes | "Added JWT auth with refresh token rotation" |
 | `Habit` | 0.6 | Regular workflows, behaviors | "Run tests before committing" |
@@ -237,7 +248,7 @@ If more detail is needed: split into multiple atomic memories, use `metadata` fo
 | Memory Type | Trigger | Association |
 |-------------|---------|-------------|
 | User correction | Search for what's being corrected | `INVALIDATED_BY` |
-| Bug fix | Link to original bug discovery | `DERIVED_FROM` |
+| Bug fix | Link to original bug discovery | `LEADS_TO` |
 | Decision | Link to alternatives considered | `PREFERS_OVER` |
 | Evolution | When knowledge supersedes old | `EVOLVED_INTO` |
 
@@ -280,13 +291,14 @@ Store a decision, insight, or pattern:
 
 ## Tagging Strategy
 
-1. Always include project name
-2. Add platform tag (`claude-code`)
-3. Include current month (`YYYY-MM` format)
-4. Add component/domain tag
-5. Add memory type tag
+Use bare tags only. Do not add platform or date tags, and do not author `entity:*:*` tags, which the server injects.
 
-**Example:** `["my-app", "claude-code", "auth", "decision", "2025-01"]`
+1. One category tag when applicable: `preference`, `decision`, `pattern`, `bugfix`, `solution`, `milestone`, `deployment`, `build`, or `test`
+2. The bare project slug when the memory is project-specific (omit it when the slug collides with a common topic word)
+
+**Examples:** `["decision", "my-app"]`, `["bugfix", "solution", "my-app"]`
+
+Tags are a hard gate at recall time (memories without a matching tag are excluded before scoring), so do not guess topic tags. For facts with a shelf life, such as a current deployment URL or an incident window, set `t_valid` (and `t_invalid` when known) on `store_memory` instead of encoding a date in a tag.
 
 ---
 
