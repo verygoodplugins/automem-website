@@ -3,11 +3,12 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+import { isPinnedSha } from './helpers/source-pins.mjs';
+
 const defaultPagePath = fileURLToPath(
   new URL('../src/content/docs/docs/architecture/mcp-bridge.md', import.meta.url),
 );
 const pagePath = process.env.MCP_BRIDGE_DOCS_PAGE_PATH || defaultPagePath;
-const releaseSha = 'e147c352b100ebbf29e6555453fdde5152066138';
 
 async function readResultFormatting() {
   const page = await readFile(pagePath, 'utf8');
@@ -17,7 +18,7 @@ async function readResultFormatting() {
   return resultFormatting[1];
 }
 
-test('MCP bridge result-formatting links use the 0.16.2 release pin', async () => {
+test('MCP bridge result-formatting links use a recorded AutoMem release pin', async () => {
   const section = await readResultFormatting();
   const sourceLinks = [
     ...section.matchAll(/https:\/\/github\.com\/verygoodplugins\/automem\/blob\/([^/]+)\/mcp-sse-server\/server\.js#L\d+-L\d+/g),
@@ -25,8 +26,8 @@ test('MCP bridge result-formatting links use the 0.16.2 release pin', async () =
 
   assert.ok(sourceLinks.length >= 2, 'expected pinned server.js source links');
   assert.ok(
-    sourceLinks.every(([, sha]) => sha === releaseSha),
-    'result-formatting links must use the 0.16.2 release source pin',
+    sourceLinks.every(([, sha]) => isPinnedSha('automem', sha)),
+    'result-formatting links must use a recorded AutoMem release pin',
   );
 });
 

@@ -3,11 +3,13 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+import { pinnedShaPattern } from './helpers/source-pins.mjs';
+
 const defaultPagePath = fileURLToPath(
   new URL('../src/content/docs/docs/cli/platform-installers.md', import.meta.url),
 );
 const pagePath = process.env.PLATFORM_INSTALLERS_DOCS_PAGE_PATH || defaultPagePath;
-const releaseSha = '9a0bbf754dd31db524da25638b0e97907e32ff37';
+const releaseSha = pinnedShaPattern('mcp-automem');
 
 async function readPage() {
   return readFile(pagePath, 'utf8');

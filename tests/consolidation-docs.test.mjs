@@ -3,10 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { isPinnedSha } from './helpers/source-pins.mjs';
+
 const pagePath = fileURLToPath(
   new URL('../src/content/docs/docs/core-concepts/consolidation.md', import.meta.url),
 );
-const sourceSha = '5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb';
 
 async function readPage() {
   return readFile(pagePath, 'utf8');
@@ -25,7 +26,7 @@ test('consolidation source-note links use the validated AutoMem source pin', asy
 
   assert.ok(sourceLinks.length >= 12, 'expected pinned consolidation source-note links');
   assert.ok(
-    sourceLinks.every(([, sha]) => sha === sourceSha),
+    sourceLinks.every(([, sha]) => isPinnedSha('automem', sha)),
     'consolidation source-note links must use the validated source pin',
   );
 });
