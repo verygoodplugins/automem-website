@@ -1,20 +1,32 @@
 #!/usr/bin/env bash
-# Land docs audit changes: commit, push, open/update PR, notify maintainer.
+# Land docs audit changes: test, commit, push, open/update PR, notify maintainer.
 # Called from .github/workflows/docs-update.yml after Claude Code finishes.
+#
+# Each source repo has one rolling PR on docs/audit-<repo>, which
+# prepare-docs-branch.sh checks out before Claude runs. The docs tests run here,
+# deterministically: a red suite lands the PR as a HOLD draft instead of leaving
+# auto-merge waiting on a check that will never pass.
 set -euo pipefail
 
 SOURCE_REPO="${SOURCE_REPO:?SOURCE_REPO required}"
 SOURCE_SHA="${SOURCE_SHA:?SOURCE_SHA required}"
+RELEASE_TAG="${RELEASE_TAG:-}"
 STRUCTURED_OUTPUT="${STRUCTURED_OUTPUT:-}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 REPO="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}"
 MAINTAINER="${DOCS_MAINTAINER:-@jgarturo}"
+PINS_FILE="${PINS_FILE:-scripts/docs-source-pins.json}"
+TEST_CMD="${DOCS_TEST_CMD:-npm test}"
+# Pushes made with the workflow's own GITHUB_TOKEN don't trigger CI, so a
+# rolling PR would never get a fresh Build check. Push with this token instead.
+PUSH_TOKEN="${PUSH_TOKEN:-}"
+RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${REPO}/actions/runs/${GITHUB_RUN_ID:-}"
 
 # Derive branch slug from source repo name (e.g. verygoodplugins/automem -> automem)
 REPO_SLUG="${SOURCE_REPO##*/}"
 SHORT_SHA="${SOURCE_SHA:0:7}"
-DEFAULT_BRANCH="docs/audit-${REPO_SLUG}-${SHORT_SHA}"
-BRANCH="${CLAUDE_BRANCH:-$DEFAULT_BRANCH}"
+SOURCE_LABEL="${RELEASE_TAG:-$SHORT_SHA}"
+BRANCH="docs/audit-${REPO_SLUG}"
 
 # Parse structured output from Claude Code action. Missing or malformed
 # output fails closed to HOLD so auto-merge never ships an unverified PR.
@@ -58,91 +70,82 @@ fi
 
 # Default title if model omitted it
 if [ -z "$TITLE" ]; then
-  TITLE="docs: update docs to reflect ${SOURCE_REPO}@${SHORT_SHA}"
+  TITLE="docs: update docs to reflect ${SOURCE_REPO}@${SOURCE_LABEL}"
 fi
 
-# Check for local changes or an existing audit branch
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-HAS_CHANGES=false
-if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-  HAS_CHANGES=true
+# Run git against GitHub with PUSH_TOKEN when set (an empty extraheader first
+# drops any credential actions/checkout persisted).
+git_remote() {
+  if [ -n "$PUSH_TOKEN" ]; then
+    local auth
+    auth="$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 | tr -d '\n')"
+    git -c "http.https://github.com/.extraheader=" \
+      -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" "$@"
+  else
+    git "$@"
+  fi
+}
+
+# Doc edits are anything but the pins file, which prepare-docs-branch.sh bumps
+# for every release whether or not a page changes.
+HAS_DOC_CHANGES=false
+if [ -n "$(git status --porcelain --untracked-files=all -- . ":(exclude)${PINS_FILE}")" ]; then
+  HAS_DOC_CHANGES=true
 fi
 
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [[ "$CURRENT_BRANCH" == docs/audit-* ]]; then
-  BRANCH="$CURRENT_BRANCH"
-fi
-
-# Remote branch exists?
-REMOTE_BRANCH_EXISTS=false
-if git ls-remote --exit-code origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
-  REMOTE_BRANCH_EXISTS=true
-fi
-
-if [ "$CONFIDENCE" = "NO_CHANGES" ] && [ "$HAS_CHANGES" = "true" ]; then
+if [ "$HAS_DOC_CHANGES" = "false" ]; then
+  git checkout -- "$PINS_FILE" 2>/dev/null || true
+  if [ "$CONFIDENCE" != "HOLD" ]; then
+    echo "No doc changes to land (confidence=${CONFIDENCE}); exiting."
+    exit 0
+  fi
+  echo "HOLD with no file edits; landing an empty commit so the questions are visible."
+elif [ "$CONFIDENCE" = "NO_CHANGES" ]; then
   echo "Model reported NO_CHANGES but the tree is dirty; failing closed to HOLD."
   CONFIDENCE="HOLD"
 fi
 
-if [ "$CONFIDENCE" = "NO_CHANGES" ] && [ "$HAS_CHANGES" = "false" ]; then
-  echo "No doc changes needed; exiting."
-  exit 0
+# prepare-docs-branch.sh leaves the rolling branch checked out. Without it, the
+# edits move onto a branch of that name at the current commit.
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+  git checkout -B "$BRANCH"
 fi
 
-# Keep a checkoutable origin/$BRANCH on Actions runners (fetch of a branch
-# name alone updates FETCH_HEAD, not the remote-tracking ref).
-fetch_audit_branch() {
-  git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
-}
-
-stash_landing_worktree() {
-  # .source-repo is ignored, so git skips it automatically. Excluding it with
-  # an explicit pathspec makes git treat the ignored directory as an add/stash
-  # target and fails the landing step on Actions runners.
-  git stash push --include-untracked -m "docs-audit-landing" -- .
-}
-
-if [ "$HAS_CHANGES" = "false" ] && [ "$REMOTE_BRANCH_EXISTS" = "false" ]; then
-  if [ "$CONFIDENCE" = "HOLD" ]; then
-    echo "HOLD with no file edits; opening an empty-commit draft so questions are visible."
-    git checkout -B "$BRANCH"
-    git commit --allow-empty -m "$TITLE"
-    git push -u origin "$BRANCH"
-  else
-    echo "No local changes and no remote branch; nothing to land."
-    exit 0
+# Test the tree that will be pushed.
+TESTS_FAILED=false
+FAILED_TESTS=""
+if [ "$HAS_DOC_CHANGES" = "true" ]; then
+  TEST_LOG="$(mktemp)"
+  echo "Running ${TEST_CMD}..."
+  if ! bash -c "$TEST_CMD" >"$TEST_LOG" 2>&1; then
+    TESTS_FAILED=true
+    CONFIDENCE="HOLD"
+    FAILED_TESTS="$(grep -E '^[[:space:]]*(✖|not ok )' "$TEST_LOG" | sed -E 's/^[[:space:]]*(✖|not ok [0-9]+ -)[[:space:]]*//; s/ \([0-9.]+ms\)$//' | tr '`' "'" | sort -u | head -20 || true)"
+    echo "Docs tests failed; holding the PR as a draft."
+    tail -n 60 "$TEST_LOG"
   fi
+  rm -f "$TEST_LOG"
 fi
 
-# Commit and push if there are local changes
-if [ "$HAS_CHANGES" = "true" ]; then
-  if [ "$REMOTE_BRANCH_EXISTS" = "true" ]; then
-    fetch_audit_branch
-    if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
-      stash_landing_worktree
-      git checkout -B "$BRANCH" "origin/$BRANCH"
-      git stash pop
-    else
-      stash_landing_worktree
-      git pull --rebase origin "$BRANCH"
-      git stash pop
-    fi
-  elif [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
-    git checkout -B "$BRANCH"
-  fi
-  git add -A -- .
-  if git diff --cached --quiet; then
-    echo "Existing audit branch already has these changes; skipping commit."
-  else
-    git commit -m "$TITLE"
-  fi
-  git push -u origin "$BRANCH"
-elif [ "$REMOTE_BRANCH_EXISTS" = "true" ]; then
-  fetch_audit_branch
-  git checkout -B "$BRANCH" "origin/$BRANCH"
+git add -A -- .
+if git diff --cached --quiet; then
+  git commit --allow-empty -m "$TITLE"
+else
+  git commit -m "$TITLE"
 fi
+
+# Never rewrite an open rolling PR; a closed or merged one restarts from main.
+EXISTING_PR="$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // ""')"
+REMOTE_SHA="$(git_remote ls-remote origin "refs/heads/${BRANCH}" | cut -f1)"
+if [ -n "$REMOTE_SHA" ] && [ -n "$EXISTING_PR" ] && ! git merge-base --is-ancestor "$REMOTE_SHA" HEAD 2>/dev/null; then
+  echo "::error::${BRANCH} has an open PR whose head is not in this branch; refusing to rewrite it."
+  exit 1
+fi
+git_remote push --force-with-lease="refs/heads/${BRANCH}:${REMOTE_SHA}" origin "HEAD:refs/heads/${BRANCH}"
 
 # Build PR body
 FIX_COUNT="$(printf '%s' "$FIXES_JSON" | jq 'length')"
@@ -150,7 +153,13 @@ BODY_FILE="$(mktemp)"
 {
   echo "## Summary"
   echo
-  echo "Automated docs audit for [\`${SOURCE_REPO}\`](https://github.com/${SOURCE_REPO}) @ [\`${SOURCE_SHA:0:7}\`](https://github.com/${SOURCE_REPO}/commit/${SOURCE_SHA})."
+  if [ -n "$RELEASE_TAG" ]; then
+    echo "Automated docs audit for [\`${SOURCE_REPO}\`](https://github.com/${SOURCE_REPO}) release [\`${RELEASE_TAG}\`](https://github.com/${SOURCE_REPO}/releases/tag/${RELEASE_TAG}) (\`${SHORT_SHA}\`)."
+  else
+    echo "Automated docs audit for [\`${SOURCE_REPO}\`](https://github.com/${SOURCE_REPO}) @ [\`${SHORT_SHA}\`](https://github.com/${SOURCE_REPO}/commit/${SOURCE_SHA})."
+  fi
+  echo
+  echo "This is the rolling docs PR for \`${REPO_SLUG}\`: each release adds commits here until it merges."
   echo
   echo "## Fixes"
   echo
@@ -162,14 +171,22 @@ BODY_FILE="$(mktemp)"
     echo "| (see diff) | — | Doc updates in this PR | \`${SHORT_SHA}\` |"
   fi
   echo
-
+  if [ "$TESTS_FAILED" = "true" ]; then
+    echo "## Failing tests"
+    echo
+    echo "\`${TEST_CMD}\` failed on this branch, so the PR is held as a draft. Full output: ${RUN_URL}"
+    echo
+    if [ -n "$FAILED_TESTS" ]; then
+      printf '%s\n' "$FAILED_TESTS" | sed 's/^/- /'
+      echo
+    fi
+  fi
   if [ "$QUESTION_COUNT" -gt 0 ]; then
     echo "## Open questions"
     echo
     printf '%s' "$QUESTIONS_JSON" | jq -r '.[] | "- \(.)"'
     echo
   fi
-
   if [ "$CONFIDENCE" = "CLEAR" ]; then
     echo "<!-- DOCS-AUDIT: CLEAR -->"
   else
@@ -178,7 +195,6 @@ BODY_FILE="$(mktemp)"
 } > "$BODY_FILE"
 
 # Create or update PR
-EXISTING_PR="$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --json number,url --jq '.[0].url // ""')"
 if [ -n "$EXISTING_PR" ]; then
   gh pr edit "$EXISTING_PR" --title "$TITLE" --body-file "$BODY_FILE"
   PR_URL="$EXISTING_PR"
@@ -207,10 +223,12 @@ fi
 # Summary comment + maintainer ping
 COMMENT_FILE="$(mktemp)"
 {
-  echo "${MAINTAINER} docs audit **${CONFIDENCE}** for \`${SOURCE_REPO}@${SHORT_SHA}\`."
+  echo "${MAINTAINER} docs audit **${CONFIDENCE}** for \`${SOURCE_REPO}@${SOURCE_LABEL}\`."
   echo
   if [ "$CONFIDENCE" = "CLEAR" ]; then
     echo "Verified edits will auto-merge once CI passes."
+  elif [ "$TESTS_FAILED" = "true" ]; then
+    echo "This PR is held because \`${TEST_CMD}\` failed — see **Failing tests** above."
   else
     echo "This PR is held for your input — see **Open questions** above."
   fi

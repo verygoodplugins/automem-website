@@ -50,7 +50,7 @@ If you see references to hot pink `#FF33CC` anywhere, that's a leftover from the
 
 ## Documentation update workflow
 
-Docs cover three sibling repos checked out next to this one: `../automem` (Python core), `../mcp-servers/mcp-automem` (TS MCP client/CLI), `../automem-graph-viewer` (React/Vite visualizer). Source-to-doc mapping lives in `scripts/file-doc-map.json`. The `/update-docs` slash command (`.claude/commands/update-docs.md`) drives the workflow — surgical edits only, do not rewrite unaffected sections. Commit style for these is `docs: update [pages] to reflect [repo]@[short-sha]`.
+Docs cover three sibling repos checked out next to this one: `../automem` (Python core), `../mcp-servers/mcp-automem` (TS MCP client/CLI), `../automem-graph-viewer` (React/Vite visualizer). Source-to-doc mapping lives in `scripts/file-doc-map.json`. The `/update-docs` slash command (`.claude/commands/update-docs.md`) drives the workflow — surgical edits only, do not rewrite unaffected sections. Commit style for these is `docs: update [pages] to reflect [repo]@[short-sha]`. Docs follow published releases: source links pin a release commit, tests read accepted pins from `scripts/docs-source-pins.json` (never hardcode a source SHA in a test), and the automated lane keeps one rolling `docs/audit-<repo>` PR per source repo, held as a draft when `npm test` fails.
 
 ## Conventions & gotchas
 
