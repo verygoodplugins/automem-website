@@ -10,8 +10,9 @@ Key GitHub sources:
 - [mcp-sse-server/server.js](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js) — Express app, transport handlers, tool definitions, session management
 - [docs/MCP_SSE.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/docs/MCP_SSE.md) — Transport protocol documentation
 - [mcp-sse-server/README.md](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/README.md) — Deployment quickstart
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — mcp-automem package entry point (stdio client)
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client implementation
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts) — mcp-automem package entry point (mode detection, CLI routing, stdio transport wiring)
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — tool definitions, server instructions, and `createAutoMemMcpServer()` (server construction and the `CallToolRequestSchema` handler)
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP client implementation
 :::
 
 The MCP Bridge connects AI platforms to AutoMem's memory service. It exists in two forms that serve different integration scenarios:
@@ -82,15 +83,15 @@ The `mcp-automem` npm package operates as a local MCP server using stdio transpo
 graph LR
     START["npx @verygoodplugins/mcp-automem"]
 
-    subgraph Detection["Mode Detection<br/>src/index.ts:41-42"]
+    subgraph Detection["Mode Detection<br/>src/index.ts:30-31"]
         CHECK{"process.argv[2]<br/>exists?"}
     end
 
     subgraph Server_Mode["Server Mode"]
-        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:100-110"]
-        MCP_SERVER["new Server()<br/>src/index.ts:457-464"]
-        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:1715"]
-        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/index.ts:1424"]
+        STDIO_GUARD["installStdioErrorGuards()<br/>src/index.ts:102-112"]
+        MCP_SERVER["new Server()<br/>src/mcp-surface.ts:1026"]
+        STDIO_TRANSPORT["StdioServerTransport<br/>src/index.ts:448"]
+        TOOL_HANDLER["CallToolRequestSchema<br/>handler<br/>src/mcp-surface.ts:1038"]
     end
 
     subgraph CLI_Mode["CLI Mode"]
@@ -99,9 +100,11 @@ graph LR
         CONFIG["runConfig()<br/>src/cli/setup.ts"]
         CURSOR["runCursorSetup()<br/>src/cli/cursor.ts"]
         CLAUDE_CODE["runClaudeCodeSetup()<br/>src/cli/claude-code.ts"]
+        COPILOT["runCopilotSetup()<br/>src/cli/copilot.ts"]
         CODEX["runCodexSetup()<br/>src/cli/codex.ts"]
         OPENCLAW["runOpenClawSetup()<br/>src/cli/openclaw.ts"]
         HERMES["runHermesSetup()<br/>src/cli/hermes.ts"]
+        GROK["runGrokSetup()<br/>src/cli/grok.ts"]
         MIGRATE["runMigrateCommand()<br/>src/cli/migrate.ts"]
         UNINSTALL["runUninstallCommand()<br/>src/cli/uninstall.ts"]
         QUEUE["runQueueCommand()<br/>src/cli/queue.ts"]
@@ -120,9 +123,11 @@ graph LR
     CHECK --> CONFIG
     CHECK --> CURSOR
     CHECK --> CLAUDE_CODE
+    CHECK --> COPILOT
     CHECK --> CODEX
     CHECK --> OPENCLAW
     CHECK --> HERMES
+    CHECK --> GROK
     CHECK --> MIGRATE
     CHECK --> UNINSTALL
     CHECK --> QUEUE
@@ -287,10 +292,12 @@ sequenceDiagram
 |---|---|---|---|
 | `storeMemory()` | POST | `/memory` | All Memory fields |
 | `recallMemory()` | GET | `/recall?{params}` | URLSearchParams encoding |
-| `associateMemories()` | POST | `/associate` | Two IDs + type/strength |
+| `associateMemories()` | POST | `/associate` | Two IDs + type/strength, or an `associations` array (1-500 entries) for batch |
 | `updateMemory()` | PATCH | `/memory/{id}` | Partial updates |
 | `deleteMemory()` | DELETE | `/memory/{id}` | ID in URL |
 | `checkHealth()` | GET | `/health` | No body |
+
+**Batch associations:** [`associateMemories()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L343-L350) sends `{ associations }` as the request body when `associations` is an array, and otherwise sends the single `memory1_id`/`memory2_id`/`type`/`strength` pair. The [`associate_memories` tool schema](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L542-L588) requires either that single pair or `associations`, with 1-500 entries per batch, and each entry needs `memory1_id`, `memory2_id`, `type`, and `strength`.
 
 **Error Handling:** [server.js:107-199](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/mcp-sse-server/server.js#L107-L199) wraps fetch failures and non-OK responses into Error objects.
 
@@ -344,9 +351,11 @@ graph TB
 **mcp-automem environment variable priority:**
 
 1. `AUTOMEM_API_KEY` (primary, current)
-2. `AUTOMEM_API_TOKEN` (fallback)
+2. `AUTOMEM_API_TOKEN` (deprecated alias, still read)
+3. `CLAUDE_PLUGIN_OPTION_API_KEY` (or the lowercase-suffix spelling `CLAUDE_PLUGIN_OPTION_api_key`)
+4. `CLAUDE_PLUGIN_OPTION_API_TOKEN` (or `CLAUDE_PLUGIN_OPTION_api_token`)
 
-The `readAutoMemApiKeyFromEnv()` function in `src/env.ts` implements this priority chain.
+The first non-blank value wins. [`readAutoMemApiKeyFromEnv()`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/env.ts#L12-L24) in `src/env.ts` implements this priority chain. Entries 3 and 4 carry the Claude Code plugin's `userConfig` answers, which Claude Code exports to plugin subprocesses as `CLAUDE_PLUGIN_OPTION_*` variables; both key spellings are accepted because the exported casing is not pinned.
 
 ---
 
@@ -388,7 +397,7 @@ Context hints:
 - `context_types` (string[]): Priority memory types
 - `priority_ids` (string[]): Specific IDs to boost
 
-**Output Formats** ([server.js:684-714](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L684-L714)):
+**Output Formats** ([server.js:684-714](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L684-L714)):
 - `text` (default): Single-block text with all results
 - `items`: One MCP content item per memory
 - `detailed`: Items with timestamps, relations, scores
@@ -398,15 +407,15 @@ Context hints:
 
 **`formatRecallAsItems()` Function:**
 
-[server.js:372-452](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L372-L452) transforms AutoMem API responses into MCP content items.
+[server.js:372-452](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L372-L452) transforms AutoMem API responses into MCP content items.
 
-**Compact (`text` and `items`):** `text` is the default single-block response and `items` returns the same compact representation as one MCP content item per memory. When a memory provides `timestamp` (the normal recall shape) or `created_at` (the ID-fetch fallback), compact output adds a standalone `Created:` line after `ID:`. That date tells a reader whether relative language in the recalled memory still refers to the current moment. ([server.js:381-398](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L381-L398))
+**Compact (`text` and `items`):** `text` is the default single-block response and `items` returns the same compact representation as one MCP content item per memory. When a memory provides `timestamp` (the normal recall shape) or `created_at` (the ID-fetch fallback), compact output adds a standalone `Created:` line after `ID:`. That date tells a reader whether relative language in the recalled memory still refers to the current moment. ([server.js:381-398](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L381-L398))
 
-**Detailed (`detailed`):** Detailed output keeps the existing `Timestamp:` label and uses the same `timestamp` then `created_at` fallback, alongside metadata, scores, and relation details. ([server.js:401-451](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L401-L451))
+**Detailed (`detailed`):** Detailed output keeps the existing `Timestamp:` label and uses the same `timestamp` then `created_at` fallback, alongside metadata, scores, and relation details. ([server.js:401-451](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L401-L451))
 
-**Raw (`json`):** `json` bypasses result formatting and returns the raw upstream API response unchanged as a JSON string. ([server.js:684-687](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L684-L687))
+**Raw (`json`):** `json` bypasses result formatting and returns the raw upstream API response unchanged as a JSON string. ([server.js:684-687](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L684-L687))
 
-**Relation Summarization:** [server.js:438-449](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/mcp-sse-server/server.js#L438-L449) — Shows up to 5 relations with type, strength, and source ID.
+**Relation Summarization:** [server.js:438-449](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/mcp-sse-server/server.js#L438-L449) — Shows up to 5 relations with type, strength, and source ID.
 
 ---
 
@@ -510,8 +519,8 @@ The MCP Bridge deploys as a separate service alongside the AutoMem API service.
 - AutoMem API: Internal `:8001` (HTTP only, no public domain by default)
 - FalkorDB: Internal `:6379` (Redis protocol, no public access)
 
-:::caution[Common Issue: PORT Variable]
-Without `PORT=8001` set, Flask defaults to `:5000`, causing `ECONNREFUSED` errors from the MCP bridge. Always set `PORT=8001` for the memory-service.
+:::caution[Common Issue: PORT Mismatch]
+The AutoMem API listens on `PORT` and falls back to `8001` only when it is unset ([`run_default_server()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py#L81-L83)). `ECONNREFUSED` errors from the MCP bridge usually mean the port in the bridge's `AUTOMEM_API_URL` does not match the port the memory-service is actually listening on. Keep the memory-service `PORT` and the port in `AUTOMEM_API_URL` identical (the examples above use `8001`), and set `PORT=8001` explicitly on the memory-service rather than relying on the fallback.
 :::
 
 ### Cost Optimization
