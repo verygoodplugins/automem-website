@@ -160,7 +160,7 @@ FALKORDB_PASSWORD=(copy exact value from falkordb service variables)
 **Error response:**
 
 ```json
-{"error": "Unauthorized", "message": "Invalid or missing API token"}
+{"status": "error", "code": 401, "message": "Unauthorized"}
 ```
 
 #### Diagnosis Flow
@@ -202,9 +202,11 @@ flowchart TD
 **Step 2: Test token**
 
 ```bash
-curl -H "Authorization: Bearer your-token" \
-  https://your-service.up.railway.app/health
+curl -i -H "Authorization: Bearer your-token" \
+  "https://your-service.up.railway.app/recall?limit=1"
 ```
+
+A `401 Unauthorized` response means the service rejected the token. Do not test the token against `/health`: it skips the API token check, so it succeeds even with a wrong token.
 
 **Step 3: If tokens don't match, update everywhere:**
 
@@ -396,9 +398,11 @@ For complete recovery procedures, see [Backup & Recovery](/docs/operations/backu
 **Log output:**
 
 ```
-⚠️  No OPENAI_API_KEY or VOYAGE_API_KEY found - using placeholder embeddings
-Semantic search will not work correctly
+Failed to initialize fastembed provider, using placeholder: <FastEmbed error>
+Using placeholder embeddings (no semantic search). Install fastembed or set VOYAGE_API_KEY/OPENAI_API_KEY for semantic embeddings.
 ```
+
+With `EMBEDDING_PROVIDER=auto`, both warnings appear when no Voyage or OpenAI key is set, Ollama is not configured, and FastEmbed fails to load. The first line carries the FastEmbed error. A missing API key alone does not cause this, because `auto` tries FastEmbed before it falls back to placeholder vectors.
 
 #### Embedding Provider Selection Flow
 
@@ -681,7 +685,7 @@ If issues persist after following this guide:
 
 3. **Test minimal configuration:**
    - Deploy with only FalkorDB (no Qdrant)
-   - Use placeholder embeddings (no OpenAI)
+   - Use placeholder embeddings (`EMBEDDING_PROVIDER=placeholder`) instead of an embedding API
    - Disable MCP bridge temporarily
 
 4. **Open an issue:**

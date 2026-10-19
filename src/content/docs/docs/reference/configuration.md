@@ -23,7 +23,7 @@ AutoMem loads environment variables from multiple sources in a specific preceden
 2. **Project `.env`** — File in repository root
 3. **User config** — `~/.config/automem/.env` (user-specific, never committed)
 
-This hierarchy allows local overrides without modifying shared configuration files. For example, a developer can set `FALKORDB_HOST=localhost` in their user config while the project `.env` contains shared development defaults.
+`config.py` calls `load_dotenv()` for the project `.env` first and for the user config second, and neither call overrides a value that is already set. The user config therefore only fills in variables that the process environment and the project `.env` leave unset. It cannot override the project `.env`: if both files set `FALKORDB_HOST`, the project value wins. For example, a developer can keep a personal `OPENAI_API_KEY` in their user config as long as the project `.env` does not set that variable.
 
 ```mermaid
 graph TB
@@ -114,7 +114,7 @@ AutoMem performs dimension validation before writing to Qdrant. Mismatches raise
 
 ### Authentication
 
-All endpoints except `/health` require authentication:
+Every endpoint except `/health`, `/backup`, and `/viewer*` (plus `OPTIONS` preflight requests) requires the API token when `AUTOMEM_API_TOKEN` is set. `/backup` skips that guard but requires the admin token instead:
 
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
@@ -175,11 +175,11 @@ Controls automatic background enrichment after memory storage:
 
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `ENRICHMENT_MAX_ATTEMPTS` | int | No | `3` | Retry limit before marking failed |
+| `ENRICHMENT_MAX_ATTEMPTS` | int | No | `3` | Max attempts for a forced job before giving up; non-forced jobs are not retried |
 | `ENRICHMENT_SIMILARITY_LIMIT` | int | No | `5` | Number of semantic neighbors to link |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | float | No | `0.8` | Min cosine similarity for `SIMILAR_TO` edge |
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | int | No | `2` | Worker sleep duration when queue empty |
-| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | int | No | `5` | Delay between retry attempts |
+| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | int | No | `5` | Flat delay the worker sleeps after a failed attempt, before it re-enqueues |
 | `ENRICHMENT_ENABLE_SUMMARIES` | bool | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | float | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker sends one recovery probe |
 | `ENRICHMENT_SPACY_MODEL` | string | No | `en_core_web_sm` | spaCy model for NER (if installed) |
@@ -187,15 +187,15 @@ Controls automatic background enrichment after memory storage:
 
 **Entity tag generation:**
 
-Extracted entities become structured tags with the pattern `entity:<type>:<slug>`:
+Extracted entities become structured tags with the pattern `entity:<category>:<slug>`. The category is always plural, and the slug is the lowercased value with each run of characters other than `a-z` and `0-9` replaced by `-`, with any leading or trailing `-` removed:
 
-| Entity Type | Example Input | Generated Tag |
-|-------------|---------------|---------------|
-| Tool | `PostgreSQL` | `entity:tool:postgresql` |
-| Project | `automem` | `entity:project:automem` |
-| Person | `Sarah` | `entity:person:sarah` |
-| Organization | `OpenAI` | `entity:organization:openai` |
-| Concept | `ACID compliance` | `entity:concept:acid-compliance` |
+| Entity Category | Example Input | Generated Tag |
+|-----------------|---------------|---------------|
+| `tools` | `PostgreSQL` | `entity:tools:postgresql` |
+| `projects` | `automem` | `entity:projects:automem` |
+| `people` | `Sarah` | `entity:people:sarah` |
+| `organizations` | `OpenAI` | `entity:organizations:openai` |
+| `concepts` | `ACID compliance` | `entity:concepts:acid-compliance` |
 
 ### Consolidation Engine
 
@@ -245,8 +245,10 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 | `SEARCH_WEIGHT_CONFIDENCE` | float | No | `0.05` | Memory confidence score |
 | `SEARCH_WEIGHT_EXACT` | float | No | `0.20` | Content token overlap |
 | `SEARCH_WEIGHT_RELATION` | float | No | `0.25` | Graph relation proximity boost |
-| `SEARCH_WEIGHT_RELEVANCE` | float | No | `0.0` | LLM-scored relevance (disabled by default) |
+| `SEARCH_WEIGHT_RELEVANCE` | float | No | `0.0` | Weight on the stored consolidation-decay `relevance_score` (age, access, relationships, importance, confidence); `0.0` disables it |
 | `SEARCH_WEIGHT_TEMPORAL` | float | No | `0.10` | Relative-recency re-rank bonus (inert unless `RECALL_RECENCY_BIAS` is active) |
+
+The ten terms from `SEARCH_WEIGHT_VECTOR` through `SEARCH_WEIGHT_RELEVANCE` are summed as-is. Their defaults total 1.95, and nothing normalizes the result, so a `final_score` can exceed 1.0. An unweighted context bonus is added on top. After scoring, recall can add `SEARCH_WEIGHT_TEMPORAL` times relative recency (only when the recency re-rank runs) and a flat `0.15` to entity-expanded results. Recency decays with the age of the memory's `timestamp`, not with `last_accessed`.
 
 Adjust weights to favor specific signals for your use case.
 
@@ -355,7 +357,7 @@ The `mcp-automem` client uses two primary environment variables to locate and au
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service (written by the guided installer) |
+| `AUTOMEM_API_URL` | No | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service (written by the guided installer). Defaults to the local URL; set it for cloud |
 | `AUTOMEM_ENDPOINT` | No | — | Legacy alias for `AUTOMEM_API_URL` (still accepted) |
 | `AUTOMEM_API_KEY` | No | (none) | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | (none) | Alternative name for the API key |
@@ -506,10 +508,7 @@ At runtime, if the endpoint is unreachable, queue operations are skipped rather 
 
 ### Logging and Debug
 
-| Variable | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `LOG_LEVEL` | string | No | `INFO` | Python logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `FLASK_ENV` | string | No | `production` | Flask environment mode |
+AutoMem has no log-level or Flask-mode environment variable: `LOG_LEVEL` and `FLASK_ENV` are not read. The server starts logging at `INFO` ([`app.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L104)) and runs with `debug=False` ([`runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py#L109)). Docker Compose exports `FLASK_ENV=development` and `FLASK_DEBUG=1`, but they do not enable Flask debug mode. The `AUTOMEM_LOG_LEVEL=debug` variable in the MCP client table above is read by mcp-automem, not by the AutoMem server.
 
 ### Testing Configuration
 

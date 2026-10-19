@@ -185,7 +185,7 @@ Root Directory: mcp-sse-server
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `PORT` | Yes | `8080` | HTTP server port |
-| `AUTOMEM_API_URL` | Yes | None | Internal URL: `http://memory-service.railway.internal:8001` |
+| `AUTOMEM_API_URL` | Yes on Railway | `http://127.0.0.1:8001` | Internal URL: `http://memory-service.railway.internal:8001`. The default is a local address, so set it |
 | `AUTOMEM_API_TOKEN` | Yes | None | Copy from `memory-service` |
 
 ## Networking Architecture
@@ -414,7 +414,7 @@ graph TB
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `PORT` | Yes | `8080` | HTTP server port |
-| `AUTOMEM_API_URL` | Yes | None | Internal URL: `http://memory-service.railway.internal:8001` |
+| `AUTOMEM_API_URL` | Yes on Railway | `http://127.0.0.1:8001` | Internal URL: `http://memory-service.railway.internal:8001`. The default is a local address, so set it |
 | `AUTOMEM_API_TOKEN` | Yes | None | Copy from `memory-service` |
 
 ## Troubleshooting

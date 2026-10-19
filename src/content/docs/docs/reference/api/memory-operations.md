@@ -193,7 +193,7 @@ This enables prefix matching queries like `tags=slack` to match `slack:channel:g
 
 **Tagging Conventions (from platform templates):**
 
-Tags are bare strings. The shipped memory policy forbids platform and date-stamped tags; use a project/domain tag plus a category instead, and use `t_valid` / `t_invalid` for facts with a shelf life.
+Tags are bare strings. The memory policy shipped for Codex, Cursor, Grok, Claude Desktop, the Claude Code plugin, and the OpenClaw plugin forbids platform and date-stamped tags (the Claude Code `CLAUDE.md` rules template and the Copilot rules do not mention them); use a project/domain tag plus a category instead, and use `t_valid` / `t_invalid` for facts with a shelf life.
 
 | Memory Type | Tag Pattern | Example |
 |-------------|-------------|--------|

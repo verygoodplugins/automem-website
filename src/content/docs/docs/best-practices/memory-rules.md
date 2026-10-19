@@ -289,12 +289,12 @@ Memories that aren't tied to one project, such as general preferences, take a ca
 Use one category tag when one applies: `preference`, `decision`, `pattern`, `bugfix`, `solution`, `milestone`, `deployment`, `build`, or `test`. Add the project slug only for project-specific memories, and omit it when the slug collides with a common topic word (`api`, `app`, `test`, `video`).
 
 :::caution[Bare tags only]
-The shipped memory policy has agents write **bare string tags**: no `project/` or `lang/` prefixes, no platform tags (`cursor`, `claude-code`), and no date-stamped tags such as `YYYY-MM`. `entity:*:*` tags are added by the service during enrichment, so don't author them. Tags are a hard gate on recall, so gate on a stable category or the project slug, and put topic words in the `query` instead.
+The shipped memory policy has agents write **bare string tags**. The Codex, Cursor, Grok, and Claude Desktop rules spell the convention out: no `project/` or `lang/` prefixes, no platform tags (`cursor`, `claude-code`), and no date-stamped tags such as `YYYY-MM`. The Claude Code plugin (its memory-management skill and `/memory-store` command) and the OpenClaw plugin policy ban platform and date tags too. Not every host's rules say that much. The Claude Code `CLAUDE.md` rules template and the Copilot rules say `automem`, not `project/automem`, and do not mention platform or date tags; the OpenClaw MCP and legacy skills only say to avoid platform tags like `openclaw`; and the Hermes rules list `hermes` among their example bare tags. `entity:*:*` tags are added by the service during enrichment, so don't author them. Tags are a hard gate on recall, so gate on a stable category or the project slug, and put topic words in the `query` instead.
 :::
 
 ### Time Conventions
 
-Don't put dates in tags; the shipped templates rule out date-stamped tags. Every memory already carries a `timestamp` (the store time unless you pass one), and `time_query` (or explicit `start` / `end`) filters on it:
+Don't put dates in tags; the Codex, Cursor, Grok, and Claude Desktop rules, the Claude Code plugin, and the OpenClaw plugin policy rule out date-stamped tags. Every memory already carries a `timestamp` (the store time unless you pass one), and `time_query` (or explicit `start` / `end`) filters on it:
 
 ```json
 {

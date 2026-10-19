@@ -179,10 +179,12 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 
 **`recall_memory`** — Hybrid search
 - Basic: `query`, `queries`, `tags`, `limit`
+- Ordering: `sort` (`score`, `time_desc`, `time_asc`, `updated_desc`, or `updated_asc`; use `time_*` for chronological recaps)
 - Time filters: `time_query`, `start`, `end`
 - Tag matching: `tag_mode` (any/all), `tag_match` (exact/prefix)
 - Graph expansion: `expand_entities`, `expand_relations`, `auto_decompose`
 - Expansion filters: `expand_min_importance`, `expand_min_strength` (v0.8.0+)
+- Expansion scope: `expand_respect_tags` (ranked mode only). When true, graph and entity expansion stays within the original tag scope; when false, expansion may include related context outside the tags
 - Context hints: `language`, `active_path`, `context_types`, `priority_ids`
 
 **`associate_memories`** — Create typed relationships between memories

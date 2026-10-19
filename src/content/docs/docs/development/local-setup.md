@@ -262,18 +262,13 @@ AUTOMEM_API_TOKEN=your-dev-token
 | `QDRANT_COLLECTION` | `memories` | Qdrant collection name |
 | `VECTOR_SIZE` | `1024` | Embedding dimension |
 | `OPENAI_API_KEY` | _unset_ | OpenAI API key |
-| `ENRICHMENT_MAX_ATTEMPTS` | `3` | Enrichment retry limit |
+| `ENRICHMENT_MAX_ATTEMPTS` | `3` | Max attempts for a forced enrichment job; non-forced jobs are not retried |
 | `ENRICHMENT_SIMILARITY_LIMIT` | `5` | Semantic neighbors count |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | `0.8` | SIMILAR_TO edge threshold |
 | `FLASK_ENV` | _unset_ | Docker Compose exports `development`; it does not control the runtime debug setting. |
 | `FLASK_DEBUG` | _unset_ | Docker Compose exports `1`; it does not control the runtime debug setting. |
-| `LOG_LEVEL` | `INFO` | Logging verbosity |
 
-**Enable verbose application logging** when diagnosing local behavior:
-
-```bash
-LOG_LEVEL=DEBUG
-```
+**Application logging:** AutoMem has no log-level environment variable, and `LOG_LEVEL` is not read. The server starts logging at `INFO` ([`app.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L104)). Read the output in the terminal running `python app.py`, or with `docker compose logs -f flask-api`.
 
 Docker Compose exports `FLASK_ENV=development` and `FLASK_DEBUG=1` for the `flask-api` container, but the [runtime entry point](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/runtime_wiring.py) hardcodes `debug=False`. Those exports therefore do not enable Flask debug mode or the autoreloader; restart the process or container after changing source files.
 

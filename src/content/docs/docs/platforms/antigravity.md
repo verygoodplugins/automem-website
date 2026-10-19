@@ -1,14 +1,14 @@
 ---
-title: Google AntiGravity
-description: Add AutoMem memory to Google AntiGravity editor via MCP.
+title: Google Antigravity
+description: Add AutoMem memory to Google Antigravity editor via MCP.
 sidebar:
   order: 12
 ---
 
-Google AntiGravity supports MCP natively through its **built-in MCP Store** and a `mcp_config.json` configuration file. AutoMem connects as a custom MCP server, exposing six memory tools (`store_memory`, `recall_memory`, `associate_memories`, `update_memory`, `delete_memory`, `check_database_health`) directly inside AntiGravity conversations.
+Google Antigravity supports MCP natively through its **built-in MCP Store** and a `mcp_config.json` configuration file. AutoMem connects as a custom MCP server, exposing six memory tools (`store_memory`, `recall_memory`, `associate_memories`, `update_memory`, `delete_memory`, `check_database_health`) directly inside Antigravity conversations.
 
 :::note
-AutoMem is not yet available in AntiGravity's MCP Store. Install it as a custom MCP server using the manual configuration below.
+AutoMem is not yet available in Antigravity's MCP Store. Install it as a custom MCP server using the manual configuration below.
 :::
 
 ---
@@ -17,8 +17,8 @@ AutoMem is not yet available in AntiGravity's MCP Store. Install it as a custom 
 
 ```mermaid
 graph TB
-    subgraph "AntiGravity Editor"
-        UI["AntiGravity UI"]
+    subgraph "Antigravity Editor"
+        UI["Antigravity UI"]
         STORE["MCP Store (built-in)"]
         MCP_CLIENT["MCP Client"]
     end
@@ -45,7 +45,7 @@ graph TB
     API --> QDRANT
 ```
 
-AntiGravity spawns the AutoMem MCP server as a child process and communicates over stdin/stdout using JSON-RPC — the same stdio transport used by Claude Desktop and Cursor.
+Antigravity spawns the AutoMem MCP server as a child process and communicates over stdin/stdout using JSON-RPC — the same stdio transport used by Claude Desktop and Cursor.
 
 ---
 
@@ -53,7 +53,7 @@ AntiGravity spawns the AutoMem MCP server as a child process and communicates ov
 
 ### Step 1: Open the MCP Configuration
 
-1. Open the **MCP Store** panel via the `...` dropdown at the top of AntiGravity's agent panel
+1. Open the **MCP Store** panel via the `...` dropdown at the top of Antigravity's agent panel
 2. Click **Manage MCP Servers**
 3. Click **View raw config** to open `mcp_config.json`
 
@@ -110,13 +110,13 @@ AntiGravity spawns the AutoMem MCP server as a child process and communicates ov
 
 ### Step 3: Reload
 
-After saving `mcp_config.json`, AntiGravity should automatically detect the new server. If tools don't appear, restart the editor.
+After saving `mcp_config.json`, Antigravity should automatically detect the new server. If tools don't appear, restart the editor.
 
 ---
 
 ## Tool Naming
 
-AntiGravity prefixes MCP tools with the server name. With the server registered as `"memory"`, tools appear as:
+Antigravity prefixes MCP tools with the server name. With the server registered as `"memory"`, tools appear as:
 
 - `store_memory`
 - `recall_memory`
@@ -126,7 +126,7 @@ AntiGravity prefixes MCP tools with the server name. With the server registered 
 - `check_database_health`
 
 :::note
-AntiGravity's exact tool prefix format may vary. Check the editor's tool list after installation to confirm the naming pattern used in your version.
+Antigravity's exact tool prefix format may vary. Check the editor's tool list after installation to confirm the naming pattern used in your version.
 :::
 
 ---
@@ -172,7 +172,7 @@ Run separate AutoMem instances for different contexts — personal vs. work memo
 
 ## Configuring Agent Instructions
 
-AntiGravity's AI agent benefits from explicit instructions on when and how to use memory. Add these patterns to your editor's agent instructions or system prompt:
+Antigravity's AI agent benefits from explicit instructions on when and how to use memory. Add these patterns to your editor's agent instructions or system prompt:
 
 **Recommended recall strategy:**
 - At conversation start, recall recent work and relevant project context
@@ -206,7 +206,7 @@ Keep tags bare: one stable category (such as `decision`, `bugfix`, or `pattern`)
 
 | Variable | Required | Purpose | Example |
 |----------|---------|---------|---------|
-| `AUTOMEM_API_URL` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
+| `AUTOMEM_API_URL` | No | AutoMem service URL. Defaults to the local URL; set it for cloud deployments | `http://127.0.0.1:8001` |
 | `AUTOMEM_API_KEY` | No* | API authentication token | `your-token-here` |
 
 \*Required for Railway/cloud deployments. Optional for local development.
@@ -215,7 +215,7 @@ Keep tags bare: one stable category (such as `decision`, `bugfix`, or `pattern`)
 
 ## Verification
 
-After installation, ask AntiGravity's agent to verify the connection:
+After installation, ask Antigravity's agent to verify the connection:
 
 ```
 Check the health of the AutoMem service
@@ -230,11 +230,11 @@ Expected response includes:
 
 ## Troubleshooting
 
-### Tools not appearing in AntiGravity
+### Tools not appearing in Antigravity
 
 1. Verify `mcp_config.json` is valid JSON (no trailing commas)
 2. Check that `AUTOMEM_API_URL` is reachable from your machine
-3. Restart AntiGravity completely
+3. Restart Antigravity completely
 4. Re-open the MCP Store panel and confirm the server appears in the list
 
 ### Service unreachable
@@ -244,13 +244,15 @@ Expected response includes:
 curl http://127.0.0.1:8001/health
 
 # For cloud deployments
-curl -H "Authorization: Bearer $YOUR_KEY" https://your-automem.up.railway.app/health
+curl https://your-automem.up.railway.app/health
 ```
+
+`/health` skips the API token check, so these commands only show whether the service is reachable. They succeed even if `AUTOMEM_API_KEY` is wrong.
 
 ### Authentication failures (401/403)
 
 1. Verify `AUTOMEM_API_KEY` matches the token set in your AutoMem service
-2. Test authentication: `curl -H "Authorization: Bearer $KEY" $ENDPOINT/health`
+2. Test authentication against an endpoint that requires the token, because `/health` does not check it: `curl -i -H "Authorization: Bearer $KEY" "$ENDPOINT/recall?limit=1"`. A `401 Unauthorized` response means the service rejected the key.
 3. Regenerate API key if expired
 
 ### MCP Store vs. custom server conflicts
@@ -261,13 +263,13 @@ If you've installed another MCP server from the store that conflicts with your A
 
 ## Cross-Platform Memory Access
 
-Memories stored via AntiGravity are accessible from any other AutoMem-connected platform (Cursor, Claude Desktop, Claude Code, GitHub Copilot) as long as they all point to the same AutoMem service endpoint.
+Memories stored via Antigravity are accessible from any other AutoMem-connected platform (Cursor, Claude Desktop, Claude Code, GitHub Copilot) as long as they all point to the same AutoMem service endpoint.
 
 ---
 
 ## Related Platforms
 
-AntiGravity's `mcp_config.json` follows the same `mcpServers` JSON structure as other MCP-enabled platforms:
+Antigravity's `mcp_config.json` follows the same `mcpServers` JSON structure as other MCP-enabled platforms:
 
 - **Claude Desktop** — uses `claude_desktop_config.json` + Personal Preferences
 - **Cursor IDE** — uses `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc`

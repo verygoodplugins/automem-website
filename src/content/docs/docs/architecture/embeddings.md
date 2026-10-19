@@ -398,7 +398,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 **Configuration validation:**
 - `VECTOR_SIZE` should match the Qdrant collection dimension. By default a differing collection dimension is adopted; with `VECTOR_SIZE_AUTODETECT=false` a mismatch raises `VectorDimensionMismatchError`
 - Provider-specific keys are only required when using that provider
-- Auto mode requires at least one provider key (falls back to placeholder)
+- Auto mode needs no API key: without Voyage or OpenAI keys it tries Ollama (when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is set), then FastEmbed, and falls back to placeholder only if FastEmbed fails to load
 - The dimension must be valid for the selected provider
 
 ### Tuning Recommendations

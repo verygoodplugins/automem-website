@@ -196,11 +196,11 @@ All background threads are daemon threads, meaning they terminate automatically 
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ENRICHMENT_MAX_ATTEMPTS` | 3 | Max retries per memory |
+| `ENRICHMENT_MAX_ATTEMPTS` | 3 | Max attempts per forced job (non-forced jobs are not retried) |
 | `ENRICHMENT_SIMILARITY_LIMIT` | 5 | Max similar neighbors to link |
 | `ENRICHMENT_SIMILARITY_THRESHOLD` | 0.8 | Min cosine similarity for `SIMILAR_TO` edge |
 | `ENRICHMENT_IDLE_SLEEP_SECONDS` | 2.0 | Queue poll timeout |
-| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | 5.0 | Base backoff on failure |
+| `ENRICHMENT_FAILURE_BACKOFF_SECONDS` | 5.0 | Flat sleep after a failure, before the re-enqueue |
 | `ENRICHMENT_ENABLE_SUMMARIES` | true | Generate content summaries |
 | `ENRICHMENT_SPACY_MODEL` | `en_core_web_sm` | spaCy model for NER |
 
@@ -262,11 +262,13 @@ Monitoring endpoints and manual triggers. The global API-token guard covers all 
 
 ### Enrichment Retries
 
-Failed enrichment jobs are automatically retried with flat backoff:
+Only forced enrichment jobs (from `POST /enrichment/reprocess`) are retried, with a flat backoff:
 
 - Max attempts: `ENRICHMENT_MAX_ATTEMPTS` (default: 3)
-- Backoff: `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default: 5.0) — sleeps this flat duration on each failure
-- Failed jobs logged and removed from queue after max attempts
+- Backoff: `ENRICHMENT_FAILURE_BACKOFF_SECONDS` (default: 5.0) — the worker sleeps this flat duration after each failure that is re-enqueued, then re-enqueues the job
+- After the last attempt the worker logs `Giving up on enrichment` and does not re-queue the job
+
+A non-forced job (the kind `POST /memory` queues) is not retried. The worker still sleeps the backoff after a failure that has attempts left, but the re-enqueue goes through the [in-flight duplicate check](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_worker.py#L37-L41) and is dropped because the failed memory ID is still marked in flight. The worker does not retry it. `POST /enrichment/reprocess` queues the memory again.
 
 ### Embedding Retries
 

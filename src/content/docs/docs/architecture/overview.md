@@ -261,7 +261,9 @@ The `_compute_metadata_score()` function ([automem/utils/scoring.py](https://git
 | Importance score | 10% | User-assigned priority | `SEARCH_WEIGHT_IMPORTANCE` |
 | Recency boost | 10% | Freshness decay function | `SEARCH_WEIGHT_RECENCY` |
 | Confidence score | 5% | Classification confidence | `SEARCH_WEIGHT_CONFIDENCE` |
-| Relevance | 0% | Contextual relevance hint | `SEARCH_WEIGHT_RELEVANCE` |
+| Relevance | 0% | Stored `relevance_score` written by consolidation decay (weight 0.0 disables it) | `SEARCH_WEIGHT_RELEVANCE` |
+
+`_compute_metadata_score()` returns the raw weighted sum of these ten terms plus an unweighted context bonus. The default weights total 1.95 and nothing normalizes it, so a score can exceed 1.0. After scoring, recall can add a temporal re-rank term (`SEARCH_WEIGHT_TEMPORAL` times relative recency, only when the recency re-rank runs) and a flat `0.15` for entity-expanded results to the `final_score` it returns. The recency term decays with the age of the memory's `timestamp`, not with `last_accessed`.
 
 ---
 

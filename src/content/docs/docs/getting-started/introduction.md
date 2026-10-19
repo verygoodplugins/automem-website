@@ -210,13 +210,13 @@ The separation between server and client is intentional:
 
 **Optional enhancements** that improve functionality:
 
-- **OpenAI API key** — enables semantic embeddings instead of placeholder hash-based vectors
+- **OpenAI API key** — optional hosted embeddings. With no provider key, `EMBEDDING_PROVIDER=auto` uses a configured Ollama server or a local FastEmbed model
 - **Voyage API key** — alternative embedding provider with better performance
 - **Qdrant Cloud account** — enables vector search (AutoMem degrades gracefully without it)
 - **spaCy model** — richer entity extraction during enrichment (`python -m spacy download en_core_web_sm`)
 
 :::note
-Without an `OPENAI_API_KEY`, the system uses `PlaceholderEmbeddingProvider` which generates deterministic hash-based vectors with no semantic meaning. Memory storage and graph queries still work, but recall quality will be lower.
+Without a Voyage or OpenAI key, `EMBEDDING_PROVIDER=auto` tries Ollama (when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is set), then a local FastEmbed model. At startup, `auto` falls back to `PlaceholderEmbeddingProvider`, which generates deterministic hash-based vectors with no semantic meaning, only when FastEmbed cannot load; setting `EMBEDDING_PROVIDER=placeholder` forces it. A provider call that fails or returns the wrong dimensions can also fall back to a placeholder vector for that memory. Memory storage and graph queries still work, but recall quality will be lower with placeholder vectors.
 :::
 
 ### MCP Client Prerequisites

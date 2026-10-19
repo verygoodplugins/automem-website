@@ -227,7 +227,7 @@ Recommended importance thresholds:
 
 | Variable | Required | Purpose | Example |
 |----------|---------|---------|---------|
-| `AUTOMEM_API_URL` | Yes | AutoMem service URL | `http://127.0.0.1:8001` |
+| `AUTOMEM_API_URL` | No | AutoMem service URL. Defaults to the local URL; set it for cloud deployments | `http://127.0.0.1:8001` |
 | `AUTOMEM_API_KEY` | No* | API authentication token | `your-token-here` |
 
 \*Required for Railway/cloud deployments. Optional for local development.

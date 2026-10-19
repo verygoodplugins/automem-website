@@ -132,8 +132,7 @@ For CI, use `--target existing` with an endpoint and key rather than provisionin
 Confirm the hosted backend is healthy:
 
 ```bash
-curl https://your-automem-url/health \
-  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+curl https://your-automem-url/health
 ```
 
 ```json
@@ -148,6 +147,13 @@ curl https://your-automem-url/health \
 
 If Qdrant is unavailable, health reports `"qdrant": "disconnected"` and the top-level `"status": "degraded"`. See [Quick Start → Verify it worked](/docs/getting-started/quick-start/) for the full field reference and a first end-to-end memory test.
 
+`/health` skips the API token check, so it does not prove that your key is accepted. When the installer has a key, its verify step also sends an authenticated `GET /recall?limit=1` request after the health check. You can run the same probe yourself. A `401 Unauthorized` response means the key was rejected:
+
+```bash
+curl -i "https://your-automem-url/recall?limit=1" \
+  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+```
+
 ---
 
 ## Troubleshooting
@@ -155,7 +161,7 @@ If Qdrant is unavailable, health reports `"qdrant": "disconnected"` and the top-
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Railway guided setup does not complete | The CLI flow could not finish in this environment | Choose **Other** and paste the endpoint + key for an existing AutoMem deployment |
-| `401 Unauthorized` on `/health` | Wrong/missing token | Re-check the key the provider issued; provide it without a `Bearer` prefix |
+| `Authenticated recall probe failed with HTTP 401` | The key was rejected. `/health` skips the token check, so only the authenticated recall probe returns this. On a fresh InstaPods or Railway deploy the wait step runs the same probe, so a rejected key shows there as "`<endpoint>` isn't responding yet" after the wait | Re-check the key the provider issued; provide it without a `Bearer` prefix |
 | You already run AutoMem on Railway | Railway (guided) creates a fresh deployment in this release | Choose **Other** and paste the existing endpoint + key |
 
 ---
