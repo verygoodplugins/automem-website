@@ -6,9 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP server, tool definitions, and request handlers
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/src/mcp-surface.ts) — MCP tool definitions and request handlers
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/server.json) — MCP server manifest
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -231,7 +231,7 @@ curl -X POST https://your-automem-instance/memory \
 ```
 
 :::note[Additional MCP store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
+The table above is a simplified view. The published MCP schema also includes `type`, `confidence`, `t_valid`, `t_invalid`, `updated_at`, `last_accessed`, `supersedes_memory_id`, `supersede_relation`, and `supersede_reason`. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
 **Content Size Governance (MCP layer adds two-tier validation):**
@@ -320,7 +320,7 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
 
-System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`.
+System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, `EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT`, and `DISCOVERED`.
 
 **MCP Tool Output:**
 

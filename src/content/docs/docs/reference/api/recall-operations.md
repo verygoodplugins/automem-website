@@ -10,9 +10,9 @@ sidebar:
 - [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Score weight and recall tuning configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `recall_memory` tool
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and formatting
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/src/mcp-surface.ts) — MCP `recall_memory` tool definition and handler
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/src/recall-memory.ts) — MCP recall response budgeting and formatting
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/fdd3bf0597dd1eb6462815a7df8df19426f7b849/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines 10 scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.

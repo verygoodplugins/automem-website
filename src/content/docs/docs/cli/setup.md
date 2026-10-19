@@ -254,7 +254,7 @@ node dist/index.js setup
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.16.0 at `9a0bbf754dd31db524da25638b0e97907e32ff37`)
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` at `fdd3bf0597dd1eb6462815a7df8df19426f7b849`)
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -396,7 +396,7 @@ your-project/
             └── package.json
 ```
 
-**Templates:** In the audited `mcp-automem` 0.16.0 release (`9a0bbf754dd31db524da25638b0e97907e32ff37`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
+**Templates:** In the audited `mcp-automem` release (`fdd3bf0597dd1eb6462815a7df8df19426f7b849`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 
