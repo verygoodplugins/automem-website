@@ -20,7 +20,7 @@ The memory system implements a **trust-based architecture**: AI assistants have 
 This philosophy evolved from early experiments with hook-based automation (Claude Code) toward instruction-based patterns (Cursor, Codex). The instruction-based approach proved more reliable because the AI can contextualize significance better than automated event capture.
 
 :::note[Hook system history]
-The hook system was experimentally implemented for Claude Code (v0.5.0) and Cursor (v0.5.0), then removed in v0.8.0 and v0.6.0 respectively. See [Custom Integrations](/docs/best-practices/progressive-disclosure/) for the current template-based integration path.
+The hook system was experimentally implemented for Claude Code (v0.5.0) and Cursor (v0.5.0), then removed in v0.8.0 and v0.6.0 respectively. Those hooks captured activity such as edits, builds, tests, and deploys mechanically. Claude Code installs now ship advisory hooks instead: a SessionStart hook that prompts the two-phase recall, and an optional Stop hook that nudges once when a substantive session stored nothing. They prompt and observe; they never write memories themselves. See [Custom Integrations](/docs/best-practices/progressive-disclosure/) for the current template-based integration path.
 :::
 
 ---
@@ -34,7 +34,7 @@ The `recall_memory` tool supports five fundamental recall strategies, often used
 | Strategy | Use Case | Parameters | When to Use |
 |---|---|---|---|
 | **Semantic** | Natural language search | `query`, `queries` | Topic-based recall, context gathering |
-| **Tag-based** | Precise filtering | `tags`, `tag_mode`, `tag_match` | Project isolation, component filtering |
+| **Tag-based** | Precise filtering | `tags`, `tag_mode`, `tag_match` | Project isolation, stable categories (`preference`, `bugfix`) |
 | **Temporal** | Time-bound search | `time_query`, `start`, `end` | Recent work, time-specific events |
 | **Graph expansion** | Multi-hop reasoning | `expand_entities`, `expand_relations` | Complex questions, relationship traversal |
 | **Context-aware** | Language/style hints | `language`, `context_types` | Coding tasks, style preferences |
@@ -62,6 +62,8 @@ recall_memory({
 })
 ```
 
+Gate Phase 2 on the project slug only when it is unambiguous. If the slug collides with a common topic word (`api`, `app`, `test`, `video`), drop `tags` and rely on the semantic `query` alone.
+
 :::tip[Key insight]
 Don't mix tag-based preference recall with semantic task recall — combining them dilutes results. Preferences are stable and should use exact tag matching without semantic search interference. For Phase 2, a single well-written `query` consistently beats `queries[]` + `auto_decompose: true` on focused tasks; reserve multi-query decomposition for genuinely multi-topic questions.
 :::
@@ -84,7 +86,7 @@ Enable graph traversal to follow relationships from seed results:
 }
 ```
 
-API parameters exposed in `src/index.ts:764-811`:
+API parameters exposed in [`src/mcp-surface.ts` L373–L418](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts#L373-L418):
 - `expand_entities: true` — Enable multi-hop entity expansion
 - `expand_relations: true` — Follow graph relationships from seed results
 - `expand_min_importance: 0.5` — Filter expanded results by importance threshold
@@ -101,11 +103,11 @@ Context hints boost relevant memories for coding tasks:
   "query": "authentication patterns",
   "language": "typescript",
   "context_types": ["Pattern", "Decision"],
-  "tags": ["my-project", "auth"]
+  "tags": ["my-project"]
 }
 ```
 
-These parameters influence the scoring algorithm in the AutoMem service, boosting memories that match the language, file path patterns, or specified types/tags.
+`language` and `context_types` are rankers: they boost matching memories without excluding the rest. `active_path` (the current file path) is used for language auto-detection. `tags` works differently: it is a hard gate that filters before scoring, so use it for the project slug or a stable category, and put topic words in `query`.
 
 **Parallel Recall for Comprehensive Context**
 
@@ -116,30 +118,30 @@ Execute multiple recall strategies simultaneously (both can be issued to the MCP
 {"query": "current sprint tasks", "tags": ["my-project"], "time_query": "last 7 days"}
 
 // Strategy 2: Preferences and style
-{"tags": ["preference"], "tag_mode": "any", "limit": 10}
+{"tags": ["preference"], "tag_mode": "any", "limit": 20}
 ```
 
-The `recall_memory` tool already implements parallel queries when both semantic search and tag filtering are requested, merging and deduplicating results server-side.
+The service deduplicates the results within each call.
 
 ### Tag Matching Modes
 
 | Parameter | Behavior | Use Case |
 |---|---|---|
-| `tag_mode: "any"` (default) | OR logic — match any tag | Broad recall, multiple components |
+| `tag_mode: "any"` (default) | OR logic — match any tag | Broad recall, multiple categories |
 | `tag_mode: "all"` | AND logic — require all tags | Strict filtering, intersection queries |
 
-**Namespace Support via Prefix Matching**
+**Prefix Matching**
 
-Set `tag_match: "prefix"` to support hierarchical tag queries:
+`tag_match: "prefix"` matches a tag and every tag below it. The service splits tags on `:` and `/`, so this query returns memories tagged `entity:people:alice`, `entity:people:bob`, and any other `entity:people:*` tag:
 
 ```json
 {
-  "tags": ["auth"],
+  "tags": ["entity:people"],
   "tag_match": "prefix"
 }
 ```
 
-This matches memories tagged `auth/jwt`, `auth/oauth`, `auth/mfa`, and any other `auth/*` variants.
+The service adds `entity:<category>:<slug>` tags during enrichment. Agents write bare tags (see [Tagging Conventions](#tagging-conventions)), so don't build your own namespaces for this. Older memories may still carry `project/<slug>` tags, which is one reason a project tag gate can come back sparse. When it does, retry without the gate and rely on the semantic `query`.
 
 ---
 
@@ -179,14 +181,14 @@ The system supports **seven memory types** with distinct semantic meanings:
 | `Decision` | Strategic/technical decisions | 0.85–0.95 | "Chose PostgreSQL over MongoDB for ACID compliance" |
 | `Pattern` | Recurring approaches | 0.70–0.85 | "Using early returns for validation reduces nesting" |
 | `Insight` | Key learnings, resolutions | 0.75–0.85 | "Auth timeout caused by missing retry logic" |
-| `Preference` | User/team preferences | 0.75–0.90 | "User prefers 2-space indents with single quotes" |
+| `Preference` | User/team preferences | 0.9 | "User prefers 2-space indents with single quotes" |
 | `Style` | Code style, formatting | 0.60–0.80 | "Always wrap database calls with timeout logging" |
 | `Habit` | Regular behaviors | 0.50–0.70 | "Deploy to staging before production" |
 | `Context` | General information | 0.50–0.70 | "Added JWT authentication system" |
 
 **Type vs Importance**: The `type` field enables semantic filtering (e.g., recall only `Decision` memories), while `importance` controls relevance ranking and decay. Corrections to AI outputs should always use `importance: 0.9` as they represent strong style signals.
 
-From templates: Use explicit `type` when confident about classification. Omit `type` to let the system auto-classify (less accurate but acceptable). Include `confidence: 0.95` when providing explicit type (defaults to 0.9).
+Set an explicit `type` on every store; the Claude Code memory rules template requires it. `confidence` is a separate dial from `importance`: 0.95 for something the user stated, 0.8 for an observed pattern, 0.6 for a tentative inference. It defaults to 0.9 when you provide a `type`. Don't set 0.95 on everything, because that flattens the signal.
 
 ---
 
@@ -228,7 +230,7 @@ graph LR
 | **Patterns** | 0.75–0.85 | Best practices, reusable approaches | Useful across projects |
 | **Insights** | 0.7–0.8 | Bug fixes, key learnings | Important but time-sensitive |
 | **Features** | 0.7–0.8 | Implementation details | Project-specific context |
-| **Preferences** | 0.6–0.8 | Tool choices, style preferences | Stable but lower priority than corrections |
+| **Preferences** | 0.9 | Tool choices, style preferences | Stored at the same weight as corrections |
 | **Context** | 0.5–0.7 | General information | Background knowledge |
 
 **Philosophy**: High importance scores (0.9+) are reserved for memories that should persist indefinitely and rank highly in recall. Medium scores (0.7–0.8) indicate useful patterns that should survive for months. Low scores (< 0.3) signal the memory system to let them naturally decay.
@@ -242,89 +244,66 @@ graph LR
 
 ## Tagging Conventions
 
-### Hierarchical Tagging Schema
+### Bare Tag Schema
 
 ```mermaid
 graph TB
-    subgraph "Tag Namespace Strategy"
+    subgraph "Tag Strategy"
         Memory["Memory to store"]
 
         Decision{"Is this\nproject-specific?"}
 
-        ProjectTags["Project namespace:\n1. project-name\n2. platform (cursor/codex)\n3. YYYY-MM\n4. component"]
+        ProjectTags["Project-specific:\n1. category (decision/bugfix/...)\n2. project-slug\n3. language"]
 
-        PersonalTags["Personal namespace:\n1. 'personal'\n2. YYYY-MM\n3. category (health/workflow)"]
+        GeneralTags["Not project-specific:\n1. category (preference/...)\n(no project slug)"]
 
         Store["store_memory()"]
     end
 
     Memory --> Decision
     Decision -->|Yes: code, architecture| ProjectTags
-    Decision -->|No: preferences, lifestyle| PersonalTags
+    Decision -->|No: preferences, lifestyle| GeneralTags
 
     ProjectTags --> Store
-    PersonalTags --> Store
+    GeneralTags --> Store
 ```
 
 **Project-Specific Memories**
 
 ```json
 {
-  "tags": ["my-api-service", "cursor", "2026-02", "auth"]
+  "tags": ["decision", "my-api-service", "typescript"]
 }
 ```
 
-**Personal/Cross-Project Memories**
+**Cross-Project Memories**
+
+Memories that aren't tied to one project, such as general preferences, take a category tag and leave out the project slug:
 
 ```json
 {
-  "tags": ["personal", "2026-02", "workflow"]
+  "tags": ["preference"]
 }
 ```
 
-**Namespace Hierarchy**
+Use one category tag when one applies: `preference`, `decision`, `pattern`, `bugfix`, `solution`, `milestone`, `deployment`, `build`, or `test`. Add the project slug only for project-specific memories, and omit it when the slug collides with a common topic word (`api`, `app`, `test`, `video`).
 
-Tags support hierarchical namespaces via prefix matching:
+:::caution[Bare tags only]
+The shipped memory policy has agents write **bare string tags**: no `project/` or `lang/` prefixes, no platform tags (`cursor`, `claude-code`), and no date-stamped tags such as `YYYY-MM`. `entity:*:*` tags are added by the service during enrichment, so don't author them. Tags are a hard gate on recall, so gate on a stable category or the project slug, and put topic words in the `query` instead.
+:::
 
-```
-project-x/
-├── auth/
-│   ├── jwt
-│   ├── oauth
-│   └── mfa
-├── api/
-│   ├── rest
-│   └── graphql
-└── frontend/
-    ├── components
-    └── routing
-```
+### Time Conventions
 
-**Why Separate Personal and Project Namespaces**
-
-From template documentation: Using `personal` instead of a project tag ensures preferences and lifestyle context aren't drowned out by high-importance technical memories. Project tags help filter technical memories, but personal memories should be discoverable across all projects.
-
-### Time Tag Conventions
-
-**Monthly Tags** (YYYY-MM format):
-
-Always include the current month as a tag. This enables time-based filtering in recall:
+Don't put dates in tags; the shipped templates rule out date-stamped tags. Every memory already carries a `timestamp` (the store time unless you pass one), and `time_query` (or explicit `start` / `end`) filters on it:
 
 ```json
 {
-  "tags": ["my-project", "2026-02", "auth"],
+  "tags": ["my-project"],
   "time_query": "last 30 days"
 }
 ```
 
-**Time-Based Filtering**:
-
-```json
-{
-  "tags": ["2026-01"],
-  "tag_mode": "any"
-}
-```
+**Facts with a shelf life**: set `t_valid` and `t_invalid` on `store_memory` (single-memory mode only) instead of encoding a date in the tags. The service persists both fields and serves them from `GET /memory/<id>`; they don't always appear in `/recall` responses.
 
 ---
 
@@ -395,23 +374,26 @@ Create associations after storing a new memory when:
 User corrections are the strongest signal for personalization. Always search and link:
 
 ```json
-// 1. Store the correction
-store_memory({ content: "User prefers camelCase for variable names", type: "Preference", importance: 0.9 })
+// 1. Find the old preference before storing
+recall_memory({ query: "variable naming style preference", limit: 5 })
 
-// 2. Find the old preference
-recall_memory({ query: "variable naming style preference" })
+// 2. Store the correction
+store_memory({ content: "User prefers camelCase for variable names", type: "Preference", tags: ["correction", "<project>"], importance: 0.9, confidence: 0.95 })
 
-// 3. Link correction to old memory
-associate_memories({ memory1_id: "<new_id>", memory2_id: "<old_id>", type: "INVALIDATED_BY", strength: 0.9 })
+// 3. Verify it landed by recalling a distinctive phrase
+recall_memory({ query: "camelCase for variable names", limit: 3 })
+
+// 4. Mark the old memory as invalidated by the new one
+associate_memories({ memory1_id: "<old_id>", memory2_id: "<new_id>", type: "INVALIDATED_BY", strength: 0.9 })
 ```
 
 **Association Pattern: Bug Fixes**
 
-Link fixes to original bug discoveries to build problem-solution chains:
+Link original bug discoveries to their fixes to build problem-solution chains:
 
 ```json
-// After storing fix
-associate_memories({ memory1_id: "<fix_id>", memory2_id: "<bug_id>", type: "LEADS_TO", strength: 0.85 })
+// After storing the fix
+associate_memories({ memory1_id: "<bug_id>", memory2_id: "<fix_id>", type: "LEADS_TO", strength: 0.85 })
 ```
 
 **Association Pattern: Decisions**
@@ -429,23 +411,21 @@ associate_memories({ memory1_id: "<postgres_id>", memory2_id: "<mongo_id>", type
 
 ### Template Variable Substitution
 
-Each platform template uses placeholder variables that are substituted during installation:
+Platform templates such as Cursor and Codex use placeholder variables that the installer substitutes:
 
 **Common Variables**
 
 | Variable | Resolution | Example |
 |---|---|---|
 | `{{PROJECT_NAME}}` | From package.json, git remote, or directory name | `my-api-service` |
-| `{{PROJECT_DESC}}` | From package.json description | `REST API for user management` |
-| `{{MCP_TOOL_PREFIX}}` | Platform-specific tool prefix | `mcp__memory__` |
-| `{{MCP_SERVER_NAME}}` | Server name from config | `memory` |
-| `{{CURRENT_MONTH}}` | Current YYYY-MM | `2026-02` |
+| `{{MCP_TOOL_PREFIX}}` | Cursor tool prefix, built from the server name as `mcp_<server>_` | `mcp_memory_` |
+| `{{MCP_SERVER_NAME}}` | Cursor MCP server name from config | `memory` |
 
 **Tool Prefix Variations**
 
 | Platform | MCP Server Name | Tool Prefix | Example |
 |---|---|---|---|
-| Cursor | `memory` | `mcp__memory__` | `mcp__memory__recall_memory` |
+| Cursor | `memory` | `mcp_memory_` | `mcp_memory_recall_memory` |
 | Claude Code | `memory` | `mcp__memory__` | `mcp__memory__store_memory` |
 | Claude Code (plugin) | `plugin_automem_memory` | `mcp__plugin_automem_memory__` | `mcp__plugin_automem_memory__recall_memory` |
 | Codex | `memory` | `mcp__memory__` | `mcp__memory__recall_memory` |
@@ -461,13 +441,14 @@ Tool names are client-specific. The prefix depends on the server name in your MC
 
 Cursor uses `.cursor/rules/automem.mdc` with `alwaysApply: true` to ensure memory tools are available in every conversation.
 
-Pattern: **3-phase lifecycle** (conversation start → during work → conversation end)
+Pattern: **Two-phase session-start recall** (preferences tag-only, task context semantic+time), an on-demand debug recall with no tag gate, and **three mid-conversation storage triggers** (user correction, decision stabilized, pattern articulated). The rule says never to store session summaries or progress reports, and it has no end-of-conversation step.
 
-**Claude Code: Permission + Rules Integration**
+**Claude Code: Permissions, Rules, and Hooks Integration**
 
-Claude Code uses two mechanisms:
+Claude Code uses three mechanisms:
 1. Permissions in `~/.claude/settings.json` to allow memory tools without prompting
 2. Rules in `~/.claude/CLAUDE.md` to guide usage
+3. A SessionStart hook that prompts the two-phase recall (bundled by the plugin, installed by the CLI installer)
 
 Pattern: **Two-phase recall** (preferences tag-only, task context semantic+time)
 
@@ -475,13 +456,13 @@ Pattern: **Two-phase recall** (preferences tag-only, task context semantic+time)
 
 Codex uses `AGENTS.md` in the project root with memory rules appended via CLI.
 
-Pattern: **Simple recall at task start**, store during work
+Pattern: **Two-phase session-start recall** and the same three storage triggers as Cursor
 
 **Claude Desktop: Personal Preferences**
 
 Claude Desktop uses Personal Preferences (Settings → Profile → Personal Preferences) with memory usage patterns.
 
-Pattern: **Conversation start protocol**, corrections as gold, before creating content
+Pattern: **Semantic-first recall** at conversation start (preferences plus one semantic task query), adding a tag gate only once the user scopes the task, and the same three storage triggers as Cursor
 
 ---
 
@@ -515,11 +496,11 @@ templates/
 ### Storage Best Practices
 
 1. **Keep memories atomic** — 150–300 characters target
-2. **Tag consistently** — project, platform, date, component
+2. **Tag consistently** — bare strings: category, project slug, language
 3. **Score appropriately** — user corrections highest (0.9)
 4. **Include context** — explain "why", not just "what"
 5. **Avoid noise** — skip trivial changes, routine operations
-6. **Use explicit types** — include `type` and `confidence` when certain
+6. **Use explicit types** — set `type` on every store and use `confidence` to say how sure you are
 
 ### Association Best Practices
 
