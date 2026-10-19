@@ -8,7 +8,7 @@ sidebar:
 This page covers installing the `@verygoodplugins/mcp-automem` package and running the guided installer to configure your connection to the AutoMem service. For information about deploying the AutoMem backend service itself, see [Prerequisites](#prerequisites). For detailed configuration options and environment variable resolution, see [Configuration Tools](/docs/cli/config-tools/).
 
 :::tip[The guided installer does all of this for you]
-`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. `setup` is an alias of `install`. The [Quick Start](/docs/getting-started/quick-start/) walks through it prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces. Print config snippets with `npx @verygoodplugins/mcp-automem config`.
+`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0; until that publish it is still the older endpoint wizard. The [Quick Start](/docs/getting-started/quick-start/) walks through the installer prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces. Print config snippets with `npx @verygoodplugins/mcp-automem config`.
 :::
 
 ## Prerequisites
@@ -259,9 +259,9 @@ The built server is available at `dist/index.js`.
 
 ## Guided installer
 
-`install` is the installer. `setup` runs the same command. It asks where AutoMem runs, verifies the endpoint, writes `.env`, and configures the agents you select. Pass `--dry-run` to preview and `--yes` to apply without prompts. Host commands such as `claude-code` and `cursor` remain scriptable writers for one platform.
+`install` is the installer on current npm. It asks where AutoMem runs, verifies the endpoint, writes `.env`, and configures the agents you select. Pass `--dry-run` to preview and `--yes` to apply without prompts. Host commands such as `claude-code` and `cursor` remain scriptable writers for one platform.
 
-The retired `.env`-only wizard is gone. Flags that belonged only to it (`--env`, `--claude-code`, `--claude-dir`, `--claude-dry-run`) now error, with a pointer at `install`, `config`, or the host writer.
+`setup` becomes an alias of `install` in the release after 0.16.0. Until that publish, `setup` is still the older endpoint wizard, and `--env`, `--claude-code`, `--claude-dir`, and `--claude-dry-run` still apply. After that release those flags error and point at `install`, `config`, or the host writer.
 
 The installer writes `.env` in the current directory after it verifies the endpoint:
 

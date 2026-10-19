@@ -15,7 +15,7 @@ The v0.14 deprecation of the Claude Code **plugin** was **reversed** in June 202
 1. **Plugin installation** (recommended) — native Claude Code plugin via `/plugin marketplace add` + `/plugin install`
 2. **CLI installation** (settings-level alternative) — `npx @verygoodplugins/mcp-automem claude-code`
 
-From a terminal, `npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) is the guided installer. When you select Claude Code it installs the plugin above. `setup` is an alias of that installer. The `claude-code` command is the settings-level writer, not a second guided installer.
+From a terminal, `npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) is the guided installer on current npm. When you select Claude Code it installs the plugin above. `setup` becomes an alias of that installer in the release after 0.16.0; until then `setup` is still the older endpoint wizard. The `claude-code` command is the settings-level writer, not a second guided installer.
 
 ---
 

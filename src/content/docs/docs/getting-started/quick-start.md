@@ -268,7 +268,7 @@ AutoMem defaults to port `8001`. A platform-set non-`8001` `PORT` can conflict w
 
 ### Connect an agent by hand
 
-The guided installer writes `.env` and wires your agents. `setup` is an alias of `install`:
+The guided installer writes `.env` and wires your agents. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0:
 
 ```bash
 npx @verygoodplugins/mcp-automem install
