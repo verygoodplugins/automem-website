@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { isPinnedSha } from './helpers/source-pins.mjs';
+
 const pagePath = fileURLToPath(
   new URL('../src/content/docs/docs/operations/health.md', import.meta.url),
 );
@@ -93,8 +95,26 @@ test('operations health does not claim /analyze reports relationship counts', as
 
   assert.ok(section, 'expected Memory Analytics section');
   assert.doesNotMatch(section[1], /relationship counts/i);
-  assert.match(section[1], /`\/analyze` does not report edges/);
+  assert.match(section[1], /`\/analyze` does not report edge counts/);
+  assert.doesNotMatch(section[1], /does not report edges\b/);
   assert.match(section[1], /`GET \/graph\/stats`/);
   assert.match(section[1], /`totals\.edges`/);
   assert.match(section[1], /`by_relationship`/);
+});
+
+test('operations health permalinks added for the alert sender and graph stats use pinned AutoMem SHAs', async () => {
+  const page = await readPage();
+
+  for (const sourcePath of ['scripts/health_monitor.py#L184-L217', 'automem/api/graph.py#L366-L458']) {
+    const escaped = sourcePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const link = page.match(
+      new RegExp('https://github\\.com/verygoodplugins/automem/blob/([^/]+)/' + escaped),
+    );
+
+    assert.ok(link, `expected a source link for ${sourcePath}`);
+    assert.ok(
+      isPinnedSha('automem', link[1]),
+      `${sourcePath} must use a pinned AutoMem revision`,
+    );
+  }
 });

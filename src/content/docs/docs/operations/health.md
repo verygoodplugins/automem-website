@@ -310,7 +310,7 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" \
 | Inspect learned patterns | `patterns` |
 | Inspect stored preferences | `preferences` |
 
-`/analyze` does not report edges. For edge counts by relationship type, use `GET /graph/stats` (`totals.edges` and `by_relationship`). See the current [graph stats handler](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/graph.py#L366-L458).
+`/analyze` does not report edge counts. For edge counts by relationship type, use `GET /graph/stats` (`totals.edges` and `by_relationship`). See the current [graph stats handler](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/graph.py#L366-L458).
 
 ## Startup Context Retrieval
 
