@@ -7,7 +7,7 @@ sidebar:
 
 :::note[Source files]
 - [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) — API-token exemptions and HTTP error responses
-- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/admin.py#L61-L82) — Admin endpoints
+- [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/admin.py#L61-L378) — Admin endpoints
 - [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/enrichment.py#L37-L67) — Enrichment endpoints
 - [automem/api/backup.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/backup.py#L39-L42) — `/backup` export endpoint
 :::
@@ -79,6 +79,9 @@ Authentication failures and other errors raised through Flask's HTTP exception p
 | `401` | `{"status": "error", "code": 401, "message": "Unauthorized"}` | Missing or invalid `AUTOMEM_API_TOKEN` |
 | `401` | `{"status": "error", "code": 401, "message": "Admin authorization required"}` | Missing or invalid `ADMIN_API_TOKEN` |
 | `403` | `{"status": "error", "code": 403, "message": "Admin token not configured"}` | Server has no `ADMIN_API_TOKEN` environment variable set |
+| `503` | `{"status": "error", "code": 503, "message": "Embedding provider is not configured"}` | Returned only when the batch-embedding callable is absent, not when no real provider is configured. The stock server (`app.py`) always binds that callable, so this 503 is effectively unreachable there: a missing or placeholder provider returns HTTP `200` `complete` with every memory in `failed` (see Phase 2 under `POST /admin/reembed`). `/admin/sync` checks only when some memories need embedding, so `dry_run` and `already_synced` responses are unaffected |
+| `503` | `{"status": "error", "code": 503, "message": "Qdrant is not available - cannot store embeddings"}` | Qdrant is unavailable for `/admin/reembed` or `/admin/sync`. `/admin/sync` uses the shorter message `Qdrant is not available` |
+| `503` | `{"status": "error", "code": 503, "message": "FalkorDB is unavailable"}` | FalkorDB is unavailable for `/admin/reembed` or `/admin/sync` |
 
 ---
 
@@ -293,10 +296,11 @@ graph TB
 | `status` | string | Result status |
 | `processed` | integer | Number of memories successfully re-embedded |
 | `failed` | integer | Number of memories that failed re-embedding |
-| `total` | integer | Total memory count in database at operation start |
+| `total` | integer | Number of memories selected for re-embedding: rows returned by the query (up to `limit`) that have non-empty content |
 | `batch_size` | integer | Batch size used (from request or default 32) |
 | `metadata_preserved` | boolean | Whether existing metadata was preserved during re-embedding |
 | `failed_ids` | array[string] | *(Conditional)* Up to 10 memory IDs that failed re-embedding; only present when `failed > 0` |
+| `failed_ids_truncated` | boolean | *(Conditional)* `true` when more than 10 IDs failed and `failed_ids` was cut to the first 10; omitted otherwise |
 
 ```json
 {
@@ -306,6 +310,17 @@ graph TB
   "total": 1000,
   "batch_size": 32,
   "metadata_preserved": true
+}
+```
+
+When no memory has content to embed, the endpoint returns early with a smaller response. `failed`, `batch_size`, and `metadata_preserved` are absent:
+
+```json
+{
+  "status": "complete",
+  "message": "No memories found to reembed",
+  "processed": 0,
+  "total": 0
 }
 ```
 
@@ -330,11 +345,11 @@ When `force=true`, the `WHERE m.content IS NOT NULL` filter is omitted from the 
 
 **Phase 2: Embedding Provider Batch Generation**
 
-Generates embeddings for the entire batch in a single provider call via `generate_real_embeddings_batch(..., allow_placeholder_fallback=False)`. Uses whichever provider is configured (`EMBEDDING_PROVIDER`, Voyage, OpenAI, Ollama, FastEmbed, etc.) — not hard-coded to OpenAI. Returns **503** only when the embedding callable is absent or Qdrant/FalkorDB is unavailable before processing starts. Placeholder-only or other provider failures raised during batch generation are caught per batch and surfaced as HTTP **200** with `status: "complete"`, `failed`, and `failed_ids` — check those fields rather than HTTP status alone. Dimension follows `VECTOR_SIZE` (default 1024).
+Tries one provider batch call per batch via `generate_real_embeddings_batch(..., allow_placeholder_fallback=False)`. If that call raises, or returns the wrong number of vectors or the wrong dimensions, the helper discards the result and retries the batch one item at a time with single-input calls, never substituting placeholder vectors. With a real provider, the batch fails only if one of those item calls fails. With no provider, or with the placeholder provider (which the default `EMBEDDING_PROVIDER=auto` falls back to when no real provider initializes), the helper raises before any provider call, so there is no retry and every batch fails immediately. Uses whichever provider is configured (`EMBEDDING_PROVIDER`, Voyage, OpenAI, Ollama, FastEmbed, etc.) — not hard-coded to OpenAI. Returns **503** only when the embedding callable is absent or Qdrant/FalkorDB is unavailable before processing starts. Placeholder-only or other provider failures raised during batch generation are caught per batch and surfaced as HTTP **200** with `status: "complete"`, `failed`, and `failed_ids` — check those fields rather than HTTP status alone. Dimension follows `VECTOR_SIZE` (default 1024).
 
 **Phase 3: Qdrant Update**
 
-Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt the operation (graceful degradation). FalkorDB graph data is not modified by this operation.
+Embeddings are written to Qdrant only. A failed Qdrant write is logged and counts the whole batch as failed, but later batches still run. FalkorDB graph data is not modified by this operation.
 
 ### Performance Considerations
 
@@ -353,18 +368,18 @@ Embeddings are written to Qdrant only. Qdrant failures are logged but don't halt
 
 ### Error Handling
 
-The operation continues even if individual batches fail:
+The operation continues with later batches even if an individual batch fails. With a real provider, the embedding helper first retries a failed batch call one item at a time with no placeholder vectors, and on the provider side the batch fails only if one of those item calls fails. With no provider or the placeholder provider, the helper raises before any call, so every batch fails immediately with no retry, and the response is still HTTP `200` `complete` with every memory counted in `failed`. Embedding generation and the Qdrant write share one `try`/`except` per batch, so a provider failure that remains (a failed item call, or the immediate failure above) or a failed Qdrant write marks the whole batch failed. Every memory in it is counted in `failed`, and its ID goes into `failed_ids` (capped at 10 in the response):
 
 | Error | Cause | Behavior |
 |-------|-------|----------|
-| Provider API rate limit | Exceeded quota | Logged; batch marked failed (provider SDK may retry internally) |
-| Missing memory content | Deleted between enumeration and fetch | Logged, skipped, processing continues |
-| Qdrant connection failure | Network issue or Qdrant down | Logged; embedding writes are skipped for this batch and the operation continues with remaining batches (FalkorDB is never modified by this operation) |
-| Invalid content format | Null or non-string content | Logged, skipped |
+| Provider API rate limit | Exceeded quota | Logged; the helper retries the batch item by item, and the whole batch is counted in `failed` only if one of those item calls fails (provider SDK may retry internally) |
+| Wrong vector count or dimensions | Provider batch call returned a different number of vectors than inputs, or vectors of the wrong size | Helper discards the batch result and retries item by item; whole batch counted in `failed` only if an item call fails |
+| Qdrant connection failure | Network issue or Qdrant down | Logged; whole batch counted in `failed`, remaining batches still run (FalkorDB is never modified by this operation) |
+| Null or empty content | Memory has no `content` | Filtered out silently during enumeration; never reaches a batch and is not counted in `failed` |
 
-All errors are logged with structured context:
+A failed batch is logged as:
 ```python
-logger.exception("Failed to generate embeddings for batch", extra={"batch_ids": ids})
+logger.error(f"Failed to process batch starting at index {i}: {e}")
 ```
 
 ---
@@ -414,8 +429,10 @@ The archive layout matches what the restore tooling expects, so a `/backup` expo
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `batch_size` | integer | No | Number of memories to process per batch. Default: `32` |
+| `batch_size` | integer | No | Number of memories to process per batch. Default: `32`. Max: `100` |
 | `dry_run` | boolean | No | If `true`, report drift without making changes. Default: `false` |
+
+A `dry_run` returns `{"status": "dry_run", "falkordb_count", "qdrant_count", "missing_count", "orphaned_count", "missing_sample", "orphaned_sample"}`, where each sample holds up to 10 IDs. When `dry_run` is false and nothing is missing from Qdrant, the endpoint returns `{"status": "already_synced", "falkordb_count", "qdrant_count", "synced": 0, "orphaned_count"}` instead. Both of these return before the embedding-provider check, so they work without a provider.
 
 ### Example Request
 
