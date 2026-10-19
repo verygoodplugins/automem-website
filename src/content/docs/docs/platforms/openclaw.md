@@ -103,12 +103,14 @@ npx @verygoodplugins/mcp-automem openclaw --dry-run  # Preview without writing
 | `--mode <plugin\|mcp\|skill>` | Integration mode | `plugin` |
 | `--scope <workspace\|shared>` | Install scope for mcp/skill modes | `workspace` |
 | `--workspace <path>` | OpenClaw workspace directory | Auto-detected |
-| `--endpoint <url>` | AutoMem service endpoint | `http://127.0.0.1:8001` |
-| `--api-key <key>` | AutoMem API key | None (optional) |
-| `--plugin-source <spec>` | npm spec or local path for plugin installs | `@verygoodplugins/mcp-automem` |
+| `--endpoint <url>` | AutoMem service endpoint | `$AUTOMEM_API_URL`, then `$AUTOMEM_ENDPOINT`, then `http://127.0.0.1:8001` |
+| `--api-key <key>` | AutoMem API key | `$AUTOMEM_API_KEY`, then `$AUTOMEM_API_TOKEN` (optional, see below) |
+| `--plugin-source <spec>` | npm spec or local path for plugin installs | The package's bundled `dist/openclaw-plugin-package` when present, otherwise `@verygoodplugins/mcp-automem` |
 | `--name <name>` | Project name for memory tags | Auto-detected |
 | `--dry-run` | Preview changes without modifying files | Off |
 | `--quiet` | Suppress non-error output | Off |
+
+The environment fallback for the key is paired with the endpoint. An exported key is used only when no endpoint is exported (`AUTOMEM_API_URL`, then `AUTOMEM_ENDPOINT`) or when the exported endpoint matches the one being installed, so the installer does not hand a key to a different server. When nothing else supplies a key, a key already stored in `openclaw.json` is reused on a re-run, again only for the same endpoint.
 
 ### What the installer does
 
@@ -125,7 +127,7 @@ npx @verygoodplugins/mcp-automem openclaw --dry-run  # Preview without writing
 
 **Skill mode (legacy):**
 1. Installs the curl-based `automem` skill to `<workspace>/skills/automem/SKILL.md`
-2. Configures `skills.entries.automem.env` with endpoint and API key
+2. Configures `skills.entries.automem`: the endpoint as `env.AUTOMEM_API_URL` (plus `env.AUTOMEM_DEFAULT_TAGS` when a default project tag resolves) and the API key as a top-level `apiKey`
 
 ### Workspace Detection
 
@@ -156,7 +158,7 @@ In plugin mode, the installer writes to `~/.openclaw/openclaw.json` under `plugi
           "debugRecallLimit": 20,
           "contextRecallWindowDays": 90,
           "exposure": "dm-only",
-          "defaultTags": ["platform/openclaw", "project/my-project"]
+          "defaultTags": ["my-project"]
         }
       }
     }
@@ -176,7 +178,7 @@ In plugin mode, the installer writes to `~/.openclaw/openclaw.json` under `plugi
 | `debugRecallLimit` | integer | `20` | Max memories for debug-context recall (1–50) |
 | `contextRecallWindowDays` | integer | `90` | Lookback window in days for task-context recall (1–365) |
 | `exposure` | string | `"dm-only"` | Auto-recall scope: `dm-only`, `all`, or `off` |
-| `defaultTags` | string[] | `[]` | Tags applied when the request doesn't supply tags |
+| `defaultTags` | string[] | `[]` | Merged, together with any tags the call supplies, into memories stored or updated through the plugin tools. When unambiguous, also the project gate for first-turn task-context recall. See [Tags](#tags) |
 
 :::note
 `autoRecallLimit` (a single limit, 1–50) still works as a **legacy** fallback: if any of `preferenceRecallLimit`/`contextRecallLimit`/`debugRecallLimit` are unset, they fall back to `autoRecallLimit`, then to the defaults above. New configs should set the three granular limits directly rather than `autoRecallLimit`.
@@ -194,13 +196,18 @@ In MCP and skill modes, the installer writes to `skills.entries.automem` instead
         "enabled": true,
         "env": {
           "AUTOMEM_API_URL": "http://127.0.0.1:8001",
-          "AUTOMEM_API_KEY": "your-token-here"
-        }
+          "AUTOMEM_DEFAULT_TAGS": "my-project"
+        },
+        "apiKey": "your-token-here"
       }
     }
   }
 }
 ```
+
+:::note
+A new entry keeps the API key in the top-level `apiKey` field, not in `env`. The installer relies on OpenClaw mapping that field into the skill's environment; the shipped skills declare `AUTOMEM_API_KEY` as their `primaryEnv`. With no key, `apiKey` is removed and `AUTOMEM_API_KEY` and `AUTOMEM_API_TOKEN` in `env` are set to empty strings, so a key exported in your shell is not passed through. An older entry that already held the key inside `env` keeps that copy in sync with `apiKey` on a re-run. `AUTOMEM_DEFAULT_TAGS` is added only when a default tag resolves (see [Tags](#tags)).
+:::
 
 :::note
 The installer handles JSON5-style comments in OpenClaw config files (single-line `//`, block `/* */`, trailing commas) using a string-aware comment stripper that preserves URLs containing `//`.
@@ -237,10 +244,12 @@ curl -s -X POST "$AUTOMEM_API_URL/memory" \
   ${AUTOMEM_API_KEY:+-H "Authorization: Bearer $AUTOMEM_API_KEY"} \
   -d '{
     "content": "Brief title. Context and details. Impact/outcome.",
-    "tags": ["openclaw"],
+    "tags": ["project-slug", "decision"],
     "importance": 0.7
   }'
 ```
+
+Replace `project-slug` with your bare project tag (see [Tags](#tags)).
 
 **Recall memories:**
 
@@ -295,9 +304,12 @@ Skip recall for:
 
 ### Tags
 
-Tags use namespace-style formatting:
-- `platform/openclaw` — automatically added
-- `project/<name>` — derived from project name (auto-detected or `--name` flag)
+Tags are bare strings. The MCP and legacy skill templates say tags are a hard gate: use bare tags only and avoid platform tags like `openclaw`. The installer adds no `platform/` or `project/` tag.
+
+The installer seeds at most one default tag from the project name: `--name`, otherwise detected from `package.json`, the git remote, or the directory name where you run the installer. The name becomes a slug: a leading `@scope/` is dropped, the rest is lowercased, each run of non-alphanumeric characters becomes `-`, leading and trailing `-` are trimmed, and the result is cut to 64 characters. If the slug is empty or is one of the ambiguous names `api`, `app`, `test`, or `video`, the installer writes no default tag.
+
+- **Plugin mode:** the slug is saved as `defaultTags` in `plugins.entries.automem.config` (see [Config fields](#config-fields)).
+- **MCP and skill modes:** the slug is recorded as `AUTOMEM_DEFAULT_TAGS` in the skill entry's `env`. Both skill templates say default project tags are for stored memories, not for every recall.
 
 ### Memory Layers
 
