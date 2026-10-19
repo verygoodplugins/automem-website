@@ -3,11 +3,13 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+import { pinnedShaPattern } from './helpers/source-pins.mjs';
+
 const defaultPagePath = fileURLToPath(
   new URL('../src/content/docs/docs/cli/queue.md', import.meta.url),
 );
 const pagePath = process.env.QUEUE_DOCS_PAGE_PATH || defaultPagePath;
-const releaseSha = '9a0bbf754dd31db524da25638b0e97907e32ff37';
+const releaseSha = pinnedShaPattern('mcp-automem');
 
 async function readPage() {
   return readFile(pagePath, 'utf8');
@@ -21,11 +23,13 @@ test('queue docs match the audited mcp-automem 0.16.0 queue and type surfaces', 
   const typeSourceLinks = [
     ...page.matchAll(/\[[^\]]*src\/types\.ts[^\]]*\]\(([^)]+)\)/gu),
   ].map((match) => match[1]);
-  assert.deepEqual(typeSourceLinks, [
-    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
-    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
-    `https://github.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types.ts`,
-  ]);
+  assert.equal(typeSourceLinks.length, 3);
+  for (const link of typeSourceLinks) {
+    assert.match(
+      link,
+      new RegExp(`^https://github\\.com/verygoodplugins/mcp-automem/blob/${releaseSha}/src/types\\.ts$`, 'u'),
+    );
+  }
   assert.match(page, /memory-queue\.jsonl/u);
   assert.doesNotMatch(page, /\.jsonll/u);
 

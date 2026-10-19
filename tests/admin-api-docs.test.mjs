@@ -3,10 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { isPinnedSha } from './helpers/source-pins.mjs';
+
 const pagePath = fileURLToPath(
   new URL('../src/content/docs/docs/reference/api/admin.md', import.meta.url),
 );
-const sourceSha = '5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb';
 
 async function readAdminPage() {
   return readFile(pagePath, 'utf8');
@@ -20,7 +21,7 @@ test('admin API source links use the current validated AutoMem revision', async 
 
   assert.ok(links.length >= 4, 'expected current source links for the admin API page');
   assert.ok(
-    links.every(([, sha]) => sha === sourceSha),
+    links.every(([, sha]) => isPinnedSha('automem', sha)),
     'admin API source links must use the validated current AutoMem revision',
   );
 });

@@ -9,18 +9,12 @@ const pagePath = fileURLToPath(
 
 // Claims audited against automem@e147c352b100ebbf29e6555453fdde5152066138
 // and mcp-automem@9a0bbf754dd31db524da25638b0e97907e32ff37.
-const automemReleaseSha = 'e147c352b100ebbf29e6555453fdde5152066138';
-const mcpReleaseSha = '9a0bbf754dd31db524da25638b0e97907e32ff37';
-
 async function readPage() {
   return readFile(pagePath, 'utf8');
 }
 
 test('quick start retains only release-validated installation and health claims', async () => {
   const page = await readPage();
-
-  assert.equal(automemReleaseSha.length, 40);
-  assert.equal(mcpReleaseSha.length, 40);
 
   assert.match(page, /X-API-Key: YOUR_TOKEN/u);
   assert.doesNotMatch(page, /X-API-Token/u);

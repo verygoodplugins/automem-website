@@ -1,0 +1,35 @@
+{
+  "verygoodplugins/automem": {
+    "releases": [
+      {
+        "version": "0.16.2",
+        "tag": "v0.16.2",
+        "sha": "5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb"
+      }
+    ],
+    "legacy": [
+      {
+        "sha": "e147c352b100ebbf29e6555453fdde5152066138",
+        "note": "Release-please branch commit for 0.16.2 (2026-08-14), not the v0.16.2 tag. Pages audited against it during the August reconciliation still need repinning to the tag; remove this entry once none link to it."
+      }
+    ]
+  },
+  "verygoodplugins/mcp-automem": {
+    "releases": [
+      {
+        "version": "0.16.0",
+        "tag": "mcp-automem-v0.16.0",
+        "sha": "9a0bbf754dd31db524da25638b0e97907e32ff37"
+      }
+    ]
+  },
+  "verygoodplugins/automem-graph-viewer": {
+    "releases": [
+      {
+        "version": "0.5.0",
+        "tag": "automem-graph-viewer-v0.5.0",
+        "sha": "c6338d13b8a80e8c7b5f24e96a60ce983ed1482b"
+      }
+    ]
+  }
+}

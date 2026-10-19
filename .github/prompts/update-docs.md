@@ -21,7 +21,18 @@ changes in the source code.
 - Do NOT change frontmatter unless the title/description genuinely needs updating.
 - Use the same Starlight conventions: :::note, :::tip, :::caution admonitions,
   mermaid code blocks for diagrams, relative links between pages.
-- After making changes, run `npm run build` to verify the site compiles.
+- After making changes, run `npm test` and `npm run build`. If a test fails,
+  fix your doc edit. If a test asserts a contract this release changed, update
+  only that assertion and cite the source file and line in `fixes`. Never delete
+  a test or loosen its source pins to make it pass.
+
+## Source links follow releases
+
+Docs describe published releases, and every run documents one: the Source SHA
+is that release's commit. Pin each GitHub source link you add or touch to the
+Source SHA. `scripts/docs-source-pins.json` lists the release commits the docs
+tests accept; the workflow has already recorded this release there, so don't
+edit that file.
 
 ## Source repositories
 
@@ -38,9 +49,9 @@ The map covers all three repos with exact paths and `/**` subtree patterns.
 ## Do NOT create a pull request
 
 The workflow lands the branch and opens the PR after you finish. Do not run `gh`,
-do not create a draft PR, and do not provide a "Create PR" link. Commit your doc
-changes to the current branch only if the action has already created one; otherwise
-leave edits in the working tree for the landing step.
+do not create a draft PR, and do not provide a "Create PR" link. Do not commit:
+leave edits in the working tree on the current branch (the repo's rolling docs
+branch) for the landing step.
 
 ## Structured audit result (REQUIRED)
 
@@ -52,7 +63,7 @@ schema. Populate these fields:
   requires a human decision before shipping docs. `NO_CHANGES` when the docs are
   already accurate and you made no edits.
 - **title**: Conventional commit style, e.g.
-  `docs: update [page-names] to reflect [source-repo]@[short-sha]`
+  `docs: update [page-names] to reflect [source-repo]@[version]`
 - **fixes**: One entry per doc change. Each entry has:
   - `claim` — what the doc now states (or should state)
   - `current` — what the doc said before (or "missing")
@@ -89,5 +100,5 @@ made no edits because the docs are already accurate.
 
 ## Commit message format
 
-When committing locally, use:
-`docs: update [page-names] to reflect [source-repo]@[short-sha]`
+The landing step commits with your title:
+`docs: update [page-names] to reflect [source-repo]@[version]`

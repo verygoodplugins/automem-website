@@ -128,6 +128,8 @@ The docs cover three sibling repositories:
 
 Source-to-doc mapping: `scripts/file-doc-map.json`. Doc updates should be surgical — change only what code changes require. See `.claude/commands/update-docs.md` for the full workflow.
 
+Docs follow published source releases. Source links pin a release commit, and `scripts/docs-source-pins.json` records the pins the docs tests accept: tests read pins through `tests/helpers/source-pins.mjs` and never hardcode a source SHA. The automated lane (`docs-update.yml`) keeps one rolling `docs/audit-<repo>` PR per source repo and holds it as a draft when `npm test` fails.
+
 ## Do Not
 
 - Run `astro build` directly — use `npm run build`

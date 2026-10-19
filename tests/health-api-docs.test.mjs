@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { pinnedShaPattern } from './helpers/source-pins.mjs';
+
 const healthPagePath = fileURLToPath(
   new URL('../src/content/docs/docs/reference/api/health.md', import.meta.url),
 );
-const sourceSha = '5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb';
+const sourceSha = pinnedShaPattern('automem');
 
 async function readHealthPage() {
   return readFile(healthPagePath, 'utf8');

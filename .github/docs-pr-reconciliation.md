@@ -12,6 +12,13 @@ recorded in `.github/docs-pr-reconciliation/audits/`.
 | AutoMem 0.16.2 | `e147c352b100ebbf29e6555453fdde5152066138` |
 | mcp-automem 0.16.0 | `9a0bbf754dd31db524da25638b0e97907e32ff37` |
 
+**Pin correction (2026-10-19):** `e147c352` is the release-please branch
+commit for 0.16.2 (2026-08-14), not the published tag. AutoMem `v0.16.2` is
+`5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb`, which carries further source
+changes. Fresh replacements pin AutoMem links to the tag and re-check line
+anchors; `scripts/docs-source-pins.json` records the release pins the docs
+tests accept.
+
 The tracked audit archive at `.github/docs-pr-reconciliation/audits/` is the
 claim-level authority. It retains the release evidence, explicit
 invalidations, already-landed exclusions, and any residual qualifications that

@@ -3,11 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { pinnedShaPattern } from './helpers/source-pins.mjs';
+
 const pagePath = fileURLToPath(
   new URL('../src/content/docs/docs/cli/guided-cloud-setup.md', import.meta.url),
 );
-const mcpAutomemRelease = '9a0bbf754dd31db524da25638b0e97907e32ff37';
-const automemRelease = 'e147c352b100ebbf29e6555453fdde5152066138';
+const mcpAutomemRelease = pinnedShaPattern('mcp-automem');
+const automemRelease = pinnedShaPattern('automem');
 
 async function readPage() {
   return readFile(pagePath, 'utf8');
