@@ -490,11 +490,13 @@ The `store_memory` tool enforces content size limits to maintain embedding quali
 
 ### MCP Client Validation
 
-The guided installer validates the endpoint before saving configuration:
+On npm 0.16.0, `setup` still uses this flow before saving configuration:
 
 1. **URL format check** — Ensures `AUTOMEM_API_URL` is a valid HTTP/HTTPS URL
 2. **Confirmation prompt** — Asks "Write settings to `.env`? [Y/n]" before writing
-3. **Configuration write** — Saves validated config to `.env`
+3. **Configuration write** — Saves the config to `.env`
+
+The guided installer (`install`) is a different flow: it verifies the endpoint, prints a plan, and writes after you approve. `setup` becomes an alias of `install` in the release after 0.16.0.
 
 At runtime, if the endpoint is unreachable, queue operations are skipped rather than blocking. This prevents queue operations from stalling when the service is temporarily down.
 
