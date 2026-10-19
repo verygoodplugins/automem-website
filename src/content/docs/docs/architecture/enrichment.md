@@ -13,7 +13,7 @@ Key GitHub sources:
 - [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
 - [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_queue_bindings.py) — Queue management
 - [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py) — EnrichmentJob dataclass
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/stores/graph_store.py) — Graph write operations for enrichment
+- [automem/utils/entity_extraction.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/entity_extraction.py) — Entity extraction (`extract_entities`, `_is_valid_entity`, `_slugify`), summary generation (`generate_summary`), and the spaCy model loader
 - [.env.example](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/.env.example) — Enrichment configuration variables
 :::
 
@@ -125,8 +125,8 @@ The pipeline uses a two-tier approach: spaCy NLP when available, with regex fall
 
 **Tier 1: spaCy NLP**
 - Runs `en_core_web_sm` model (configurable via `ENRICHMENT_SPACY_MODEL`)
-- Model is loaded once and cached via LRU cache — eliminates repeated 5-10 second load time
-- Named Entity Recognition (NER) extracts `PERSON`, `ORG`, `PRODUCT`, `WORK_OF_ART`, `EVENT`, `GPE`, `LOC` labels
+- Model is loaded on first use into the module-level `_SPACY_NLP` global, guarded by `_SPACY_INIT_LOCK` (a `threading.Lock`), and reused for later extractions
+- Named Entity Recognition (NER) extracts `PERSON`, `ORG`, `PRODUCT`, `WORK_OF_ART`, `LAW`, `EVENT`, `GPE`, `LOC`, `NORP` labels
 
 **Tier 2: Regex Fallbacks**
 - Active when spaCy is unavailable or as supplements for patterns spaCy misses
@@ -142,8 +142,8 @@ Five entity categories are extracted and stored in `metadata.entities`:
 |---|---|---|---|
 | `people` | `PERSON` | `met with X`, `talked to X` | "Sarah", "John Smith" |
 | `organizations` | `ORG` | — | "Google", "NASA" |
-| `tools` | `PRODUCT`, `WORK_OF_ART` | `using X`, `deploy X` | "PostgreSQL", "Docker" |
-| `concepts` | `EVENT`, `GPE`, `LOC` | — | "Machine Learning", "New York" |
+| `tools` | `PRODUCT`, `WORK_OF_ART`, `LAW` | `using X`, `deploy X` | "PostgreSQL", "Docker" |
+| `concepts` | `EVENT`, `GPE`, `LOC`, `NORP` | — | "Machine Learning", "New York" |
 | `projects` | — | backticks, `project called "X"` | "automem", "Project Phoenix" |
 
 ### Entity Validation
@@ -387,7 +387,11 @@ The backoff is a flat sleep of `ENRICHMENT_FAILURE_BACKOFF_SECONDS` on each fail
 The `POST /enrichment/reprocess` endpoint (requires `X-Admin-Token`) allows forced re-enrichment of existing memories:
 
 **Parameters:**
-- `ids` — Array of memory UUIDs to reprocess
+- `ids` — Memory UUIDs to reprocess, as a JSON array or a comma-separated string in the JSON body. The comma-separated `?ids=` query parameter is used only when the body has no `ids` value. IDs are trimmed and de-duplicated, and blank entries and non-string array items are ignored.
+
+**Responses** (once the admin-token check passes):
+- `202 Accepted` — `{"status": "queued", "count": <n>, "ids": [<sorted ids>]}`, where `count` is the number of distinct IDs; each one is enqueued with `forced=true`
+- `400 Bad Request` — no usable IDs were supplied; the body is `{"status": "error", "code": 400, "message": "No memory ids provided for reprocessing"}`
 
 ---
 
