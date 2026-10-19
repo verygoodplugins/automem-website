@@ -128,26 +128,26 @@ The test suite uses in-memory mock objects that implement the same protocols as 
 
 #### `FakeGraph` Class
 
-`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:35-795](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L35-L795)):
+`FakeGraph` simulates FalkorDB query behavior ([tests/support/fake_graph.py:57-899](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/support/fake_graph.py#L57-L899)):
 
 - **Query pattern matching**: Uses string matching to identify query type (e.g., `"COUNT(DISTINCT r)"` for relationship counts)
 - **Deterministic responses**: Returns pre-configured data from state attributes
-- **Side effect tracking**: Records deletions, archives, and score updates
-- **Query history**: Stores all queries for verification
+- **Side effect tracking**: Records deletions in `graph.deleted` (a list of memory IDs), and archives and score updates in `graph.archived` and `graph.updated_scores` (lists of `(memory_id, score)` tuples)
+- **Query history**: Records every call in `graph.queries` as a `(query, params)` tuple for verification
 
 #### `FakeVectorStore` Class
 
-`FakeVectorStore` tracks vector deletion operations ([tests/test_consolidation_engine.py:19-24](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L19-L24)).
+`FakeVectorStore` records each `delete()` call as a `(collection_name, points_selector)` tuple in `vector_store.deletions` ([tests/test_consolidation_engine.py:19-24](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_consolidation_engine.py#L19-L24)).
 
 #### `FakeResult` Class
 
-`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:9-11](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/support/fake_graph.py#L9-L11)).
+`FakeResult` mimics FalkorDB query result structure with a `result_set` attribute ([tests/support/fake_graph.py:9-11](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/support/fake_graph.py#L9-L11)).
 
 ### Test Fixtures
 
 #### `freeze_time` Fixture
 
-The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:27-39](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/tests/test_consolidation_engine.py#L27-L39)):
+The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a fixed timestamp (2024-01-01 00:00:00 UTC), ensuring deterministic decay calculations ([tests/test_consolidation_engine.py:27-39](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_consolidation_engine.py#L27-L39)):
 
 - **Auto-use**: Applies to all tests automatically
 - **Module patching**: Patches `consolidation_module.datetime`, not global `datetime`
@@ -156,11 +156,12 @@ The `freeze_time` fixture uses `monkeypatch` to replace `datetime.now()` with a 
 
 #### Helper Functions
 
-`iso_days_ago(days: int)` generates ISO timestamp strings relative to the frozen time:
+`iso_days_ago(days: int)` generates ISO timestamp strings relative to the same 2024-01-01 UTC base as the frozen time ([tests/test_consolidation_engine.py:42-44](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_consolidation_engine.py#L42-L44)):
 
 ```python
 def iso_days_ago(days: int) -> str:
-    return (FROZEN_TIME - timedelta(days=days)).isoformat()
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    return (base - timedelta(days=days)).isoformat()
 ```
 
 ### Writing New Tests
@@ -173,6 +174,8 @@ Follow this pattern for consolidation engine tests:
 2. **Execution**: Instantiate `MemoryConsolidator` and call method
 3. **Verification**: Assert return values and check mock state
 
+`calculate_relevance_score()` takes one memory dict (plus an optional `current_time`), not separate keyword arguments. It requires the dict's `id` and reads `timestamp`, `last_accessed`, `importance`, and `confidence` from it:
+
 ```python
 def test_calculate_relevance_score_recent_memory():
     # 1. Setup
@@ -182,11 +185,13 @@ def test_calculate_relevance_score_recent_memory():
     # 2. Execution
     consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
     score = consolidator.calculate_relevance_score(
-        memory_id="mem_001",
-        importance=0.8,
-        access_count=5,
-        last_accessed=iso_days_ago(1),
-        created_at=iso_days_ago(2),
+        {
+            "id": "mem_001",
+            "timestamp": iso_days_ago(2),
+            "last_accessed": iso_days_ago(1),
+            "importance": 0.8,
+            "confidence": 0.7,
+        }
     )
 
     # 3. Verification
@@ -204,36 +209,46 @@ graph.relationship_counts = {
 }
 ```
 
-**Sample memories for creative associations** — configure `sample_rows` with structure matching the query in `discover_creative_associations()`:
+The row fixtures (`sample_rows`, `cluster_rows`, `decay_rows`, and `forgetting_rows`) are plain lists of column values in the order the matching Cypher query returns them, not dicts.
+
+**Sample memories for creative associations** — configure `sample_rows` as `[id, content, type, embedding, timestamp]`, matching the query in `discover_creative_associations()`:
 
 ```python
 graph.sample_rows = [
-    ["mem_001", "Chose PostgreSQL for reliability", 0.8, 2],
-    ["mem_002", "Prefer typed languages", 0.7, 1],
+    ["mem_001", "Chose PostgreSQL for reliability", "Decision", [1.0, 0.0, 0.0], iso_days_ago(3)],
+    ["mem_002", "Prefer typed languages", "Preference", [0.0, 1.0, 0.0], iso_days_ago(4)],
 ]
 ```
 
-**Cluster data** — configure `cluster_rows` for clustering tests:
+**Cluster data** — configure `cluster_rows` as `[id, content, embedding, type]` for clustering tests. These rows feed the graph-embedding fallback in `cluster_similar_memories()`, which runs when the consolidator has no vector store. With a vector store attached, the consolidator reads embeddings from Qdrant instead. Clusters need at least `min_cluster_size` rows (3 by default):
 
 ```python
 graph.cluster_rows = [
-    ["mem_001", "content_a", [0.1, 0.2, 0.3]],
-    ["mem_002", "content_b", [0.15, 0.22, 0.31]],
+    ["mem_001", "content_a", [0.1, 0.2, 0.3], "Insight"],
+    ["mem_002", "content_b", [0.15, 0.22, 0.31], "Insight"],
+    ["mem_003", "content_c", [0.12, 0.21, 0.29], "Pattern"],
 ]
 ```
 
-**Decay and forgetting data** — configure `decay_rows` or `forgetting_rows` with full memory attributes:
+**Decay data** — configure `decay_rows` as `[id, content, timestamp, importance, last_accessed, old_score]`, the column order `_apply_decay()` selects (`old_score` is the previously stored `relevance_score`):
 
 ```python
 graph.decay_rows = [
-    {
-        "id": "mem_001",
-        "importance": 0.8,
-        "access_count": 10,
-        "last_accessed": iso_days_ago(30),
-        "created_at": iso_days_ago(60),
-        "relevance_score": 0.75
-    }
+    ["mem_001", "Early note", iso_days_ago(60), 0.8, iso_days_ago(30), 0.75],
+    ["mem_002", "Recent insight", iso_days_ago(1), 0.7, iso_days_ago(1), 0.9],
+]
+```
+
+**Forgetting data** — configure `forgetting_rows` as `[id, content, score, timestamp, type, importance, last_accessed]` for `apply_controlled_forgetting()`. Optional `protected` and `protected_reason` columns may follow:
+
+```python
+graph.forgetting_rows = [
+    # Deleted: very low relevance and past the grace period
+    ["mem_001", "Superseded note", 0.01, iso_days_ago(365), "Memory", 0.1, iso_days_ago(365)],
+    # Archived: low relevance, past the grace period
+    ["mem_002", "Memory to archive", 0.1, iso_days_ago(100), "Memory", 0.1, iso_days_ago(100)],
+    # Kept: low relevance, but inside the 90-day grace period, so only its score is updated
+    ["mem_003", "Recent low-value note", 0.1, iso_days_ago(15), "Memory", 0.1, iso_days_ago(15)],
 ]
 ```
 
@@ -247,7 +262,7 @@ def test_apply_forgetting_dry_run():
     # ... configure graph ...
     consolidator = MemoryConsolidator(graph=graph, vector_store=FakeVectorStore())
     result = consolidator.apply_controlled_forgetting(dry_run=True)
-    assert len(graph.deleted_nodes) == 0  # Nothing deleted in dry run
+    assert graph.deleted == []  # Nothing deleted in dry run
 
 def test_apply_forgetting_execution():
     graph = FakeGraph()
@@ -255,30 +270,33 @@ def test_apply_forgetting_execution():
     vector_store = FakeVectorStore()
     consolidator = MemoryConsolidator(graph=graph, vector_store=vector_store)
     result = consolidator.apply_controlled_forgetting(dry_run=False)
-    assert len(graph.deleted_nodes) > 0   # Nodes deleted
-    assert len(vector_store.deleted_ids) > 0  # Vectors deleted
+    assert len(graph.deleted) > 0           # Nodes deleted
+    assert len(vector_store.deletions) > 0  # Vector deletions issued
 ```
 
 #### Verifying Mock Interactions
 
-**Query history** — check which queries were executed:
+**Query history** — `graph.queries` holds `(query, params)` tuples, so match on the first element:
 
 ```python
-assert any("MATCH (m:Memory)" in q for q in graph.query_history)
+assert any("MATCH (m:Memory)" in query for query, _params in graph.queries)
 ```
 
-**State changes** — verify deletions, archives, and score updates:
+**State changes** — `graph.deleted` is a list of memory IDs, while `graph.archived` and `graph.updated_scores` are lists of `(memory_id, score)` tuples:
 
 ```python
-assert "mem_001" in graph.deleted_nodes
-assert "mem_002" in graph.archived_nodes
-assert graph.updated_scores.get("mem_003") < 0.2
+assert "mem_001" in graph.deleted
+assert any(memory_id == "mem_002" for memory_id, _score in graph.archived)
+assert dict(graph.updated_scores)["mem_003"] < 0.2
 ```
 
-**Vector store interactions:**
+**Vector store interactions** — `vector_store.deletions` holds `(collection_name, points_selector)` tuples. When the Qdrant models can't be imported, as under the test suite's `qdrant_client` stub, the consolidator passes a plain `{"points": [...]}` dict as the selector. The repository's own test accepts either `point_ids` or `points`:
 
 ```python
-assert "mem_001" in vector_store.deleted_ids
+collection, selector = vector_store.deletions[0]
+assert collection == "memories"
+points = selector.get("point_ids") or selector.get("points")
+assert points == ["mem_001"]
 ```
 
 ### Test Coverage Report
@@ -440,12 +458,19 @@ Integration tests store and recall actual memories in the AutoMem service. Use a
 
 ### CI/CD Integration
 
-The CI workflow ([`.github/workflows/ci.yml`](https://github.com/verygoodplugins/mcp-automem/blob/main/.github/workflows/ci.yml)) runs on every PR and push to main:
+The CI workflow ([`.github/workflows/ci.yml`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/.github/workflows/ci.yml)) runs on every PR and push to main, as three jobs.
 
-1. Link validation on documentation files
+**Check Links** (`links`) validates links in `README.md`, `INSTALLATION.md`, and `CHANGELOG.md` with lychee (fails build on broken links).
+
+**`test`** runs on Ubuntu with Node 24. After `npm ci`, its steps run in this order:
+
+1. `npm run format:check` — Prettier (fails build on formatting differences)
 2. `npm run lint` — ESLint (fails build on errors)
 3. `npm run build` — TypeScript compilation (fails build on errors)
 4. `npm test` — Unit tests (fails build on failures)
 5. `npm run test:coverage` — Coverage report (non-blocking)
+6. `npm run test:e2e` — Headless installer end-to-end scenarios: it builds and packs a tarball and runs install and uninstall scenarios against an in-process mock (fails build on failures). A preceding step checks out `verygoodplugins/automem-website` so the harness can run its `public/install.sh` bootstrap scenario.
+
+**Hook commands** (`hooks-windows`) runs on Windows. It builds the package, then runs `tests/installer/hook-commands.test.ts` with Vitest.
 
 Unit tests run in CI without an external AutoMem service. Integration tests are run manually or in dedicated integration environments.
