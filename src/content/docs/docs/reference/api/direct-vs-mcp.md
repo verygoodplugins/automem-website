@@ -6,9 +6,13 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP server, tool definitions, and request handlers
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts) — Entry point: mode detection, CLI routing, and stdio server startup
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions, request handlers, and `createAutoMemMcpServer()`
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP client, including the client-side argument checks for each tool mode
 - [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
 - [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
+
+Line numbers on this page refer to mcp-automem 0.16.0.
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -63,7 +67,7 @@ graph LR
     HealthMethod -->|"No params"| GetHealth
 ```
 
-The MCP bridge (`mcp-automem`) operates as a thin translation layer. Each MCP tool call is mapped to an `AutoMemClient` method, which in turn makes an HTTP request to the AutoMem server. No business logic lives in the bridge — it handles parameter mapping, content validation, and response formatting only.
+The MCP bridge (`mcp-automem`) operates as a thin translation layer. Each MCP tool call is mapped to an `AutoMemClient` method, which in turn makes an HTTP request to the AutoMem server. The bridge keeps no storage or ranking logic of its own — it handles parameter mapping, argument validation, the client-side supersede flow, and response formatting.
 
 ---
 
@@ -79,39 +83,41 @@ The `mcp-automem` package (`src/index.ts`) serves two purposes from a single ent
 Mode detection occurs immediately at startup:
 
 ```typescript
-// src/index.ts lines 58-61
-const command = (process.argv[2] || "").toLowerCase();
+// src/index.ts lines 30-31
+const command = (process.argv[2] || '').toLowerCase();
 const isServerMode = command.length === 0;
-// ...
-if (isServerMode) {
-  // Redirect console.log/info/debug/warn to stderr
-} else {
-  // CLI mode — execute command and exit
-}
 ```
+
+In server mode the entry point goes on to rebind the console and start the stdio server. In CLI mode it runs the matching command handler and exits; an unrecognized command prints an error and exits with code 1 (`src/index.ts` lines 407-411).
 
 This allows a single npm package to serve as both an interactive MCP server for AI platforms and a command-line toolkit for configuration management.
 
 ### Stdio Transport
 
-In server mode, all MCP communication occurs over `stdin`/`stdout` using the `StdioServerTransport` from `@modelcontextprotocol/sdk`. All logging is redirected to `stderr` to prevent pollution of the JSON-RPC channel:
+In server mode, all MCP communication occurs over `stdin`/`stdout` using the `StdioServerTransport` from `@modelcontextprotocol/sdk`. `console.log`, `console.info`, `console.debug`, and `console.warn` are rebound to `console.error`, which writes to `stderr`, to keep logging off the JSON-RPC channel:
 
 ```typescript
-// Redirect console output to stderr (server mode only)
-console.log = (...args) => process.stderr.write(args.join(" ") + "\n");
-console.error = (...args) => process.stderr.write(args.join(" ") + "\n");
+// src/index.ts lines 78-84 (server mode only)
+if (isServerMode) {
+  const logToStderr = (...args: unknown[]) => console.error(...args);
+  console.log = logToStderr;
+  console.info = logToStderr;
+  console.debug = logToStderr;
+  console.warn = logToStderr;
+}
 ```
 
 ### Process Lifecycle
 
 | Stage | Lines | Description |
 |-------|-------|-------------|
-| Entry | 1–57 | Shebang, imports, helper functions |
-| Mode Detection | 58–62 | Determine server vs CLI mode; redirect logging in server mode |
-| CLI Routing | 63–118 | Execute CLI commands and exit |
-| Configuration | 119–177 | Install stdio guards, load environment, create `AutoMemClient` |
-| Server Setup | 178–783 | Create server, register tools and handlers |
-| Main Loop | 785–795 | Connect transport, run |
+| Entry | 1–28 | Shebang, imports, `isInteractiveTerminal()` helper |
+| Mode Detection | 30–84 | Determine server vs CLI mode, decide whether to silence the dotenv banner, and redirect logging in server mode |
+| Startup Helpers | 86–125 | Load `.env`, set the optional process title, define `installStdioErrorGuards()`, read the package version |
+| CLI Routing | 127–411 | Print help, execute CLI commands and exit, reject unknown commands |
+| Configuration | 413–433 | Resolve the API URL and key, create `AutoMemClient` |
+| Server Setup | 435–439 | Build the server with `createAutoMemMcpServer()` (tools and handlers live in `src/mcp-surface.ts`) |
+| Main Loop | 441–496 | `main()`: install stdio guards, create `StdioServerTransport`, register shutdown triggers, connect |
 
 ### Error Resilience
 
@@ -120,18 +126,21 @@ The server guards against two classes of failures:
 **Broken pipe errors** — When the AI platform terminates the connection unexpectedly:
 
 ```typescript
-// installStdioErrorGuards() — lines 120-130
-const handler = (error: unknown) => {
-  const err = error as { code?: string } | undefined;
-  if (err?.code === "EPIPE" || err?.code === "ECONNRESET") {
-    process.exit(0);
-  }
-};
-process.stdout.on("error", handler);
-process.stderr.on("error", handler);
+// src/index.ts lines 102-112
+function installStdioErrorGuards() {
+  const handler = (error: unknown) => {
+    const err = error as { code?: string } | undefined;
+    if (err?.code === 'EPIPE' || err?.code === 'ECONNRESET') {
+      process.exit(0);
+    }
+  };
+
+  process.stdout.on('error', handler);
+  process.stderr.on('error', handler);
+}
 ```
 
-**Tool execution errors** — All tool handlers are wrapped in try-catch, returning MCP error responses rather than crashing the server.
+**Tool execution errors** — All tool handlers are wrapped in try-catch (`src/mcp-surface.ts` lines 1041-1320), returning MCP error responses rather than crashing the server.
 
 ---
 
@@ -139,23 +148,23 @@ process.stderr.on("error", handler);
 
 ```mermaid
 graph TB
-    subgraph tools["MCP Tools (buildMcpServer)"]
+    subgraph tools["MCP Tools (createAutoMemMcpServer)"]
         direction TB
 
-        T1["store_memory<br/>Required: content<br/>Optional: tags, importance,<br/>embedding, metadata, timestamps"]
-        T2["recall_memory<br/>Optional: query, queries,<br/>embedding, limit, sort,<br/>time filters, tags,<br/>expand options, context hints"]
-        T3["associate_memories<br/>Required: memory1_id,<br/>memory2_id, type, strength"]
+        T1["store_memory<br/>One of: content (single)<br/>or memories[] (batch)<br/>Optional: tags, importance,<br/>embedding, metadata, timestamps,<br/>supersede fields"]
+        T2["recall_memory<br/>Modes: memory_id (fetch),<br/>tags + exhaustive (enumerate),<br/>or ranked retrieval<br/>Optional: query, queries,<br/>embedding, limit, sort,<br/>time filters, tags,<br/>expand options, context hints"]
+        T3["associate_memories<br/>Pair: memory1_id, memory2_id,<br/>type, strength<br/>or associations[] (batch)"]
         T4["update_memory<br/>Required: memory_id<br/>Optional: content, tags,<br/>importance, metadata, timestamps"]
-        T5["delete_memory<br/>Required: memory_id"]
+        T5["delete_memory<br/>One of: memory_id or tags"]
         T6["check_database_health<br/>No parameters"]
     end
 
     subgraph schemas["Input Schemas"]
-        S1["type: object<br/>properties: {content, tags[],<br/>importance, embedding[], ...}<br/>required: ['content']"]
-        S2["type: object<br/>properties: {query, queries[],<br/>embedding[], limit, sort,<br/>expand_relations, expand_entities,<br/>context, language, ...}"]
-        S3["type: object<br/>properties: {memory1_id,<br/>memory2_id, type, strength}<br/>required: all"]
+        S1["type: object<br/>properties: {content, memories[],<br/>tags[], importance, embedding[], ...}<br/>no top-level required"]
+        S2["type: object<br/>properties: {memory_id, exhaustive,<br/>query, queries[], embedding[],<br/>limit, offset, sort, format,<br/>expand_relations, expand_entities,<br/>context, language, ...}<br/>no top-level required"]
+        S3["type: object<br/>properties: {memory1_id,<br/>memory2_id, type, strength,<br/>associations[], edge props}<br/>no top-level required"]
         S4["type: object<br/>properties: {memory_id,<br/>content, tags[], importance, ...}<br/>required: ['memory_id']"]
-        S5["type: object<br/>properties: {memory_id}<br/>required: ['memory_id']"]
+        S5["type: object<br/>properties: {memory_id, tags[]}<br/>no top-level required"]
         S6["type: object<br/>properties: {}"]
     end
 
@@ -171,15 +180,15 @@ graph TB
 
 | Tool Name | HTTP Equivalent | Read-Only | Destructive | Idempotent |
 |-----------|----------------|-----------|-------------|------------|
-| `store_memory` | `POST /memory` | No | No | No |
-| `recall_memory` | `GET /recall` | Yes | No | Yes |
-| `associate_memories` | `POST /associate` | No | No | Yes |
+| `store_memory` | `POST /memory` (batch mode: `POST /memory/batch`) | No | No | No |
+| `recall_memory` | `GET /recall` (ID fetch: `GET /memory/:id`; tag enumeration: `GET /memory/by-tag`) | Yes | No | Yes |
+| `associate_memories` | `POST /associate` (pair and batch modes) | No | No | Yes |
 | `update_memory` | `PATCH /memory/:id` | No | No | Yes |
-| `delete_memory` | `DELETE /memory/:id` | No | Yes | Yes |
+| `delete_memory` | `DELETE /memory/:id` (bulk by tag: `DELETE /memory/by-tag`) | No | Yes | No |
 | `check_database_health` | `GET /health` | Yes | No | Yes |
 
-:::note[Why store_memory is non-idempotent]
-`store_memory` is the only tool with `idempotentHint: false` because each invocation generates a unique `memory_id` even if the content is identical. This prevents AI platforms from aggressively caching or deduplicating calls.
+:::note[Why store_memory and delete_memory are non-idempotent]
+`store_memory` and `delete_memory` are the only tools with `idempotentHint: false`. Every `store_memory` call creates a new memory with a fresh server-assigned `memory_id`, even if the content is identical. For `delete_memory`, the tool description notes that bulk-by-tag mode is not idempotent in practice, because a repeat call can match memories tagged after the first one.
 :::
 
 ### MCP Tool Annotations
@@ -190,7 +199,7 @@ MCP tool annotations provide semantic hints to AI platforms about tool behavior:
 |------------|------|---------|------------|
 | `readOnlyHint` | boolean | Tool only reads data | `recall_memory`, `check_database_health` |
 | `destructiveHint` | boolean | Tool permanently removes or modifies data | `delete_memory` only |
-| `idempotentHint` | boolean | Same args always produce same result | All except `store_memory` |
+| `idempotentHint` | boolean | Same args always produce same result | All except `store_memory` and `delete_memory` |
 | `openWorldHint` | boolean | Tool may access external resources | `false` for all tools |
 
 ---
@@ -201,21 +210,41 @@ MCP tool annotations provide semantic hints to AI platforms about tool behavior:
 
 **MCP Tool Input Schema:**
 
+`store_memory` is mode-multiplexed: pass top-level `content` for a single memory (add `supersedes_memory_id` to replace an existing one), or `memories: [...]` for a batch. The input schema has no top-level `required` array, but the MCP client throws if you send neither `content` nor `memories`.
+
 | Parameter | Type | Required | Constraints | Description |
 |-----------|------|----------|-------------|-------------|
-| `content` | string | Yes | Runtime: ≤2000 chars | Memory content to store |
+| `content` | string | Single mode (XOR `memories`) | Runtime: ≤2000 chars | Memory content to store |
+| `memories` | array[object] | Batch mode (XOR `content`) | 1–500 items; each item requires non-empty `content` | Memories to store in one request. Per-item fields: `tags`, `importance`, `timestamp`, `type`, `confidence`, `metadata` |
 | `tags` | array[string] | No | — | Categorization tags |
 | `importance` | number | No | 0–1 | Significance score |
-| `embedding` | array[number] | No | — | Optional pre-computed vector |
+| `embedding` | array[number] | No | Single mode only | Optional pre-computed vector |
 | `metadata` | object | No | — | Structured additional data |
 | `timestamp` | string | No | ISO format | Creation timestamp |
+| `type` | string | No | enum: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context` | Memory type classification |
+| `confidence` | number | No | 0–1 | Classification confidence (defaults to 0.9 when `type` is set) |
+| `t_valid`, `t_invalid` | string | No | ISO 8601, single mode only | Validity window |
+| `updated_at`, `last_accessed` | string | No | ISO 8601, single mode only | Explicit timestamps |
+| `supersedes_memory_id` | string | No | Single mode only | Existing memory this one replaces or corrects |
+| `supersede_relation` | string | No | `INVALIDATED_BY` (default) \| `EVOLVED_INTO` | Relation created from the old memory to the new one |
+| `supersede_reason` | string | No | — | Reason stored on the old memory's metadata |
+
+In batch mode, put `tags`, `importance`, and the other per-item fields inside each `memories` entry. The client rejects any top-level single-mode field sent alongside `memories`, and it rejects per-item `id`, `embedding`, `t_valid`, and `t_invalid`.
 
 **MCP Tool Output:**
 
+Only `message` is a required output field. The rest depend on which mode ran.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `memory_id` | string | Yes | Unique identifier for stored memory |
 | `message` | string | Yes | Confirmation message |
+| `memory_id` | string | No | Single and supersede modes: ID of the stored memory |
+| `memory_ids` | array[string] | No | Batch mode: IDs of the stored memories |
+| `stored` | integer | No | Batch mode: number of memories stored |
+| `qdrant`, `enrichment` | string | No | Batch mode: indexing and enrichment status reported by the server |
+| `query_time_ms` | number | No | Batch mode: server-reported execution time |
+| `superseded_memory_id` | string | No | Supersede mode: ID of the memory marked invalid |
+| `association_created` | boolean | No | Supersede mode: whether the old → new association was created |
 
 **HTTP API equivalent:**
 
@@ -230,11 +259,11 @@ curl -X POST https://your-automem-instance/memory \
   }'
 ```
 
-:::note[Additional MCP store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
+:::note[Supersede mode is client-orchestrated]
+Every parameter above is published in the MCP `inputSchema`. Single mode forwards its fields directly to `POST /memory`, and batch mode posts `{"memories": [...]}` to `POST /memory/batch`. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. The tool has no `id` parameter: the AutoMem server always [assigns the memory ID itself](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py#L543). See [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
-**Content Size Governance (MCP layer adds two-tier validation):**
+**Content Size Governance (single mode; the MCP layer adds two-tier validation):**
 
 | Limit | Value | Behavior |
 |-------|-------|---------|
@@ -242,17 +271,25 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 | Soft limit | 500 chars | Warning; backend may auto-summarize |
 | Hard limit | 2000 chars | MCP layer rejects before sending to API |
 
+In batch mode the client only checks that each item's `content` is non-empty. The AutoMem service enforces its own content limits.
+
 ---
 
 ### recall_memory vs GET /recall
 
 **MCP Tool Input Schema:**
 
+`recall_memory` picks one of three modes from the arguments you pass: `memory_id` fetches a single record, `tags` with `exhaustive: true` enumerates a tag exactly, and anything else is ranked hybrid retrieval. The input schema has no top-level `required` array.
+
 | Parameter | Type | Required | Constraints | Description |
 |-----------|------|----------|-------------|-------------|
+| `memory_id` | string | No | — | ID-fetch mode: returns that one memory. No other parameter is sent to the server, but `format` still shapes the response. An ID that does not exist returns `count: 0` with empty `results` |
+| `exhaustive` | boolean | No | Requires non-empty `tags`; rejects `tag_match: "prefix"`, `tag_mode: "all"`, and ranked-only options such as `query` or `sort` | Tag-enumeration mode: paginated exact-match listing, not ranked retrieval |
 | `query` | string | No | — | Semantic search query |
 | `queries` | array[string] | No | — | Multiple queries for broader recall |
-| `limit` | integer | No | 1–200, default 5 | Max results to return |
+| `embedding` | array[number] | No | — | Optional embedding vector for direct similarity search |
+| `limit` | integer | No | 1–200 (schema default 5) | Max results to return. Ranked mode defaults to 5; enumeration without `limit` uses the server default of 20. Enumeration mode honors up to 200; in ranked mode the server enforces its own cap (default 100 via `RECALL_MAX_LIMIT`) |
+| `offset` | integer | No | ≥ 0 | Pagination offset |
 | `tags` | array[string] | No | — | Filter by tags |
 | `tag_mode` | string | No | `"any"` \| `"all"` | Tag matching mode |
 | `tag_match` | string | No | `"exact"` \| `"prefix"` | Tag matching strategy |
@@ -276,9 +313,12 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 | `count` | integer | Yes | Number of memories returned |
 | `results` | array[object] | Yes | Array of memory objects with scores |
 | `dedup_removed` | integer | No | Duplicates removed in multi-query mode |
+| `mode` | string | No | Mode that produced the result: `"ranked"`, `"enumeration"`, or `"id_fetch"` |
+| `has_more` | boolean | No | Enumeration mode: whether more pages exist past `offset + limit` |
+| `limit`, `offset` | integer | No | Enumeration mode: page size and offset used for this response |
 
-:::note[Additional pass-through recall parameters]
-The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Recall Operations](/docs/reference/api/recall-operations/).
+:::note[More published recall parameters]
+The table above is a subset. The published `inputSchema` also carries `per_query_limit`, `sort`, `format`, `exclude_tags`, `auto_decompose`, `current_only`, `state_mode`, `state_debug`, `recency_bias`, `scope_fallback`, `min_score`, `adaptive_floor`, `active_path`, `context_tags`, `context_types`, and `priority_ids`. In ranked mode they are forwarded to the HTTP API and documented in [Recall Operations](/docs/reference/api/recall-operations/).
 :::
 
 **Response shaping and backend-owned recall:**
@@ -300,12 +340,16 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 
 **MCP Tool Input Schema:**
 
+Like `store_memory`, this tool has a single-pair mode and a batch mode. The input schema has no top-level `required` array, so the pair-mode fields below are required by the MCP client at runtime rather than by the schema.
+
 | Parameter | Type | Required | Constraints | Description |
 |-----------|------|----------|-------------|-------------|
-| `memory1_id` | string | Yes | — | Source memory UUID |
-| `memory2_id` | string | Yes | — | Target memory UUID |
-| `type` | string | Yes | enum: 11 authorable types | Relationship type |
-| `strength` | number | No | 0–1, default 0.5 | Relationship strength |
+| `memory1_id` | string | Pair mode | — | Source memory UUID |
+| `memory2_id` | string | Pair mode | — | Target memory UUID |
+| `type` | string | Pair mode | enum: 11 authorable types | Relationship type |
+| `strength` | number | Pair mode | 0–1 | Relationship strength. The MCP client throws if it is missing; the HTTP API defaults to 0.5 when you omit it |
+| `associations` | array[object] | Batch mode | 1–500 items; each item requires `memory1_id`, `memory2_id`, `type`, and `strength` | Batch of associations. Do not combine with the pair-mode fields |
+| `context`, `reason`, `pattern_type`, `confidence`, `resolution`, `observations`, `timestamp`, `transformation`, `role` | — | No | Each applies to specific relationship types | Relation-specific properties. Accepted at the top level in pair mode and inside each batch item |
 
 **Relationship type enum values (11 authorable):**
 
@@ -327,8 +371,11 @@ System-generated relations may still appear in recall results, but they are not 
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `success` | boolean | Yes | Whether association was created |
-| `message` | string | Yes | Confirmation message |
+| `success` | boolean | Yes | Whether every requested association was created; `false` for partial batch results |
+| `message` | string | Yes | Confirmation message (batch mode: the service summary) |
+| `created_count`, `failed_count` | integer | No | Batch mode: number of associations created and failed |
+| `succeeded`, `failed` | array[object] | No | Batch mode: per-association records |
+| `summary` | string | No | Batch mode: service summary |
 
 **HTTP API equivalent:**
 
@@ -343,6 +390,8 @@ curl -X POST https://your-automem-instance/associate \
     "strength": 0.95
   }'
 ```
+
+Batch mode sends `{"associations": [...]}` to the same `POST /associate` endpoint.
 
 ---
 
@@ -394,10 +443,14 @@ Exactly one of `memory_id` or `tags` must be provided.
 
 **MCP Tool Output:**
 
+Only `message` is a required output field. `memory_id` is absent in bulk-by-tag mode.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `memory_id` | string | Yes | ID of deleted memory |
 | `message` | string | Yes | Confirmation message |
+| `memory_id` | string | No | Single-delete mode: ID of the deleted memory |
+| `deleted_count` | integer | No | Bulk-by-tag mode: number of memories deleted |
+| `tags` | array[string] | No | Bulk-by-tag mode: tags used for the bulk delete |
 
 **HTTP API equivalent:**
 
@@ -405,6 +458,8 @@ Exactly one of `memory_id` or `tags` must be provided.
 curl -X DELETE https://your-automem-instance/memory/a1b2c3d4-... \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
+
+Bulk-by-tag mode calls `DELETE /memory/by-tag?tags=...` instead.
 
 :::caution[Permanent deletion]
 `delete_memory` permanently removes the memory from both FalkorDB and Qdrant. The `destructiveHint: true` annotation signals to AI platforms that this tool requires elevated confirmation before invocation.
@@ -442,12 +497,22 @@ MCP tool handlers return dual-representation responses conforming to the MCP pro
 1. **`content` array** — Human-readable text (type: `"text"`) for display in chat interfaces
 2. **`structuredContent` object** — Machine-readable data matching the tool's `outputSchema`
 
-Example from `store_memory`:
+Example from `store_memory` in single mode (abridged from `src/mcp-surface.ts` lines 1112-1161):
 
 ```typescript
+let responseText = `Memory stored successfully!\n\nMemory ID: ${result.memory_id}`;
+// ...supersede, message, auto-summarize, and size-warning lines are appended when present
+
+const output = {
+  memory_id: result.memory_id,
+  message: result.message,
+  // ...supersede, auto-summarize (summarized, original_length, summarized_length),
+  // and size-warning fields when present
+};
+
 return {
-  content: [{ type: "text", text: `Memory stored with ID: ${result.memory_id}` }],
-  structuredContent: { memory_id: result.memory_id, message: result.message }
+  content: [{ type: 'text', text: responseText }],
+  structuredContent: output,
 };
 ```
 
@@ -465,11 +530,11 @@ This dual format ensures:
 | AI agent integration (Claude, Cursor, etc.) | — | Preferred — native JSON-RPC |
 | Custom application or script | Preferred — direct control | — |
 | Bulk operations (migration, reprocessing) | Preferred — no overhead | — |
-| Content size validation before storage | — | Built-in two-tier limits |
+| Content size validation before storage | — | Built-in two-tier limits (single mode) |
 | Structured tool output for chat clients | Manual formatting | Built-in `content` + `structuredContent` |
 | Admin operations (reembed, reprocess) | Preferred — admin endpoints | Not available |
 | Health monitoring dashboards | Preferred — full response | Simplified output only |
-| Process supervision (stable PID) | — | Supported via `PROCESS_TITLE` env var |
+| Process supervision (stable process title) | — | Supported via the `AUTOMEM_PROCESS_TAG` (or `MCP_PROCESS_TAG`) env var |
 
 :::tip[Prefer MCP for AI agents]
 AI platforms using the MCP protocol get automatic tool discovery, schema validation, structured output parsing, and content governance before requests reach the API. Recall ranking, tag handling, deduplication, and graph/entity expansion remain backend behavior, so the main difference is transport and response format, not search semantics.
@@ -479,10 +544,10 @@ AI platforms using the MCP protocol get automatic tool discovery, schema validat
 
 ## Tool Registration and Discovery
 
-The `mcp-automem` server registers tools via the MCP SDK's schema-based routing:
+The `mcp-automem` server registers tools via the MCP SDK's schema-based routing. Tool definitions and request handlers live in `src/mcp-surface.ts`; `src/index.ts` only builds the server from them through `createAutoMemMcpServer()`.
 
-**`ListToolsRequestSchema` handler (line 669):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection. AI platforms call this once at startup to discover what tools are available.
+**`ListToolsRequestSchema` handler (`src/mcp-surface.ts` line 1034):** Returns the complete `tools` array when AI platforms query available tools via MCP introspection, so platforms can discover what tools are available.
 
-**`CallToolRequestSchema` handler (lines 671–826):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
+**`CallToolRequestSchema` handler (`src/mcp-surface.ts` lines 1038-1321):** Executes tool logic based on the `name` parameter using a switch-based dispatcher, then delegates to the corresponding `AutoMemClient` method.
 
-The `tools` array (lines 177–667) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
+The `tools` array (`src/mcp-surface.ts` lines 85-1007) contains six static tool definitions with extensive inline documentation in the `description` field. This documentation is directly visible to AI platforms via MCP introspection, informing the model when and how to invoke each tool.
