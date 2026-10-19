@@ -50,10 +50,12 @@ test('defaultTags field is merged into stores and updates, not only applied when
   const row = fields.split('\n').find((line) => line.startsWith('| `defaultTags` |'));
   assert.ok(row, 'expected a defaultTags config field row');
 
-  assert.match(row, /Merged, together with any tags the call supplies/);
-  assert.match(row, /stored or updated through the plugin tools/);
+  assert.match(row, /Merged with the tags each store or update call supplies and sent as that call's tags/);
+  assert.match(row, /On an update the merged list replaces the memory's tags/);
+  assert.match(row, /when `defaultTags` is non-empty an update that passes no tags resets them to `defaultTags`/);
   assert.match(row, /project gate for first-turn task-context recall/);
   assert.doesNotMatch(row, /doesn't supply tags/);
+  assert.doesNotMatch(row, /stored or updated through the plugin tools/);
   assert.doesNotMatch(page, /Tags applied when the request doesn't supply tags/);
 });
 
@@ -71,7 +73,7 @@ test('Tags section describes one sanitized bare slug, or none for ambiguous slug
   assert.match(tags, /leading and trailing `-` are trimmed/);
   assert.match(tags, /cut to 64 characters/);
   assert.match(tags, /`api`, `app`, `test`, or `video`/);
-  assert.match(tags, /the installer writes no default tag/);
+  assert.match(tags, /the installer writes no default tag \(a value from an earlier install is left as is\)/);
   assert.match(tags, /saved as `defaultTags` in `plugins\.entries\.automem\.config`/);
   assert.match(tags, /recorded as `AUTOMEM_DEFAULT_TAGS` in the skill entry's `env`/);
   assert.doesNotMatch(tags, /automatically added/);
@@ -93,7 +95,11 @@ test('MCP/skill config example puts the key in top-level apiKey and keeps it out
   assert.match(block, /A new entry keeps the API key in the top-level `apiKey` field, not in `env`/);
   assert.match(block, /shipped skills declare `AUTOMEM_API_KEY` as their `primaryEnv`/);
   assert.match(block, /`AUTOMEM_API_KEY` and `AUTOMEM_API_TOKEN` in `env` are set to empty strings/);
-  assert.match(block, /keeps that copy in sync with `apiKey` on a re-run/);
+  assert.match(
+    block,
+    /An entry that already has `AUTOMEM_API_KEY` or `AUTOMEM_API_TOKEN` in `env` \(including the blank values a keyless install writes\) has that copy synced to `apiKey` on a re-run/,
+  );
+  assert.doesNotMatch(block, /older entry that already held the key/);
   assert.match(block, /`AUTOMEM_DEFAULT_TAGS` is added only when a default tag resolves/);
 });
 
