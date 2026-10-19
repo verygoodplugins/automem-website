@@ -5,12 +5,10 @@ sidebar:
   order: 1
 ---
 
-This page covers installing the `@verygoodplugins/mcp-automem` package and running the setup wizard to configure your connection to the AutoMem service. For information about deploying the AutoMem backend service itself, see [Prerequisites](#prerequisites). For detailed configuration options and environment variable resolution, see [Configuration Tools](/docs/cli/config-tools/).
+This page covers installing the `@verygoodplugins/mcp-automem` package and running the guided installer to configure your connection to the AutoMem service. For information about deploying the AutoMem backend service itself, see [Prerequisites](#prerequisites). For detailed configuration options and environment variable resolution, see [Configuration Tools](/docs/cli/config-tools/).
 
 :::tip[The guided installer does all of this for you]
-`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. The [Quick Start](/docs/getting-started/quick-start/) walks through it prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces.
-
-The two commands differ in scope: **`install`** is the full guided wizard (backend + agents); **`setup`** (below) is the lighter wizard that only writes a `.env` against an endpoint you already have.
+`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0; until that publish it is still the older endpoint wizard. The [Quick Start](/docs/getting-started/quick-start/) walks through the installer prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces. Print config snippets with `npx @verygoodplugins/mcp-automem config`.
 :::
 
 ## Prerequisites
@@ -217,7 +215,7 @@ graph TB
 The recommended installation method uses `npx` to run the package without installing it globally. This ensures you always use the latest version and avoids version conflicts.
 
 ```bash
-npx @verygoodplugins/mcp-automem setup
+npx @verygoodplugins/mcp-automem install
 ```
 
 **How it works:**
@@ -234,7 +232,7 @@ Install the package globally to use the `mcp-automem` command without `npx`.
 
 ```bash
 npm install -g @verygoodplugins/mcp-automem
-mcp-automem setup
+mcp-automem install
 ```
 
 **When to use:** If you run CLI commands frequently or want faster execution without npx download delays.
@@ -248,7 +246,7 @@ git clone https://github.com/verygoodplugins/mcp-automem
 cd mcp-automem
 npm install
 npm run build
-node dist/index.js setup
+node dist/index.js install
 ```
 
 The built server is available at `dist/index.js`.
@@ -259,98 +257,24 @@ The built server is available at `dist/index.js`.
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
 
-## Setup Wizard
+## Guided installer
 
-The `setup` command provides an interactive wizard that configures your connection to the AutoMem service.
+`install` is the installer on current npm. It asks where AutoMem runs, verifies the endpoint, writes `.env`, and configures the agents you select. Pass `--dry-run` to preview and `--yes` to apply without prompts. Host commands such as `claude-code` and `cursor` remain scriptable writers for one platform.
 
-### Wizard Flow
+`setup` becomes an alias of `install` in the release after 0.16.0. Until that publish, `setup` is still the older endpoint wizard, and `--env`, `--claude-code`, `--claude-dir`, and `--claude-dry-run` still apply. After that release those flags error and point at `install`, `config`, or the host writer.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI as setup command<br/>(src/cli/setup.ts)
-    participant ENV as .env file
-
-    User->>CLI: npx @verygoodplugins/mcp-automem setup
-    CLI->>User: Prompt: AutoMem API URL?
-    User->>CLI: http://localhost:8001
-    CLI->>User: Prompt: API key?
-    User->>CLI: [blank or token]
-    CLI->>User: Prompt: Write settings to .env? [Y/n]
-    User->>CLI: Y
-
-    CLI->>ENV: Create/update .env<br/>AUTOMEM_API_URL=...<br/>AUTOMEM_API_KEY=...
-    ENV-->>CLI: File written
-    CLI->>User: ✅ Saved AutoMem settings to .env
-
-    CLI->>User: Print setup snippets<br/>(Claude Desktop JSON, Claude Code env export, Hermes YAML)
-```
-
-### Setup Wizard Implementation
-
-The wizard prompts for one required and one optional configuration value:
-
-| Prompt | Environment Variable | Description | Default |
-|---|---|---|---|
-| **AutoMem API URL** | `AUTOMEM_API_URL` | HTTP URL to AutoMem service | `http://127.0.0.1:8001` |
-| **API key** | `AUTOMEM_API_KEY` | Authentication token (optional for local) | None |
-
-**Endpoint validation:**
-- Must be a valid HTTP/HTTPS URL
-- Should end without trailing slash
-- Common values: `http://localhost:8001` (local), `https://your-app.railway.app` (Railway)
-
-**API Key handling:**
-- Optional for local development (no authentication)
-- Required for Railway and production deployments
-- Can be left blank when prompted for local setups
-
-### .env File Creation
-
-The setup wizard creates or updates a `.env` file in the current directory:
+The installer writes `.env` in the current directory after it verifies the endpoint:
 
 ```
 AUTOMEM_API_URL=http://localhost:8001
 AUTOMEM_API_KEY=your-api-key-here
 ```
 
-**File resolution:** The dotenv library loads `.env` from the current working directory when the MCP server starts. The configuration can also be overridden by system environment variables (see [Configuration Tools](/docs/cli/config-tools/)).
+Dotenv loads that file when the MCP server starts. System environment variables override it (see [Configuration Tools](/docs/cli/config-tools/)).
 
 :::caution[Security note]
 The `.env` file contains your API key and should be added to `.gitignore` to avoid committing credentials to version control.
 :::
-
-### Configuration File Output
-
-After writing the `.env` file, the setup wizard prints the setup material it knows how to generate directly:
-
-**For Claude Desktop:**
-```json
-{
-  "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@verygoodplugins/mcp-automem"],
-      "env": {
-        "AUTOMEM_API_URL": "${AUTOMEM_API_URL}",
-        "AUTOMEM_API_KEY": "${AUTOMEM_API_KEY}"
-      }
-    }
-  }
-}
-```
-
-**For Claude Code:** environment export lines for the current endpoint plus a placeholder API key (`your-auto-mem-api-key`), not your real secret.
-
-**For Hermes:** an `mcp_servers` YAML snippet for `~/.hermes/config.yaml`. For native provider setup (`memory.provider`), run `npx @verygoodplugins/mcp-automem hermes`.
-
-The setup command does **not** print Cursor or Codex snippets. For platform-specific install flows outside Claude Desktop, Claude Code, and Hermes, see [Platform Installers](/docs/cli/platform-installers/).
-
-### Setup Completion
-
-After writing `.env`, the wizard prints a confirmation and then outputs the Claude Desktop, Claude Code, and Hermes setup material above.
-
-The wizard does **not** call the AutoMem service during setup — it writes the configuration and prints the snippets without validating reachability. To verify your connection manually after setup, use `curl http://your-endpoint/health` (see [Verification](#verification) below).
 
 ## Config Output
 
@@ -360,7 +284,7 @@ Print the current configuration for other platforms (Claude Desktop JSON, Claude
 npx @verygoodplugins/mcp-automem config
 ```
 
-Use `config` when you want the CLI to reprint your current configuration later without re-running the setup wizard. This command prints human-readable output for the supported surfaces, including Claude Desktop JSON, Claude Code env export lines with the `your-auto-mem-api-key` placeholder, and the Hermes `mcp_servers` YAML snippet. For Hermes provider mode, run `npx @verygoodplugins/mcp-automem hermes`.
+Use `config` when you want the CLI to reprint your current configuration later. This command prints human-readable output for the supported surfaces, including Claude Desktop JSON, Claude Code env export lines with the `your-auto-mem-api-key` placeholder, and the Hermes `mcp_servers` YAML snippet. For Hermes provider mode, run `npx @verygoodplugins/mcp-automem hermes`.
 
 If you need machine-readable output instead, add `--format=json` (or `--json`):
 
@@ -368,15 +292,15 @@ If you need machine-readable output instead, add `--format=json` (or `--json`):
 npx @verygoodplugins/mcp-automem config --format=json
 ```
 
-That JSON mode emits the raw MCP configuration object. It is useful for scripting, but it is not the same claim as the setup command's exact Claude Desktop snippet.
+That JSON mode emits the raw MCP configuration object. It is useful for scripting. The default text output is the human-readable snippets.
 
 ## Post-Installation File Structure
 
-After running the setup wizard, your directory contains:
+After the guided installer writes `.env`, your directory contains:
 
 ```
 your-project/
-├── .env                          # Created by setup wizard
+├── .env                          # Written by the guided installer
 │   ├── AUTOMEM_API_URL=...
 │   └── AUTOMEM_API_KEY=...
 └── node_modules/                 # If npm install was run

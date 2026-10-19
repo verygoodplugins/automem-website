@@ -456,7 +456,7 @@ npm run build && node dist/index.js
 **Method 1: Direct invocation** — test CLI commands without MCP client:
 
 ```bash
-node dist/index.js setup      # Test setup wizard
+node dist/index.js install --dry-run   # Preview the guided installer
 node dist/index.js --help     # Show available commands
 ```
 

@@ -2,11 +2,11 @@
 // and the /install page. `script` uses get.automem.ai — a Cloudflare Worker
 // (workers/install-redirect) that 302-redirects to public/install.sh, a thin
 // wrapper around `npx -y @verygoodplugins/mcp-automem@latest install`. `npm` is
-// the command that works on npm `latest` today; swap it to `… install` once that
-// subcommand ships on `latest`.
+// that same guided installer, which is on npm latest. `setup` aliases it
+// only after the mcp-automem release that follows 0.16.0.
 export const INSTALL_COMMANDS = {
   script: 'curl -fsSL get.automem.ai | sh',
-  npm: 'npx @verygoodplugins/mcp-automem setup',
+  npm: 'npx @verygoodplugins/mcp-automem install',
 } as const;
 
 export type InstallCommandKey = keyof typeof INSTALL_COMMANDS;

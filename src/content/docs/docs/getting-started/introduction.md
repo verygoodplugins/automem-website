@@ -116,7 +116,7 @@ The server (Flask on port 8001, run via `python app.py`) is the authoritative me
 The MCP client (`@verygoodplugins/mcp-automem`) operates in two modes depending on how it is invoked:
 
 - **Server mode**: When AI platforms launch it with no arguments (`npx -y @verygoodplugins/mcp-automem`), it starts a `StdioServerTransport` and listens on stdin/stdout for JSON-RPC messages from the platform.
-- **CLI mode**: When invoked with arguments (`npx @verygoodplugins/mcp-automem setup`), it routes to command handlers for setup, configuration, and platform installation.
+- **CLI mode**: When invoked with arguments (`npx @verygoodplugins/mcp-automem install`), it routes to command handlers for installation, configuration, and platform installation. `setup` becomes an alias of `install` in the release after 0.16.0.
 
 Both modes use the same `AutoMemClient` class (`src/automem-client.ts`) for HTTP communication with the AutoMem service.
 

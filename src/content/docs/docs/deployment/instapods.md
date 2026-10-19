@@ -55,10 +55,10 @@ After deployment, InstaPods gives you the pieces the MCP client needs:
 - `AUTOMEM_API_KEY` - the token used by MCP clients to authenticate
 - MCP client config - generated for copy/paste into supported tools
 
-For manual configuration, run the setup wizard and use the InstaPods endpoint and token when prompted:
+For manual configuration, run the guided installer and use the InstaPods endpoint and token when prompted. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0:
 
 ```bash
-npx @verygoodplugins/mcp-automem setup
+npx @verygoodplugins/mcp-automem install
 ```
 
 For platform-specific config locations, see [Setup & Installation](/docs/cli/setup/) and the individual [Platform Guides](/docs/platforms/claude-desktop/).

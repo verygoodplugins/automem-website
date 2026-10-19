@@ -93,7 +93,8 @@ test('install command widget centralizes commands and exposes copy + toggle', as
   // The launcher uses the short, standardized URL (get.automem.ai → install.sh worker).
   assert.match(commands, /curl -fsSL get\.automem\.ai \| sh/);
   assert.doesNotMatch(commands, /automem\.ai\/install\.sh/);
-  assert.match(commands, /npx @verygoodplugins\/mcp-automem setup/);
+  assert.match(commands, /npx @verygoodplugins\/mcp-automem install/);
+  assert.doesNotMatch(commands, /mcp-automem setup/);
 
   // Script ⇄ npm toggle and one-line (non-wrapping) presentation.
   assert.match(widget, /data-install-tab="script"/);
