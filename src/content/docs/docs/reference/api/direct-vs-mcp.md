@@ -6,9 +6,9 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP server, tool definitions, and request handlers
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/src/mcp-surface.ts) — MCP tool definitions, server instructions, and CallTool dispatch
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/server.json) — MCP server manifest
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -231,7 +231,7 @@ curl -X POST https://your-automem-instance/memory \
 ```
 
 :::note[Additional MCP store parameters]
-The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
+The MCP `store_memory` tool accepts `type`, `confidence`, `supersedes_memory_id`, `supersede_relation`, `supersede_reason`, `t_valid`, `t_invalid`, `updated_at`, and `last_accessed` as additional parameters. Supersede mode (`supersedes_memory_id`, `supersede_relation`, `supersede_reason`) is **not** a POST pass-through — the MCP client orchestrates fetch → store → invalidate → associate. See [Memory Operations](/docs/reference/api/memory-operations/).
 :::
 
 **Content Size Governance (MCP layer adds two-tier validation):**
@@ -276,8 +276,8 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 | `results` | array[object] | Yes | Array of memory objects with scores |
 | `dedup_removed` | integer | No | Duplicates removed in multi-query mode |
 
-:::note[Additional pass-through recall parameters]
-The MCP `recall_memory` tool also accepts `per_query_limit`, `sort`, `format`, and `offset` as advanced parameters. These are forwarded directly to the HTTP API and are not listed in the published MCP schema. They are documented in [Recall Operations](/docs/reference/api/recall-operations/).
+:::note[Additional recall parameters]
+The MCP `recall_memory` tool also accepts `memory_id` (ID fetch mode), `exhaustive` (enumeration mode), `exclude_tags`, `expand_respect_tags`, `auto_decompose`, `per_query_limit`, `sort`, `format`, `offset`, `state_mode`, `current_only`, `state_debug`, `recency_bias`, `scope_fallback`, `min_score`, `adaptive_floor`, `context_tags`, `context_types`, and `priority_ids`. They are documented in [Recall Operations](/docs/reference/api/recall-operations/).
 :::
 
 **Response shaping and backend-owned recall:**
@@ -320,7 +320,7 @@ curl "https://your-automem-instance/recall?query=typescript+preferences&tags=pre
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
 
-System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`.
+System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, `EXPLAINS`, `SHARES_THEME`, `PARALLEL_CONTEXT`, and `DISCOVERED`.
 
 **MCP Tool Output:**
 
@@ -395,7 +395,9 @@ Exactly one of `memory_id` or `tags` must be provided.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `memory_id` | string | Yes | ID of deleted memory |
+| `memory_id` | string | No | Single-delete result: ID of the deleted memory |
+| `deleted_count` | integer | No | Bulk-delete result: number of memories deleted |
+| `tags` | array[string] | No | Bulk-delete result: tags used for the bulk delete |
 | `message` | string | Yes | Confirmation message |
 
 **HTTP API equivalent:**
@@ -419,7 +421,7 @@ curl -X DELETE https://your-automem-instance/memory/a1b2c3d4-... \
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `status` | string | Yes | `"healthy"` or `"error"` |
+| `status` | string | Yes | `"healthy"`, `"degraded"`, or `"error"` |
 | `backend` | string | Yes | Backend type (always `"automem"`) |
 | `statistics` | object | No | Database statistics (memory counts, etc.) |
 | `error` | string | No | Error message if `status` is `"error"` |

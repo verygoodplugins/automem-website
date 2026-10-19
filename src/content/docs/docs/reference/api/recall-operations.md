@@ -10,9 +10,9 @@ sidebar:
 - [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — Score weight and recall tuning configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `recall_memory` tool
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and formatting
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/src/mcp-surface.ts) — MCP `recall_memory` tool definition
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/src/recall-memory.ts) — MCP recall response budgeting and formatting
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines 10 scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
@@ -95,6 +95,7 @@ Context hints influence the 10-component scoring system but do not filter result
 | `expansion_limit` | integer | 25 | Total max expanded memories (from `RECALL_EXPANSION_LIMIT`) |
 | `expand_min_importance` | float | 0.0 | Minimum importance threshold for expanded memories |
 | `expand_min_strength` | float | 0.0 | Minimum relation strength to traverse |
+| `expand_respect_tags` | boolean | false | When true, graph/entity expansion stays within the original tag scope; when false, expansion may include related context outside the tags |
 
 Graph expansion operates in two phases: seed results from hybrid search, then expansion via graph traversal. Expansion filtering parameters only apply to expanded memories, never to seed results.
 
@@ -656,6 +657,7 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 | `relation_limit` | integer | No | 1–200, default 5 | Relations per seed memory |
 | `expand_min_importance` | number | No | 0–1 | Filter expanded results by importance |
 | `expand_min_strength` | number | No | 0–1 | Min relation strength to traverse |
+| `expand_respect_tags` | boolean | No | — | When true, expansion stays within the original tag scope; when false, may include related context outside the tags |
 | `context` | string | No | — | Context label for boosting |
 | `language` | string | No | — | Programming language hint |
 | `active_path` | string | No | — | Current file path for language detection |

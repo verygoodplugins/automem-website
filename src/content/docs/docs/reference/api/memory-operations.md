@@ -8,9 +8,9 @@ sidebar:
 :::note[Source files]
 - [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/memory.py) — Flask API endpoints
 - [app.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/app.py) — shared HTTP error envelope
-- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions and handlers
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — MCP request validation and HTTP transport
-- [src/memory-policy/shared.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/memory-policy/shared.ts) — platform and date-tag policy
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88dfedabcd0d3b4c95cd15991bf4b647933/src/mcp-surface.ts) — MCP tool definitions and handlers
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88dfedabcd0d3b4c95cd15991bf4b647933/src/automem-client.ts) — MCP request validation and HTTP transport
+- [src/memory-policy/shared.ts](https://github.com/verygoodplugins/mcp-automem/blob/b688c88dfedabcd0d3b4c95cd15991bf4b647933/src/memory-policy/shared.ts) — platform and date-tag policy
 :::
 
 Memory operations provide the primary interface for storing and retrieving contextual information. The system maintains dual storage: FalkorDB serves as the source of truth for graph data, while Qdrant provides semantic search capabilities.
