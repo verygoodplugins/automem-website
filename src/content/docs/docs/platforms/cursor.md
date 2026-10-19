@@ -52,7 +52,7 @@ npx @verygoodplugins/mcp-automem cursor --yes
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--name <project>` | Project name for memory tags | Auto-detected from `package.json` or git |
+| `--name <project>` | Project name for memory tags | Auto-detected from `package.json`, git remote, or directory name |
 | `--dir <path>` | Custom target directory | `.cursor/rules` |
 | `--dry-run` | Preview changes without writing files | Off |
 | `--yes` / `-y` | Skip interactive prompts | Off |
@@ -61,7 +61,7 @@ npx @verygoodplugins/mcp-automem cursor --yes
 The installer:
 1. Detects project name from `package.json`, git remote, or directory name
 2. Checks version of any existing `.mdc` file and prompts for update if newer version available
-3. Detects your MCP server name from `~/.cursor/mcp.json` (looks for `memory`, `automem`, or any server with AutoMem signatures)
+3. Detects your MCP server name from `~/.cursor/mcp.json` (looks for `memory`, `automem`, or any server with AutoMem signatures) and uses `memory` when it finds none
 4. Generates `.cursor/rules/automem.mdc` with your project name and correct tool prefix
 5. Creates a `.bak` backup before overwriting any existing file
 
@@ -111,7 +111,7 @@ Cursor exposes MCP tools with underscore-delimited prefixes: `mcp_<server>_<tool
 | `memory` | `mcp_memory_` | `mcp_memory_recall_memory` |
 | `auto-mem` | `mcp_auto_mem_` | `mcp_auto_mem_recall_memory` |
 
-The CLI installer automatically detects the server name and generates the `.mdc` file with the correct prefix.
+The CLI installer detects the server name and generates the `.mdc` file with the matching prefix. When it builds the prefix, it replaces every character other than an ASCII letter, digit, or underscore with an underscore. If it finds no AutoMem server in `~/.cursor/mcp.json`, it falls back to the server name `memory`, so the rules use `mcp_memory_*` tool names by default.
 
 ---
 
@@ -119,46 +119,48 @@ The CLI installer automatically detects the server name and generates the `.mdc`
 
 After running the installer, `.cursor/rules/automem.mdc` is created with `alwaysApply: true` so Cursor applies the rules to all conversations in the project.
 
-### Three-Phase Memory Pattern
+### Two-Phase Recall and Three Storage Triggers
 
-The rule file prescribes a three-phase memory workflow:
+The rule file prescribes two recalls at the start of a session, followed by three mid-conversation storage triggers. It has no end-of-conversation summary step.
 
-**Phase 1: Conversation Start**
+**Session start: two recalls, issued in parallel**
 
-Recall context for most questions. Skip only for:
-- Pure syntax questions ("How does Array.map work?")
-- Trivial edits (typos, formatting)
-- Direct factual queries about current code
+Preferences and task context are independent recalls, so the rule file has Cursor issue both in a single message. The defaults are `limit: 20` for preferences, `limit: 30` for task context, and a 90-day task window.
 
-Always recall for:
-- Project context and architecture questions
-- Feature planning and design discussions
-- Debugging (search for similar past errors)
-- Performance optimization
-- Refactoring (understand why current structure exists)
+1. **Preferences**: `tags: ["preference"]`, `limit: 20`, `sort: "updated_desc"`
+2. **Task context**: one semantic query built from the proper nouns, product names, people, tools, and specific topics in the user's message, gated on the project tag unless the name collides with a common topic word (see Tagging Conventions), with `time_query: "last 90 days"` and `limit: 30`. The optional `language` and `active_path` parameters boost results and do not gate them.
 
-Adaptive recall logic:
-- If files are open → recall memories tagged with those components
-- If error messages present → search similar error patterns
-- If multiple related files → recall architectural decisions
+Skip the task-context recall for pure syntax questions, trivial edits, one-off calculations, direct factual queries about current files, and casual openings.
 
-**Phase 2: During Conversation — Storage Triggers**
+Debug recall is separate and runs only when Cursor is investigating a concrete symptom: the error message or symptom as the query, `limit: 20`, and no tag gate, because bugfix and solution tagging is incomplete and a hard gate hides fixes stored elsewhere in the corpus. The rule file also says not to re-recall mid-conversation unless the topic shifts, a new proper noun enters, or debugging starts.
 
-| Type | Importance | Use Case | Example |
-|------|-----------|---------|---------|
-| Decision | 0.9 | Architecture choices, library selections | "Chose Redis for caching due to sub-millisecond latency requirements" |
-| Insight | 0.8 | Root cause discoveries, problem resolutions | "UserAuth failing on null input. Root: missing validation. Added checks" |
-| Pattern | 0.7 | Reusable patterns, best practices | "Using early returns for validation. Reduces nesting, improves readability" |
-| Preference | 0.6–0.8 | Configuration choices, style preferences | "Using Prettier with 2-space indents and single quotes" |
-| Context | 0.5–0.7 | General information, new features | "Added JWT authentication with refresh tokens" |
+When the task-context recall misses:
+- **Too broad** — add a tag gate (a stable category or the unambiguous project slug) and tighten the query to the real nouns
+- **Empty** — drop the time window first, then broaden the query
+- **Sparse under a tag gate** — drop the gate and rely on the semantic query alone, since older memories can use `project/<slug>` prefixes
+- **Need graph traversal** — use `expand_relations: true`, adding `expand_respect_tags: true` only when traversal must stay inside the tag gate
 
-**Phase 3: Conversation End — Summary**
+**During the conversation: three storage triggers**
 
-Summarize when:
-- Multiple files were modified
-- Significant refactoring occurred
-- New features were implemented
-- Important decisions were made
+The rule file stores only durable decisions, corrections, explicit preferences, bug-fix root causes, and articulated reusable patterns. Its mid-conversation triggers are these three, and only these three:
+
+| Trigger | Store as | Importance | Then associate with |
+|---------|----------|-----------|---------------------|
+| User correction or override ("actually", "no, I prefer", "stop doing X") | `Preference`, tag `correction`, confidence 0.95 | 0.9 | The prior memory, via `INVALIDATED_BY` |
+| Decision stabilizes after at least one round of discussion ("let's go with X", "ship it") | `Decision` | 0.85–0.9 | Alternatives that came up, via `PREFERS_OVER` |
+| Pattern the user articulated, not one inferred ("I always do X", "every time") | `Pattern` | 0.8 | Concrete examples, via `EXEMPLIFIES` |
+
+A bug-fix root cause is stored as an `Insight` (importance 0.75, confidence 0.85) tagged `bugfix` and `solution`, then associated with the bug report through `LEADS_TO`.
+
+Every store follows the same four steps:
+1. Recall related memories (`limit: 5`)
+2. Store the memory
+3. Recall a distinctive phrase from the content to verify it was saved, and retry the store once if it is missing, because `store_memory` can silently fail
+4. Associate it with the related memory from step 1 when one exists
+
+**No end-of-conversation summary**
+
+The rule file's storage discipline says never to store session summaries, progress reports, confirmations, speculative context, or attentiveness notes, and never to store secrets, credentials, tokens, or PII. It has no wrap-up step at the end of the conversation.
 
 ---
 
@@ -172,6 +174,7 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 - `confidence` (optional): 0.0–1.0 (default 0.9 if type provided)
 - `tags` (optional): Array for categorization
 - `importance` (optional): 0.0–1.0 (default 0.5)
+- `t_valid` / `t_invalid` (optional): ISO 8601 timestamps for when the memory becomes valid and when it expires (single-memory mode only)
 - `metadata` (optional): Custom structured data
 
 **`recall_memory`** — Hybrid search
@@ -197,18 +200,25 @@ All six AutoMem tools are available via the `mcp_memory_*` prefix (assuming serv
 
 ## Tagging Conventions
 
+Use bare tags only. The rule file says to use `automem`, not `project/automem`, and to avoid `lang/` prefixes, platform tags (so no `cursor` tag), and date-stamped tags (so no `YYYY-MM`). `entity:*:*` tags are injected by the server.
+
+The rule file treats tags as a hard gate on recall: memories without a matching tag are excluded before scoring. It therefore gates on stable categories and the project name rather than guessed topic tags.
+
 **Project-specific memories** (code, architecture, decisions):
-1. `{{PROJECT_NAME}}` — Detected from `package.json` or git
-2. `cursor` — Platform tag
-3. `YYYY-MM` — Current month
-4. Component tag — Specific area (auth, api, frontend)
+1. **Category tag**: a stable category such as `preference`, `bugfix`, `solution`, or `correction`
+2. **Project tag**: your project name (`{{PROJECT_NAME}}` in the rule template), detected from `package.json`, the git remote, or the directory name, or set with `--name`
+3. **Language tag**: for example `typescript` or `python`
 
-**Personal/cross-project memories** (preferences, style):
-1. `personal` — Use instead of project tag for portability
-2. `YYYY-MM` — Current month
-3. Category tag (health, preferences, workflow)
+```json
+["decision", "my-app", "typescript"]
+```
 
-Using `personal` instead of the project name ensures style preferences and personal notes are discoverable across all projects, not buried under project-specific memories.
+**Cross-project memories** (preferences, style): the session-start preferences recall is gated on `preference` alone and is not scoped to a project, so the most recently updated `preference`-tagged memories (up to 20) surface in any project.
+
+Notes on the rule file's recall behavior:
+- When the project name collides with a common topic word (`api`, `app`, `test`, `video`), the rule file drops the project tag gate on recall and relies on the semantic query alone
+- A language tag is not a gate: at recall time the rule file passes the language as the optional `language` parameter, which boosts results and does not gate them
+- For facts with a shelf life, set `t_valid` and `t_invalid` instead of encoding a date in a tag
 
 ---
 
