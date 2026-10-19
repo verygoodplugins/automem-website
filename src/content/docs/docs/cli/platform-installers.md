@@ -58,7 +58,7 @@ The `command` and `args` launch the MCP server in stdio mode. The `env` block pa
 After editing the config file, **restart Claude Desktop** for changes to take effect.
 
 :::tip[Generate the snippet]
-Run `npx @verygoodplugins/mcp-automem config --format=json` and it will print the exact JSON snippet for your current AutoMem configuration.
+Run `npx @verygoodplugins/mcp-automem config` to print the Claude Desktop snippet for your current endpoint. `config --format=json` prints a generic MCP JSON object, and that object is not the Desktop snippet above.
 :::
 
 ### Personal Preferences
