@@ -16,7 +16,7 @@ Key GitHub sources:
 - [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/fastembed.py) — FastEmbed local provider
 - [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/ollama.py) — Ollama local provider
 - [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/placeholder.py) — Deterministic fallback provider
-- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/validation.py) — Dimension validation
+- [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py) — Dimension validation
 - [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_embedding_providers.py) — Provider tests
 :::
 
@@ -106,14 +106,16 @@ flowchart TD
 4. **FastEmbed fourth:** Local ONNX inference, no API costs, good quality for 768d
 5. **Placeholder last:** Deterministic fallback, no semantic meaning but consistent
 
-### Dimension Validation and Fail-Fast
+### Dimension Validation
 
-The system validates embedding dimensions against the configured `VECTOR_SIZE` at two checkpoints — provider initialization and every write to Qdrant:
+Dimension reconciliation happens at startup — **not** on every write:
 
-- **At init:** when the provider chain resolves, the selected provider's declared dimension is compared to the Qdrant collection's actual `VECTOR_SIZE`. A mismatch aborts startup with a clear error instead of silently truncating or padding vectors at query time.
-- **At write:** `validate_vector_dimensions()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/utils/validation.py) re-checks every embedding before `upsert`.
-- Mismatches raise `ValueError` with the observed and expected dimensions in the message.
-- Prevents Qdrant collection corruption from mixed dimensions when switching providers.
+- **Default (`VECTOR_SIZE_AUTODETECT=true`):** `get_effective_vector_size()` in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py#L36-L87) reads the existing collection's dimension. If it differs from `VECTOR_SIZE`, AutoMem logs a warning, adopts the collection's dimension, and builds the embedding provider at that size.
+- **Strict mode (`VECTOR_SIZE_AUTODETECT=false`):** a mismatch makes `get_effective_vector_size()` raise `VectorDimensionMismatchError` (a `RuntimeError`, not a `ValueError`) with both dimensions and fix options in the message. In the 0.16.2 startup path, [`ensure_qdrant_collection()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py#L129-L183) catches that error with its generic exception handler, logs the traceback, and sets the Qdrant client to `None`, so startup continues without a Qdrant client instead of exiting.
+- **Provider check:** once the effective dimension is set, Voyage is the only provider with a hard dimension check at init ([`_PROVIDER_DIMENSION_CONSTRAINTS`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/provider_init.py#L12-L40)): the dimension must be 256, 512, 1024, or 2048. With `EMBEDDING_PROVIDER=voyage`, any other dimension (for example an adopted 1536d or 3072d collection) raises a `RuntimeError` and startup fails. In `auto` mode the same failure is logged as a warning and selection moves on to the next provider.
+- `validate_vector_dimensions()` is a [legacy wrapper](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py#L100-L117) kept for backwards compatibility. `app.py` imports it but nothing calls it.
+- Length checks happen where vectors are produced, not at the Qdrant call. [`generate_real_embeddings_batch()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/runtime_helpers.py#L118-L169) compares every vector with the effective dimension, retries a failed or mismatched batch item by item, and replaces items that still fail with placeholder vectors (or raises when called with `allow_placeholder_fallback=False`). A client-supplied `embedding` with the wrong length is rejected with a 400 by [`coerce_embedding()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/runtime_helpers.py#L30-L47) on `POST /memory`.
+- Together these checks prevent Qdrant collection corruption from mixed dimensions when switching providers.
 - FalkorDB writes always succeed regardless of embedding status — the graph never depends on a healthy vector path.
 
 ---
@@ -224,7 +226,7 @@ The `embedding_worker()` function implements a time-boxed accumulation strategy 
 The worker accumulates jobs into a batch, then triggers processing when **either** condition is met:
 
 1. Batch size reaches `EMBEDDING_BATCH_SIZE` (default: 20 items)
-2. Timeout elapsed since first item added (default: 2.0 seconds)
+2. A queue read times out while a batch is pending. The wait is bounded by a rolling `EMBEDDING_BATCH_TIMEOUT_SECONDS` deadline (default: 2.0 seconds) that restarts after every flush and every empty-queue timeout, so it is not measured from the moment the first item was added. Each queue read waits at least 0.1 seconds.
 
 This ensures low-traffic periods don't cause indefinite delays while high-traffic periods maximize API efficiency.
 
@@ -253,11 +255,11 @@ This ensures low-traffic periods don't cause indefinite delays while high-traffi
 
 ```mermaid
 graph LR
-    Batch["batch: List[Dict]<br/>(up to 20 jobs)"]
+    Batch["batch: List[Tuple[str, str]]<br/>(up to 20 jobs)"]
     Extract["Extract content<br/>text: List[str]"]
     Generate["process_embedding_batch()<br/>Provider bulk request"]
     Embeddings["embeddings: List[List[float]]<br/>(dimensions per provider)"]
-    Store["store_embedding_in_qdrant()<br/>For each (memory_id, embedding)"]
+    Store["store_embedding_in_qdrant()<br/>For each (memory_id, content, embedding)"]
     Success["Log success<br/>+ stats update"]
 
     Batch --> Extract
@@ -367,7 +369,8 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `EMBEDDING_PROVIDER` | str | `auto` | Provider selection: `auto`, `voyage`, `openai`, `local`, `ollama`, `placeholder` |
 | `EMBEDDING_BATCH_SIZE` | int | 20 | Maximum memories per batch |
 | `EMBEDDING_BATCH_TIMEOUT_SECONDS` | float | 2.0 | Maximum batch accumulation time (seconds) |
-| `VECTOR_SIZE` | int | 1024 | Embedding dimension (must match Qdrant collection). `text-embedding-3-small` natively produces 1536d but the system passes `dimensions=VECTOR_SIZE` to OpenAI's API to truncate via Matryoshka representation learning. |
+| `VECTOR_SIZE` | int | 1024 | Embedding dimension used to create a new Qdrant collection. With `VECTOR_SIZE_AUTODETECT=true` (the default), an existing collection's dimension takes precedence. `text-embedding-3-small` natively produces 1536d but the system passes the effective dimension as `dimensions` to OpenAI's own API to truncate via Matryoshka representation learning. |
+| `VECTOR_SIZE_AUTODETECT` | bool | `true` | When an existing Qdrant collection's dimension differs from `VECTOR_SIZE`, adopt the collection's dimension and log a warning. Set to `false` for strict matching, which raises `VectorDimensionMismatchError` instead (see [Dimension Validation](#dimension-validation)). |
 
 ### Provider-Specific Configuration
 
@@ -393,7 +396,7 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 | `QDRANT_COLLECTION` | str | `memories` | Qdrant collection name |
 
 **Configuration validation:**
-- `VECTOR_SIZE` must match the Qdrant collection dimension
+- `VECTOR_SIZE` should match the Qdrant collection dimension. By default a differing collection dimension is adopted; with `VECTOR_SIZE_AUTODETECT=false` a mismatch raises `VectorDimensionMismatchError`
 - Provider-specific keys are only required when using that provider
 - Auto mode requires at least one provider key (falls back to placeholder)
 - The dimension must be valid for the selected provider
