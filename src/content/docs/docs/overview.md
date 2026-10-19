@@ -145,11 +145,11 @@ AutoMem's architecture separates concerns into distinct modules, each handling s
 | **Flask API** | `automem/api/` | Request validation, orchestration, authentication | `Flask`, `require_api_token`, `ServiceState` |
 | **Graph Store** | `automem/stores/graph_store.py` | FalkorDB operations, relationship management | `_build_graph_tag_predicate` |
 | **Vector Store** | `automem/stores/vector_store.py` | Qdrant operations, semantic search | `_build_qdrant_tag_filter` |
-| **Embedding Providers** | `automem/embedding/` | Pluggable embedding generation | `EmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageEmbeddingProvider`, `FastEmbedProvider`, `PlaceholderEmbeddingProvider` |
+| **Embedding Providers** | `automem/embedding/` | Pluggable embedding generation | `EmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageEmbeddingProvider`, `OllamaEmbeddingProvider`, `FastEmbedProvider`, `PlaceholderEmbeddingProvider` |
 | **Enrichment Pipeline** | `automem/enrichment/` | Entity extraction, pattern detection, relationship building | `EnrichmentStats`, `extract_entities`, `generate_summary` |
 | **Consolidation Engine** | `automem/consolidation/` | Memory decay, creative association, clustering, forgetting | `MemoryConsolidator`, `ConsolidationScheduler` |
 | **Memory Classifier** | `automem/classification/` | Regex + LLM-based memory type classification | `MemoryClassifier`, `classify` |
-| **Health Monitor** | `scripts/health_monitor.py` | Drift detection, webhook alerts | `check_drift`, `repair_drift` |
+| **Health Monitor** | `scripts/health_monitor.py` | Drift detection, webhook alerts, optional auto-recovery | `HealthMonitor`, `check_consistency`, `send_alert`, `trigger_recovery` |
 
 The MCP bridge exposes six tools to AI platforms:
 
@@ -387,7 +387,7 @@ graph TB
 - **EnrichmentWorker**: Extracts entities (spaCy NER + regex), generates summaries, creates temporal/semantic links, detects patterns
 - **EmbeddingWorker**: Batches requests (20 items, 2-second timeout) to reduce API costs by 40-50%, retries on failure (max 3 attempts)
 - **ConsolidationScheduler**: Runs four cycles on configurable intervals (Decay, Creative, Cluster, Forget) using control node for persistence
-- **SyncWorker**: Monitors drift between FalkorDB and Qdrant, auto-repairs when divergence exceeds 5%
+- **SyncWorker**: Every `SYNC_CHECK_INTERVAL_SECONDS` (default one hour), compares memory IDs in FalkorDB and Qdrant, skipping memory types in `RECALL_EXCLUDED_TYPES`, and queues memories missing from Qdrant for embedding when they still have content. The 5% drift threshold belongs to the separate health monitor, not to this worker
 
 ---
 
@@ -399,17 +399,17 @@ AutoMem uses a pluggable provider pattern for embedding generation, supporting m
 
 ```mermaid
 graph TB
-    Start["Embedding Request<br/>_generate_real_embedding()"]
+    Start["Provider Initialization<br/>init_embedding_provider()<br/>automem/embedding/provider_init.py"]
 
     subgraph config["Configuration"]
-        EnvProvider["EMBEDDING_PROVIDER<br/>auto/voyage/openai/local/placeholder"]
+        EnvProvider["EMBEDDING_PROVIDER<br/>auto/voyage/openai/local/ollama/placeholder"]
         EnvModel["EMBEDDING_MODEL<br/>VECTOR_SIZE"]
     end
 
     subgraph auto_select["Auto-Selection Priority"]
         CheckVoyage{"VOYAGE_API_KEY<br/>set?"}
         CheckOpenAI{"OPENAI_API_KEY<br/>set?"}
-        CheckOllama{"OLLAMA_BASE_URL<br/>set?"}
+        CheckOllama{"OLLAMA_BASE_URL or<br/>OLLAMA_MODEL set?"}
         CheckFastEmbed{"FastEmbed<br/>available?"}
         UsePlaceholder["PlaceholderEmbeddingProvider<br/>automem/embedding/placeholder.py"]
 
@@ -423,6 +423,7 @@ graph TB
         ForceVoyage["EMBEDDING_PROVIDER=voyage"]
         ForceOpenAI["EMBEDDING_PROVIDER=openai"]
         ForceLocal["EMBEDDING_PROVIDER=local"]
+        ForceOllama["EMBEDDING_PROVIDER=ollama"]
         ForcePlaceholder["EMBEDDING_PROVIDER=placeholder"]
     end
 
@@ -432,6 +433,7 @@ graph TB
     EnvProvider -->|"voyage"| ForceVoyage
     EnvProvider -->|"openai"| ForceOpenAI
     EnvProvider -->|"local"| ForceLocal
+    EnvProvider -->|"ollama"| ForceOllama
     EnvProvider -->|"placeholder"| ForcePlaceholder
 
     CheckVoyage -->|"Yes"| Voyage
@@ -446,9 +448,10 @@ graph TB
     ForceVoyage --> Voyage
     ForceOpenAI --> OpenAI
     ForceLocal --> FastEmbed
+    ForceOllama --> Ollama
     ForcePlaceholder --> UsePlaceholder
 
-    Voyage --> Result["Return embedding"]
+    Voyage --> Result["Provider set on<br/>state.embedding_provider"]
     OpenAI --> Result
     Ollama --> Result
     FastEmbed --> Result
@@ -529,7 +532,7 @@ AutoMem's behavior is controlled through environment variables loaded from proce
 | `FALKORDB_PORT` | Graph database port | `6379` | Standard Redis protocol port |
 | `QDRANT_URL` | Vector database endpoint | _unset_ | Optional; enables semantic search |
 | `VECTOR_SIZE` | Embedding dimension | `1024` | Must match Qdrant collection |
-| `EMBEDDING_PROVIDER` | Provider selection mode | `auto` | `auto`, `voyage`, `openai`, `local`, `placeholder` |
+| `EMBEDDING_PROVIDER` | Provider selection mode | `auto` | `auto`, `voyage`, `openai`, `local`, `ollama`, `placeholder` |
 | `PORT` | Flask API port | `8001` | **Must be set explicitly on Railway** |
 
 The MCP bridge requires two additional environment variables:
