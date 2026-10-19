@@ -8,8 +8,9 @@ sidebar:
 :::note[Source files]
 Key GitHub sources:
 - [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/runtime_clients.py) — Connection init (init_falkordb, init_qdrant, ensure_qdrant_collection)
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py) — FalkorDB abstraction
-- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/vector_store.py) — Qdrant abstraction
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/graph_store.py) — Cypher tag-filter predicate builder (`_build_graph_tag_predicate`)
+- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/vector_store.py) — Qdrant filter builder (`_build_qdrant_tag_filter`)
+- [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py) — Keyword and vector search (`_graph_keyword_search`, `_vector_search`)
 - [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/embedding/provider.py) — Embedding provider abstraction
 - [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/utils/validation.py) — Dimension validation
 - [.env.example](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/.env.example) — Configuration reference
@@ -110,7 +111,7 @@ FalkorDB uses Redis AOF (Append-Only File) and RDB snapshots for durability. Con
 
 **Memory Node Creation**
 
-Memories are created via `MERGE` to ensure idempotency ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
+A new memory is written with `MERGE (m:Memory {id: $id})` ([automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py#L626)). `POST /memory` always generates a fresh server-side UUID for `id`, so the `MERGE` does not deduplicate a retried request.
 
 **Relationship Creation**
 
@@ -118,7 +119,7 @@ The `/associate` endpoint creates typed edges between memory nodes ([automem/api
 
 **Keyword Search**
 
-The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py)).
+The `_graph_keyword_search` function performs content and tag matching using Cypher queries ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py#L595)). When tag filters are supplied, it adds the predicate built by `_build_graph_tag_predicate` in `automem/stores/graph_store.py` to those queries.
 
 ---
 
@@ -130,7 +131,7 @@ Qdrant stores dense vector embeddings and enables **semantic similarity search**
 
 - **Fast vector search**: Sub-100ms similarity queries over thousands of memories
 - **Payload mirroring**: Stores memory content, tags, importance alongside vectors
-- **Filtered search**: Combine vector similarity with tag/metadata filters
+- **Filtered search**: Combine vector similarity with tag filters and excluded memory types
 - **Batch operations**: Efficient bulk upserts for embedding generation
 
 :::note
@@ -141,7 +142,9 @@ Qdrant is optional. If unavailable, AutoMem falls back to keyword-based search i
 
 | Environment Variable | Default | Description |
 |---|---|---|
-| `QDRANT_URL` | _(none)_ | Full URL (e.g., `https://xyz.cloud.qdrant.io`) |
+| `QDRANT_URL` | _(none)_ | Full URL (e.g., `https://xyz.cloud.qdrant.io`). Takes precedence over `QDRANT_HOST` and `QDRANT_PORT` |
+| `QDRANT_HOST` | _(none)_ | Hostname for self-hosted Qdrant. Used only when `QDRANT_URL` is unset or empty: the API service builds `http://<QDRANT_HOST>:<QDRANT_PORT>` (plain HTTP; use `QDRANT_URL` for HTTPS). `scripts/reembed_embeddings.py` reads only `QDRANT_URL` |
+| `QDRANT_PORT` | `6333` | Port used with `QDRANT_HOST` when building the URL |
 | `QDRANT_API_KEY` | _(none)_ | API key for authentication |
 | `QDRANT_COLLECTION` | `memories` | Collection name |
 | `VECTOR_SIZE` | `1024` | Embedding dimensions (must match collection and provider) |
@@ -197,7 +200,7 @@ Batching reduces API calls by 40-50% compared to individual requests. If `VECTOR
 
 ### Vector Search Implementation
 
-The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/vector_store.py)).
+The `_vector_search` function performs similarity queries against the Qdrant collection ([automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py#L940)). It builds its query filter, covering tag constraints and excluded memory types, with `_build_qdrant_tag_filter` from `automem/stores/vector_store.py`.
 
 ---
 
