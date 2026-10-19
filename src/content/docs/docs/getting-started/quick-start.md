@@ -268,10 +268,10 @@ AutoMem defaults to port `8001`. A platform-set non-`8001` `PORT` can conflict w
 
 ### Connect an agent by hand
 
-The setup wizard prints config snippets for every platform, or use the lighter endpoint-only wizard if you just need to write a `.env`:
+The guided installer writes `.env` and wires your agents. `setup` is an alias of `install`:
 
 ```bash
-npx @verygoodplugins/mcp-automem setup
+npx @verygoodplugins/mcp-automem install
 ```
 
 For a manual MCP entry — for example Claude Desktop's `claude_desktop_config.json`:

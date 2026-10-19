@@ -272,7 +272,7 @@ This grouping prevents excessive PRs by batching related updates and isolating m
 **npm install:**
 
 ```bash
-npx @verygoodplugins/mcp-automem setup
+npx @verygoodplugins/mcp-automem install
 # or
 npm install -g @verygoodplugins/mcp-automem
 ```

@@ -139,7 +139,7 @@ The resolution is implemented in `resolveAutoMemConfig()` in `src/cli/queue.ts`.
 
 ## Platform-Specific Configuration Files
 
-Each AI platform stores MCP server configuration differently. The setup wizard and CLI tools generate appropriate configuration for each platform.
+Each AI platform stores MCP server configuration differently. The guided installer and CLI tools generate appropriate configuration for each platform.
 
 ### Configuration File Locations
 

@@ -7,7 +7,7 @@ sidebar:
 
 The `mcp-automem` CLI provides one-command installers for each supported AI platform. These commands configure the MCP server connection, install memory rules, and set up platform-specific integration files — all without manually editing configuration files.
 
-For initial installation and setup wizard, see [Setup & Installation](/docs/cli/setup/). For configuration details and environment variables, see [Configuration Tools](/docs/cli/config-tools/).
+For the guided installer, see [Setup & Installation](/docs/cli/setup/). For configuration details and environment variables, see [Configuration Tools](/docs/cli/config-tools/).
 
 ## Overview
 
@@ -24,7 +24,7 @@ Each platform installer generates and installs appropriate configuration files f
 
 ## Claude Desktop
 
-Claude Desktop requires manual configuration file editing — there is no one-command installer. The setup wizard prints the configuration snippet after completing setup.
+Claude Desktop requires manual configuration file editing — there is no one-command installer. `npx @verygoodplugins/mcp-automem config` prints the configuration snippet.
 
 ### Configuration File Location
 
@@ -58,7 +58,7 @@ The `command` and `args` launch the MCP server in stdio mode. The `env` block pa
 After editing the config file, **restart Claude Desktop** for changes to take effect.
 
 :::tip[Generate the snippet]
-Run `npx @verygoodplugins/mcp-automem setup` and it will print the exact JSON snippet for your current AutoMem configuration.
+Run `npx @verygoodplugins/mcp-automem config --format=json` and it will print the exact JSON snippet for your current AutoMem configuration.
 :::
 
 ### Personal Preferences

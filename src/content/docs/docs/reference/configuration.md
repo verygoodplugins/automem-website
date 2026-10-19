@@ -355,7 +355,7 @@ The `mcp-automem` client uses two primary environment variables to locate and au
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service (written by setup wizard) |
+| `AUTOMEM_API_URL` | Yes | `http://127.0.0.1:8001` | HTTP URL of the AutoMem service (written by the guided installer) |
 | `AUTOMEM_ENDPOINT` | No | — | Legacy alias for `AUTOMEM_API_URL` (still accepted) |
 | `AUTOMEM_API_KEY` | No | (none) | API key for authenticated instances (preferred name) |
 | `AUTOMEM_API_TOKEN` | No | (none) | Alternative name for the API key |
@@ -490,7 +490,7 @@ The `store_memory` tool enforces content size limits to maintain embedding quali
 
 ### MCP Client Validation
 
-The setup wizard validates the endpoint before saving configuration:
+The guided installer validates the endpoint before saving configuration:
 
 1. **URL format check** — Ensures `AUTOMEM_API_URL` is a valid HTTP/HTTPS URL
 2. **Confirmation prompt** — Asks "Write settings to `.env`? [Y/n]" before writing
