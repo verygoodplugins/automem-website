@@ -192,11 +192,13 @@ AntiGravity's AI agent benefits from explicit instructions on when and how to us
 
 ```json
 {
-  "tags": ["project-name", "antigravity", "YYYY-MM", "component-name"],
+  "tags": ["decision", "project-name"],
   "type": "Decision",
   "importance": 0.9
 }
 ```
+
+Keep tags bare: one stable category (such as `decision`, `bugfix`, or `pattern`) and, for project-specific memories, the project slug. The memory rules that mcp-automem generates for Codex, Cursor, Grok, and Claude Desktop (and its OpenClaw policy) exclude platform tags (`antigravity`, `cursor`), namespace prefixes (`project/*`, `lang/*`), and date-stamped tags (`YYYY-MM`). For facts with a shelf life, use `t_valid` and `t_invalid` on a single-memory `store_memory` call instead of encoding a date in a tag. Batch items do not accept those fields.
 
 ---
 
@@ -220,9 +222,9 @@ Check the health of the AutoMem service
 ```
 
 Expected response includes:
-- FalkorDB connection status
-- Qdrant connection status
-- Service version
+- FalkorDB connection status (`connected` or `disconnected`)
+- Qdrant connection status (`connected` or `disconnected`)
+- Memory and vector counts, plus a sync status (`synced`, `drift_detected`, `orphaned_vectors`, or `unknown` when a count is unavailable)
 
 ---
 
