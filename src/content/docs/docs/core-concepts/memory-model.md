@@ -62,7 +62,7 @@ All memories contain the following properties:
 |---|---|---|---|
 | `t_valid` | string (ISO 8601) | No | When this memory becomes valid (future-dated memories). Defaults to `timestamp` |
 | `t_invalid` | string (ISO 8601) | No | When this memory expires or becomes invalid |
-| `updated_at` | string (ISO 8601) | Yes | Defaults to `timestamp` on creation. `PATCH /memory/:id` keeps the stored value unless the request sends `updated_at` |
+| `updated_at` | string (ISO 8601) | Yes | Update timestamp, not bumped automatically. Defaults to `timestamp` on creation; `PATCH /memory/:id` keeps the stored value unless the request sends `updated_at` |
 | `last_accessed` | string (ISO 8601) | Yes | Last retrieval or access timestamp. Defaults to `updated_at` on creation |
 
 ### Enrichment Properties
@@ -77,14 +77,14 @@ All memories contain the following properties:
 
 | Property | Type | Description |
 |---|---|---|
-| `archived` | boolean | Whether memory is archived (excluded from search by default) |
+| `archived` | boolean | Whether memory is archived (excluded from search candidates) |
 | `relevance_score` | float | Dynamic score computed by consolidation engine |
 
 ---
 
 ## Memory Type Taxonomy
 
-The classifier assigns one of seven semantic types, defined in `MEMORY_TYPES`. When it cannot classify a memory it returns the fallback type `Memory`, described below:
+The classifier assigns one of seven semantic types. When it cannot classify a memory it returns the fallback type `Memory` (see the note below the type table). The types are defined in `MEMORY_TYPES`:
 
 ### Type Definitions
 
@@ -358,7 +358,7 @@ Memories are stored as points with payloads mirroring FalkorDB properties:
 
 - FalkorDB is the **source of truth** (required)
 - Qdrant is **optional** but enables semantic search
-- Data is written to both databases synchronously
+- On `POST /memory`, FalkorDB is written synchronously. Qdrant is written in the same request only when the request supplies `embedding`; otherwise the vector is queued for generation, or skipped when Qdrant is not configured
 - Qdrant can rebuild FalkorDB if graph data is lost
 
 :::note
@@ -402,7 +402,7 @@ stateDiagram-v2
 
 1. **Created** (`POST /memory`):
    - Memory written to FalkorDB
-   - Embedding queued for generation
+   - Embedding queued for generation (when omitted and Qdrant is configured)
    - Enrichment job queued
    - Returns `201 Created` immediately
 
@@ -499,7 +499,7 @@ sequenceDiagram
 
 ### Type Validation
 
-- The classifier assigns one of: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context`
+- The classifier assigns one of: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context`, or the `Memory` fallback (confidence `0.3`) when no pattern matches and the LLM returns nothing usable
 - An explicit `type` is not checked: `POST /memory` and `POST /memory/batch` store whatever string the request sends, without rejecting unknown values or mapping them through `TYPE_ALIASES`, so send the canonical spelling
 
 ### Confidence Validation
@@ -517,10 +517,10 @@ sequenceDiagram
 ### Tag Validation
 
 - Array of strings, or a single string that is stored as one tag (`POST /memory` does not split comma-separated strings). Any other type returns `400 Bad Request`
-- `tags` are stored as sent, with case preserved and blank entries kept
+- `tags` are stored as sent, with case preserved and blank entries kept, until the enrichment run rewrites them
 - `tag_prefixes` are computed from the trimmed, lowercased tags, skipping blank entries
 - Hierarchical prefixes auto-computed, splitting on `:` or `/` (e.g., `"project:automem:api"` → `["project", "project:automem", "project:automem:api"]`)
-- `PATCH /memory/:id` and the enrichment pipeline use a different normalizer that splits comma-separated strings, trims entries, and drops blanks
+- `PATCH /memory/:id` and the enrichment pipeline use a different normalizer that splits comma-separated strings, trims entries, and drops blanks. Enrichment rewrites the stored `tags` with it, removes duplicates, and appends `entity:<category>:<slug>` tags
 
 ### Timestamp Validation
 

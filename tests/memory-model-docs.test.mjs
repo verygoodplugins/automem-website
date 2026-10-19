@@ -160,7 +160,7 @@ test('core and temporal properties document server-side ids and creation default
   assert.match(tableRow(temporal, 't_valid'), /Defaults to `timestamp`/);
   assert.match(
     tableRow(temporal, 'updated_at'),
-    /Defaults to `timestamp` on creation\. `PATCH \/memory\/:id` keeps the stored value unless the request sends `updated_at`/,
+    /Update timestamp, not bumped automatically\. Defaults to `timestamp` on creation; `PATCH \/memory\/:id` keeps the stored value unless the request sends `updated_at`/,
   );
   assert.doesNotMatch(tableRow(temporal, 'updated_at'), /Last modification timestamp/);
   assert.match(tableRow(temporal, 'last_accessed'), /Defaults to `updated_at` on creation/);
@@ -297,6 +297,10 @@ test('validation rules match what POST /memory enforces', async () => {
     types,
     /An explicit `type` is not checked: `POST \/memory` and `POST \/memory\/batch` store whatever string the request sends/,
   );
+  assert.match(
+    types,
+    /or the `Memory` fallback \(confidence `0\.3`\) when no pattern matches and the LLM returns nothing usable/,
+  );
   assert.doesNotMatch(types, /Invalid types return `400 Bad Request`/);
   assert.doesNotMatch(types, /Case-sensitive/);
 
@@ -315,6 +319,11 @@ test('validation rules match what POST /memory enforces', async () => {
   assert.match(tags, /`tags` are stored as sent, with case preserved and blank entries kept/);
   assert.match(tags, /`tag_prefixes` are computed from the trimmed, lowercased tags, skipping blank entries/);
   assert.match(tags, /`PATCH \/memory\/:id` and the enrichment pipeline use a different normalizer/);
+  assert.match(tags, /until the enrichment run rewrites them/);
+  assert.match(
+    tags,
+    /Enrichment rewrites the stored `tags` with it, removes duplicates, and appends `entity:<category>:<slug>` tags/,
+  );
 });
 
 test('the creation flow enqueues enrichment after the embedding step, as POST /memory does', async () => {
@@ -332,4 +341,22 @@ test('the creation flow enqueues enrichment after the embedding step, as POST /m
     flow.slice(flow.indexOf('alt Embedding provided'), enrichmentStep),
     /else No embedding[\s\S]*end\n/,
   );
+});
+
+test('storage and lifecycle describe when the vector is written or queued', async () => {
+  const page = await readPage();
+  const stores = between(page, '**Dual Storage Strategy:**', ':::note');
+  const created = between(page, '1. **Created** (`POST /memory`):', '2. **Enrichment Queued**:');
+  const states = between(page, '### State Properties', '\n---\n');
+
+  assert.doesNotMatch(stores, /Data is written to both databases synchronously/);
+  assert.match(
+    stores,
+    /FalkorDB is written synchronously\. Qdrant is written in the same request only when the request supplies `embedding`/,
+  );
+  assert.match(stores, /otherwise the vector is queued for generation, or skipped when Qdrant is not configured/);
+  assert.match(created, /Embedding queued for generation \(when omitted and Qdrant is configured\)/);
+
+  assert.match(tableRow(states, 'archived'), /excluded from search candidates/);
+  assert.doesNotMatch(tableRow(states, 'archived'), /excluded from search by default/);
 });
