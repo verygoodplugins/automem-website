@@ -291,14 +291,15 @@ Store a decision, insight, or pattern:
 
 ## Tagging Strategy
 
-Use bare tags only. Do not add platform or date tags, and do not author `entity:*:*` tags, which the server injects.
+Use bare tags only. Do not add a platform tag (such as `claude-code`) or date tags, and do not author `entity:*:*` tags, which the server injects.
 
 1. One category tag when applicable: `preference`, `decision`, `pattern`, `bugfix`, `solution`, `milestone`, `deployment`, `build`, or `test`
 2. The bare project slug when the memory is project-specific (omit it when the slug collides with a common topic word)
+3. A language or component/domain tag only when it improves recall
 
-**Examples:** `["decision", "my-app"]`, `["bugfix", "solution", "my-app"]`
+**Examples:** `["decision", "my-app"]`, `["decision", "my-app", "typescript"]`, `["bugfix", "solution", "my-app", "auth"]`
 
-Tags are a hard gate at recall time (memories without a matching tag are excluded before scoring), so do not guess topic tags. For facts with a shelf life, such as a current deployment URL or an incident window, set `t_valid` (and `t_invalid` when known) on `store_memory` instead of encoding a date in a tag.
+Tags are a hard gate at recall time (memories without a matching tag are excluded before scoring), so do not gate recall on guessed topic tags; put those nouns in the query. For facts with a shelf life, such as a current deployment URL or an incident window, set `t_valid` (and `t_invalid` when known) on `store_memory` instead of encoding a date in a tag.
 
 ---
 

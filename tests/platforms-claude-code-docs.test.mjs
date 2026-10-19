@@ -93,23 +93,29 @@ test('tagging strategy uses bare tags with no platform or date tag and validity 
   const page = await readPage();
   const tagging = between(page, '## Tagging Strategy', '## Migration from Legacy Hook Installs');
 
-  assert.match(tagging, /Use bare tags only\. Do not add platform or date tags/);
+  assert.match(tagging, /Use bare tags only\. Do not add a platform tag \(such as `claude-code`\) or date tags/);
   assert.match(tagging, /`entity:\*:\*` tags, which the server injects/);
   assert.match(tagging, /One category tag when applicable: `preference`, `decision`, `pattern`, `bugfix`, `solution`/);
   assert.match(tagging, /bare project slug when the memory is project-specific/);
+  assert.match(tagging, /3\. A language or component\/domain tag only when it improves recall/);
+  assert.match(
+    tagging,
+    /do not gate recall on guessed topic tags; put those nouns in the query/,
+  );
+  assert.doesNotMatch(tagging, /so do not guess topic tags/);
   assert.match(tagging, /`t_valid` \(and `t_invalid` when known\)/);
 
   const examples = tagging.match(/\*\*Examples:\*\* (.+)/);
   assert.ok(examples, 'expected an Examples line');
   assert.match(examples[1], /\["decision", "my-app"\]/);
-  assert.match(examples[1], /\["bugfix", "solution", "my-app"\]/);
+  assert.match(examples[1], /\["decision", "my-app", "typescript"\]/);
+  assert.match(examples[1], /\["bugfix", "solution", "my-app", "auth"\]/);
   assert.doesNotMatch(examples[1], /claude-code/);
   assert.doesNotMatch(examples[1], /\d{4}-\d{2}/);
 
   assert.doesNotMatch(tagging, /Add platform tag/);
   assert.doesNotMatch(tagging, /Include current month/);
   assert.doesNotMatch(tagging, /YYYY-MM/);
-  assert.doesNotMatch(tagging, /component\/domain tag/);
 });
 
 test('guided-installer wording from the install-command update stays in place', async () => {
