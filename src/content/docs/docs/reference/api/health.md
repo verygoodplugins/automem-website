@@ -235,9 +235,12 @@ The temporal activity query is guarded separately and may fail without aborting 
     },
     "entity_frequency": {"python": 87, "fastapi": 54},
     "confidence_distribution": {"low": 23, "medium": 187, "high": 1037}
-  }
+  },
+  "elapsed_ms": 0
 }
 ```
+
+The top-level `elapsed_ms` field is a hardcoded `0`, not a timing measurement. The handler does not time the request, so don't use this field to track `/analyze` latency.
 
 ### Example Requests
 
