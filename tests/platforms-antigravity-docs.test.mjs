@@ -40,7 +40,11 @@ test('antigravity tagging text states the bare-tag rules and the temporal fields
   const guidance = configuring.slice(configuring.indexOf('**Tagging convention:**'));
 
   assert.match(guidance, /Keep tags bare/);
-  assert.match(guidance, /exclude platform tags \(`antigravity`, `cursor`\)/);
+  assert.match(
+    guidance,
+    /rules that mcp-automem generates for Codex, Cursor, Grok, and Claude Desktop \(and its OpenClaw policy\) exclude platform tags \(`antigravity`, `cursor`\)/,
+  );
+  assert.doesNotMatch(guidance, /other supported hosts/, 'Claude Code, Copilot, and Hermes rules do not state this');
   assert.match(guidance, /namespace prefixes \(`project\/\*`, `lang\/\*`\)/);
   assert.match(guidance, /date-stamped tags \(`YYYY-MM`\)/);
   assert.match(guidance, /use `t_valid` and `t_invalid` on a single-memory `store_memory` call/);
@@ -55,7 +59,9 @@ test('antigravity verification lists what the health check reports and no servic
   assert.match(expected, /FalkorDB connection status \(`connected` or `disconnected`\)/);
   assert.match(expected, /Qdrant connection status \(`connected` or `disconnected`\)/);
   assert.match(expected, /Memory and vector counts/);
-  assert.match(expected, /sync status comparing them/);
+  assert.match(expected, /a sync status \(/);
+  assert.match(expected, /`unknown` when a count is unavailable/);
+  assert.doesNotMatch(expected, /comparing them/);
   for (const value of ['synced', 'drift_detected', 'orphaned_vectors', 'unknown']) {
     assert.match(expected, new RegExp(`\`${value}\``));
   }
