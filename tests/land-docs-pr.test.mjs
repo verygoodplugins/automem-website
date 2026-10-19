@@ -68,7 +68,17 @@ if [ "$1" = "pr" ] && [ "$2" = "create" ]; then
   exit 0
 fi
 if [ "$1" = "pr" ] && [ "$2" = "view" ]; then
-  echo "\${GH_IS_DRAFT:-false}"
+  case "$*" in
+    *body*) cat "\${GH_PR_BODY_FILE}" ;;
+    *) echo "\${GH_IS_DRAFT:-false}" ;;
+  esac
+  exit 0
+fi
+if [ "$1" = "pr" ] && [ "$2" = "edit" ]; then
+  while [ $# -gt 0 ]; do
+    if [ "$1" = "--body-file" ]; then cp "$2" "${ghBody}"; fi
+    shift
+  done
   exit 0
 fi
 exit 0
@@ -240,4 +250,89 @@ test('landing refuses to rewrite an open rolling PR it did not build on', async 
     run('git', ['--git-dir', remote, 'rev-parse', 'refs/heads/docs/audit-mcp-automem']).trim(),
     openSha,
   );
+});
+
+// A rolling PR left held by an earlier failing suite, checked out as prepare leaves it.
+async function heldRollingPr(t, body) {
+  const workspace = await makeWorkspace(t);
+  const { checkout } = workspace;
+  run('git', ['checkout', '-b', 'docs/audit-mcp-automem'], { cwd: checkout });
+  await writeFile(join(checkout, 'guide.md'), 'earlier release edit\n');
+  run('git', ['commit', '-am', 'docs: earlier release'], { cwd: checkout });
+  run('git', ['push', 'origin', 'docs/audit-mcp-automem'], { cwd: checkout });
+  const bodyFile = join(checkout, '..', 'existing-body.md');
+  await writeFile(bodyFile, body);
+  return { ...workspace, bodyFile };
+}
+
+const heldBody = [
+  '## Summary',
+  '',
+  'Automated docs audit.',
+  '',
+  '## Failing tests',
+  '',
+  '`npm test` failed on this branch, so the PR is held as a draft.',
+  '',
+  '- an old flaky test',
+  '',
+  '<!-- DOCS-AUDIT: HOLD -->',
+  '',
+].join('\n');
+
+test('a run without edits retests a PR held for failing tests and clears it when green', async (t) => {
+  const { checkout, env, ghBody, readGhLog, bodyFile } = await heldRollingPr(t, heldBody);
+
+  run('bash', [landingScript], {
+    cwd: checkout,
+    env: env({
+      GH_OPEN_PR: 'https://github.example.test/owner/repo/pull/7',
+      GH_PR_BODY_FILE: bodyFile,
+      GH_IS_DRAFT: 'true',
+      STRUCTURED_OUTPUT: JSON.stringify({ confidence: 'NO_CHANGES', fixes: [], questions: [], title: '' }),
+    }),
+  });
+
+  const body = await readFile(ghBody, 'utf8');
+  assert.match(body, /<!-- DOCS-AUDIT: CLEAR -->/u);
+  assert.doesNotMatch(body, /DOCS-AUDIT: HOLD|## Failing tests|old flaky test/u);
+  assert.match(body, /Automated docs audit\./u);
+  assert.match(await readGhLog(), /^pr ready https:\/\/github\.example\.test\/owner\/repo\/pull\/7$/mu);
+});
+
+test('a retest that still fails keeps the PR held with the current failures', async (t) => {
+  const { checkout, env, ghBody, readGhLog, bodyFile } = await heldRollingPr(t, heldBody);
+
+  run('bash', [landingScript], {
+    cwd: checkout,
+    env: env({
+      GH_OPEN_PR: 'https://github.example.test/owner/repo/pull/7',
+      GH_PR_BODY_FILE: bodyFile,
+      DOCS_TEST_CMD: 'echo "✖ a real regression (2ms)"; exit 1',
+      STRUCTURED_OUTPUT: JSON.stringify({ confidence: 'CLEAR', fixes: [], questions: [], title: '' }),
+    }),
+  });
+
+  const body = await readFile(ghBody, 'utf8');
+  assert.match(body, /<!-- DOCS-AUDIT: HOLD -->/u);
+  assert.doesNotMatch(body, /DOCS-AUDIT: CLEAR|old flaky test/u);
+  assert.match(body, /^- a real regression$/mu);
+  assert.equal(body.match(/## Failing tests/gu).length, 1);
+  assert.doesNotMatch(await readGhLog(), /^pr ready /mu);
+});
+
+test('a PR held for open questions is not retested or cleared', async (t) => {
+  const withQuestions = heldBody.replace('<!-- DOCS-AUDIT: HOLD -->', '## Open questions\n\n- which default?\n\n<!-- DOCS-AUDIT: HOLD -->');
+  const { checkout, env, readGhLog, bodyFile } = await heldRollingPr(t, withQuestions);
+
+  run('bash', [landingScript], {
+    cwd: checkout,
+    env: env({
+      GH_OPEN_PR: 'https://github.example.test/owner/repo/pull/7',
+      GH_PR_BODY_FILE: bodyFile,
+      STRUCTURED_OUTPUT: JSON.stringify({ confidence: 'NO_CHANGES', fixes: [], questions: [], title: '' }),
+    }),
+  });
+
+  assert.doesNotMatch(await readGhLog(), /^pr (edit|ready) /mu);
 });

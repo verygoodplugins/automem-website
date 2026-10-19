@@ -39,6 +39,13 @@ on:
         description: "What changed and why docs need updating"
         required: true
 
+# One run per source repo at a time, so two releases never race on the same
+# rolling docs branch. GitHub keeps one pending run per group: a third release
+# arriving while one runs and one waits replaces the waiting run.
+concurrency:
+  group: docs-update-${{ github.event.client_payload.source_repo || inputs.source_repo }}
+  cancel-in-progress: false
+
 jobs:
   update-docs:
     runs-on: ubuntu-latest
@@ -134,16 +141,6 @@ jobs:
           path: .source-repo
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
-      - name: Setup Node.js
-        if: steps.resolve.outputs.skip != 'true'
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        if: steps.resolve.outputs.skip != 'true'
-        run: npm ci
-
       - name: Prepare rolling docs branch
         if: steps.resolve.outputs.skip != 'true'
         env:
@@ -153,6 +150,16 @@ jobs:
           RELEASE_TAG: ${{ steps.resolve.outputs.release_tag }}
           RELEASE_VERSION: ${{ steps.resolve.outputs.release_version }}
         run: bash .github/scripts/prepare-docs-branch.sh
+
+      - name: Setup Node.js
+        if: steps.resolve.outputs.skip != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        if: steps.resolve.outputs.skip != 'true'
+        run: npm ci
 
       - name: Run Claude Code
         if: steps.resolve.outputs.skip != 'true'

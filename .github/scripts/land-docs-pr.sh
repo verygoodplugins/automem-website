@@ -89,6 +89,91 @@ git_remote() {
   fi
 }
 
+open_pr_url() {
+  gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // ""'
+}
+
+# Run the docs tests on the working tree; a failure holds the PR.
+TESTS_FAILED=false
+FAILED_TESTS=""
+run_docs_tests() {
+  local log
+  log="$(mktemp)"
+  echo "Running ${TEST_CMD}..."
+  if ! bash -c "$TEST_CMD" >"$log" 2>&1; then
+    TESTS_FAILED=true
+    CONFIDENCE="HOLD"
+    FAILED_TESTS="$(grep -E '^[[:space:]]*(✖|not ok )' "$log" | sed -E 's/^[[:space:]]*(✖|not ok [0-9]+ -)[[:space:]]*//; s/ \([0-9.]+ms\)$//' | tr '`' "'" | sort -u | head -20 || true)"
+    echo "Docs tests failed; holding the PR as a draft."
+    tail -n 60 "$log"
+  fi
+  rm -f "$log"
+}
+
+failing_tests_section() {
+  echo "## Failing tests"
+  echo
+  echo "\`${TEST_CMD}\` failed on this branch, so the PR is held as a draft. Full output: ${RUN_URL}"
+  echo
+  if [ -n "$FAILED_TESTS" ]; then
+    printf '%s\n' "$FAILED_TESTS" | sed 's/^/- /'
+    echo
+  fi
+}
+
+# Push HEAD to the rolling branch. Never rewrite an open rolling PR; a closed
+# or merged one restarts from main.
+push_branch() {
+  local remote_sha
+  EXISTING_PR="$(open_pr_url)"
+  remote_sha="$(git_remote ls-remote origin "refs/heads/${BRANCH}" | cut -f1)"
+  if [ -n "$remote_sha" ] && [ -n "$EXISTING_PR" ] && ! git merge-base --is-ancestor "$remote_sha" HEAD 2>/dev/null; then
+    echo "::error::${BRANCH} has an open PR whose head is not in this branch; refusing to rewrite it."
+    exit 1
+  fi
+  git_remote push --force-with-lease="refs/heads/${BRANCH}:${remote_sha}" origin "HEAD:refs/heads/${BRANCH}"
+}
+
+# A rolling PR held only because the docs tests failed gets retested when a
+# later run brings no new edits (a flaky failure, or a fix that reached main and
+# was merged in by prepare-docs-branch.sh), so it isn't held forever.
+retest_held_pr() {
+  local pr_url body body_file
+  pr_url="$(open_pr_url)"
+  [ -n "$pr_url" ] && [ "$(git rev-parse --abbrev-ref HEAD)" = "$BRANCH" ] || return 0
+  body="$(gh pr view "$pr_url" --json body --jq '.body // ""')"
+  printf '%s\n' "$body" | grep -q '^## Failing tests' || return 0
+  if printf '%s\n' "$body" | grep -q '^## Open questions'; then
+    echo "Held rolling PR also has open questions; leaving it for a maintainer."
+    return 0
+  fi
+
+  run_docs_tests
+  push_branch
+  body_file="$(mktemp)"
+  # Drop the old Failing tests section; re-add it before the marker if still red.
+  printf '%s\n' "$body" | SECTION="$(failing_tests_section)" FAILED="$TESTS_FAILED" awk '
+    /^## Failing tests/ { skip = 1; next }
+    skip && (/^## / || /^<!-- DOCS-AUDIT:/) { skip = 0 }
+    skip { next }
+    /^<!-- DOCS-AUDIT:/ {
+      if (ENVIRON["FAILED"] == "true") { print ENVIRON["SECTION"]; print "<!-- DOCS-AUDIT: HOLD -->" }
+      else { print "<!-- DOCS-AUDIT: CLEAR -->" }
+      next
+    }
+    { print }
+  ' > "$body_file"
+  gh pr edit "$pr_url" --body-file "$body_file"
+  if [ "$TESTS_FAILED" = "true" ]; then
+    gh pr comment "$pr_url" --body "${MAINTAINER} retested this held docs PR for \`${SOURCE_REPO}@${SOURCE_LABEL}\`: \`${TEST_CMD}\` still fails, so it stays held."
+  else
+    gh pr ready "$pr_url"
+    gh pr comment "$pr_url" --body "${MAINTAINER} retested this held docs PR for \`${SOURCE_REPO}@${SOURCE_LABEL}\`: \`${TEST_CMD}\` passes now, so it is marked **CLEAR** and will auto-merge once CI passes."
+  fi
+  rm -f "$body_file"
+  echo "Retested held PR: $pr_url (tests_failed=${TESTS_FAILED})"
+}
+
 # Doc edits are anything but the pins file, which prepare-docs-branch.sh bumps
 # for every release whether or not a page changes.
 HAS_DOC_CHANGES=false
@@ -99,6 +184,7 @@ fi
 if [ "$HAS_DOC_CHANGES" = "false" ]; then
   git checkout -- "$PINS_FILE" 2>/dev/null || true
   if [ "$CONFIDENCE" != "HOLD" ]; then
+    retest_held_pr
     echo "No doc changes to land (confidence=${CONFIDENCE}); exiting."
     exit 0
   fi
@@ -116,19 +202,8 @@ if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
 fi
 
 # Test the tree that will be pushed.
-TESTS_FAILED=false
-FAILED_TESTS=""
 if [ "$HAS_DOC_CHANGES" = "true" ]; then
-  TEST_LOG="$(mktemp)"
-  echo "Running ${TEST_CMD}..."
-  if ! bash -c "$TEST_CMD" >"$TEST_LOG" 2>&1; then
-    TESTS_FAILED=true
-    CONFIDENCE="HOLD"
-    FAILED_TESTS="$(grep -E '^[[:space:]]*(✖|not ok )' "$TEST_LOG" | sed -E 's/^[[:space:]]*(✖|not ok [0-9]+ -)[[:space:]]*//; s/ \([0-9.]+ms\)$//' | tr '`' "'" | sort -u | head -20 || true)"
-    echo "Docs tests failed; holding the PR as a draft."
-    tail -n 60 "$TEST_LOG"
-  fi
-  rm -f "$TEST_LOG"
+  run_docs_tests
 fi
 
 git add -A -- .
@@ -138,14 +213,7 @@ else
   git commit -m "$TITLE"
 fi
 
-# Never rewrite an open rolling PR; a closed or merged one restarts from main.
-EXISTING_PR="$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // ""')"
-REMOTE_SHA="$(git_remote ls-remote origin "refs/heads/${BRANCH}" | cut -f1)"
-if [ -n "$REMOTE_SHA" ] && [ -n "$EXISTING_PR" ] && ! git merge-base --is-ancestor "$REMOTE_SHA" HEAD 2>/dev/null; then
-  echo "::error::${BRANCH} has an open PR whose head is not in this branch; refusing to rewrite it."
-  exit 1
-fi
-git_remote push --force-with-lease="refs/heads/${BRANCH}:${REMOTE_SHA}" origin "HEAD:refs/heads/${BRANCH}"
+push_branch
 
 # Build PR body
 FIX_COUNT="$(printf '%s' "$FIXES_JSON" | jq 'length')"
@@ -172,14 +240,7 @@ BODY_FILE="$(mktemp)"
   fi
   echo
   if [ "$TESTS_FAILED" = "true" ]; then
-    echo "## Failing tests"
-    echo
-    echo "\`${TEST_CMD}\` failed on this branch, so the PR is held as a draft. Full output: ${RUN_URL}"
-    echo
-    if [ -n "$FAILED_TESTS" ]; then
-      printf '%s\n' "$FAILED_TESTS" | sed 's/^/- /'
-      echo
-    fi
+    failing_tests_section
   fi
   if [ "$QUESTION_COUNT" -gt 0 ]; then
     echo "## Open questions"
