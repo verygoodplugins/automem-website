@@ -265,6 +265,7 @@ The MCP `store_memory` tool also accepts `id`, `type`, and `confidence` as advan
 | `relation_limit` | integer | No | 1–200, default 5 | Relations per seed memory |
 | `expand_min_importance` | number | No | 0–1 | Filter expanded results by importance |
 | `expand_min_strength` | number | No | 0–1 | Min relation strength to traverse |
+| `expand_respect_tags` | boolean | No | — | Restrict graph expansion to the active tag scope |
 | `context` | string | No | — | Context label for boosting |
 | `language` | string | No | — | Programming language hint |
 

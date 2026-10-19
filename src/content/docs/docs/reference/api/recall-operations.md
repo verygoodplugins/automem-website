@@ -95,6 +95,7 @@ Context hints influence the 10-component scoring system but do not filter result
 | `expansion_limit` | integer | 25 | Total max expanded memories (from `RECALL_EXPANSION_LIMIT`) |
 | `expand_min_importance` | float | 0.0 | Minimum importance threshold for expanded memories |
 | `expand_min_strength` | float | 0.0 | Minimum relation strength to traverse |
+| `expand_respect_tags` | boolean | false | Restrict graph expansion to memories within the active tag scope |
 
 Graph expansion operates in two phases: seed results from hybrid search, then expansion via graph traversal. Expansion filtering parameters only apply to expanded memories, never to seed results.
 
@@ -406,7 +407,7 @@ The `queries` parameter (array of strings) allows multiple search queries in a s
 The MCP `recall_memory` tool (`src/automem-client.ts`) routes requests through three mutually exclusive branches — only one executes per call:
 
 1. **ID fetch mode:** If `memory_id` is provided, short-circuits to `GET /memory/{id}` and returns immediately without evaluating other parameters.
-2. **Enumeration mode:** If `exhaustive: true` is set (with tags), routes to `GET /memory/by-tag`. Ranked-only parameters (`query`, `embedding`, `time_query`, etc.) are rejected with a validation error in this mode.
+2. **Enumeration mode:** If `exhaustive: true` is set (with tags), routes to `GET /memory/by-tag`. The following ranked-only parameters are rejected with a validation error in this mode: `query`, `queries`, `embedding`, `time_query`, `start`, `end`, `exclude_tags`, `expand_relations`, `expand_entities`, `auto_decompose`, `expansion_limit`, `relation_limit`, `expand_min_importance`, `expand_min_strength`, `current_only`, `state_debug`, `state_mode`, `recency_bias`, `scope_fallback`, `expand_respect_tags`, `min_score`, `adaptive_floor`, `sort`, `context`, `language`, `active_path`, `context_tags`, `context_types`, `priority_ids`, and `per_query_limit`. Only `tags`, `limit`, `offset`, `tag_mode: "any"`, `tag_match: "exact"`, and `format` are accepted.
 3. **Ranked retrieval mode:** All other cases call `GET /recall` with URL parameters built from the tool arguments.
 
 ---
@@ -656,6 +657,7 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 | `relation_limit` | integer | No | 1–200, default 5 | Relations per seed memory |
 | `expand_min_importance` | number | No | 0–1 | Filter expanded results by importance |
 | `expand_min_strength` | number | No | 0–1 | Min relation strength to traverse |
+| `expand_respect_tags` | boolean | No | — | Restrict graph expansion to memories within the active tag scope |
 | `context` | string | No | — | Context label for boosting |
 | `language` | string | No | — | Programming language hint |
 | `active_path` | string | No | — | Current file path for language detection |
