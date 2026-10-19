@@ -241,7 +241,7 @@ Railway health check configuration in `railway.json`:
 
 ### `GET /analyze`
 
-The analyze endpoint provides comprehensive statistics about the memory graph, including type distributions, entity frequencies, temporal patterns, and relationship counts.
+The analyze endpoint provides comprehensive statistics about the memory graph, including type distributions, learned patterns and preferences, entity frequencies, temporal patterns, and confidence distributions.
 
 | Property | Value |
 |---|---|
@@ -309,6 +309,8 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" \
 | Understand activity patterns | `temporal_insights` |
 | Inspect learned patterns | `patterns` |
 | Inspect stored preferences | `preferences` |
+
+`/analyze` does not report edges. For edge counts by relationship type, use `GET /graph/stats` (`totals.edges` and `by_relationship`). See the current [graph stats handler](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/graph.py#L366-L458).
 
 ## Startup Context Retrieval
 
@@ -543,18 +545,25 @@ Run periodic checks via Railway CLI or local cron.
 
 ### Webhook Alert Format
 
-Health monitor sends JSON payloads to configured webhooks:
+Health monitor sends JSON payloads to configured webhooks. This example is a drift warning:
 
 ```json
 {
-  "alert_type": "drift_warning",
-  "drift_percent": 12.3,
-  "falkordb_count": 884,
-  "qdrant_count": 778,
-  "timestamp": "2025-10-20T14:30:00Z",
-  "service_url": "https://your-project.up.railway.app"
+  "level": "warning",
+  "title": "Memory Count Drift Detected",
+  "message": "FalkorDB and Qdrant are 12.3% out of sync",
+  "details": {
+    "falkordb_count": 877,
+    "qdrant_count": 1000,
+    "drift": 123,
+    "drift_percent": 12.3
+  },
+  "timestamp": "2025-10-20T14:30:00.123456",
+  "system": "AutoMem Health Monitor"
 }
 ```
+
+`level` is one of `info`, `warning`, or `critical`. Every alert carries the same six top-level keys (`level`, `title`, `message`, `details`, `timestamp`, and `system`). Alert-specific values, such as the drift figures, are nested under `details` and vary by alert. `timestamp` is a UTC ISO 8601 string without a timezone suffix. See the current [alert sender](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/health_monitor.py#L184-L217).
 
 ### Slack Integration
 
