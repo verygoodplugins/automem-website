@@ -11,7 +11,7 @@ sidebar:
 - **Native memory provider** — AutoMem becomes Hermes' `memory.provider`, injecting ambient recall into the model payload before each turn.
 - **Both** — ambient recall from the provider, plus explicit MCP tools for writes and targeted recalls.
 
-The default is **MCP-only**: it exposes one explicit tool path and avoids collisions with Hermes' built-in memory tools. Choose **provider** when you want AutoMem to act as Hermes' native memory with no manual tool calls.
+The default is **MCP-only**: it exposes one explicit tool path and avoids collisions with Hermes' built-in memory tools. Choose **provider** when you want AutoMem to act as Hermes' native memory, with recall injected automatically instead of through an MCP server.
 
 ---
 
@@ -48,15 +48,17 @@ Hermes is also one of the agents offered by the [guided installer](/docs/getting
 
 | Flag | Environment variable | Description | Default |
 |---|---|---|---|
-| `--mode <mode>` | `AUTOMEM_HERMES_MODE` | `mcp`, `provider`, or `both` | `mcp` |
+| `--mode <mode>` | — | `mcp`, `provider`, or `both` | `mcp` |
 | `--endpoint <url>` | `AUTOMEM_API_URL` | AutoMem HTTP API endpoint | `http://127.0.0.1:8001` |
 | `--api-key <token>` | `AUTOMEM_API_KEY` | Bearer token for authenticated endpoints | — |
 | `--rules <path>` | — | Rules file to update | `$HERMES_HOME/AGENTS.md` |
-| `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan; write nothing | Off |
-| `--yes` / `-y` | `AUTOMEM_YES=1` | Skip prompts (CI) | Off |
+| `--dry-run` | — | Print the plan; write nothing | Off |
+| `--yes` / `-y` | — | Skip prompts (CI) | Off |
 | `--quiet` | — | Suppress output | Off |
 
-Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and every changed file keeps a `.bak` copy.
+Of the flags above, only `--endpoint` and `--api-key` have environment-variable equivalents: when omitted, they fall back to `AUTOMEM_API_URL` (or `AUTOMEM_ENDPOINT`) and `AUTOMEM_API_KEY` (or `AUTOMEM_API_TOKEN`). `--mode`, `--dry-run`, and `--yes` are command-line flags only. `AUTOMEM_HERMES_MODE`, `AUTOMEM_DRY_RUN`, and `AUTOMEM_YES` are read by the [guided installer](/docs/getting-started/quick-start/) (`npx @verygoodplugins/mcp-automem install`), which takes the mode as `--hermes-mode`.
+
+Re-running is safe: existing AutoMem credentials are preserved (so switching `--mode` won't reset your endpoint or key), and when an existing `config.yaml`, rules file, or provider plugin file changes, the previous copy is saved next to it as `.bak` (`.bak.1`, `.bak.2`, … if one already exists). `$HERMES_HOME/.env` is the exception: it is edited in place with no backup.
 
 ---
 
@@ -146,7 +148,7 @@ In **MCP / both** modes, Hermes exposes five tools under the `mcp_automem_*` pre
 
 `delete_memory` is intentionally **not** included in Hermes' default tool surface. For the full tool semantics, see [Memory Operations](/docs/reference/api/memory-operations/) and [Recall Operations](/docs/reference/api/recall-operations/).
 
-In **provider** mode there are no explicit tools — recall is ambient. Provider explicit recall is capped at 10 results to keep accidental broad recalls from flooding a turn.
+In **provider** mode, recall is ambient and the installer writes `AUTOMEM_HERMES_PROVIDER_TOOLS=true`, so the provider also registers five explicit tools under the `automem_*` prefix: `automem_recall_memory`, `automem_store_memory`, `automem_associate_memories`, `automem_update_memory`, and `automem_check_database_health`. The names match the MCP tools above without the `mcp_` prefix. Explicit `automem_recall_memory` calls are capped at 10 results.
 
 ---
 
