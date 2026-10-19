@@ -40,11 +40,12 @@ on:
         required: true
 
 # One run per source repo at a time, so two releases never race on the same
-# rolling docs branch. GitHub keeps one pending run per group: a third release
-# arriving while one runs and one waits replaces the waiting run.
+# rolling docs branch. `queue: max` keeps every waiting release run (up to 100)
+# instead of replacing the pending one, so no release goes undocumented.
 concurrency:
   group: docs-update-${{ github.event.client_payload.source_repo || inputs.source_repo }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   update-docs:
@@ -96,10 +97,20 @@ jobs:
           fi
           if [ -z "$RELEASE_TAG" ] && [ -n "$PAYLOAD_SOURCE_SHA" ]; then
             DISPATCH_SHA=$(gh api "repos/$SOURCE_REPO/commits/$PAYLOAD_SOURCE_SHA" -q '.sha')
-            for TAG in $(gh api "repos/$SOURCE_REPO/releases?per_page=10" -q '.[] | select(.draft | not) | .tag_name'); do
-              if [ "$(gh api "repos/$SOURCE_REPO/commits/$TAG" -q '.sha')" = "$DISPATCH_SHA" ]; then
-                RELEASE_TAG="$TAG"
+            # A push-triggered dispatch can arrive before release-please publishes
+            # the release for this commit, so look again for a few minutes.
+            for ATTEMPT in 1 2 3 4 5 6; do
+              for TAG in $(gh api "repos/$SOURCE_REPO/releases?per_page=10" -q '.[] | select(.draft | not) | .tag_name'); do
+                if [ "$(gh api "repos/$SOURCE_REPO/commits/$TAG" -q '.sha')" = "$DISPATCH_SHA" ]; then
+                  RELEASE_TAG="$TAG"
+                  break
+                fi
+              done
+              if [ -n "$RELEASE_TAG" ]; then
                 break
+              fi
+              if [ "$ATTEMPT" -lt 6 ]; then
+                sleep 30
               fi
             done
           fi
