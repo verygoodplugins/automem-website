@@ -10,7 +10,7 @@ Key implementation files:
 - `automem/utils/validation.py` — Vector dimension validation
 - `automem/classification/memory_classifier.py` — Classification system
 - `automem/api/memory.py` — Memory lifecycle and storage
-- [consolidation.py#L40-L50](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/consolidation.py#L40-L50) — MemoryRow dataclass (normalized memory representation used by consolidation engine)
+- [consolidation.py#L68-L79](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L68-L79) — MemoryRow dataclass (normalized memory representation used by consolidation engine)
 :::
 
 This page describes the complete data model for memories in AutoMem, including their structure, properties, classification taxonomy, and storage representation. For information about how memories relate to each other, see [Relationship Types](/docs/core-concepts/relationship-types/). For details on how memories are searched and retrieved, see [Hybrid Search](/docs/core-concepts/hybrid-search/).
@@ -32,7 +32,7 @@ graph LR
     Memory --> confidence["confidence: 0.0-1.0"]
     Memory --> tags["tags: string[]"]
     Memory --> metadata["metadata: JSON"]
-    Memory --> embedding["embedding: float[1024]"]
+    Memory --> embedding["embedding: float[VECTOR_SIZE]"]
 ```
 
 ---
@@ -45,34 +45,33 @@ All memories contain the following properties:
 
 | Property | Type | Required | Description |
 |---|---|---|---|
-| `id` | string (UUID) | Yes | Unique identifier, auto-generated if not provided |
+| `id` | string (UUID) | Yes | Unique identifier, always generated server-side (an `id` sent in the request is ignored) |
 | `content` | string | Yes | The actual memory text (minimum 1 character) |
-| `type` | string | Yes | Classification from `MEMORY_TYPES` set |
-| `confidence` | float | Yes | Classification confidence score (0.0-1.0) |
-| `importance` | float | Yes | User-specified or derived importance (0.0-1.0, default: 0.5) |
+| `type` | string | Yes | Classification from the `MEMORY_TYPES` set, or the `Memory` fallback. An explicit `type` in the request is stored as sent |
+| `confidence` | float | Yes | Classification confidence score (0.0-1.0). Defaults to `0.9` when the request sets `type`; a `confidence` sent without `type` is ignored |
+| `importance` | float | Yes | User-specified importance (0.0-1.0, default: 0.5) |
 | `timestamp` | string (ISO 8601) | Yes | When the memory was created or occurred |
 | `tags` | array[string] | No | Hierarchical categorization tags (e.g., `["project:automem", "decision"]`) |
 | `tag_prefixes` | array[string] | No | Pre-computed lowercase tag prefixes for fast filtering |
 | `metadata` | object | No | Flexible JSON object for custom fields |
-| `embedding` | array[float] | No | 1024-dimensional vector for semantic search |
+| `embedding` | array[float] | No | Vector for semantic search. Its length is the effective `VECTOR_SIZE` (default 1024); while `VECTOR_SIZE_AUTODETECT` is on (the default), an existing Qdrant collection's dimension is adopted instead |
 
 ### Temporal Properties
 
 | Property | Type | Required | Description |
 |---|---|---|---|
-| `t_valid` | string (ISO 8601) | No | When this memory becomes valid (future-dated memories) |
+| `t_valid` | string (ISO 8601) | No | When this memory becomes valid (future-dated memories). Defaults to `timestamp` |
 | `t_invalid` | string (ISO 8601) | No | When this memory expires or becomes invalid |
-| `updated_at` | string (ISO 8601) | Yes | Last modification timestamp |
-| `last_accessed` | string (ISO 8601) | Yes | Last retrieval or access timestamp |
+| `updated_at` | string (ISO 8601) | Yes | Defaults to `timestamp` on creation. `PATCH /memory/:id` keeps the stored value unless the request sends `updated_at` |
+| `last_accessed` | string (ISO 8601) | Yes | Last retrieval or access timestamp. Defaults to `updated_at` on creation |
 
 ### Enrichment Properties
 
 | Property | Type | Description |
 |---|---|---|
 | `enriched_at` | string (ISO 8601) | When enrichment pipeline processed this memory |
-| `enrichment_attempts` | integer | Number of enrichment attempts (max 3) |
 | `summary` | string | Auto-generated summary (first sentence, max 240 chars) |
-| `entities` | object | Extracted entities: `tools`, `projects`, `people`, `concepts`, `organizations` |
+| `metadata.entities` | object | Extracted entities: `tools`, `projects`, `people`, `concepts`, `organizations`. Stored inside `metadata`, not as a top-level property |
 
 ### State Properties
 
@@ -85,7 +84,7 @@ All memories contain the following properties:
 
 ## Memory Type Taxonomy
 
-AutoMem classifies all memories into one of seven semantic types. The classification system is defined in `MEMORY_TYPES`:
+The classifier assigns one of seven semantic types, defined in `MEMORY_TYPES`. When it cannot classify a memory it returns the fallback type `Memory`, described below:
 
 ### Type Definitions
 
@@ -121,7 +120,7 @@ graph TB
 | `Context` | Situational background, circumstances, what was happening | "During database migration sprint in Q3 2024" |
 
 :::caution
-`"Memory"` is the internal fallback type returned by the classifier when LLM is unavailable and no regex pattern matches (confidence: 0.3). It is not a valid canonical type — it is immediately normalized to `"Context"` via `TYPE_ALIASES` during storage. Stored memories will always have one of the seven canonical types listed above.
+`"Memory"` is the fallback type returned by the classifier when no regex pattern matches and the LLM is unavailable or returns nothing usable (confidence: 0.3). It is not one of the seven canonical types, and `POST /memory` stores it as returned: nothing in the store path maps it to `"Context"`. `TYPE_ALIASES` normalizes the types the LLM returns, but the store path does not apply it, so a stored memory can carry `"Memory"`, and an explicit `type` in the request is stored exactly as sent.
 :::
 
 ---
@@ -132,40 +131,38 @@ graph TB
 
 AutoMem employs a hybrid classification system that balances speed, cost, and accuracy:
 
-1. **Explicit Type** (preferred): Client provides `type` field in POST request
+1. **Explicit Type** (preferred): Client provides `type` field in POST request. It is stored as sent, with confidence `0.9` unless the request sets `confidence`
 2. **Regex Pattern Matching** (fast, free): Checks content against predefined patterns
-3. **LLM Fallback** (accurate, ~$0.02/month): Uses GPT-4o-mini when patterns don't match
+3. **LLM Fallback** (accurate): Uses the model in `CLASSIFICATION_MODEL` (default `gpt-4o-mini`) when patterns don't match
+
+If the LLM is unavailable or returns nothing usable, the classifier returns `Memory` with confidence `0.3`.
 
 ```mermaid
 graph TB
     Start["Memory Content"]
 
     Explicit{"Type<br/>provided?"}
-    Validate{"Valid<br/>type?"}
 
     Regex["Check PATTERNS dict"]
     Match{"Regex<br/>match?"}
 
-    LLM["Call GPT-4o-mini<br/>$0.0001 per request"]
-    LLMValid{"Valid<br/>type?"}
+    LLM["Call classification model<br/>(CLASSIFICATION_MODEL)"]
+    LLMValid{"Usable<br/>response?"}
 
-    Decision["Validated Type<br/>+ Confidence"]
-    Fallback["Memory → normalized to Context<br/>confidence: 0.3"]
+    Decision["Type<br/>+ Confidence"]
+    Fallback["Memory (fallback)<br/>confidence: 0.3"]
 
     Start --> Explicit
 
-    Explicit -->|Yes| Validate
+    Explicit -->|"Yes: stored as sent"| Decision
     Explicit -->|No| Regex
-
-    Validate -->|Yes| Decision
-    Validate -->|No| Fallback
 
     Regex --> Match
     Match -->|Yes| Decision
     Match -->|No| LLM
 
     LLM --> LLMValid
-    LLMValid -->|Yes| Decision
+    LLMValid -->|"Yes: aliases normalized"| Decision
     LLMValid -->|No| Fallback
 ```
 
@@ -179,18 +176,21 @@ The `MemoryClassifier` class defines regex patterns for each memory type:
 | `Pattern` | `r"usually"`, `r"typically"`, `r"tend to"`, `r"often"`, `r"consistently"` |
 | `Preference` | `r"prefer"`, `r"like.*better"`, `r"favorite"`, `r"rather than"` |
 | `Style` | `r"wrote.*in.*style"`, `r"communicated"`, `r"formatted as"` |
-| `Habit` | `r"always"`, `r"every time"`, `r"daily"`, `r"weekly"`, `r"routine"` |
+| `Habit` | `r"\balways\b(?!\s+use\b)"`, `r"every time"`, `r"daily"`, `r"weekly"`, `r"routine"` |
 | `Insight` | `r"realized"`, `r"discovered"`, `r"learned that"`, `r"figured out"` |
 | `Context` | `r"during"`, `r"while working on"`, `r"in the context of"`, `r"when"` |
 
-**Confidence Calculation:**
+`always use` is a `Preference` pattern, so the `Habit` pattern skips it.
 
-- Base confidence: `0.6` for single pattern match
-- Boost: `+0.1` for each additional pattern match (max `0.95`)
+**Matching and Confidence:**
+
+- Types are checked in the order listed above, and the first type with a matching pattern wins
+- Base confidence: `0.6` when a single pattern of that type matches
+- With more than one matching pattern for that type: `min(0.95, 0.6 + 0.1 × matches)`, so two matches give `0.8`, three give `0.9`, and four or more give `0.95`
 
 ### LLM Classification
 
-When regex patterns don't match (approximately 30% of cases), the system falls back to GPT-4o-mini:
+When no regex pattern matches, the classifier falls back to the classification model (`CLASSIFICATION_MODEL`, default `gpt-4o-mini`):
 
 **System Prompt Structure:**
 
@@ -209,16 +209,19 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}
 
 **Request Format:**
 
-- Model: `gpt-4o-mini`
-- Temperature: `0.3` (deterministic)
-- Max tokens: `50`
+- Model: `CLASSIFICATION_MODEL` (default `gpt-4o-mini`)
+- Max tokens: `50`, sent as `max_completion_tokens` for model names starting with `o1`, `o3`, `o4`, `gpt-4o`, `gpt-4.1`, or `gpt-5` (which includes the default) and as `max_tokens` for other models
+- Temperature: `0.3`, sent only with `max_tokens`, so the default model receives no temperature parameter
 - Response format: JSON object
 - Input limit: First 1000 characters of content
 
 **Validation:**
 
-- Returned type must exist in `MEMORY_TYPES`
-- Invalid types fall back to `"Memory"` with confidence `0.3`, which is then normalized to `"Context"` via `TYPE_ALIASES` during storage
+- The returned type is normalized through `TYPE_ALIASES` (for example `analysis` becomes `Insight`, and a lowercase `decision` becomes `Decision`)
+- A type that cannot be mapped is stored as `"Context"` with confidence `0.5`
+- If the response omits `confidence`, `0.7` is used
+- An empty response, invalid JSON, or an API error falls back to `"Memory"` with confidence `0.3`, and `"Memory"` is stored as returned
+- While the enrichment circuit breaker is open, the LLM call is skipped with the same fallback. The breaker opens on an LLM quota error and stays open for `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` (default `300`)
 
 :::tip
 Cost is approximately **$0.02/month** at 10 memories/day requiring LLM classification.
@@ -231,7 +234,7 @@ sequenceDiagram
     participant Client
     participant API as "/memory endpoint"
     participant Classifier as "MemoryClassifier"
-    participant OpenAI as "OpenAI GPT-4o-mini"
+    participant OpenAI as "Classification LLM (default gpt-4o-mini)"
     participant Falkor as "FalkorDB"
 
     Client->>API: "POST /memory<br/>{content, type?}"
@@ -246,11 +249,11 @@ sequenceDiagram
         alt patterns match
             Classifier-->>API: "type, confidence"
         else no pattern match AND use_llm=true
-            Classifier->>OpenAI: "GPT-4o-mini classification"
+            Classifier->>OpenAI: "LLM classification"
             OpenAI-->>Classifier: "type, confidence"
             Classifier-->>API: "type, confidence"
-        else no LLM
-            Classifier-->>API: "Memory (default), 0.3 → normalized to Context"
+        else LLM unavailable or no usable result
+            Classifier-->>API: "Memory (fallback), 0.3"
         end
     end
 
@@ -279,7 +282,9 @@ By default, `/recall` excludes memories where:
 - `now < t_valid` (not yet valid)
 - `now >= t_invalid` (expired)
 
-**Override:** Use `time_query` or explicit `start`/`end` parameters to include expired memories.
+**Override:** Pass `state_mode=history` (or the legacy `current_only=false`) to skip the [current-state filter](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py#L2301-L2314) and include not-yet-valid and expired memories. The filter also replaces a superseded memory (one with an active `INVALIDATED_BY` or `EVOLVED_INTO` replacement) with its replacement, so history mode returns the superseded memory itself. `/recall` [resolves `state_mode`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py#L1853-L1866) to `current` when neither parameter is sent.
+
+`time_query`, `start`, and `end` only set the time window; they do not include expired memories. The candidate searches skip archived memories in either mode (for example the [graph keyword search](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py#L635) and the [vector search](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py#L1012-L1013)).
 
 **Example Scenarios:**
 
@@ -298,10 +303,10 @@ Automatically added by the enrichment pipeline:
 
 | Field | Type | Description |
 |---|---|---|
-| `metadata.enriched_at` | string | ISO timestamp of enrichment |
-| `metadata.enrichment_attempts` | integer | Retry count (max 3) |
-| `metadata.summary` | string | Auto-generated summary |
 | `metadata.entities` | object | Extracted entities by category |
+| `metadata.enrichment` | object | Details of the latest enrichment run: `last_run`, `forced`, `temporal_links`, `patterns_detected`, `semantic_neighbors`. Just-in-time enrichment during recall adds `jit` and `jit_at` to the same object |
+
+`enriched_at` and `summary` are top-level properties (see Enrichment Properties above), not `metadata` fields.
 
 The `metadata.entities` object is structured by entity category:
 
@@ -373,10 +378,10 @@ stateDiagram-v2
     EnrichmentQueued --> Enriching: Worker picks up
 
     Enriching --> Enriched: Success<br/>Entities extracted<br/>Relationships created
-    Enriching --> EnrichmentFailed: Failure<br/>Retry (max 3)
+    Enriching --> EnrichmentFailed: Failure
 
-    EnrichmentFailed --> Enriching: Backoff retry
-    EnrichmentFailed --> Abandoned: Max attempts
+    EnrichmentFailed --> Enriching: Forced jobs only<br/>Flat backoff
+    EnrichmentFailed --> Abandoned: Non-forced job<br/>or max attempts
 
     Enriched --> Active: Searchable<br/>In graph
 
@@ -403,8 +408,9 @@ stateDiagram-v2
 
 2. **Enrichment Queued**:
    - Job added to in-memory queue
-   - Worker thread polls queue every 2 seconds
-   - Max 3 enrichment attempts with exponential backoff
+   - Worker thread blocks on the queue and wakes at least every `ENRICHMENT_IDLE_SLEEP_SECONDS` (default 2 seconds)
+   - Up to `ENRICHMENT_MAX_ATTEMPTS` attempts (default 3), with a flat `ENRICHMENT_FAILURE_BACKOFF_SECONDS` sleep (default 5 seconds) before each re-enqueue
+   - The re-enqueue goes through the in-flight duplicate check, which drops it for non-forced jobs (the kind `POST /memory` queues), so only forced jobs from `POST /enrichment/reprocess` are retried
 
 3. **Enriching**:
    - Entity extraction (spaCy NER + regex)
@@ -469,13 +475,13 @@ sequenceDiagram
     API->>F: CREATE Memory node
     F-->>API: memory_id
 
-    API->>EQ: Enqueue enrichment
-
     alt Embedding provided
         API->>Q: Store vector + payload
     else No embedding
         API->>EmQ: Queue for generation
     end
+
+    API->>EQ: Enqueue enrichment
 
     API-->>C: 201 Created<br/>{memory_id, enrichment: queued}
 ```
@@ -493,14 +499,13 @@ sequenceDiagram
 
 ### Type Validation
 
-- Must be one of: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context`
-- Case-sensitive
-- Invalid types return `400 Bad Request` with valid options listed
+- The classifier assigns one of: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context`
+- An explicit `type` is not checked: `POST /memory` and `POST /memory/batch` store whatever string the request sends, without rejecting unknown values or mapping them through `TYPE_ALIASES`, so send the canonical spelling
 
 ### Confidence Validation
 
 - Range: `0.0` to `1.0` (inclusive)
-- Default: `0.9` if type explicitly provided, computed otherwise
+- Default: `0.9` if type explicitly provided. Otherwise the classifier computes it and any `confidence` in the request is ignored
 - Non-numeric values rejected
 
 ### Importance Validation
@@ -511,10 +516,11 @@ sequenceDiagram
 
 ### Tag Validation
 
-- Array of strings or comma-separated string
-- Normalized to lowercase
-- Hierarchical prefixes auto-computed (e.g., `"project:automem:api"` → `["project", "project:automem", "project:automem:api"]`)
-- Empty tags filtered out
+- Array of strings, or a single string that is stored as one tag (`POST /memory` does not split comma-separated strings). Any other type returns `400 Bad Request`
+- `tags` are stored as sent, with case preserved and blank entries kept
+- `tag_prefixes` are computed from the trimmed, lowercased tags, skipping blank entries
+- Hierarchical prefixes auto-computed, splitting on `:` or `/` (e.g., `"project:automem:api"` → `["project", "project:automem", "project:automem:api"]`)
+- `PATCH /memory/:id` and the enrichment pipeline use a different normalizer that splits comma-separated strings, trims entries, and drops blanks
 
 ### Timestamp Validation
 
@@ -525,6 +531,6 @@ sequenceDiagram
 
 ### Embedding Validation
 
-- Must be exactly 1024 dimensions
-- All values must be numeric
-- Auto-generated if omitted (OpenAI `text-embedding-3-small` or deterministic placeholder)
+- Must match the effective vector dimension: `VECTOR_SIZE` (default `1024`), or the dimension of an existing Qdrant collection while `VECTOR_SIZE_AUTODETECT` (default `true`) adopts it
+- Accepts a list of numbers or a comma-separated string; all values must be numeric
+- On `POST /memory`, generated in the background if omitted and Qdrant is configured (otherwise `embedding_status` is `skipped`). With `EMBEDDING_PROVIDER=auto` (the default) the provider is the first available of Voyage (`VOYAGE_API_KEY`), OpenAI (`OPENAI_API_KEY`), Ollama (`OLLAMA_BASE_URL` or `OLLAMA_MODEL`), local FastEmbed, then a deterministic placeholder. See [Embedding Generation](/docs/architecture/embeddings/) for the other `EMBEDDING_PROVIDER` values
