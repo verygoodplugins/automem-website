@@ -5,7 +5,7 @@ sidebar:
   order: 9
 ---
 
-ElevenLabs Agents connect to AutoMem through the same **remote MCP sidecar** used by other cloud platforms (ChatGPT, Claude.ai). ElevenLabs supports custom HTTP headers, making it the only cloud platform that can use the more secure header-based authentication.
+ElevenLabs Agents connect to AutoMem through the same **remote MCP sidecar** used by other cloud platforms (ChatGPT, Claude.ai). ElevenLabs supports custom HTTP headers, so it can use the more secure header-based authentication. [Claude.ai (Web)](/docs/platforms/claude-web/) can use a header or a URL token too, while [ChatGPT](/docs/platforms/chatgpt/) is limited to URL-based tokens. The sidecar itself accepts a token from either place.
 
 :::note
 ElevenLabs has a **30-second idle timeout**. The sidecar's SSE transport sends heartbeats every 20 seconds to keep the connection alive. Streamable HTTP is also supported.
@@ -144,7 +144,7 @@ ElevenLabs has a **30-second idle timeout** on SSE connections. The sidecar hand
 
 - SSE heartbeats sent every **20 seconds** (within the 30s timeout window)
 - Heartbeat format: `: ping\n\n` (SSE comment, not a data event)
-- Anti-buffering headers set: `X-Accel-Buffering: no`, `Cache-Control: no-cache`
+- Anti-buffering headers set: `X-Accel-Buffering: no`, `Cache-Control: no-cache, no-transform`
 
 If you observe connection drops:
 1. Check that no intermediate proxy is buffering the SSE stream
@@ -174,7 +174,7 @@ Test memory:
 
 ### Agent cannot connect
 
-1. Verify sidecar health: `curl https://your-mcp-bridge.up.railway.app/health`
+1. Verify sidecar health: `curl https://your-mcp-bridge.up.railway.app/health`. It returns `200` whenever the sidecar process is up, even if AutoMem is down, so read the body: `upstream` reports the sidecar's last check of AutoMem (`reachable`, `unreachable`, `unconfigured` when `AUTOMEM_API_TOKEN` is not set on the sidecar, or `unknown` before the first check) and `upstream_error` gives the reason when AutoMem cannot be reached, while `upstream_details` carries AutoMem's own health report. That check runs at startup and every 30 seconds by default. `GET /ready` runs the check on each request and returns `503` unless AutoMem reports healthy.
 2. Check TLS certificate is valid
 3. Ensure port 443 is reachable from ElevenLabs' servers
 
@@ -182,7 +182,9 @@ Test memory:
 
 1. For header auth: verify the header name is exactly `Authorization` and value is `Bearer YOUR_TOKEN`
 2. For URL auth: verify token is URL-encoded if it contains special characters
-3. Test token: `curl -H "Authorization: Bearer $TOKEN" https://your-mcp-bridge.up.railway.app/health`
+3. Test the token against AutoMem directly, not through the sidecar: `curl -i -H "Authorization: Bearer $TOKEN" "https://your-automem.up.railway.app/recall?query=test&limit=1"`. A `401` means AutoMem rejected the token; a `200` means the token was accepted. Do not use `/health` for this: neither the sidecar's `/health` nor AutoMem's own `/health` checks the token.
+
+The sidecar itself returns `401` only when a request carries no token and `AUTOMEM_API_TOKEN` is not set on the sidecar. If `AUTOMEM_API_TOKEN` is set, a request with no token uses that default, and a token in the request is used in preference to it. A token that is present but wrong is forwarded to AutoMem. Connecting and listing tools still succeed, and a tool call that reads or writes memories fails with an MCP tool error (for example `AutoMem error: Unauthorized`) instead of an HTTP `401` from the sidecar. `check_database_health` can still succeed with a wrong token, because AutoMem's `/health` does not check it.
 
 ### Connection drops during agent conversation
 
@@ -190,9 +192,11 @@ The SSE heartbeat (every 20 seconds) should prevent ElevenLabs' 30-second timeou
 - Switch to Streamable HTTP (`/mcp`) — lower latency, no idle timeout issues
 - Check sidecar logs for session expiration (sessions expire after 1 hour of inactivity)
 
-### Memory service unreachable (sidecar returns 502)
+### Memory service unreachable
 
-Verify `AUTOMEM_API_URL` in sidecar environment variables points to the correct AutoMem service. On Railway, use the internal hostname: `http://memory-service.railway.internal:8001`.
+When AutoMem is unreachable or returns an error, the sidecar does not turn it into an HTTP `502`. The tool call comes back as an MCP tool error (`isError: true`) whose text describes the failure, for example `AutoMem error: fetch failed`, `AutoMem request timed out`, or `AutoMem service is temporarily unavailable`.
+
+Verify `AUTOMEM_API_URL` in sidecar environment variables points to the correct AutoMem service. On Railway, use the internal hostname: `http://memory-service.railway.internal:8001`. If `AUTOMEM_API_URL` is not set, the sidecar falls back to the legacy `AUTOMEM_ENDPOINT`, then to `http://127.0.0.1:8001`, instead of reporting a configuration error, so a missing variable usually shows up as this same tool error.
 
 ---
 
