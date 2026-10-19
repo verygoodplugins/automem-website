@@ -60,7 +60,7 @@ The sidecar is included in the AutoMem Railway one-click template. For manual de
 3. Note the public URL: `https://your-mcp-bridge.up.railway.app`
 
 :::caution
-On Railway, use the internal DNS (`http://memory-service.railway.internal:8001`) for `AUTOMEM_API_URL` to avoid egress charges. The memory service **must** have `PORT=8001` set — without it, Flask defaults to port 5000 and connections will fail.
+On Railway, use the internal DNS (`http://memory-service.railway.internal:8001`) for `AUTOMEM_API_URL` to avoid egress charges. The memory service listens on `PORT` and falls back to `8001` only when `PORT` is unset ([`run_default_server()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py#L81-L83)), so the port in `AUTOMEM_API_URL` must match the port the service is actually listening on. Set `PORT=8001` explicitly on the memory service rather than relying on the fallback.
 :::
 
 **Sidecar endpoints:**
@@ -156,7 +156,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 
 | Cause | Solution |
 |-------|---------|
-| Missing `PORT=8001` in memory service | Add `PORT=8001` to memory service environment variables |
+| Memory service listening on a different port | Set `PORT=8001` explicitly on the memory service so it matches the port in `AUTOMEM_API_URL`, then redeploy (AutoMem uses `8001` only when `PORT` is unset) |
 | Wrong internal hostname | Update to `memory-service.railway.internal:8001` |
 | Service not running | Check Railway dashboard for deployment status |
 
