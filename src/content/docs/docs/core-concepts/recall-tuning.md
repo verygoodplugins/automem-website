@@ -7,10 +7,10 @@ sidebar:
 
 :::note[Source files]
 Key implementation files:
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/config.py) — All ranking weights and tuning knobs (with inline rationale)
-- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/utils/scoring.py) — Score computation
-- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/recall.py) — Recall endpoint orchestration and re-rank
-- [automem/search/**](https://github.com/verygoodplugins/automem/tree/0720da2/automem/search) — Vector, keyword, and relation search
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — All ranking weights and tuning knobs (with inline rationale)
+- [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/scoring.py) — Score computation
+- [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py) — Recall endpoint orchestration and re-rank
+- [automem/search/**](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search) — Vector, keyword, and relation search
 :::
 
 AutoMem ships with a ranking pipeline that works well out of the box — every knob on this page defaults to *no behavior change* from prior releases. This guide is for operators who want to **tune** recall for a specific corpus: bias toward freshness, tighten a tag-scoped pool against off-topic memories, or adjust how much structured metadata and relationships contribute.
