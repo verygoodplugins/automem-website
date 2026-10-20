@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/docs/RAILWAY_DEPLOYMENT.md).
+This page combines content from [docs/MONITORING_AND_BACKUPS.md](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/MONITORING_AND_BACKUPS.md), [.github/workflows/backup.yml](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/.github/workflows/backup.yml), and [docs/RAILWAY_DEPLOYMENT.md](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/RAILWAY_DEPLOYMENT.md).
 :::
 
 This page describes the backup strategies and disaster recovery procedures available for AutoMem deployments. It covers the three recovery layers, scheduled backup automation, configuration options, backup formats, and four recovery paths for different failure scenarios. For monitoring backup health and detecting data drift, see [Health Monitoring](/docs/operations/health/).
@@ -94,7 +94,7 @@ The FalkorDB service uses a persistent volume mounted at `/var/lib/falkordb/data
 
 ### backup_automem.py Script
 
-The core backup script at [`scripts/backup_automem.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/backup_automem.py) exports data from both FalkorDB and Qdrant to compressed JSON files.
+The core backup script at [`scripts/backup_automem.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/backup_automem.py) exports data from both FalkorDB and Qdrant to compressed JSON files.
 
 ### Backup Format
 
@@ -226,7 +226,7 @@ sequenceDiagram
     GHA->>GHA: Log backup summary<br/>File sizes and timestamps
 ```
 
-The workflow is defined in [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/.github/workflows/backup.yml) and triggers every 6 hours or manually via `workflow_dispatch`.
+The workflow is defined in [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/.github/workflows/backup.yml) and triggers every 6 hours or manually via `workflow_dispatch`.
 
 :::caution[TCP Proxy requirement]
 The workflow validates that `FALKORDB_HOST` is not a Railway internal hostname (`*.railway.internal`), as GitHub Actions runners cannot access internal Railway domains. The TCP proxy must be enabled to provide external connectivity.
@@ -358,7 +358,7 @@ The fastest and most reliable recovery method. Uses Qdrant's vector payloads to 
 | Function | Purpose | Code Location |
 |---|---|---|
 | `qdrant_client.scroll()` | Fetch all vectors with payloads | Qdrant SDK call |
-| `restore_memory_to_graph_only()` | Filters `RESERVED_FIELDS` from metadata inline (no separate filter function) | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/recover_from_qdrant.py) |
+| `restore_memory_to_graph_only()` | Filters `RESERVED_FIELDS` from metadata inline (no separate filter function) | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/recover_from_qdrant.py) |
 | `CREATE (m:Memory {...})` | Rebuild memory nodes | Cypher query in recovery loop |
 | Relationship extraction | Parse `metadata.relationships` array | Recovery loop logic |
 
@@ -640,7 +640,7 @@ Monitor the system for 24 hours after recovery:
 
 **Cause:** Using old version of `recover_from_qdrant.py` without `RESERVED_FIELDS` filtering
 
-**Solution:** Update to v0.5.0+ of AutoMem. If already on old version, run [`scripts/cleanup_memory_types.py`](https://github.com/verygoodplugins/automem/blob/57264a9f71ae2ce9f08e3cd1950710af682106de/scripts/cleanup_memory_types.py) to fix corrupted types.
+**Solution:** Update to v0.5.0+ of AutoMem. If already on old version, run [`scripts/cleanup_memory_types.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/cleanup_memory_types.py) to fix corrupted types.
 
 ### Drift Persists After Recovery
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Source files]
-This page is based on [`docs/RAILWAY_DEPLOYMENT.md`](https://github.com/verygoodplugins/automem/blob/main/docs/RAILWAY_DEPLOYMENT.md), [`docs/MONITORING_AND_BACKUPS.md`](https://github.com/verygoodplugins/automem/blob/main/docs/MONITORING_AND_BACKUPS.md), and [`docs/MCP_SSE.md`](https://github.com/verygoodplugins/automem/blob/main/docs/MCP_SSE.md) in the AutoMem repository.
+This page is based on [`docs/RAILWAY_DEPLOYMENT.md`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/RAILWAY_DEPLOYMENT.md), [`docs/MONITORING_AND_BACKUPS.md`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/MONITORING_AND_BACKUPS.md), and [`docs/MCP_SSE.md`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/MCP_SSE.md) in the AutoMem repository.
 :::
 
 This page covers common operational issues and their solutions when deploying and running AutoMem. For configuration reference, see [Railway Deployment](/docs/deployment/railway/). For monitoring setup, see [Health Monitoring](/docs/operations/health/). For backup and recovery procedures, see [Backup & Recovery](/docs/operations/backup/).
@@ -65,7 +65,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 2. Add: `PORT=8001`
 3. Redeploy the service
 
-**Code reference:** [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/runtime_wiring.py) — reads `PORT` from environment with an `8001` default. `app.py` is a thin bootstrap module that delegates startup to `runtime_wiring.py`.
+**Code reference:** [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py) — reads `PORT` from environment with an `8001` default. `app.py` is a thin bootstrap module that delegates startup to `runtime_wiring.py`.
 
 #### Root Cause 2: IPv4-Only Binding (Fixed in v0.7.1+)
 
@@ -81,7 +81,7 @@ Error: connect ECONNREFUSED fd12:ca03:42be:0:1000:50:1079:5b6c:8001
 * Running on http://0.0.0.0:8001
 ```
 
-**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/runtime_wiring.py), not in `app.py` directly.
+**Solution:** Update to AutoMem v0.7.1 or later. Flask now binds to `::` (dual-stack IPv6/IPv4) via the `host="::"` parameter in [`automem/runtime_wiring.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py), not in `app.py` directly.
 
 #### Root Cause 3: Wrong Internal Hostname
 
@@ -214,7 +214,7 @@ A `401 Unauthorized` response means the service rejected the token. Do not test 
 2. **MCP bridge** (if using): Update `AUTOMEM_API_TOKEN` in the mcp-sse-server service variables
 3. **Client configuration** (Claude Desktop, Cursor, etc.): Update `.env` or platform config file with the copied token value
 
-**Code reference:** [`automem/api/auth_helpers.py`](https://github.com/verygoodplugins/automem/blob/0720da2/automem/api/auth_helpers.py) — `require_api_token` validates tokens (invoked from `app.py`'s `@app.before_request` hook).
+**Code reference:** [`automem/api/auth_helpers.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py) — `require_api_token` validates tokens (invoked from `app.py`'s `@app.before_request` hook).
 
 ---
 
@@ -270,7 +270,7 @@ Error: [Errno 104] Connection reset by peer
 
 #### Root Cause: Using Internal Hostname from External Runner
 
-GitHub Actions runners are outside Railway's network and cannot resolve `*.railway.internal` hostnames. The workflow at [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/main/.github/workflows/backup.yml) validates that `FALKORDB_HOST` does not contain `.railway.internal`.
+GitHub Actions runners are outside Railway's network and cannot resolve `*.railway.internal` hostnames. The workflow at [`.github/workflows/backup.yml`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/.github/workflows/backup.yml) validates that `FALKORDB_HOST` does not contain `.railway.internal`.
 
 #### Solution: Enable and Configure TCP Proxy
 
@@ -355,7 +355,7 @@ flowchart TD
 
 **2. Failed Writes (5-10% drift)**
 
-Qdrant upsert logic is in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/main/automem/api/memory.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail with exception logging, causing drift.
+Qdrant upsert logic is in [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py). If the Qdrant service is unreachable, writes to FalkorDB succeed but Qdrant writes fail with exception logging, causing drift.
 
 **3. Data Loss Event (>50% drift)**
 
@@ -591,7 +591,7 @@ curl https://your-service.up.railway.app/health | jq '.enrichment.queue_depth'
 
 **1. Check relationship cache:**
 
-The LRU cache in [`consolidation.py:201-217`](https://github.com/verygoodplugins/automem/blob/3ae04bf6f4545f38744e4c3f280b763db881a6fb/consolidation.py#L201-L217) (the repo-root consolidation engine, imported by `automem/consolidation/runtime_bindings.py` — not itself inside the `automem/consolidation/` package) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
+The LRU cache in [`consolidation.py:201-216`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L201-L216) (the repo-root consolidation engine, imported by `automem/consolidation/runtime_bindings.py` — not itself inside the `automem/consolidation/` package) should have an 80% hit rate during normal operation. If consolidation is running frequently, the cache may be continuously invalidated.
 
 **2. Verify indexes:**
 
