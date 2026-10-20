@@ -88,8 +88,10 @@ Enrichment jobs are enqueued in three scenarios:
 | Trigger | Endpoint | Behavior |
 |---|---|---|
 | Memory creation | `POST /memory` | Automatic enqueue after graph write |
-| Memory update | `PATCH /memory/:id` | Re-enqueue if content/tags changed |
+| Batch creation | `POST /memory/batch` | Automatic enqueue for each stored memory |
 | Admin reprocessing | `POST /enrichment/reprocess` | Forced reprocessing with `forced=true` |
+
+`PATCH /memory/:id` does not enqueue enrichment, so an edit does not refresh a memory's entities, summary, or links. Run `POST /enrichment/reprocess` to re-enrich it.
 
 ### Retry Logic
 
@@ -346,7 +348,7 @@ When a job is dequeued, the ID is moved from `enrichment_pending` to `enrichment
 | spaCy model unavailable | Log warning, use regex fallbacks | Graceful degradation |
 | FalkorDB write failure | Forced jobs retry with flat backoff; non-forced jobs are not retried | Up to `ENRICHMENT_MAX_ATTEMPTS` attempts (forced jobs) |
 | Qdrant unavailable | Skip semantic linking, log warning | Continue enrichment |
-| Invalid memory ID | Log error, record failure | No retry |
+| Memory ID not found | `enrich_memory` returns `False` and logs at debug level; the worker records a skipped success, not a failure | No retry |
 | Extraction exception | Catch and log; forced jobs retry, non-forced jobs are not retried | Up to `ENRICHMENT_MAX_ATTEMPTS` attempts (forced jobs) |
 
 ### Retry Mechanics

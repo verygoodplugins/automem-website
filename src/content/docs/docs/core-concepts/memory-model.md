@@ -224,7 +224,7 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}
 - While the enrichment circuit breaker is open, the LLM call is skipped with the same fallback. The breaker opens on an LLM quota error and stays open for `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` (default `300`)
 
 :::tip
-Cost is approximately **$0.02/month** at 10 memories/day requiring LLM classification.
+Cost is approximately **$0.02/month** at 10 memories/day requiring LLM classification with the default `gpt-4o-mini`. Other `CLASSIFICATION_MODEL` values are priced differently.
 :::
 
 The full classification sequence, including how POST /memory decides between explicit type, regex, and LLM:
@@ -342,7 +342,7 @@ Memories are stored as nodes with the `Memory` label. Node properties directly m
 
 - Relationships connect memories (see [Relationship Types](/docs/core-concepts/relationship-types/))
 - Cypher queries enable graph traversal
-- Indexes on `tags`, `tag_prefixes`, `timestamp`, `importance`
+- AutoMem does not create FalkorDB indexes on `Memory` properties at startup or on write. `scripts/restore_from_backup.py` creates an `id` index on each restored node label, including `Memory`, and the index stays after the restore
 
 ### Qdrant (Vector Database)
 
@@ -350,7 +350,7 @@ Memories are stored as points with payloads mirroring FalkorDB properties:
 
 **Qdrant Features:**
 
-- Keyword indexes on `tags` and `tag_prefixes` for fast filtering
+- Keyword payload indexes on `tags`, `tag_prefixes`, and `type` for fast filtering, created at startup unless `QDRANT_ENSURE_PAYLOAD_INDEXES` is `false`
 - HNSW index on vectors for approximate nearest neighbor search
 - Payload filters support complex boolean queries
 
@@ -359,7 +359,7 @@ Memories are stored as points with payloads mirroring FalkorDB properties:
 - FalkorDB is the **source of truth** (required)
 - Qdrant is **optional** but enables semantic search
 - On `POST /memory`, FalkorDB is written synchronously. Qdrant is written in the same request only when the request supplies `embedding`; otherwise the vector is queued for generation, or skipped when Qdrant is not configured
-- Qdrant can rebuild FalkorDB if graph data is lost
+- If graph data is lost, `scripts/recover_from_qdrant.py` re-creates `Memory` nodes from the Qdrant payloads. It clears the graph first and does not restore relationships
 
 :::note
 If Qdrant is unavailable, the system gracefully degrades to graph-only search mode. Vector similarity scoring is disabled but keyword and graph traversal continue to work.
@@ -385,9 +385,7 @@ stateDiagram-v2
 
     Enriched --> Active: Searchable<br/>In graph
 
-    Active --> Updated: PATCH /memory/:id
-    Updated --> ReEnrichment: Content changed
-    ReEnrichment --> Active
+    Active --> Active: PATCH /memory/:id<br/>No enrichment job queued
 
     Active --> Decaying: Consolidation<br/>relevance_score decreases
 
@@ -414,7 +412,7 @@ stateDiagram-v2
 
 3. **Enriching**:
    - Entity extraction (spaCy NER + regex)
-   - Temporal links created (`OCCURRED_BEFORE`)
+   - Temporal links created (`PRECEDED_BY`)
    - Semantic neighbors found (`SIMILAR_TO`)
    - Pattern detection (`EXEMPLIFIES`)
    - Summary generation (optional)
@@ -423,6 +421,7 @@ stateDiagram-v2
    - Fully searchable via `/recall`
    - Included in graph queries
    - Participates in consolidation
+   - `PATCH /memory/:id` saves the edit without queuing enrichment, so entities, summary, and links are not refreshed; `POST /enrichment/reprocess` re-runs it
 
 5. **Decaying**:
    - `relevance_score` decreases exponentially
@@ -432,7 +431,7 @@ stateDiagram-v2
 6. **Archived**:
    - Marked `archived: true`
    - Excluded from search by default
-   - Can be restored or deleted
+   - Can be deleted with `DELETE /memory/:id`; the API has no route to restore an archived memory
 
 7. **Deleted**:
    - Removed from both FalkorDB and Qdrant

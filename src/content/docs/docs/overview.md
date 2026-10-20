@@ -334,7 +334,6 @@ AutoMem runs four independent worker threads that process memories asynchronousl
 graph TB
     subgraph write_ops["Write Operations"]
         PostMem["POST /memory<br/>automem/api/memory.py"]
-        PatchMem["PATCH /memory/:id<br/>automem/api/memory.py"]
     end
 
     subgraph queues["Queue Management"]
@@ -359,14 +358,12 @@ graph TB
     subgraph config["Configuration"]
         EnrichConfig["ENRICHMENT_IDLE_SLEEP_SECONDS=2<br/>ENRICHMENT_MAX_ATTEMPTS=3<br/>ENRICHMENT_SIMILARITY_LIMIT=5"]
         EmbedConfig["EMBEDDING_BATCH_SIZE=20<br/>EMBEDDING_BATCH_TIMEOUT_SECONDS=2.0"]
-        ConsolConfig["CONSOLIDATION_TICK_SECONDS<br/>DECAY/CREATIVE/CLUSTER/FORGET<br/>_INTERVAL_SECONDS"]
+        ConsolConfig["CONSOLIDATION_TICK_SECONDS<br/>DECAY/CREATIVE/CLUSTER/FORGET/IDENTITY<br/>_INTERVAL_SECONDS"]
         SyncConfig["SYNC_CHECK_INTERVAL_SECONDS<br/>SYNC_AUTO_REPAIR=true"]
     end
 
     PostMem --> EnrichQueue
     PostMem --> EmbedQueue
-    PatchMem --> EnrichQueue
-    PatchMem -.->|"if content changed"| EmbedQueue
 
     EnrichQueue --> EnrichPending
     EmbedQueue --> EmbedPending
@@ -385,15 +382,15 @@ graph TB
 **Worker responsibilities:**
 
 - **EnrichmentWorker**: Extracts entities (spaCy NER + regex), generates summaries, creates temporal/semantic links, detects patterns
-- **EmbeddingWorker**: Batches requests (20 items, 2-second timeout) to reduce API costs by 40-50%, retries on failure (max 3 attempts)
-- **ConsolidationScheduler**: Runs four cycles on configurable intervals (Decay, Creative, Cluster, Forget) using control node for persistence
+- **EmbeddingWorker**: Batches requests (20 items, 2-second timeout). A failed batch is not re-queued: the batch call falls back to per-item calls, and any item that still fails is stored with a placeholder vector
+- **ConsolidationScheduler**: Runs five scheduled tasks on configurable intervals (Decay, Creative, Cluster, Forget, and Identity) using control node for persistence. Forget's interval defaults to 0, disabled, and Identity's interval defaults to 0, disabled, unless `IDENTITY_SYNTHESIS_ENABLED=true`
 - **SyncWorker**: Every `SYNC_CHECK_INTERVAL_SECONDS` (default one hour), compares memory IDs in FalkorDB and Qdrant, skipping memory types in `RECALL_EXCLUDED_TYPES`, and queues memories missing from Qdrant for embedding when they still have content. The 5% drift threshold belongs to the separate health monitor, not to this worker
 
 ---
 
 ## Embedding Provider Abstraction
 
-AutoMem uses a pluggable provider pattern for embedding generation, supporting multiple backends with automatic failover. The system selects providers in priority order based on availability.
+AutoMem uses a pluggable provider pattern for embedding generation, supporting multiple backends. Only `EMBEDDING_PROVIDER=auto` (the default) falls through to the next provider in priority order; an explicitly named provider raises if it cannot initialize, which stops the server at startup. The choice is made once, when the provider is first initialized, so a provider that starts failing later does not trigger a switch.
 
 ### Provider Selection Logic
 
