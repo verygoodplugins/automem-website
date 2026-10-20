@@ -15,7 +15,7 @@ sidebar:
 - [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L480-L489) — HTTP error response envelope
 :::
 
-This page documents the HTTP API endpoints for triggering and monitoring memory consolidation tasks. Consolidation is AutoMem's background maintenance system that mimics biological memory processes — decay, creative association, clustering, and forgetting.
+This page documents the HTTP API endpoints for triggering and monitoring memory consolidation tasks. Consolidation is AutoMem's background maintenance system that mimics biological memory processes — decay, creative association, clustering, and forgetting. An `identity` task also merges duplicate entities and synthesizes identity definitions for Entity nodes.
 
 For information about the consolidation engine's internal architecture and algorithms, see [Consolidation Engine](/docs/core-concepts/consolidation/).
 
@@ -66,6 +66,7 @@ graph TB
     Consolidator -->|"Update relevance"| FalkorGraph
     Consolidator -->|"Create edges"| FalkorGraph
     Consolidator -->|"Archive/delete"| FalkorGraph
+    Consolidator -->|"Merge entities, synthesize identities"| FalkorGraph
     Consolidator -->|"Record runs"| ControlNode
     Consolidator -->|"Record runs"| RunHistory
 ```
@@ -81,7 +82,7 @@ Manually trigger one or more consolidation tasks.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `mode` | string | No | `"full"` | Task type to execute: `decay`, `creative`, `cluster`, `forget`, `identity`, or `full` |
-| `dry_run` | boolean | No | `true` | If `true`, simulate without making changes |
+| `dry_run` | boolean | No | `true` | If `true`, `creative`, `cluster`, `forget`, and `identity` report what they would do without writing. `decay` has no dry-run guard and always updates relevance scores, so `mode="decay"` and `mode="full"` write even with the default `dry_run: true` |
 
 ### Task Types
 
@@ -112,7 +113,7 @@ sequenceDiagram
     API->>Consolidator: "consolidate(mode=mode, dry_run=dry_run)"
 
     alt dry_run=true
-        Consolidator-->>API: "Simulated results (no writes)"
+        Consolidator-->>API: "Results (no writes, except decay scores)"
         API-->>Client: "200 {status: 'success', consolidation: {...}}"
     else dry_run=false
         Consolidator->>FalkorDB: "Read Memory nodes"
@@ -229,23 +230,22 @@ The number of history records returned is controlled server-side by `CONSOLIDATI
 {
   "status": "success",
   "next_runs": {
-    "decay": "2025-01-16T08:00:00Z",
-    "creative": "2025-01-22T08:00:00Z",
-    "cluster": "2025-02-15T08:00:00Z",
-    "forget": null
+    "decay": "In 7 hour(s)",
+    "creative": "In 3 day(s)",
+    "cluster": "In 24 day(s)",
+    "forget": "Disabled",
+    "identity": "Disabled"
   },
   "history": [
     {
+      "id": "3f2b8c1d4e5a4f6b9a7c0d1e2f3a4b5c",
+      "mode": "decay",
       "task": "decay",
-      "timestamp": "2025-01-15T08:00:00Z",
-      "duration_seconds": 1.23,
-      "updates": 42
-    },
-    {
-      "task": "creative",
-      "timestamp": "2025-01-15T08:00:00Z",
-      "duration_seconds": 2.45,
-      "associations": 8
+      "success": true,
+      "dry_run": false,
+      "started_at": "2025-01-15T08:00:00+00:00",
+      "completed_at": "2025-01-15T08:00:01+00:00",
+      "result": "{\"mode\": \"decay\", \"dry_run\": false, \"started_at\": \"2025-01-15T08:00:00+00:00\", \"steps\": {\"decay\": {\"processed\": 42, \"avg_relevance_before\": 0.61, \"avg_relevance_after\": 0.59, \"distribution\": {\"high\": 30, \"medium\": 9, \"low\": 2, \"archive\": 1}}}, \"completed_at\": \"2025-01-15T08:00:01+00:00\", \"success\": true}"
     }
   ],
   "thread_alive": true,
@@ -258,14 +258,16 @@ The number of history records returned is controlled server-side by `CONSOLIDATI
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | Always `"success"` |
-| `next_runs.<task>` | string (ISO 8601) \| null | Calculated next execution time (null if task is disabled) |
-| `history[].task` | string | Task type that was executed |
-| `history[].timestamp` | string (ISO 8601) | Execution start time |
-| `history[].duration_seconds` | float | Time taken to complete |
-| `history[].updates` | integer | Nodes updated (decay task) |
-| `history[].associations` | integer | Edges created (creative task) |
-| `history[].clusters` | integer | MetaMemory nodes created (cluster task) |
-| `history[].forgotten` | integer | Memories archived/deleted (forget task) |
+| `next_runs.<task>` | string | Human-readable time until the task is next due, not a timestamp: `"Due now"`, `"In N day(s)"`, `"In N hour(s)"` (whole hours, so under an hour reads `"In 0 hour(s)"`), or `"Disabled"` when the task's interval is 0. Keys are `decay`, `creative`, `cluster`, `forget`, and `identity` |
+| `history[]` | object | The properties of one `ConsolidationRun` node, newest `started_at` first |
+| `history[].id` | string | Run ID (UUID hex) |
+| `history[].mode` | string | Mode that was run |
+| `history[].task` | string | Same value as `mode` |
+| `history[].success` | boolean | `false` when the engine reported an internal failure |
+| `history[].dry_run` | boolean | Whether the run was a dry run. Dry runs are not recorded by `POST /consolidate`, and scheduled runs are never dry runs, so records written by those paths show `false` |
+| `history[].started_at` | string (ISO 8601) | Run start time |
+| `history[].completed_at` | string (ISO 8601) | Run completion time |
+| `history[].result` | string | The full `consolidation` result object, serialized as a JSON string. Parse it to read per-task statistics under `steps` |
 | `thread_alive` | boolean | Whether the background scheduler thread is active |
 | `tick_seconds` | integer | Polling interval for the scheduler loop |
 
@@ -290,7 +292,7 @@ Properties correspond to the `CONSOLIDATION_TASK_FIELDS` mapping in `automem/con
 
 ### ConsolidationRun Nodes
 
-Each execution creates a timestamped record stored as a `ConsolidationRun` node in FalkorDB. The `/consolidate/status` endpoint reads the most recent `ConsolidationRun` nodes ordered by timestamp descending, up to the number configured by `CONSOLIDATION_HISTORY_LIMIT` (default 20).
+Each recorded execution (scheduled runs and `POST /consolidate` calls with `dry_run` set to `false`) creates a `ConsolidationRun` node in FalkorDB. The `/consolidate/status` endpoint reads the most recent `ConsolidationRun` nodes ordered by `started_at` descending, up to the number configured by `CONSOLIDATION_HISTORY_LIMIT` (default 20).
 
 ---
 
@@ -356,7 +358,7 @@ Requests to authenticated endpoints without valid authentication receive a `401 
 | 500 Internal Server Error | Status query failure (GET) | `{"error": "Failed to get status", "details": "<exception message>"}` |
 | 503 Service Unavailable | FalkorDB is unavailable (both endpoints, before any work starts) | `{"status": "error", "code": 503, "message": "FalkorDB is unavailable"}` |
 
-All errors are logged with full stack traces to facilitate debugging.
+The two `500` handlers log only the exception message at error level, not a stack trace.
 
 ---
 

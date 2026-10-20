@@ -11,6 +11,7 @@ sidebar:
 - [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py) — Thin bootstrap; `@app.before_request` delegates to `require_api_token()`
 - [automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py) — Token validation and `/health` auth exemption
 - [automem/runtime_environment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_environment.py) — Process logging configuration
+- [scripts/health_monitor.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/health_monitor.py#L40-L352) - Polling health monitor, drift thresholds, and alerts
 :::
 
 AutoMem provides three monitoring and introspection endpoints that give visibility into service health, database connectivity, enrichment queue state, and memory graph statistics. These endpoints are essential for deployment monitoring, debugging, and understanding the characteristics of stored memories.
@@ -114,7 +115,7 @@ sequenceDiagram
 | `memory_count` | integer \| null | User-facing memories in FalkorDB, excluding `RECALL_EXCLUDED_TYPES` (default `MetaPattern`; null if query fails) |
 | `vector_count` | integer \| null | Vector-sync-eligible points in Qdrant, excluding the same types (null if unavailable) |
 | `sync_status` | string | Drift status between FalkorDB and Qdrant: `"synced"`, `"drift_detected"`, `"orphaned_vectors"`, or `"unknown"` |
-| `vector_dimensions` | object | Embedding dimension info: `configured` (from `VECTOR_SIZE`), `effective` (provider-reported), `collection` (Qdrant collection size), `mismatch` (boolean) |
+| `vector_dimensions` | object | Embedding dimension info: `configured` (from `VECTOR_SIZE`), `effective` (provider-reported), `collection` (Qdrant collection size), `mismatch` (boolean: `true` when `collection` differs from `configured`; `false` when Qdrant is unavailable; it does not change `status`) |
 | `enrichment` | object | Enrichment queue metrics (see below) |
 | `graph` | string | FalkorDB graph name (`FALKORDB_GRAPH` env variable) |
 | `timestamp` | string | ISO 8601 timestamp of health check |
@@ -161,7 +162,7 @@ The analyze endpoint provides comprehensive statistics about the memory graph, i
 
 **Authentication:** Required (`Authorization: Bearer <token>`, `X-API-Key: <token>`, or `?api_key=<token>`)
 
-**Response:** HTTP 200 with JSON analytics, or HTTP 401 if unauthorized.
+**Response:** HTTP 200 with JSON analytics, HTTP 401 if unauthorized, HTTP 503 if FalkorDB is unavailable, or HTTP 500 with `{"error": "Analyze failed", "details": "<exception message>"}` if an analytics query fails.
 
 ### Analytics Query Flow
 
@@ -271,11 +272,11 @@ curl "https://your-automem-instance/analyze" \
 
 The startup recall endpoint returns a curated set of memories suitable for initializing AI agent context at session start. It prioritizes high-importance memories and falls back to recent memories to ensure the agent always has relevant context.
 
-**Authentication:** Required when `API_TOKEN` is configured (`Authorization: Bearer <token>`, `X-API-Key: <token>`, or `?api_key=<token>`)
+**Authentication:** Required when `AUTOMEM_API_TOKEN` is configured (`Authorization: Bearer <token>`, `X-API-Key: <token>`, or `?api_key=<token>`)
 
 **Query Parameters:** None
 
-**Response:** HTTP 200 with JSON memory list, or HTTP 503 if FalkorDB unavailable.
+**Response:** HTTP 200 with JSON memory list, HTTP 401 if unauthorized, HTTP 503 if FalkorDB is unavailable, or HTTP 500 with `{"error": "Startup recall failed", "details": "<exception message>"}` if a query fails.
 
 ### Startup Recall Flow
 
@@ -395,7 +396,7 @@ graph LR
         FalkorDB[("FalkorDB<br/>graph database")]
         Qdrant[("Qdrant<br/>vector database")]
         EnrichQ["Enrichment Queue"]
-        Alert["Alert System<br/>(Slack/Discord/Webhook)"]
+        Alert["Alert System<br/>(Log/Webhook)"]
     end
 
     Monitor-->|"Poll every 5min"|Health
@@ -403,16 +404,19 @@ graph LR
     Health-->|"Get collection"|Qdrant
     Health-->|"Queue status"|EnrichQ
     Health-->|"Return metrics"|Monitor
-    Monitor-->|"If memory_count vs vector_count drift > 5%"|Alert
-    Monitor-->|"If degraded"|Alert
+    Monitor-->|"Direct count query"|FalkorDB
+    Monitor-->|"Direct collection query"|Qdrant
+    Monitor-->|"If FalkorDB vs Qdrant count drift > 5%"|Alert
 ```
 
-For production deployments, a health monitoring service polls `/health` on an interval and takes action on anomalies:
+For production deployments, the health monitor script (`scripts/health_monitor.py`) polls on an interval and takes action on anomalies:
 
-- Polls `/health` every 5 minutes (configurable)
-- Compares `memory_count` (FalkorDB) vs `vector_count` (Qdrant) to detect drift
-- Triggers alerts if drift exceeds 5%
-- Optionally triggers auto-recovery via `recover_from_qdrant.py`
+- Runs a check every 300 seconds (5 minutes) by default; change it with `--interval`
+- Calls `/health` and logs whether it answered HTTP 200. It does not read `status`, so a `"degraded"` response does not raise an alert
+- Queries FalkorDB and Qdrant directly and compares their own counts, not the `memory_count` and `vector_count` fields from `/health`. Drift is the absolute count difference as a percentage of the Qdrant count
+- Sends a warning alert if drift exceeds 5% (`--drift-threshold`)
+- Sends a critical alert if drift exceeds 50% (`--critical-threshold`). With `--auto-recover` it then runs `scripts/recover_from_qdrant.py`; without that flag it only alerts and asks for a manual recovery
+- Alerts are written to the log and posted to the webhook set with `--webhook` or `HEALTH_MONITOR_WEBHOOK`
 
 ### Structured Logging
 
@@ -422,9 +426,9 @@ At the current source baseline, process logging is configured at `INFO` and writ
 
 | Condition | Recommended Alert |
 |-----------|------------------|
-| `status: "degraded"` | Immediate page — FalkorDB or Qdrant unavailable |
+| `status: "degraded"` with `falkordb` or `qdrant` showing `"disconnected"` | Immediate page — FalkorDB or Qdrant unavailable |
 | `qdrant` shows `"disconnected"` | Warning — vector search degraded |
-| `memory_count` vs `vector_count` drift > 5% | Warning — run `/admin/reembed` |
+| `memory_count` vs `vector_count` drift > 5% | Warning — run `/admin/reembed`. `/health` itself reports `status: "degraded"` (with `sync_status: "drift_detected"`) as soon as `vector_count` is below `memory_count`, with no 5% tolerance |
 | `enrichment.status: "stopped"` | Warning — enrichment stopped, restart service |
 | `enrichment.failed` count growing | Investigation — check application logs |
 
