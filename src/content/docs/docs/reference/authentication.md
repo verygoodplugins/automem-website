@@ -16,7 +16,7 @@ For deployment-specific token generation on Railway, see [Railway Deployment](/d
 | Token Type | Environment Variable | Required For | Purpose |
 |------------|---------------------|-------------|---------|
 | **API Token** | `AUTOMEM_API_TOKEN` | All endpoints except `/health`, `/backup`, and `/viewer*` (and `OPTIONS` preflights) | Standard memory operations (store, recall, update, delete) |
-| **Admin Token** | `ADMIN_API_TOKEN` | Admin and enrichment endpoints | Privileged operations (reprocessing, re-embedding, bulk operations) |
+| **Admin Token** | `ADMIN_API_TOKEN` | `/admin/reembed`, `/admin/sync`, `/enrichment/reprocess`, `/entities/audit`, `/entity/<slug>/merge`, and `/backup` | Privileged operations (reprocessing, re-embedding, bulk operations) |
 
 ---
 
@@ -38,7 +38,7 @@ graph TD
     ExtractQuery["Extract token<br/>from query string"]
 
     NoToken["Return None<br/>→ 401 Unauthorized"]
-    ValidateToken["Validate against<br/>AUTOMEM_API_TOKEN or<br/>ADMIN_API_TOKEN"]
+    ValidateToken["Validate against<br/>AUTOMEM_API_TOKEN"]
 
     Request --> CheckBearer
     CheckBearer -->|Yes| ExtractBearer
@@ -388,7 +388,7 @@ curl -v -H "Authorization: Bearer YOUR_TOKEN" \
 
 **Common causes:**
 
-1. Missing `X-Admin-Token` header — admin endpoints require both headers
+1. Missing admin token. AutoMem reads it from the `X-Admin-Token` header, the `X-Admin-Api-Key` header, or the `admin_token` query parameter. Admin endpoints other than `/backup` also need the API token
 2. Admin token mismatch between client and server
 
 ### Admin Endpoint Returns 403
