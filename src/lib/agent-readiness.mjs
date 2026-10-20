@@ -16,7 +16,7 @@ It gives assistants a durable memory graph instead of forcing every conversation
 
 - Hybrid memory recall with vector, keyword, metadata, recency, and graph signals.
 - Typed memory operations for storing, recalling, updating, deleting, and associating memories.
-- MCP client support for Claude Desktop, Claude Code, Cursor, OpenAI Codex, ChatGPT, GitHub Copilot, ElevenLabs, OpenClaw, and Google AntiGravity.
+- MCP client support for Claude Desktop, Claude Code, Cursor, OpenAI Codex, ChatGPT, GitHub Copilot, ElevenLabs, OpenClaw, and Google Antigravity.
 - Self-hosted deployment paths for Docker, Railway, and InstaPods.
 - Documentation for authentication, operations, health checks, backups, and architecture.
 

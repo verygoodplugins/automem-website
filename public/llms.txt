@@ -24,7 +24,7 @@ AutoMem is an open-source persistent memory layer for AI agents and MCP-compatib
 - GitHub Copilot: https://automem.ai/docs/platforms/github-copilot/
 - ElevenLabs Agents: https://automem.ai/docs/platforms/elevenlabs/
 - OpenClaw: https://automem.ai/docs/platforms/openclaw/
-- Google AntiGravity: https://automem.ai/docs/platforms/antigravity/
+- Google Antigravity: https://automem.ai/docs/platforms/antigravity/
 
 ## Source Repositories
 

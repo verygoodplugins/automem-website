@@ -201,25 +201,24 @@ Key sections:
 
 | Section | Purpose |
 |---------|---------|
-| Desktop is semantic-first | Avoids guessing project tags on broad Desktop conversations |
-| Conversation start | Pulls preferences first, then one semantic task-context recall when useful |
-| When to store | Keeps durable preferences, decisions, patterns, and fixes while skipping noise |
-| Storage format | Shows concise `store_memory` calls with type, tags, importance, confidence |
-| Mid-conversation memory ops | Uses recall → store → verify → associate for important updates |
-| Relation types | Lists the 11 authorable association types for `associate_memories` |
+| Memory - Desktop is semantic-first | Avoids guessing project tags on broad Desktop conversations |
+| Conversation start - semantic-first recall | Pulls preferences first, then one semantic task-context recall when useful |
+| Storage Discipline | Keeps durable preferences, decisions, patterns, and fixes while skipping noise, and shows a concise `store_memory` call with type, tags, importance, confidence |
+| Three mid-conversation triggers (and only three) | Stores on a user correction, a settled decision, or an articulated pattern |
+| The atomic ritual - every store runs all four steps | Uses recall → store → verify → associate for every store |
+| Mandatory association pairings | Maps each trigger to a store type and an association, and lists the 11 authorable relation types for `associate_memories` |
 
 ### Memory Storage Patterns
 
-Recommended importance thresholds:
+Importance values the template uses:
 
 | Type | Importance | Example |
 |------|-----------|---------|
 | Preference / Decision | 0.9 | "Prefer early returns over nested conditionals" |
-| Insight / Bug fix | 0.8 | "Auth failing on null input. Root: missing validation" |
-| Pattern | 0.7 | "Using early returns for validation in all API routes" |
-| Context | 0.5–0.7 | "Added JWT auth with refresh token rotation" |
+| Insight / Bug fix | 0.75 | "Auth failing on null input. Root: missing validation" |
+| Pattern | 0.8 | "Using early returns for validation in all API routes" |
 
-**Correction storage (critical pattern):** When you correct Claude's output, the Personal Preferences template tells Claude to store the correction as a high-importance style signal so the same mistake is not repeated.
+**Correction storage (critical pattern):** When you correct Claude's output, the Personal Preferences template tells Claude to store the correction as a high-importance `Preference` tagged `correction` so the same mistake is not repeated.
 
 ---
 
@@ -282,7 +281,7 @@ curl https://your-automem.up.railway.app/health
 
 1. Verify `AUTOMEM_API_KEY` matches the token set in your AutoMem service
 2. Test authentication against an endpoint that requires the token, because `/health` does not check it: `curl -i -H "Authorization: Bearer $KEY" "$ENDPOINT/recall?limit=1"`. A `401 Unauthorized` response means the service rejected the key.
-3. Regenerate API key if expired
+3. AutoMem checks the key against the token configured on the service and has no token expiry, so a key that worked earlier fails only if the service token changed. Update `AUTOMEM_API_KEY` to the current value and restart Claude Desktop
 
 ### Memory not persisting between sessions
 
