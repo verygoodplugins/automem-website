@@ -247,7 +247,7 @@ All modes also write an AutoMem rules block to `~/.hermes/AGENTS.md`. See the [H
 
 ## Remote MCP (Cloud Platforms)
 
-For cloud AI platforms that cannot run local processes (ChatGPT, Claude.ai via API, ElevenLabs), AutoMem provides a remote MCP bridge via the `automem` server's built-in remote MCP sidecar (see [`docs/MCP_SSE.md`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/docs/MCP_SSE.md)).
+For cloud AI platforms that cannot run local processes (ChatGPT, Claude.ai via API, ElevenLabs), AutoMem provides a remote MCP bridge via the `automem` server's built-in remote MCP sidecar (see [`docs/MCP_SSE.md`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/MCP_SSE.md)).
 
 The sidecar exposes AutoMem tools over Streamable HTTP (recommended) with SSE (Server-Sent Events) as a legacy fallback, both compatible with remote MCP clients. Deploy it alongside the AutoMem backend — see [Railway Deployment](/docs/deployment/railway/) for the deployment setup.
 
