@@ -27,7 +27,7 @@ The mcp-automem package provides three distinct integration strategies, each sui
 
 ### Server Configuration
 
-The MCP server is implemented in [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts) and exposes six tools via stdio transport. To integrate a new MCP-capable platform, point the platform at the mcp-automem binary without CLI arguments — this triggers server mode.
+The MCP server starts in [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts) and exposes six tools, defined in [`src/mcp-surface.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts), via stdio transport. To integrate a new MCP-capable platform, point the platform at the mcp-automem binary without CLI arguments — this triggers server mode.
 
 ### Platform-Specific Considerations
 
@@ -47,13 +47,13 @@ Most MCP platforms use a JSON configuration file. Key points:
 
 ### Process Lifecycle
 
-Important implementation details from [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts):
+Important implementation details from [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts):
 
-1. **Server mode detection** — Empty `process.argv[2]` triggers server mode (lines 41-42)
-2. **Console redirection** — All `console.log` calls redirected to stderr to prevent stdout pollution (lines 74-80)
-3. **Quiet dotenv** — Environment loading silenced to prevent debug output (lines 60-72)
-4. **EPIPE handling** — Graceful exit on broken pipe when a platform disconnects (`installStdioErrorGuards()`, defined lines 100-110, invoked at line 1714)
-5. **Process tagging** — Optional `AUTOMEM_PROCESS_TAG` environment variable (also honors an undocumented `MCP_PROCESS_TAG` alias) for safe process management (lines 84-98)
+1. **Server mode detection** — Empty `process.argv[2]` triggers server mode (lines 30-31)
+2. **Console redirection** — All `console.log` calls redirected to stderr to prevent stdout pollution (lines 78-84)
+3. **Quiet dotenv** — Environment loading silenced to prevent debug output (lines 63-76 and 86)
+4. **EPIPE handling** — Graceful exit on broken pipe when a platform disconnects (`installStdioErrorGuards()`, defined lines 102-112, invoked at line 447)
+5. **Process tagging** — Optional `AUTOMEM_PROCESS_TAG` environment variable (also honors an undocumented `MCP_PROCESS_TAG` alias) for safe process management (lines 88-100)
 
 ## Template System for CLI Installers
 
@@ -93,9 +93,9 @@ To add a new platform installer (e.g., for a hypothetical "MyIDE"):
 
 **2. Implement CLI command:** `src/cli/myide.ts`
 
-**3. Register command in main entry point** (`src/index.ts` — add an `if (command === "myide") {...}` block to the dispatch sequence after the existing `hermes`/`queue` checks, around line 392)
+**3. Register command in main entry point** (`src/index.ts` — add an `if (command === "myide") {...}` block to the dispatch sequence after the existing `hermes`/`queue` checks, around line 371)
 
-**4. Update help text** (`src/index.ts`, the `COMMANDS:` list, lines 185-198):
+**4. Update help text** (`src/index.ts`, the `COMMANDS:` list, lines 134-149):
 
 ```
 COMMANDS:
@@ -104,7 +104,7 @@ COMMANDS:
   ...
 ```
 
-See [`src/cli/cursor.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/cursor.ts) and [`src/cli/codex.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/codex.ts) as reference implementations.
+See [`src/cli/cursor.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/cursor.ts) and [`src/cli/codex.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/codex.ts) as reference implementations.
 
 ### Template Best Practices
 
@@ -125,7 +125,7 @@ For platforms that don't support MCP or prefer direct HTTP communication, `AutoM
 
 ### HTTP Endpoint Reference
 
-The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts)):
+The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts)):
 
 | Method | Endpoint | Request Body | Response | Client Method |
 |---|---|---|---|---|
@@ -146,7 +146,7 @@ The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](h
 
 ### API Request Flow and Error Handling
 
-Error handling details from [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts#L157-L233) (`makeRequest()`, lines 157-233):
+Error handling details from [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts#L155-L255) (`makeRequest()`, lines 155-255):
 
 - **Retryable errors**: Network errors, 5xx server errors (3 attempts max)
 - **Backoff**: Exponential — 500ms, 1s, 2s
@@ -345,11 +345,11 @@ Custom integrations with mcp-automem can be implemented through three primary ap
 
 3. **Direct API Integration** — Ideal for non-MCP platforms or when full control is needed. Import `AutoMemClient`, call HTTP methods directly, handle retries and errors in application code.
 
-**Key integration points in the codebase** (`src/index.ts` has grown to 1763 lines total; anchors below reflect current HEAD):
+**Key integration points in the codebase** (anchors below are at mcp-automem 0.16.0, where `src/index.ts` is 496 lines and the tool surface lives in `src/mcp-surface.ts`):
 
-- Server entry / startup: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L41-L110) lines 41-110
-- Tool definitions: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L466-L1418) lines 466-1418
-- Tool handlers: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/index.ts#L1424-L1706) lines 1424-1706
-- HTTP client: [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/automem-client.ts) — `AutoMemClient` class starts at line 150 (892 lines total)
-- Templates: [`templates/`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/templates/)
-- CLI installers: [`src/cli/`](https://github.com/verygoodplugins/mcp-automem/blob/946f9e5ed1385b632efd2e5b250d064bcc4295e8/src/cli/)
+- Server entry / startup: [`src/index.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts#L30-L112) lines 30-112
+- Tool definitions: [`src/mcp-surface.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts#L85-L1007) lines 85-1007
+- Tool handlers: [`src/mcp-surface.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts#L1038-L1321) lines 1038-1321
+- HTTP client: [`src/automem-client.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — `AutoMemClient` class starts at line 148 (894 lines total)
+- Templates: [`templates/`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/templates/)
+- CLI installers: [`src/cli/`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/)
