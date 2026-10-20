@@ -120,8 +120,6 @@ Every endpoint except `/health`, `/backup`, and `/viewer*` (plus `OPTIONS` prefl
 |----------|------|----------|---------|-------------|
 | `AUTOMEM_API_TOKEN` | string | Yes | _unset_ | Authentication token for standard operations |
 | `ADMIN_API_TOKEN` | string | Yes | _unset_ | Token for admin endpoints (`/admin/*`, `/enrichment/reprocess`) |
-| `API_TOKEN` | string | No | _unset_ | Fallback alias for `AUTOMEM_API_TOKEN` |
-| `ADMIN_TOKEN` | string | No | _unset_ | Fallback alias for `ADMIN_API_TOKEN` |
 
 :::tip
 Query parameter authentication (`?api_key=`) is supported but discouraged in production due to log exposure. Use Bearer tokens for API clients and header-based authentication for MCP bridges. See [Authentication](/docs/reference/authentication/) for full details.
@@ -183,7 +181,7 @@ Controls automatic background enrichment after memory storage:
 | `ENRICHMENT_ENABLE_SUMMARIES` | bool | No | `true` | Auto-generate memory summaries |
 | `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` | float | No | `300` | Cooldown (seconds) after a definitive LLM quota-exhaustion error before the worker sends one recovery probe |
 | `ENRICHMENT_SPACY_MODEL` | string | No | `en_core_web_sm` | spaCy model for NER (if installed) |
-| `JIT_ENRICHMENT_ENABLED` | bool | No | `true` | Run enrichment inline on store (just-in-time) |
+| `JIT_ENRICHMENT_ENABLED` | bool | No | `true` | Run lightweight enrichment inline during recall for memories not yet enriched (just-in-time) |
 
 **Entity tag generation:**
 
@@ -243,7 +241,7 @@ Fine-tune hybrid search ranking. Weights are applied to individual signals and s
 | `SEARCH_WEIGHT_IMPORTANCE` | float | No | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_RECENCY` | float | No | `0.10` | Freshness boost |
 | `SEARCH_WEIGHT_CONFIDENCE` | float | No | `0.05` | Memory confidence score |
-| `SEARCH_WEIGHT_EXACT` | float | No | `0.20` | Content token overlap |
+| `SEARCH_WEIGHT_EXACT` | float | No | `0.20` | Whole-query exact match against metadata terms |
 | `SEARCH_WEIGHT_RELATION` | float | No | `0.25` | Graph relation proximity boost |
 | `SEARCH_WEIGHT_RELEVANCE` | float | No | `0.0` | Weight on the stored consolidation-decay `relevance_score` (age, access, relationships, importance, confidence); `0.0` disables it |
 | `SEARCH_WEIGHT_TEMPORAL` | float | No | `0.10` | Relative-recency re-rank bonus (inert unless `RECALL_RECENCY_BIAS` is active) |

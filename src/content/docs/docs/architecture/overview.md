@@ -257,7 +257,7 @@ The `_compute_metadata_score()` function ([automem/utils/scoring.py](https://git
 | Metadata sidecar match | 35% | Candidates admitted via the metadata sidecar channel | `SEARCH_WEIGHT_METADATA` |
 | Relationship strength | 25% | Graph edge properties | `SEARCH_WEIGHT_RELATION` |
 | Exact match | 20% | Exact string match | `SEARCH_WEIGHT_EXACT` |
-| Tag matching | 20% | Prefix/exact tag filters | `SEARCH_WEIGHT_TAG` |
+| Tag matching | 20% | Query-token hits against tag and metadata terms | `SEARCH_WEIGHT_TAG` |
 | Importance score | 10% | User-assigned priority | `SEARCH_WEIGHT_IMPORTANCE` |
 | Recency boost | 10% | Freshness decay function | `SEARCH_WEIGHT_RECENCY` |
 | Confidence score | 5% | Classification confidence | `SEARCH_WEIGHT_CONFIDENCE` |
