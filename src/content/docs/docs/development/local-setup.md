@@ -24,7 +24,7 @@ Before setting up the development environment, ensure the following tools are in
 | git | Any recent version | Source control |
 
 :::tip[One-shot bootstrap]
-The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv and installs dev requirements in one command. Prefer it over the manual steps below unless you need a custom setup.
+The repo now ships [`scripts/bootstrap_dev.sh`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/bootstrap_dev.sh), which creates a Python 3.12 virtualenv and installs dev requirements in one command. Prefer it over the manual steps below unless you need a custom setup.
 :::
 
 ### Repository Contents
@@ -103,8 +103,8 @@ graph TB
 
         subgraph "Docker Compose Stack (make dev)"
             DC["docker-compose.yml"]
-            Falkor["falkordb/falkordb:latest\nPort 6379\nVolume: ./data/falkordb"]
-            Qdrant["qdrant/qdrant:latest\nPort 6333\nVolume: ./data/qdrant"]
+            Falkor["falkordb/falkordb:latest\nPort 6379\nVolume: falkordb_data"]
+            Qdrant["qdrant/qdrant:v1.11.3\nPort 6333\nVolume: qdrant_data"]
             APIContainer["flask-api\nPort 8001\nOptional"]
         end
 
@@ -134,10 +134,10 @@ make dev   # equivalent to: docker compose up --build
 
 This starts all services in the foreground (attached), rebuilding images if `Dockerfile` or `requirements.txt` changed:
 
-- **FalkorDB** on port `6379` with volume mount at `./data/falkordb`
-- **Qdrant** on port `6333` with volume mount at `./data/qdrant`
+- **FalkorDB** on port `6379`, with data in the `falkordb_data` named volume
+- **Qdrant** on port `6333`, with data in the `qdrant_data` named volume
 
-The [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/docker-compose.yml) file defines these services with persistent storage, ensuring data survives container restarts. Its API service is named `flask-api`.
+The [`docker-compose.yml`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docker-compose.yml) file defines these services with persistent storage, ensuring data survives container restarts. Its API service is named `flask-api`.
 
 ```bash
 # Stop services
@@ -225,7 +225,7 @@ sequenceDiagram
     Flask-->>Dev: '{"status": "healthy"}'
 ```
 
-The [scheduler defaults](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/config.py) run decay daily, creative consolidation weekly, and clustering every 30 days. Forgetting defaults to `0` seconds, which disables it until explicitly configured.
+The [scheduler defaults](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) run decay daily, creative consolidation weekly, and clustering every 30 days. Forgetting defaults to `0` seconds, which disables it until explicitly configured.
 
 ---
 
@@ -270,7 +270,7 @@ AUTOMEM_API_TOKEN=your-dev-token
 
 **Application logging:** AutoMem has no log-level environment variable, and `LOG_LEVEL` is not read. The server starts logging at `INFO` ([`app.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L104)). Read the output in the terminal running `python app.py`, or with `docker compose logs -f flask-api`.
 
-Docker Compose exports `FLASK_ENV=development` and `FLASK_DEBUG=1` for the `flask-api` container, but the [runtime entry point](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/runtime_wiring.py) hardcodes `debug=False`. Those exports therefore do not enable Flask debug mode or the autoreloader; restart the process or container after changing source files.
+Docker Compose exports `FLASK_ENV=development` and `FLASK_DEBUG=1` for the `flask-api` container, but the [runtime entry point](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py) hardcodes `debug=False`. Those exports therefore do not enable Flask debug mode or the autoreloader; restart the process or container after changing source files.
 
 ---
 
@@ -368,10 +368,12 @@ curl http://localhost:6333/health   # Verify Qdrant is accessible
 
 #### Docker Volumes Permission Issues
 
-**Symptom**: `Permission denied` errors when writing to `./data/falkordb` or `./data/qdrant`
+Compose keeps database data in the `falkordb_data` and `qdrant_data` named volumes, which Docker manages. The database services bind-mount only `./backups/falkordb` and `./backups/qdrant` from the host.
+
+**Symptom**: `Permission denied` errors when writing to `./backups/falkordb` or `./backups/qdrant`
 
 ```bash
-sudo chown -R $(whoami) ./data/
+sudo chown -R $(whoami) ./backups/
 ```
 
 ---

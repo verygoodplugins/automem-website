@@ -9,7 +9,7 @@ This page provides a complete reference for all environment variables and config
 
 For a quick-reference table grouped by category, see [Environment Variables](/docs/getting-started/environment-variables/). For deployment-specific setup, see [Docker & Local Dev](/docs/getting-started/docker/) or [Railway Deployment](/docs/deployment/railway/).
 
-The server and MCP behaviors corrected here are verified against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/tree/e147c352b100ebbf29e6555453fdde5152066138) and [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37).
+The server and MCP behaviors corrected here are verified against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb) and [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37).
 
 ---
 

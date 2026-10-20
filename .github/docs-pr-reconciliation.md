@@ -15,9 +15,10 @@ recorded in `.github/docs-pr-reconciliation/audits/`.
 **Pin correction (2026-10-19):** `e147c352` is the release-please branch
 commit for 0.16.2 (2026-08-14), not the published tag. AutoMem `v0.16.2` is
 `5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb`, which carries further source
-changes. Fresh replacements pin AutoMem links to the tag and re-check line
-anchors; `scripts/docs-source-pins.json` records the release pins the docs
-tests accept.
+changes. Every docs page now links AutoMem at the tag, with line anchors and
+claims re-checked there. The table above keeps `e147c352` only as the commit
+the audit used; `scripts/docs-source-pins.json` records the release pins the
+docs tests accept and no longer lists it.
 
 The tracked audit archive at `.github/docs-pr-reconciliation/audits/` is the
 claim-level authority. It retains the release evidence, explicit
