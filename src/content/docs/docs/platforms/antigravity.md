@@ -253,7 +253,7 @@ curl https://your-automem.up.railway.app/health
 
 1. Verify `AUTOMEM_API_KEY` matches the token set in your AutoMem service
 2. Test authentication against an endpoint that requires the token, because `/health` does not check it: `curl -i -H "Authorization: Bearer $KEY" "$ENDPOINT/recall?limit=1"`. A `401 Unauthorized` response means the service rejected the key.
-3. Regenerate API key if expired
+3. AutoMem checks the key against the token configured on the service and has no token expiry, so a key that worked earlier fails only if the service token changed. Update `AUTOMEM_API_KEY` to the current value and restart Antigravity
 
 ### MCP Store vs. custom server conflicts
 

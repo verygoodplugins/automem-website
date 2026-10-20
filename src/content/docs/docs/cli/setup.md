@@ -350,7 +350,7 @@ For platform-specific verification (Claude Desktop, Cursor, etc.), see the respe
 
 | Issue | Cause | Solution |
 |---|---|---|
-| `AUTOMEM_API_URL not set` | `.env` file missing or not in current directory | Run `setup` wizard or manually create `.env` |
+| `AUTOMEM_API_URL not set` | No endpoint is configured in the environment or in a `.env` file in the current directory. The client falls back to `http://127.0.0.1:8001` and prints this warning only in an interactive terminal | Run the `install` wizard (`setup` is an alias), or set `AUTOMEM_API_URL`. Nothing to fix if your AutoMem runs at the default local address |
 | `Connection refused` | AutoMem service not running | Start service: `cd automem && make dev` |
 | `401 Unauthorized` | Invalid API key | Check `AUTOMEM_API_KEY` matches service token |
 | `npx: command not found` | Node.js not installed | Install Node.js 20.19.0+, 22.13.0+, or 24+ |
