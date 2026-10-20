@@ -7,14 +7,14 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/enrichment.py) — `/enrichment/status` and `/enrichment/reprocess` route handlers
-- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
-- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
-- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
-- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/enrichment/runtime_queue_bindings.py) — Queue management
-- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py) — EnrichmentJob dataclass
+- [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/enrichment.py) — `/enrichment/status` and `/enrichment/reprocess` route handlers
+- [automem/enrichment/runtime_worker.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_worker.py) — Enrichment worker thread and job queue management
+- [automem/enrichment/runtime_orchestration.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_orchestration.py) — Memory enrichment orchestration (enrich_memory, jit_enrich_lightweight)
+- [automem/enrichment/runtime_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_helpers.py) — Relationship creation helpers (temporal, semantic, pattern links)
+- [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_queue_bindings.py) — Queue management
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/service_state.py) — EnrichmentJob dataclass
 - [automem/utils/entity_extraction.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/entity_extraction.py) — Entity extraction (`extract_entities`, `_is_valid_entity`, `_slugify`), summary generation (`generate_summary`), and the spaCy model loader
-- [.env.example](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/.env.example) — Enrichment configuration variables
+- [.env.example](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/.env.example) — Enrichment configuration variables
 :::
 
 The Enrichment Pipeline is a background worker system that automatically enhances stored memories with extracted entities, relationships, summaries, and pattern associations. This page documents the queue-based architecture, processing stages, entity extraction techniques, and relationship creation mechanisms.
@@ -75,7 +75,7 @@ Fields:
 - `attempt` — Attempt counter (0-indexed), incremented when a forced job is re-enqueued after a failure
 - `forced` — When `true` (admin trigger), skips the already-enriched check and reprocesses
 
-([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/service_state.py))
+([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/service_state.py))
 
 ---
 

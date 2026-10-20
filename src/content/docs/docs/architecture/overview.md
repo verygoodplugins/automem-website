@@ -7,13 +7,13 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/service_state.py) — ServiceState dataclass and shared state
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/config.py) — Centralized configuration and constants
-- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/runtime_wiring.py) — Application startup and worker initialization
+- [automem/service_state.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/service_state.py) — ServiceState dataclass and shared state
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — Centralized configuration and constants
+- [automem/runtime_wiring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/runtime_wiring.py) — Application startup and worker initialization
 - [automem/api/](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/) — Route blueprints (memory.py, recall.py, graph.py, entity.py, admin.py, backup.py, health.py, enrichment.py, consolidation.py, stream.py, viewer.py)
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/graph_store.py) — FalkorDB operations
-- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/vector_store.py) — Qdrant operations
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/provider.py) — Embedding provider abstraction
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/graph_store.py) — FalkorDB operations
+- [automem/stores/vector_store.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/vector_store.py) — Qdrant operations
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/provider.py) — Embedding provider abstraction
 :::
 
 This document provides a comprehensive overview of AutoMem's internal architecture, design decisions, and component interactions. It covers the Flask application structure, service initialization, request processing flow, and the coordination between storage systems and background workers.
@@ -177,7 +177,7 @@ graph TB
 
 ### ServiceState Dataclass
 
-The `ServiceState` dataclass ([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/service_state.py)) serves as the central state container for all service components.
+The `ServiceState` dataclass ([automem/service_state.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/service_state.py)) serves as the central state container for all service components.
 
 This single `state` instance is shared across all Flask request handlers and background threads, requiring careful lock management for queue operations.
 
@@ -221,14 +221,14 @@ sequenceDiagram
 
 | Function | Purpose | Location |
 |---|---|---|
-| `init_falkordb()` | Establishes FalkorDB connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/runtime_clients.py) |
-| `init_qdrant()` | Establishes optional Qdrant connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/runtime_clients.py) |
-| `init_openai()` | Initializes OpenAI client for memory classification | [automem/service_runtime.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/service_runtime.py) |
-| `init_embedding_provider()` | Selects and initializes embedding provider | [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/provider_init.py) |
-| `init_enrichment_pipeline()` | Launches entity extraction and linking pipeline | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/enrichment/runtime_queue_bindings.py) |
-| `init_embedding_pipeline()` | Launches batch embedding generation worker | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/runtime_bindings.py) |
-| `init_consolidation_scheduler()` | Launches scheduled consolidation cycles | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/consolidation/runtime_bindings.py) |
-| `init_sync_worker()` | Launches drift detection and repair worker | [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/sync/runtime_bindings.py) |
+| `init_falkordb()` | Establishes FalkorDB connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py) |
+| `init_qdrant()` | Establishes optional Qdrant connection | [automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py) |
+| `init_openai()` | Initializes OpenAI client for memory classification | [automem/service_runtime.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/service_runtime.py) |
+| `init_embedding_provider()` | Selects and initializes embedding provider | [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/provider_init.py) |
+| `init_enrichment_pipeline()` | Launches entity extraction and linking pipeline | [automem/enrichment/runtime_queue_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment/runtime_queue_bindings.py) |
+| `init_embedding_pipeline()` | Launches batch embedding generation worker | [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/runtime_bindings.py) |
+| `init_consolidation_scheduler()` | Launches scheduled consolidation cycles | [automem/consolidation/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/consolidation/runtime_bindings.py) |
+| `init_sync_worker()` | Launches drift detection and repair worker | [automem/sync/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/sync/runtime_bindings.py) |
 
 ---
 
@@ -248,7 +248,7 @@ Recall implements hybrid search combining vector similarity, keyword matching, a
 
 ### 10-Component Hybrid Scoring
 
-The `_compute_metadata_score()` function ([automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/utils/scoring.py)) combines signals with configurable weights:
+The `_compute_metadata_score()` function ([automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/scoring.py)) combines signals with configurable weights:
 
 | Component | Weight | Source | Config Variable |
 |---|---|---|---|
@@ -310,7 +310,7 @@ The `automem/stores/vector_store.py` module handles Qdrant operations:
 
 Key functions:
 - `_build_qdrant_tag_filter(tags, mode, match)` — Constructs Qdrant filter objects for tag queries
-- `ensure_qdrant_collection()` — Creates collection with appropriate vector parameters if missing ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/stores/runtime_clients.py))
+- `ensure_qdrant_collection()` — Creates collection with appropriate vector parameters if missing ([automem/stores/runtime_clients.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py))
 - Graceful degradation: All Qdrant operations wrapped in try-except with logging but no request failures
 
 ---
@@ -321,7 +321,7 @@ AutoMem implements two-tier authorization with multiple token extraction methods
 
 ### Token Extraction Methods
 
-The `extract_api_token()` function ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/auth_helpers.py)) tries three methods in order:
+The `extract_api_token()` function ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py)) tries three methods in order:
 
 1. **Bearer token** (recommended): `Authorization: Bearer {token}`
 2. **Custom header**: `X-API-Key: {token}`
@@ -329,7 +329,7 @@ The `extract_api_token()` function ([automem/api/auth_helpers.py](https://github
 
 ### Admin Endpoints
 
-Admin operations require a separate token checked by `require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/api/auth_helpers.py)):
+Admin operations require a separate token checked by `require_admin_token()` ([automem/api/auth_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py)):
 
 | Endpoint | Purpose | Tokens Required |
 |---|---|---|
@@ -341,8 +341,8 @@ Admin operations require a separate token checked by `require_admin_token()` ([a
 When `AUTOMEM_API_TOKEN` is set, a [`before_request` guard](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) and [`require_api_token()`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/auth_helpers.py#L45-L61) apply it to every route except `/health`, `/viewer*`, `/backup` (admin token only), and `OPTIONS` requests.
 
 **Configuration:**
-- `AUTOMEM_API_TOKEN` — Standard API access ([automem/config.py:622](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L622))
-- `ADMIN_API_TOKEN` — Admin operations ([automem/config.py:623](https://github.com/verygoodplugins/automem/blob/ed36b98e3e1569dde71aa430417b6549520f7068/automem/config.py#L623))
+- `AUTOMEM_API_TOKEN` — Standard API access ([automem/config.py:594](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py#L594))
+- `ADMIN_API_TOKEN` — Admin operations ([automem/config.py:595](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py#L595))
 
 ---
 
@@ -358,15 +358,15 @@ All providers implement the `EmbeddingProvider` abstract base class.
 
 When `EMBEDDING_PROVIDER=auto` (default), the system tries providers in order:
 
-1. **Voyage AI** — Best quality, requires API key ([automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/voyage.py))
-2. **OpenAI** — High quality, requires API key ([automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/openai.py))
-3. **Ollama** — Local server, no API key ([automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/ollama.py))
-4. **FastEmbed** — Local ONNX, no API key ([automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/fastembed.py))
-5. **Placeholder** — Hash-based, always available ([automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding/placeholder.py))
+1. **Voyage AI** — Best quality, requires API key ([automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/voyage.py))
+2. **OpenAI** — High quality, requires API key ([automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/openai.py))
+3. **Ollama** — Local server, no API key ([automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/ollama.py))
+4. **FastEmbed** — Local ONNX, no API key ([automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/fastembed.py))
+5. **Placeholder** — Hash-based, always available ([automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/placeholder.py))
 
 ### Dimension Validation
 
-The `validate_vector_dimensions()` function ([automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/utils/validation.py)) prevents dimension mismatches that would corrupt Qdrant data.
+Dimension checks live in [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py). By default (`VECTOR_SIZE_AUTODETECT=true`), `get_effective_vector_size()` adopts an existing collection's dimension and logs a warning when it differs from `VECTOR_SIZE`. The legacy `validate_vector_dimensions()` only logs. With `VECTOR_SIZE_AUTODETECT=false`, a mismatch raises `VectorDimensionMismatchError`.
 
 :::caution
 If validation fails, the memory still writes to FalkorDB (canonical record preserved) but the embedding is not stored in Qdrant.
