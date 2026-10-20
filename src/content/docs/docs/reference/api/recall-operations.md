@@ -52,7 +52,7 @@ Tag filtering uses pre-computed `tag_prefixes` stored in both FalkorDB and Qdran
 **Prefix matching example:**
 - Query: `tags=slack`
 - Matches: `slack:channel:general`, `slack:user:U123`, `slack:reaction:thumbs-up`
-- Uses precomputed `tag_prefixes` field for O(1) lookup
+- Matches against the precomputed `tag_prefixes` field, which stores each tag's segment prefixes (`slack`, `slack:channel`, `slack:channel:general`), so a prefix filter is an exact membership check instead of a `STARTS WITH` scan
 
 **Mode behavior:**
 - `any` (default): Match if ANY filter tag present
@@ -77,12 +77,12 @@ Time queries are parsed by `_parse_time_expression()` from `automem/utils/time.p
 | `active_path` | string | — | File path being edited (auto-detects language) |
 | `context_tags` | array[string] | — | Tags to boost in scoring |
 | `context_types` | array[string] | — | Memory types to prioritize |
-| `priority_ids` | array[string] | — | Memory IDs to boost during scoring |
+| `priority_ids` | array[string] | — | Memory IDs to boost during scoring and fetch directly when the search missed them |
 
 Context hints add an unweighted context bonus to the final score (see the formula under [Hybrid Scoring System](#hybrid-scoring-system)) but do not filter results. When `active_path` matches a coding language extension, the system prioritizes `Style` type memories for that language.
 
 :::note[`priority_ids` semantics]
-`priority_ids` adds a relevance boost to matching memories during scoring — it does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints, it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
+`priority_ids` adds a fixed +0.9 context bonus to matching memories during scoring. A listed ID that the search did not surface is fetched directly by ID and returned with `match_type: "priority_id"`, and listed IDs are placed ahead of other candidates before results are trimmed to `limit`. It does **not** bypass filters or guarantee inclusion. If a listed ID fails the tag gate, time window, or other query constraints (including `exclude_tags`, `min_score`, the current-state filter, and the adaptive score floor), it will still be excluded. To guarantee a specific memory is returned, fetch it directly via [`GET /memory/{id}`](/docs/reference/api/memory-operations/) instead of relying on `priority_ids`.
 :::
 
 ### Graph Expansion Parameters
@@ -153,8 +153,8 @@ Fallback fills are appended **after** the scoped results, and each carries `outs
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `min_score` | float | from `RECALL_MIN_SCORE` | Minimum final score for a result to be returned |
-| `adaptive_floor` | boolean | from `RECALL_ADAPTIVE_FLOOR` | Adjusts the minimum score floor based on overall result quality, dropping weak outliers |
+| `min_score` | float | from `RECALL_MIN_SCORE` (ships `0.0`, disabled) | Minimum final score for a result to be returned |
+| `adaptive_floor` | boolean | from `RECALL_ADAPTIVE_FLOOR` (ships `true`) | Adjusts the minimum score floor based on overall result quality, dropping weak outliers |
 
 ---
 
@@ -198,7 +198,7 @@ graph LR
 
 **Search strategy:**
 1. **Vector Search** (`state.qdrant != None`): Semantic similarity using the configured embedding provider (Voyage by default)
-2. **Keyword Search** (FalkorDB): Content and tag matching using Cypher `CONTAINS`
+2. **Keyword Search** (FalkorDB): Content and tag matching using Cypher `CONTAINS`, run only when vector search returned fewer candidates than the per-query limit, to fill the remaining slots
 3. **Trending Results** (no query): High-importance memories ordered by recency
 4. **Deduplication**: Track seen IDs across sources
 5. **Filtering**: Apply temporal and tag constraints
@@ -220,8 +220,7 @@ graph TB
     end
 
     subgraph KeywordSearch["Keyword Search (FalkorDB)"]
-        KeywordComp["Keyword Component<br/>Weight: SEARCH_WEIGHT_KEYWORD<br/>TF-IDF + phrase matching"]
-        ExactComp["Exact Component<br/>Weight: SEARCH_WEIGHT_EXACT<br/>Direct content overlap"]
+        KeywordComp["Keyword Component<br/>Weight: SEARCH_WEIGHT_KEYWORD<br/>Keyword-search match score, or share<br/>of query keywords found in content"]
     end
 
     subgraph MetadataSidecar["Metadata Sidecar Search"]
@@ -233,6 +232,7 @@ graph TB
         ConfidenceComp["Confidence Component<br/>Weight: SEARCH_WEIGHT_CONFIDENCE<br/>Classification confidence"]
         RecencyComp["Recency Component<br/>Weight: SEARCH_WEIGHT_RECENCY<br/>Freshness boost"]
         TagComp["Tag Component<br/>Weight: SEARCH_WEIGHT_TAG<br/>Tag overlap score"]
+        ExactComp["Exact Component<br/>Weight: SEARCH_WEIGHT_EXACT<br/>Whole-query exact match against metadata terms"]
     end
 
     subgraph ContextScoring["Context Scoring"]
@@ -334,17 +334,19 @@ graph TB
 
     CheckExpand{"expand_relations<br/>enabled?"}
 
-    FetchRelations["fetch_relations()<br/>search/runtime_relations.py"]
+    FetchRelations["Cypher MATCH per seed<br/>_expand_related_memories()<br/>api/recall.py"]
+
+    CheckLimit{"Expanded count below<br/>expansion_limit?"}
 
     FilterStrength{"Relation strength >=<br/>expand_min_strength?"}
 
     FilterImportance{"Memory importance >=<br/>expand_min_importance?"}
 
-    TraverseEdge["Traverse edge<br/>Load related memory"]
-
-    CheckLimit{"Total expanded <br/>expansion_limit?"}
+    FilterScope{"Passes time window, exclude_tags,<br/>and tag scope if expand_respect_tags?"}
 
     AddToResults["Add to expanded results"]
+
+    NextEdge["Next edge, then next seed"]
 
     FinalResults["Merged Results<br/>Seed + Expanded"]
 
@@ -352,17 +354,22 @@ graph TB
     CheckExpand -->|No| FinalResults
     CheckExpand -->|Yes| FetchRelations
 
-    FetchRelations --> FilterStrength
-    FilterStrength -->|Fail| FinalResults
-    FilterStrength -->|Pass| TraverseEdge
+    FetchRelations --> CheckLimit
+    CheckLimit -->|"Limit reached"| FinalResults
+    CheckLimit -->|"Within limit"| FilterStrength
 
-    TraverseEdge --> FilterImportance
-    FilterImportance -->|Fail| FinalResults
-    FilterImportance -->|Pass| CheckLimit
+    FilterStrength -->|"Fail, skip edge"| NextEdge
+    FilterStrength -->|Pass| FilterImportance
 
-    CheckLimit -->|Exceeded| FinalResults
-    CheckLimit -->|Within limit| AddToResults
-    AddToResults --> FinalResults
+    FilterImportance -->|"Fail, skip edge"| NextEdge
+    FilterImportance -->|Pass| FilterScope
+
+    FilterScope -->|"Fail, skip edge"| NextEdge
+    FilterScope -->|Pass| AddToResults
+
+    AddToResults --> NextEdge
+    NextEdge -->|"More edges or seeds"| CheckLimit
+    NextEdge -->|"None left"| FinalResults
 ```
 
 The `_expand_related_memories()` function expands each seed memory by one hop, using a Cypher `MATCH` to follow typed relationship edges (e.g., `RELATES_TO`, `PREFERS_OVER`, `LEADS_TO`). Edges are ordered by update time (falling back to the related memory's `timestamp`), newest first, and capped at `relation_limit` per seed.
@@ -370,37 +377,37 @@ The `_expand_related_memories()` function expands each seed memory by one hop, u
 **Key configuration constants:**
 - `RECALL_RELATION_LIMIT` (default: 5) — Max edges per seed memory
 - `RECALL_EXPANSION_LIMIT` (default: 25) — Total expanded memories cap
-- `RECALL_MIN_SCORE` — Minimum score threshold for results to be returned
-- `RECALL_ADAPTIVE_FLOOR` — Adaptive floor that adjusts minimum score based on result quality
+- `RECALL_MIN_SCORE` (default: 0.0, disabled) — Minimum score threshold for results to be returned
+- `RECALL_ADAPTIVE_FLOOR` (default: true) — Adaptive floor that adjusts minimum score based on result quality
 
 **Edge types traversed:** the relationship types flagged `default_expand` in the relationship registry: `RELATES_TO`, `LEADS_TO`, `OCCURRED_BEFORE`, `PREFERS_OVER`, `EXEMPLIFIES`, `CONTRADICTS`, `REINFORCES`, `INVALIDATED_BY`, `EVOLVED_INTO`, `DERIVED_FROM`, and `PART_OF`. The system-generated `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED` edges are not followed. See [Relationship Operations](/docs/reference/api/relationships/) for the full type reference.
 
 ### Entity Expansion Flow
 
-When `expand_entities=true`, the system performs multi-hop reasoning via entity tags:
+When `expand_entities=true`, the system performs multi-hop reasoning via entity tags. It runs once, after the seed results and any relation expansion are assembled, and only when Qdrant is available:
 
-1. Extract entity tags from query (format: `entity:<type>:<slug>`)
-2. Find memories with matching entity tags (first hop)
-3. Extract entities from matched memories
-4. Find memories containing those entities (second hop)
+1. Collect entities from the seed memories and any relation-expanded memories: `metadata.entities` (people, places, organizations) and `entity:people:<slug>` tags
+2. For up to 5 of those entities, one after another, search for memories tagged `entity:people:<slug>` (up to 5 per entity, capped by `expansion_limit`)
+3. Return the new memories with `match_type: "entity_expansion"` and `expanded_from_entity`
 
-**Example:** Query `"What is Sarah's sister's job?"` → Find `"Sarah"` entity → Find Sarah's relationships → Find `"sister Rachel"` → Find Rachel's job.
+**Example:** Query `"What is Sarah's sister's job?"` → Hybrid search finds the seed memory `"Sarah's sister is Rachel"` → Find memories tagged for `rachel` → Find Rachel's job.
 
 ### Auto Query Decomposition
 
 When `auto_decompose: true`, the backend automatically extracts entities and topics from the query to generate supplementary searches:
 
 - Query: `"React OAuth authentication patterns"`
-- Decomposed into: `["React", "OAuth", "authentication", "patterns"]`
-- Executes parallel searches for each term
+- Searched as: the original query plus up to three topic keywords, `["React OAuth authentication patterns", "react", "oauth", "authentication"]` (no names are detected in this query)
+- When a query does contain capitalized names (at most two are used), each name is searched alone and combined with up to three topic keywords instead of the topic keywords alone
+- Runs the searches one after another, not in parallel
 - Merges and deduplicates results
 
 ### Multiple Query Deduplication
 
-The `queries` parameter (array of strings) allows multiple search queries in a single request. The backend executes them in parallel and deduplicates results server-side.
+The `queries` parameter (array of strings) allows multiple search queries in a single request. The backend executes them one after another and deduplicates results server-side.
 
 **Deduplication logic:**
-1. Each query returns up to `limit` results
+1. Each query returns up to `per_query_limit` results (default `limit`)
 2. Server merges results by `memory_id`
 3. Keeps highest-scored version of each memory
 4. Returns `dedup_removed` count in response metadata
@@ -427,13 +434,10 @@ sequenceDiagram
 
     Client->>API: "GET /recall?query=...&expand_relations=true"
 
-    par Vector Search
-        API->>Vector: "search(embedding, limit)"
-        Vector-->>API: "vector_candidates"
-    and Graph Search
-        API->>Graph: "keyword search Cypher"
-        Graph-->>API: "graph_candidates"
-    end
+    API->>Vector: "search(embedding, limit)"
+    Vector-->>API: "vector_candidates"
+    API->>Graph: "keyword search Cypher (fills remaining slots)"
+    Graph-->>API: "graph_candidates"
 
     API->>Scorer: "merge + rank candidates"
     Scorer-->>API: "ranked_results"
@@ -514,14 +518,14 @@ sequenceDiagram
 }
 ```
 
-The sample's numbers follow from the default weights. The query keywords are `postgresql`, `database`, and `decisions`; the content contains two of them (`keyword` 0.6667) and the tags match one (`tag` 0.3333). The vector hit scored 0.82, and the memory is 54 days old when queried, so `recency` is 0.7 on the default 180-day window. `final_score` is then 0.35 × 0.82 + 0.35 × 0.6667 + 0.2 × 0.3333 + 0.1 × 0.9 + 0.05 × 0.9 + 0.1 × 0.7 = 0.792, with no context bonus. Each result also carries bookkeeping fields (`source`, `match_score`, `original_score`, `score`, `_query`) that the sample leaves out.
+The sample's numbers follow from the default weights. The query keywords are `postgresql`, `database`, and `decisions`; the content contains two of them (`keyword` 0.6667) and the tags match one (`tag` 0.3333). The vector hit scored 0.82, and the memory is 54 days old when queried, so `recency` is 0.7 on the default 180-day window. `final_score` is then 0.35 × 0.82 + 0.35 × 0.6667 + 0.2 × 0.3333 + 0.1 × 0.9 + 0.05 × 0.9 + 0.1 × 0.7 = 0.792, with no context bonus. Each result also carries bookkeeping fields (`source`, `match_score`, `original_score`, `score`, `_query`) that the sample leaves out. The `memory` object in the sample is abridged too: stored memories can also carry `tag_prefixes`, `updated_at`, `last_accessed`, `t_valid`, `t_invalid`, and `metadata`.
 
 **Result fields:**
 - `id`: The memory's ID
 - `memory`: The stored memory record (Qdrant payload or FalkorDB node properties) with fields such as `content`, `tags`, `importance`, `timestamp`, `type`, `confidence`, and `metadata`. The memory ID is the result-level `id` (vector hits carry no ID inside `memory`) and the creation time is stored as `timestamp`; the MCP tool presents them as `memory_id` and `created_at`
 - `final_score`: Combined relevance score
 - `match_type`: Type of match — `vector`, `keyword`, `trending`, `metadata`, `tag`, `relation`, `entity_expansion`, `priority_id`, or `state_replacement`
-- `score_components`: Breakdown of scoring factors: the ten weighted components plus `context` (the context bonus), `evidence` (the strongest of the vector, keyword, metadata, and exact scores), and `relevance_gated`
+- `score_components`: Breakdown of scoring factors: the ten weighted components plus `context` (the context bonus), `evidence` (the strongest of the vector, keyword, metadata, and exact scores), and `relevance_gated`. Two keys appear only conditionally: `temporal` (the result's recency relative to the other candidates, 0.0 to 1.0) when the [recency re-rank](#relative-recency-bias) changes scores, and `entity_expansion` (0.15) on entity-expanded results
 - `relations`: Connected memories (if expansion enabled)
 - `expanded_from_entity`: Entity that triggered expansion (if applicable)
 - `deduped_from`: IDs of duplicate results removed
@@ -550,10 +554,12 @@ When `expand_entities=true`:
   "entity_expansion": {
     "enabled": true,
     "expanded_count": 4,
-    "entities_found": ["Rachel", "Platform team"]
+    "entities_found": ["rachel", "platform team"]
   }
 }
 ```
+
+`entities_found` lists up to 10 entity names, lowercased, collected from the seed and relation-expanded results. Expansion searches at most 5 of them, so a listed name did not necessarily produce a result.
 
 ---
 
@@ -666,10 +672,14 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 
 | Parameter | Type | Required | Constraints | Description |
 |-----------|------|----------|-------------|-------------|
+| `memory_id` | string | No | — | ID fetch mode: returns the single memory via `GET /memory/{id}` and ignores all other parameters |
+| `exhaustive` | boolean | No | — | Tag enumeration mode: requires non-empty `tags` and routes to `GET /memory/by-tag` instead of ranked recall |
 | `query` | string | No | — | Semantic search query |
 | `queries` | array[string] | No | — | Multiple queries for broader recall |
-| `limit` | integer | No | 1–200, default 5 | Max results to return; server enforces its own cap (default 100 via `RECALL_MAX_LIMIT`) |
+| `embedding` | array[number] | No | — | Pre-computed embedding vector for direct similarity search |
+| `limit` | integer | No | 1–200 | Max results to return. When omitted, the server defaults to 5 in ranked mode and 20 in enumeration mode; ranked recall is capped server-side (default 100 via `RECALL_MAX_LIMIT`) and enumeration at 200 |
 | `tags` | array[string] | No | — | Filter by tags |
+| `exclude_tags` | array[string] | No | — | Ranked mode only: tags to exclude (any match excludes; independent of `tag_match`) |
 | `tag_mode` | string | No | `"any"` or `"all"` | Tag matching mode |
 | `tag_match` | string | No | `"exact"` or `"prefix"` | Tag matching strategy |
 | `time_query` | string | No | — | Natural language time filter |
@@ -687,15 +697,19 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 | `active_path` | string | No | — | Current file path for language detection |
 | `context_tags` | array[string] | No | — | Priority tags to boost |
 | `context_types` | array[string] | No | — | Priority memory types to boost |
-| `priority_ids` | array[string] | No | — | Memory IDs to boost during scoring (does not bypass filters) |
-| `auto_decompose` | boolean | No | — | Auto-extract entities from query for parallel searches |
+| `priority_ids` | array[string] | No | — | Memory IDs to boost during scoring and fetch directly when the search missed them (does not bypass filters) |
+| `auto_decompose` | boolean | No | — | Auto-extract entities and topics from query to generate supplementary searches |
+| `per_query_limit` | integer | No | 1–50, default `limit` | Per-query result limit when using `queries` |
 | `state_mode` | string | No | `"current"` or `"history"` | Lifecycle filter; default `current` (current-state only) |
-| `current_only` | boolean | No | — | Legacy lifecycle flag; wins over `state_mode` when both resolve |
-| `state_debug` | boolean | No | — | Include suppression/replacement detail in `state_filter` |
+| `current_only` | boolean | No | schema default `true` | Legacy lifecycle flag; wins over `state_mode` when both resolve. The client forwards it only when the call sets it |
+| `state_debug` | boolean | No | schema default `false` | Include suppression/replacement detail in `state_filter` |
 | `recency_bias` | string | No | `"off"`, `"on"`, or `"auto"` | Relative-recency re-rank; default from `RECALL_RECENCY_BIAS` |
 | `scope_fallback` | boolean | No | — | Fill short tag-scoped results from an unscoped vector search |
-| `min_score` | number | No | — | Minimum final score gate for returned results |
-| `adaptive_floor` | boolean | No | — | Adaptive score-floor gating based on result quality |
+| `min_score` | number | No | 0–1 | Minimum final score gate for returned results; default from `RECALL_MIN_SCORE` (ships `0.0`, disabled) |
+| `adaptive_floor` | boolean | No | — | Adaptive score-floor gating based on result quality; default from `RECALL_ADAPTIVE_FLOOR` (ships `true`) |
+| `sort` | string | No | `"score"`, `"time_desc"`, `"time_asc"`, `"updated_desc"`, or `"updated_asc"` | Result ordering; the server default is `score`, or `time_desc` when a time window is given without a query (use `time_*` for chronological recaps) |
+| `format` | string | No | `"text"`, `"items"`, `"detailed"`, or `"json"`; default `"text"` | Output format (see [MCP Response Formatting](#mcp-response-formatting)) |
+| `offset` | integer | No | 0 or more | Enumeration mode only (`exhaustive: true`): records to skip when paging. Ranked recall rejects `offset > 0`, so raise `limit` instead |
 
 **Output schema:**
 
@@ -703,20 +717,24 @@ The `recall_memory` MCP tool wraps `GET /recall` with additional client-side opt
 |-------|------|----------|-------------|
 | `count` | integer | Yes | Number of memories returned |
 | `results` | array | Yes | Array of memory objects with scores |
+| `mode` | string | No | Mode that produced the result: `ranked`, `enumeration`, or `id_fetch` |
+| `has_more` | boolean | No | Enumeration mode only: true if more records exist past this page |
+| `limit` | integer | No | Enumeration mode only: page size of this response |
+| `offset` | integer | No | Enumeration mode only: offset used for this response |
+| `next_offset` | integer | No | Enumeration mode only, when `has_more` is true: the `offset` for the next page |
+| `truncation` | object | No | Present when the response budget cut anything |
 | `dedup_removed` | integer | No | Duplicates removed in multi-query |
-| `expansion` | object | No | Graph expansion statistics |
-| `entity_expansion` | object | No | Entity expansion statistics |
-| `time_window` | object | No | Applied time filter bounds |
-| `tags` | string[] | No | Applied tag filters |
+
+The schema also declares the ranked-recall diagnostics `query`, `sort`, `exclude_tags`, `state_filter`, `state_mode`, `tag_scope`, `scope_fallback`, `recency_bias`, `score_filter`, `queries`, `vector_search`, `jit_enriched_count`, `query_time_ms`, and `entities`. `structuredContent` can also carry fields the schema does not declare: `expansion`, `entity_expansion`, `time_window`, `tags`, `keywords`, `tag_mode`, `tag_match`, and `context_priority`.
 
 ### MCP Response Formatting
 
-Budgeted formats (`text`, `items`, `detailed`) are **summary-first** to stay under MCP client tool-response caps (~25k tokens in Claude Code). The formatter in `src/recall-memory.ts`:
+Budgeted formats (`text`, `items`, `detailed`) trim each memory to stay under MCP client tool-response caps (~25k tokens in Claude Code). The formatter in `src/recall-memory.ts`:
 
-- Prefers each memory's server-generated `summary` over a long `content` preview when present
-- Truncates content previews to 400 characters when no summary is available
-- Collapses relations to compact stubs (max 3 per memory, 100-char summaries); stubs include `id`, `from` (the seed memory for expanded results or the suppressed memory for state replacements), `type`, `strength`, `kind`, and `summary`
-- Collapses metadata to its key list
+- Cuts content longer than 400 characters to a 400-character preview and flags it with `content_truncated` and `content_chars` (the full length)
+- Keeps a server-generated `summary` as an additional field; it stands in for the preview in the text channel only when `content` is empty
+- In `detailed`, collapses relations to compact stubs (max 3 per memory, 100-char summaries); stubs include `id`, `from` (the seed memory for expanded results or the suppressed memory for state replacements), `type`, `strength`, `kind`, and `summary`
+- In `detailed`, collapses metadata to its key list
 - Applies a global token budget (default 18,000 estimated tokens; override with `AUTOMEM_RECALL_TOKEN_BUDGET`); the budget bounds the **whole serialized response** (`structuredContent` plus every text block), not just the results array
 
 `format: "json"` keeps raw per-field passthrough, including `t_valid`, `t_invalid`, and `archived` on each memory, but the global budget still applies. **ID fetches** via `memory_id` are never truncated and also include `t_valid`, `t_invalid`, and `archived` — use that mode to retrieve a full record.
@@ -736,7 +754,7 @@ Each memory in budgeted `text` output is a numbered list item:
 A summary line includes statistics when applicable:
 
 ```
-(3 duplicates removed; 5 via entity expansion (Rachel, Platform team); 2 via relation expansion)
+(3 duplicates removed; 5 via entity expansion (rachel, platform team); 2 via relation expansion)
 ```
 
 The MCP response also includes `structuredContent` with the (possibly budget-trimmed) `RecallResult` object for programmatic consumption.
@@ -805,7 +823,7 @@ The MCP response also includes `structuredContent` with the (possibly budget-tri
 |-----------|----------|------------|
 | FalkorDB unavailable | Graph-backed steps (keyword, trending, metadata, relation expansion) are skipped; vector search still runs | 200 |
 | Qdrant unavailable | Graph-only mode (keyword + metadata) | 200 |
-| Embedding generation fails | Falls back to keyword search | 200 |
+| Embedding generation fails | Falls back to a deterministic placeholder vector, so vector hits are not semantically meaningful | 200 |
 | No query and no tags | Returns trending memories | 200 |
 
 The system implements graceful degradation where vector search failures don't block graph operations.
@@ -826,7 +844,7 @@ An unrecognized `time_query` expression is not an error: it is ignored, and only
 
 ## Performance Optimization Techniques
 
-1. **Tag Prefix Indexing**: Pre-computed `tag_prefixes` enable O(1) prefix matching
-2. **Parallel Search**: Vector and graph searches execute concurrently
-3. **LRU Caching**: Entity extraction results cached (80% speedup)
-4. **Access Tracking**: `last_accessed` updates happen asynchronously
+1. **Tag Prefix Indexing**: Pre-computed `tag_prefixes` turn prefix matching into an exact match on stored prefixes, which Qdrant serves from a keyword payload index
+2. **Sequential Candidate Search**: Vector search runs first, and graph keyword search only fills the slots it leaves open
+3. **Deferred Relation Hydration**: `relations` for vector hits are fetched only after scoring, filtering, and trimming, so over-fetched candidates that are dropped never trigger graph relation queries
+4. **Access Tracking**: `last_accessed` updates for the seed matches (not expanded memories) run synchronously, in one batched write before the response is returned
