@@ -13,9 +13,9 @@ AutoMem uses different test frameworks in each repository: **pytest** for the au
 
 ### Purpose and Scope
 
-AutoMem's test suite validates core functionality through unit tests with emphasis on the consolidation engine. The test framework uses pytest with mock objects to isolate graph and vector store interactions, enabling fast execution without external dependencies.
+AutoMem's test suite validates core functionality through unit tests covering the Flask API, the consolidation engine, enrichment, and embedding providers. The test framework uses pytest with mock objects to isolate graph and vector store interactions, enabling fast execution without external dependencies.
 
-Currently, the test suite focuses on consolidation logic. API endpoints and background workers are validated through manual testing and production monitoring.
+The API endpoints have the largest share of tests (`test_api_endpoints.py`, `test_app.py`, and the route and error contracts in `tests/contracts/`), and the consolidation engine has its own mock-based suite. Background workers are only partly covered: the enrichment circuit breaker, `enrich_memory()`, batch embedding fallbacks, and the background sync check have unit tests, while `ConsolidationScheduler` has none.
 
 ### Test Suite Organization
 
@@ -25,16 +25,23 @@ tests/
 ├── test_consolidation_engine.py
 ├── test_api_endpoints.py
 ├── test_app.py
+├── test_backup_endpoint.py
 ├── test_enrichment.py
+├── test_enrichment_circuit.py
 ├── test_embedding_providers.py
+├── test_entity_identities.py
+├── test_stream_events.py
 ├── test_integration.py
 ├── test_content_size.py
 ├── test_vector_size_safety.py
 ├── test_recall_entity_extraction.py
-├── support/
-├── contracts/
-└── benchmarks/
+├── support/        # FakeGraph
+├── contracts/      # route and error contract tests
+├── lab/            # tests for the recall lab scripts in scripts/lab/
+└── benchmarks/     # benchmark suites, auto-marked live
 ```
+
+The tree shows the main files, not every module.
 
 ### Pytest Markers
 
@@ -46,7 +53,7 @@ Tests are tagged with markers to control which tier runs:
 | `integration` | `pytest -rs -m integration tests/` | Docker stack running | Full API + database flow |
 | `live` | `AUTOMEM_ALLOW_LIVE=1 pytest -m live tests/` | Railway deployment | Production smoke tests |
 
-`make test` runs unit tests only. `make test-integration` starts Docker Compose and runs integration tests.
+`make test` runs the unit tests (`pytest -rs -m unit`), then the MCP bridge's Node tests through `make test-node`. `make test-integration` starts Docker Compose and runs integration tests.
 
 #### Coverage by Component
 
@@ -64,7 +71,7 @@ Tests are tagged with markers to control which tier runs:
 | Content Size Limits | `test_content_size.py` | Covered |
 | Vector Size Safety | `test_vector_size_safety.py` | Covered |
 | Recall Entity Extraction | `test_recall_entity_extraction.py` | Covered |
-| MCP Bridge | — | Manual testing only |
+| MCP Bridge | `mcp-sse-server/test/server.test.js`, `mcp-sse-server/test/parity.test.js` | Covered (Node test runner; parity needs a live stack) |
 
 ### Running Tests
 
@@ -83,6 +90,8 @@ pytest tests/test_consolidation_engine.py        # Specific file
 pytest -m unit tests/ -k "test_relevance_score"  # Specific function
 pytest -rs -m integration tests/                 # Integration tests (requires Docker stack)
 ```
+
+**MCP bridge:** the bridge's tests use Node's built-in test runner. `make test-node` (or `npm test` inside `mcp-sse-server/`, which runs `node --test`) runs them, `make test` runs them after the unit tests, and AutoMem's CI `node-test` job runs them on Node 20. The three tests in `parity.test.js` skip unless `AUTOMEM_RUN_PARITY_TESTS=1` is set, and when enabled they need a live stack. `make test-parity` starts its own Docker stack on port 8011 and runs the bridge tests with that variable set, which diffs the remote bridge against the stdio `mcp-automem` transport.
 
 ### Test Architecture
 
@@ -315,7 +324,7 @@ assert points == ["mem_001"]
 
 #### Uncovered Components
 
-**MCP Bridge** — deploy to Railway and test with Claude Desktop.
+**MCP Bridge** — `make test` and AutoMem's CI `node-test` job skip the three parity tests in `parity.test.js`. Cross-transport parity runs through `make test-parity` and the `MCP Transport Parity` workflow (`.github/workflows/mcp-parity.yml`), which runs on pull requests that touch `mcp-sse-server/**`, `automem/api/**`, or `app.py`. That workflow is `continue-on-error` while the harness still fails on known parity gaps, so a parity failure does not block a pull request.
 
 ### Performance Testing Procedures
 
@@ -351,12 +360,10 @@ curl http://localhost:8001/health | jq '.enrichment'
 
 Based on current coverage gaps:
 
-1. **API endpoint tests** — Test Flask routes with mock database
-2. **Background worker tests** — Test enrichment and embedding workers
-3. **Integration tests** — Test full memory storage → enrichment → recall flow
-4. **ConsolidationScheduler tests** — Test scheduling logic and intervals
-5. **MCP bridge tests** — Test tool call translation
-6. **Load testing** — Verify performance under high memory throughput
+1. **Background worker tests** — Test enrichment and embedding workers
+2. **Integration tests** — Test full memory storage → enrichment → recall flow
+3. **ConsolidationScheduler tests** — Test scheduling logic and intervals
+4. **Load testing** — Verify performance under high memory throughput
 
 ---
 
@@ -380,11 +387,11 @@ graph TB
     UNIT --> TOOLS_TEST["MCP Tools\nRequest/response validation"]
 
     INTEGRATION --> ENDTOEND["End-to-End\nReal AutoMem service"]
-    INTEGRATION --> PLATFORM["Platform Integration\nInstaller verification"]
+    UNIT --> PLATFORM["Platform Integration\nInstaller verification"]
 ```
 
-- **Unit tests**: `src/**/*.test.ts` or `tests/unit/` — mock `node-fetch` for HTTP requests, mock `fs` for filesystem operations, use in-memory fixtures for AutoMem responses
-- **Integration tests**: `tests/integration/` — require a running AutoMem service
+- **Unit tests**: `src/**/*.test.ts` and `tests/**/*.test.ts` — stub the global `fetch` for HTTP requests, mock `fs` for filesystem operations, use in-memory fixtures for AutoMem responses
+- **Integration tests**: `tests/integration/automem-service.test.ts` — requires a running AutoMem service. `vitest.config.ts` excludes this file from the unit run, and `vitest.integration.config.ts` runs only this file. The other file in that directory, `mcp-tools.test.ts`, needs no service and runs with the unit tests.
 
 ### Test Commands
 
@@ -402,17 +409,18 @@ Coverage reporting is integrated into the CI pipeline via `@vitest/coverage-v8`,
 
 ### Mock Strategy
 
-**HTTP mocking** — mock `node-fetch` to simulate AutoMem backend responses without a running service:
+**HTTP mocking** — `AutoMemClient` calls the global `fetch`, so stub it to simulate AutoMem backend responses without a running service:
 
 ```typescript
 import { vi } from 'vitest';
 
-vi.mock('node-fetch', () => ({
-  default: vi.fn().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({ memory_id: 'test-123', message: 'Stored' })
-  })
-}));
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
+
+mockFetch.mockResolvedValueOnce({
+  ok: true,
+  json: async () => ({ memory_id: 'mem-123', message: 'Memory stored' }),
+});
 ```
 
 **Filesystem mocking** — mock `fs` for CLI installer tests:
@@ -445,12 +453,13 @@ const mockRecallResponse = {
 
 ### Integration Test Requirements
 
-Integration tests require a live AutoMem service. Set the following environment variables before running:
+Integration tests require a live AutoMem service. Set the following environment variable before running (the default is shown):
 
 ```bash
-AUTOMEM_API_URL=http://localhost:8001
-AUTOMEM_API_KEY=your-test-token
+AUTOMEM_TEST_API_URL=http://localhost:8001
 ```
+
+`AUTOMEM_TEST_ENDPOINT` is the deprecated alias and is still read as a fallback. The suite builds its client from the endpoint alone and sends no API key.
 
 :::caution[Integration tests create real data]
 Integration tests store and recall actual memories in the AutoMem service. Use a dedicated test instance or clean up test memories after runs using tag-based deletion.
