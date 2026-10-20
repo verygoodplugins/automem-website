@@ -176,4 +176,4 @@ curl -i "https://your-automem-url/recall?limit=1" \
 
 ## Release scope
 
-The installer behavior on this page is validated against [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37). The health-response vocabulary is validated against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/health.py).
+The installer behavior on this page is validated against [mcp-automem 0.16.0](https://github.com/verygoodplugins/mcp-automem/tree/9a0bbf754dd31db524da25638b0e97907e32ff37). The health-response vocabulary is validated against [AutoMem 0.16.2](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/health.py).

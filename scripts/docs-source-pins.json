@@ -6,12 +6,6 @@
         "tag": "v0.16.2",
         "sha": "5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb"
       }
-    ],
-    "legacy": [
-      {
-        "sha": "e147c352b100ebbf29e6555453fdde5152066138",
-        "note": "Release-please branch commit for 0.16.2 (2026-08-14), not the v0.16.2 tag. Pages audited against it during the August reconciliation still need repinning to the tag; remove this entry once none link to it."
-      }
     ]
   },
   "verygoodplugins/mcp-automem": {

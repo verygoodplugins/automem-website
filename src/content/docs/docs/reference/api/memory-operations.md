@@ -6,8 +6,8 @@ sidebar:
 ---
 
 :::note[Source files]
-- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/automem/api/memory.py) — Flask API endpoints
-- [app.py](https://github.com/verygoodplugins/automem/blob/e147c352b100ebbf29e6555453fdde5152066138/app.py) — shared HTTP error envelope
+- [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py) — Flask API endpoints
+- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py) — shared HTTP error envelope
 - [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions and handlers
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — MCP request validation and HTTP transport
 - [src/memory-policy/shared.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/memory-policy/shared.ts) — platform and date-tag policy
@@ -118,8 +118,8 @@ The system uses `MemoryClassifier` to automatically determine memory type when n
 
 1. **Explicit Type**: If `type` parameter provided, use directly with `confidence=0.9`
 2. **Regex Patterns**: Match content against predefined patterns for each memory type (fast, free)
-3. **LLM Classification**: Use OpenAI GPT-4o-mini as fallback for complex content
-4. **Default**: Assign `Context` type with low confidence (0.3) if all methods fail
+3. **LLM Classification**: Use OpenAI GPT-4o-mini as fallback for complex content. The call is skipped while the enrichment quota circuit is open (see `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS`)
+4. **Default**: Assign the generic `Memory` type with low confidence (0.3) if no pattern matches and the LLM returns no usable result. `Memory` is not one of the seven types in the table below
 
 **Memory Type Reference:**
 
@@ -131,7 +131,7 @@ The system uses `MemoryClassifier` to automatically determine memory type when n
 | `Preference` | 0.6–0.9 | Style choices, tool preferences, workflow preferences |
 | `Style` | 0.6–0.8 | Coding conventions, formatting rules |
 | `Habit` | 0.5–0.7 | Development workflows, testing practices |
-| `Context` | 0.5–0.7 | Feature descriptions, project context, miscellaneous (default) |
+| `Context` | 0.5–0.7 | Feature descriptions, project context, miscellaneous |
 
 ### Data Flow
 
@@ -159,14 +159,14 @@ sequenceDiagram
     POST_memory->>Graph: MERGE Memory node<br/>(id, content, type, tags, importance,<br/>timestamp, metadata, confidence)
     Graph-->>POST_memory: Node created
 
-    POST_memory->>EnrichQ: enqueue_enrichment(memory_id)
-
     alt Embedding Provided
         POST_memory->>Qdrant: upsert(id, embedding, payload)
         Qdrant-->>POST_memory: Stored
     else No Embedding
         POST_memory->>EmbedQ: Queue for generation
     end
+
+    POST_memory->>EnrichQ: enqueue_enrichment(memory_id)
 
     POST_memory-->>Client: 201 Created<br/>{memory_id, type, confidence,<br/>enrichment: "queued"}
 ```
@@ -177,8 +177,8 @@ sequenceDiagram
 2. **Classification**: Determine memory type if not provided (regex → LLM → default)
 3. **Tag Processing**: Compute hierarchical tag prefixes for efficient filtering
 4. **Graph Write**: Execute `MERGE` operation in FalkorDB (immediate, blocking)
-5. **Enrichment Queue**: Add to background queue for entity extraction and relationship building
-6. **Embedding Handling**: Store a provided embedding or queue generation when Qdrant is configured
+5. **Embedding Handling**: Store a provided embedding or queue generation when Qdrant is configured
+6. **Enrichment Queue**: After the response body is built, add the memory to the background queue for entity extraction and relationship building
 7. **Response**: Return immediately with memory ID and enrichment status
 
 ### Tag Processing
