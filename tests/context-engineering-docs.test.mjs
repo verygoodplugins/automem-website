@@ -127,7 +127,7 @@ test('template variable table lists only variables the installers pass', async (
 
   assert.deepEqual(
     rows.map((row) => row.match(/^\| `(\{\{[A-Z_]+\}\})`/)[1]),
-    ['{{PROJECT_NAME}}', '{{MCP_TOOL_PREFIX}}', '{{MCP_SERVER_NAME}}'],
+    ['{{PROJECT_NAME}}', '{{MCP_TOOL_PREFIX}}', '{{MCP_SERVER_NAME}}', '{{HERMES_MODE_RULES}}'],
   );
   assert.doesNotMatch(page, /\{\{PROJECT_DESC\}\}/);
   assert.doesNotMatch(page, /\{\{CURRENT_MONTH\}\}/);
@@ -145,9 +145,10 @@ test('template variable table lists only variables the installers pass', async (
   assert.match(serverName, /`memory` if none is found/);
   assert.match(serverName, /\| `memory` \|$/);
   assert.doesNotMatch(serverName, /\| `automem` \|$/);
+
 });
 
-test('template substitution is documented per host, not as one shared handler path', async () => {
+test('template substitution is documented per host: one shared helper, per-installer variables', async () => {
   const page = await readPage();
   const variables = section(page, '### Variable Resolution');
   const implementation = variables.match(/\*\*Implementation\*\*: ([^\n]+)/);
@@ -156,12 +157,9 @@ test('template substitution is documented per host, not as one shared handler pa
   assert.match(implementation[1], /Template substitution is host-specific/);
   assert.match(
     implementation[1],
-    /Codex, Grok, and Hermes installers share \[`replaceTemplateVars\(\)`\]\(https:\/\/github\.com\/verygoodplugins\/mcp-automem\/blob\/[0-9a-f]{40}\/src\/cli\/host-toolkit\.ts#L\d+-L\d+\) in `src\/cli\/host-toolkit\.ts`/,
+    /Codex, Grok, Hermes, and Cursor installers share \[`replaceTemplateVars\(\)`\]\(https:\/\/github\.com\/verygoodplugins\/mcp-automem\/blob\/[0-9a-f]{40}\/src\/cli\/host-toolkit\.ts#L\d+-L\d+\) in `src\/cli\/host-toolkit\.ts`/,
   );
-  assert.match(
-    implementation[1],
-    /Cursor installer has its own \[`replaceTemplateVars\(\)`\]\(https:\/\/github\.com\/verygoodplugins\/mcp-automem\/blob\/[0-9a-f]{40}\/src\/cli\/cursor\.ts#L\d+-L\d+\) in `src\/cli\/cursor\.ts`/,
-  );
+  assert.doesNotMatch(implementation[1], /has its own/, 'the Cursor installer imports the shared helper');
   assert.match(implementation[1], /substitutes only the variables it passes/);
   assert.match(implementation[1], /Codex passes `\{\{PROJECT_NAME\}\}` alone/);
   assert.match(

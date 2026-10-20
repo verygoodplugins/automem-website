@@ -24,7 +24,9 @@ The system implements two-tier content size limits to prevent embedding quality 
 **Rationale**: Vector embeddings lose quality with overly long text. The 500-character soft limit signals to the backend that summarization may be beneficial, while the 2000-character hard limit prevents storage of entire code files or documentation.
 
 :::caution
-Exceeding the soft limit (500 chars) causes the server to issue a warning and may trigger backend summarization. Exceeding the hard limit (2000 chars) causes immediate rejection — the memory will not be stored at all.
+In single-memory mode, exceeding the soft limit (500 chars) causes the server to issue a warning and may trigger backend summarization. Exceeding the hard limit (2000 chars) causes immediate rejection — the memory will not be stored at all.
+
+These checks run only in single-memory mode. In batch mode (`memories: [...]`) the client does not check content length; it only requires each item's `content` to be non-empty. The AutoMem service applies its own limits (by default it rejects the request if any item is over 2000 characters and may summarize items over 500).
 :::
 
 ---
@@ -62,7 +64,7 @@ The system supports seven memory types with distinct semantic meanings:
 **Tag matching modes**:
 - `tag_mode: "any"` (default) — Matches memories with ANY of the provided tags (OR logic)
 - `tag_mode: "all"` — Requires ALL tags to be present (AND logic)
-- `tag_match: "prefix"` — Supports namespace hierarchies like `auth/*` matching `auth/jwt`, `auth/oauth`
+- `tag_match: "prefix"` (default for ranked recall) — Matches a tag and every tag below it. The service splits stored tags on `:` and `/`, so `tags: ["entity:people"]` matches `entity:people:alice`. There is no `*` wildcard. Use it for the server-injected `entity:*` tags, not for your own namespaces.
 
 ---
 
@@ -96,7 +98,7 @@ store_memory({
   content: "User prefers snake_case for Python variable names",
   type: "Preference",
   importance: 0.9,
-  tags: ["my-project", "preference", "python", "2026-02"]
+  tags: ["my-project", "preference", "python"]
 })
 
 // 2. Find old preference
@@ -209,8 +211,9 @@ Templates support variable substitution for platform-specific customization:
 | `{{PROJECT_NAME}}` | From package.json, git remote, or directory name | `my-api-service` |
 | `{{MCP_TOOL_PREFIX}}` | Cursor installer only: `mcp_<server name>_`, with non-identifier characters in the server name replaced by `_` | `mcp_memory_` |
 | `{{MCP_SERVER_NAME}}` | Cursor installer only: the AutoMem server name found in `~/.cursor/mcp.json`, or `memory` if none is found | `memory` |
+| `{{HERMES_MODE_RULES}}` | Hermes installer only: the rules section for the install mode (`--mode mcp`, `provider`, or `both`; default `mcp`), rendered by `renderHermesModeRules()` | `## MCP-only mode` section |
 
-**Implementation**: Template substitution is host-specific. The Codex, Grok, and Hermes installers share [`replaceTemplateVars()`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/host-toolkit.ts#L341-L348) in `src/cli/host-toolkit.ts`, while the Cursor installer has its own [`replaceTemplateVars()`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/cursor.ts#L104-L110) in `src/cli/cursor.ts`. A handler substitutes only the variables it passes: Codex passes `{{PROJECT_NAME}}` alone ([`src/cli/codex.ts:34-36`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/codex.ts#L34-L36)), and the Cursor installer also passes `{{MCP_TOOL_PREFIX}}` and `{{MCP_SERVER_NAME}}` ([`src/cli/cursor.ts:312-320`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/cli/cursor.ts#L312-L320)).
+**Implementation**: Template substitution is host-specific. The Codex, Grok, Hermes, and Cursor installers share [`replaceTemplateVars()`](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/cli/host-toolkit.ts#L348-L355) in `src/cli/host-toolkit.ts`. A handler substitutes only the variables it passes: Codex passes `{{PROJECT_NAME}}` alone ([`src/cli/codex.ts:34-36`](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/cli/codex.ts#L34-L36)), the Hermes installer also passes `{{HERMES_MODE_RULES}}` ([`src/cli/hermes.ts:249-252`](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/cli/hermes.ts#L249-L252)), and the Cursor installer also passes `{{MCP_TOOL_PREFIX}}` and `{{MCP_SERVER_NAME}}` ([`src/cli/cursor.ts:39-43`](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/cli/cursor.ts#L39-L43)).
 
 ### Building a New Platform Integration
 
@@ -219,7 +222,7 @@ To add support for a new MCP-compatible platform:
 1. **Create template directory**: `templates/[platform-name]/`
 2. **Add configuration template**: Platform-specific MCP server config format
 3. **Create rule/instruction file**: Memory-first instructions adapted to platform conventions
-4. **Implement CLI command**: Add installer in `src/cli/[platform].ts`
+4. **Implement CLI command**: Add installer in `src/cli/[platform].ts`, register the client in `src/cli/clients.ts` (`AGENT_CLIENTS`; the CLI's known commands and the uninstall platforms are derived from it), add its dispatch branch in `src/index.ts`, and wire it into the guided installer in `src/cli/install.ts`
 5. **Update documentation**: Add section to `INSTALLATION.md`
 
 **Example structure**:
@@ -237,7 +240,7 @@ templates/myplatform/
 2. **Use platform-specific tool naming** — Show exact tool prefix format (e.g., `mcp__memory__` vs `mcp_memory_`)
 3. **Provide concrete examples** — Don't just describe tools, show actual usage with project variables
 4. **Explain importance scoring** — Critical: 0.9+, Important: 0.7–0.9, Standard: 0.5–0.7
-5. **Document tagging conventions** — Project name, platform, month, component tags
+5. **Document tagging conventions** — Bare tags for project name, category, and language; no platform or date-stamped tags
 6. **Include content size guidelines** — Target 150–300 chars, max 500 chars, hard limit 2000 chars
 7. **Show relationship types** — Explain all 11 association types with examples
 8. **Add troubleshooting hints** — What to do if recall fails, service unreachable, etc.
@@ -272,11 +275,11 @@ The `AutoMemClient` class in `src/automem-client.ts` wraps all AutoMem HTTP API 
 
 | Method | Endpoint | Request Body | Response | Client Method |
 |---|---|---|---|---|
-| POST | `/memory` | `{content, tags, importance, embedding?, metadata?, timestamp?}` | `{memory_id, message}` | `storeMemory()` |
+| POST | `/memory` | `{content, tags, importance, embedding?, metadata?, timestamp?}` | `{status, memory_id, stored_at, type, confidence, qdrant, ...}` | `storeMemory()` |
 | GET | `/recall?query=...` | N/A (query params) | `{results[], count, dedup_removed?, ...}` | `recallMemory()` |
-| POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{success, message}` | `associateMemories()` |
-| PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{memory_id, message}` | `updateMemory()` |
-| DELETE | `/memory/:id` | N/A | `{memory_id, message}` | `deleteMemory()` |
+| POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{status, message, relation_type, strength, ...}` | `associateMemories()` |
+| PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{status, memory_id}` | `updateMemory()` |
+| DELETE | `/memory/:id` | N/A | `{status, memory_id}` | `deleteMemory()` |
 | GET | `/memory/by-tag?tags=...` | N/A | `{memories[], count, limit, offset, has_more, ...}` | `recallMemory({ tags, exhaustive: true })` |
 | GET | `/health` | N/A | `{status, falkordb, qdrant, graph, timestamp}` | `checkHealth()` |
 
@@ -318,7 +321,7 @@ The MCP server is created by [`createAutoMemMcpServer()`](https://github.com/ver
 - Each tool defines `outputSchema` (JSON Schema for response)
 - Tools include `annotations` for MCP hints:
   - `readOnlyHint`: Tool doesn't modify state
-  - `destructiveHint`: Tool deletes/modifies data
+  - `destructiveHint`: Tool may perform destructive updates (meaningful only when `readOnlyHint` is false)
   - `idempotentHint`: Repeated calls safe
 
 **Tool Annotations**
@@ -326,9 +329,9 @@ The MCP server is created by [`createAutoMemMcpServer()`](https://github.com/ver
 | Field | Meaning | Example Usage |
 |---|---|---|
 | `readOnlyHint` | Tool doesn't modify state | `recall_memory`, `check_database_health` |
-| `destructiveHint` | Tool removes data | `delete_memory` |
-| `idempotentHint` | Multiple calls with same args produce same result | `update_memory`, `delete_memory` |
-| `openWorldHint` | Results may reference external entities | Not used (memory IDs are self-contained) |
+| `destructiveHint` | Tool may perform destructive updates (meaningful only when `readOnlyHint` is false) | `delete_memory` |
+| `idempotentHint` | Multiple calls with same args produce same result | `update_memory`, `associate_memories` |
+| `openWorldHint` | Results may reference external entities | `false` on every tool (memory IDs are self-contained) |
 
 **Important implementation details**:
 1. **Server mode detection** — Empty `process.argv[2]` triggers server mode
@@ -375,9 +378,9 @@ Enforce size limits in your integration:
 
 Recommend tagging conventions:
 - Always include project/workspace identifier
-- Add temporal tag (year-month): `2025-01`
-- Use hierarchical tags with prefix matching: `auth/login`, `auth/tokens`
-- Include type tags: `decision`, `pattern`, `bug-fix`, `preference`
+- Do not add date-stamped tags (such as `2025-01`); use the `timestamp` field, or `t_valid` and `t_invalid` for facts with a shelf life
+- Use bare tags with no namespace prefixes: `auth`, not `project/auth` or `auth/login`
+- Include type tags: `decision`, `pattern`, `bugfix`, `preference`
 
 ### 4. Recall Optimization
 
@@ -456,8 +459,10 @@ If migrating from a different MCP memory implementation:
 **Enable debug logging:**
 
 ```bash
-DEBUG=automem:* npx @verygoodplugins/mcp-automem
+AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 ```
+
+mcp-automem reads `AUTOMEM_LOG_LEVEL`, not `DEBUG`. At `debug` it adds only an `AutoMem MCP server running` line on stderr at startup, plus the process title when `AUTOMEM_PROCESS_TAG` is set. It does not trace individual requests.
 
 **Test backend directly:**
 
@@ -467,8 +472,10 @@ curl -i -H "Authorization: Bearer $AUTOMEM_API_KEY" "$AUTOMEM_API_URL/recall?lim
 
 A `401 Unauthorized` response means the service rejected the key. Do not use `/health` for this: it skips the API token check, so it only shows that the service is reachable.
 
-**Verify template variable substitution:**
+**Preview what the Cursor installer writes:**
 
 ```bash
-npx @verygoodplugins/mcp-automem cursor --dry-run --verbose
+npx @verygoodplugins/mcp-automem cursor --dry-run
 ```
+
+`--dry-run` prints a `[DRY RUN] Would write: <path>` line for each file and writes nothing. It does not print the rendered templates, and there is no `--verbose` flag (the installer ignores unknown flags). To check variable substitution, run the installer and open the generated `.cursor/rules/automem.mdc`.
