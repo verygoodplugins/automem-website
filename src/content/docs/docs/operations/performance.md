@@ -42,7 +42,7 @@ graph TB
         SyncWrite["FalkorDB write<br/>Immediate, blocking"]
         AsyncEmbed["Embedding generation<br/>Queued for background"]
         AsyncEnrich["Enrichment<br/>Queued for background"]
-        Return["Return 200 OK<br/>100-150ms total"]
+        Return["Return 201 Created<br/>100-150ms total"]
 
         MemoryPOST --> SyncWrite
         MemoryPOST --> AsyncEmbed
@@ -84,8 +84,8 @@ The worker uses a timeout-based accumulation strategy:
 
 1. Pop item from `embedding_queue`
 2. Add to `batch` list
-3. Check if `len(batch) >= EMBEDDING_BATCH_SIZE` or timeout elapsed
-4. If batch ready, call `process_embedding_batch()`
+3. Check if `len(batch) >= EMBEDDING_BATCH_SIZE`. The batch deadline is not checked after a successful `get()`
+4. If the batch is full, call `process_embedding_batch()`
 5. Otherwise keep blocking on the queue until the batch deadline. The worker calls `get()` with the time remaining until that deadline (minimum 0.1s) and flushes any partial batch when the call times out. It does not poll on a sleep interval: the worker sleeps 1s only while the queue is not initialized or after an unexpected error in the loop
 
 ### Key Functions
@@ -268,10 +268,10 @@ logger.info("recall_complete", extra={
 | `type` | string | Memory classification |
 | `importance` | float | User-defined priority |
 | `tags_count` | int | Number of tags |
-| `content_length` | int | Content size in bytes |
+| `content_length` | int | Content length in characters (`len(content)`) |
 | `latency_ms` | float | Store operation time |
-| `embedding_status` | string | `"queued"` or `"provided"` |
-| `qdrant_status` | string | `"queued"`, `"stored"`, or `"disabled"` |
+| `embedding_status` | string | `"queued"`, `"provided"`, or `"skipped"` |
+| `qdrant_status` | string \| null | `"queued"`, `"stored"`, `"failed"`, `"unconfigured"`, or `null` |
 | `enrichment_queued` | bool | Enrichment pipeline status |
 
 ### Log Parsing and Analysis
@@ -313,7 +313,7 @@ The `/health` endpoint includes enrichment queue metrics without requiring authe
 
 | Metric | Description | Alert Threshold |
 |---|---|---|
-| `status` | `"running"`, `"stopped"`, or `"error"` | Alert if not `"running"` |
+| `status` | `"running"` or `"stopped"` | Alert if not `"running"` |
 | `queue_depth` | Jobs waiting in queue | Alert if > 100 for 5+ min |
 | `pending` | Unprocessed memories | Monitor for backlog |
 | `inflight` | Currently processing | Usually 0-3 |
@@ -423,7 +423,7 @@ CONSOLIDATION_DECAY_INTERVAL_SECONDS=86400
 
 **Query Time Tracking**: `time.perf_counter()` adds <0.1ms per request (negligible)
 
-**Structured Logging**: Log volume increases by ~200 bytes per request
+**Structured Logging**: With a formatter that renders `extra` fields, log volume increases by ~200 bytes per request (the stock format prints only the message)
 - Impact: Minimal for most log aggregation services
 - Mitigation: Configure log retention policies appropriately
 

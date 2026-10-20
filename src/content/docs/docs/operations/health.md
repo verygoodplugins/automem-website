@@ -142,11 +142,11 @@ The `enrichment` object provides visibility into the background enrichment pipel
 | Field | Type | Description |
 |---|---|---|
 | `status` | string | Worker state: `"running"` or `"stopped"` |
-| `queue_depth` | integer | Total jobs in queue (pending + inflight) |
+| `queue_depth` | integer | Current size reported by the enrichment queue; it does not equal `pending` + `inflight`, which are tracked separately |
 | `pending` | integer | Jobs waiting to be processed |
 | `inflight` | integer | Jobs currently being processed |
 | `processed` | integer | Total jobs completed since service start |
-| `failed` | integer | Total jobs that failed permanently |
+| `failed` | integer | Failed enrichment attempts since service start; every failed attempt counts, including one that is retried |
 
 #### Status Values
 
@@ -333,7 +333,7 @@ The endpoint makes two fixed tag queries:
 - `critical`, `lesson`, or `ai-assistant` memories, ordered by importance, up to 10 results
 - `system` or `memory-recall` memories, up to 5 results
 
-It does not fall back to a recent-memory query. See the current [startup recall handler](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py#L2693-L2753).
+It does not fall back to a recent-memory query. See the current [startup recall handler](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py#L2696-L2753).
 
 #### Integration with AI Agents
 
@@ -371,7 +371,7 @@ sequenceDiagram
     HM->>QD: GET /collections/memories
     QD-->>HM: qdrant_count: 884
 
-    HM->>HM: Calculate drift %<br/>|FK - QD| / max(FK, QD)
+    HM->>HM: Calculate drift %<br/>|FK - QD| / max(QD, 1)
 
     alt Drift < 5%
         Note over HM: Normal - No action
@@ -399,8 +399,10 @@ sequenceDiagram
 Drift percentage is calculated as:
 
 ```
-drift_percent = |falkordb_count - qdrant_count| / max(falkordb_count, qdrant_count) * 100
+drift_percent = |falkordb_count - qdrant_count| / max(qdrant_count, 1) * 100
 ```
+
+The denominator is the Qdrant count, floored at 1 so an empty Qdrant collection does not divide by zero.
 
 #### Drift Detection Architecture
 
@@ -435,7 +437,7 @@ graph LR
     HealthMonitor --> Qdrant
     HealthEndpoint --> SyncWorker
 
-    FalkorDB --> DriftCalc["Drift Calculation<br/>abs(falkor - qdrant) / max(falkor, qdrant)"]
+    FalkorDB --> DriftCalc["Drift Calculation<br/>abs(falkor - qdrant) / max(qdrant, 1)"]
     Qdrant --> DriftCalc
 
     DriftCalc --> Normal
@@ -459,9 +461,9 @@ graph LR
 
 **Common Causes of Drift:**
 
-- **< 1% drift**: Normal — in-flight writes during health check
-- **5-10% drift**: Failed writes to one database during temporary outage
-- **> 50% drift**: Critical data loss — one database was cleared/corrupted
+- **Up to the warning threshold (5%)**: Normal — in-flight writes during health check
+- **Above the warning threshold, up to the critical threshold (5-50%)**: Failed writes to one database during temporary outage
+- **Above the critical threshold (> 50%)**: Critical data loss — one database was cleared/corrupted
 
 #### Understanding Drift Thresholds
 
@@ -471,14 +473,13 @@ flowchart TD
 
     Monitor --> Count["Count memories:<br/>FalkorDB vs Qdrant"]
 
-    Count --> Calc["Calculate drift %:<br/>abs(falkor - qdrant) / max(falkor, qdrant) * 100"]
+    Count --> Calc["Calculate drift %:<br/>abs(falkor - qdrant) / max(qdrant, 1) * 100"]
 
     Calc --> Check{"Drift level?"}
 
-    Check -->|"< 1%"| Normal["Normal<br/>In-flight writes<br/>No action needed"]
-    Check -->|"1-5%"| Warning["Warning<br/>HEALTH_MONITOR_DRIFT_THRESHOLD<br/>Monitor but OK"]
-    Check -->|"5-50%"| Alert["Alert<br/>Investigation needed<br/>Webhook notification"]
-    Check -->|"> 50%"| Critical["Critical<br/>HEALTH_MONITOR_CRITICAL_THRESHOLD<br/>Data loss event<br/>Trigger recovery"]
+    Check -->|"< 5%"| Normal["Normal<br/>In-flight writes<br/>No action needed"]
+    Check -->|"5-50%"| Alert["Warning<br/>--drift-threshold<br/>Investigation needed<br/>Webhook notification"]
+    Check -->|"> 50%"| Critical["Critical<br/>--critical-threshold<br/>Data loss event<br/>Trigger recovery"]
 
     Alert --> Manual["Manual review:<br/>Check logs<br/>Verify writes"]
     Critical --> Auto["Auto-recovery (if enabled):<br/>recover_from_qdrant.py"]
@@ -567,17 +568,17 @@ Health monitor sends JSON payloads to configured webhooks. This example is a dri
 
 ### Slack Integration
 
+The monitor posts the JSON payload above unchanged. It does not add a `text` field, which Slack incoming webhooks expect. Point `HEALTH_MONITOR_WEBHOOK` (or `--webhook`) at a small relay that builds the Slack `text` from the alert's `title` and `message` and forwards it to your Slack webhook URL:
+
 ```
-HEALTH_MONITOR_WEBHOOK=https://hooks.slack.com/services/T.../B.../...
+HEALTH_MONITOR_WEBHOOK=https://your-relay.example.com/health-alerts
 ```
+
+The monitor does not check the response status, so a rejected post still logs `Alert sent to webhook`.
 
 ### Discord Integration
 
-Discord webhooks use the same format as Slack:
-
-```
-HEALTH_MONITOR_WEBHOOK=https://discord.com/api/webhooks/...
-```
+The payload is not in Discord's format either. Discord webhooks expect a `content` (or `embeds`) field, and the monitor sends neither. Use a relay that maps the alert to `content` before it reaches your Discord webhook URL (`https://discord.com/api/webhooks/...`).
 
 ### Custom Webhook Endpoint
 
@@ -624,9 +625,11 @@ For detailed recovery procedures, see [Backup & Recovery](/docs/operations/backu
 |---|---|---|
 | `--interval` | `300` | Seconds between health checks |
 | `--auto-recover` | disabled | Enable automatic recovery |
-| `--webhook URL` | none | Slack/Discord webhook URL |
+| `--webhook URL` | none | URL that receives the JSON alert payload (see [Alerting Configuration](#alerting-configuration)) |
 | `--drift-threshold` | `5` | Warning threshold (percentage) |
 | `--critical-threshold` | `50` | Critical threshold for recovery (percentage) |
+
+The script copies `--drift-threshold` and `--critical-threshold` into the `HEALTH_MONITOR_DRIFT_THRESHOLD` and `HEALTH_MONITOR_CRITICAL_THRESHOLD` environment variables before it creates the monitor. Because the flags default to 5 and 50, a value set only in the environment is overwritten. Set the thresholds with the flags.
 
 ## Monitoring Best Practices
 
@@ -679,7 +682,7 @@ For detailed recovery procedures, see [Backup & Recovery](/docs/operations/backu
 **Symptoms:**
 
 ```
-⚠️ Warning: 12% drift detected
+⚠️ Warning: 13.6% drift detected
 FalkorDB: 884 memories
 Qdrant: 778 vectors
 ```
@@ -687,7 +690,7 @@ Qdrant: 778 vectors
 **Solutions:**
 
 1. **< 5% drift**: Normal — in-flight writes during check
-2. **5-10% drift**: Possible failed writes — check logs for errors
+2. **5-50% drift**: Possible failed writes — check logs for errors
 3. **> 50% drift**: Run recovery script manually:
    ```bash
    python scripts/recover_from_qdrant.py
@@ -721,10 +724,10 @@ Qdrant: 778 vectors
 
 ## Structured Logging
 
-All three monitoring endpoints emit structured logs for observability:
+None of the three monitoring endpoints logs a structured event on a successful request:
 
-- `/health` — logs connection check results and memory counts
-- `/analyze` — logs query execution times for each analytics query
-- `/startup-recall` — logs number of memories returned by each phase
+- `/health`: no endpoint-specific logging
+- `/analyze`: logs only a failure, as an error message
+- `/startup-recall`: logs only a failure, as an error message
 
-The structured log format uses Python's `extra={}` parameter to include machine-parseable fields alongside log messages, enabling automated performance analysis and metrics dashboard integration. See [Performance Tuning](/docs/operations/performance/) for details on the logging fields and how to parse them.
+Structured `extra={}` events such as `recall_complete` (`GET /recall`) and `memory_stored` (`POST /memory`) do carry machine-parseable fields. The stock log format prints only the message, so those fields appear only if you add a custom or JSON formatter. See [Performance Tuning](/docs/operations/performance/) for the logging fields and how to parse them.
