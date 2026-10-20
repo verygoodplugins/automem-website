@@ -315,12 +315,12 @@ AutoMem is designed to continue operating even when components fail. The most cr
 
 | Scenario | System Behavior | Code Reference |
 |----------|----------------|----------------|
-| **Qdrant unavailable at startup** | Logs warning, initializes with `state.qdrant = None`, graph operations continue normally | [`automem/api/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api) |
-| **Qdrant fails during write** | Logs error, memory persists in FalkorDB, enrichment queued | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/memory.py) |
-| **Qdrant fails during recall** | Falls back to keyword/graph search only, returns results without vector scoring | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api/recall.py) |
-| **Embedding provider unavailable** | Falls back to `PlaceholderEmbeddingProvider`, generates deterministic hash-based vectors | [`automem/embedding/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/embedding) |
-| **Enrichment worker crashes** | Failed jobs are logged and counted in `enrichment_stats`; only forced jobs are retried, and `POST /enrichment/reprocess` re-queues memories that were not enriched | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/enrichment) |
-| **Consolidation scheduler fails** | Logs error, scheduler continues on next tick, control node tracks last successful runs | [`automem/consolidation/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/consolidation) |
+| **Qdrant unavailable at startup** | Logs warning, initializes with `state.qdrant = None`, graph operations continue normally | [`automem/api/`](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api) |
+| **Qdrant fails during write** | Logs error, memory persists in FalkorDB, enrichment queued | [`automem/api/memory.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py) |
+| **Qdrant fails during recall** | Falls back to keyword/graph search only, returns results without vector scoring | [`automem/api/recall.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py) |
+| **Embedding provider unavailable** | Falls back to `PlaceholderEmbeddingProvider`, generates deterministic hash-based vectors | [`automem/embedding/`](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding) |
+| **Enrichment worker crashes** | Failed jobs are logged and counted in `enrichment_stats`; only forced jobs are retried, and `POST /enrichment/reprocess` re-queues memories that were not enriched | [`automem/enrichment/`](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/enrichment) |
+| **Consolidation scheduler fails** | Logs error, scheduler continues on next tick, control node tracks last successful runs | [`automem/consolidation/`](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/consolidation) |
 
 ---
 
@@ -511,7 +511,7 @@ AutoMem implements two-tier authentication: standard API tokens for normal opera
 | `POST /admin/reembed` | Both tokens | `Authorization: Bearer <token>` + `X-Admin-Token: <admin_token>` | Admin operations |
 | `POST /enrichment/reprocess` | Both tokens | Same as above | Admin operations |
 
-Token validation is handled by the `require_api_token` decorator in [`automem/api/`](https://github.com/verygoodplugins/automem/tree/4b5eaafd2602c9eba39bbfe38e4120e3654c67e9/automem/api), which checks headers and query parameters in order of preference. Admin endpoints additionally validate the `X-Admin-Token` header.
+Token validation is handled by `require_api_token()` in [`automem/api/`](https://github.com/verygoodplugins/automem/tree/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api), which an `@app.before_request` hook calls and which checks headers and query parameters in order of preference. Admin endpoints additionally validate the `X-Admin-Token` (or `X-Admin-Api-Key`) header.
 
 For full details, see [Authentication](/docs/reference/authentication/).
 

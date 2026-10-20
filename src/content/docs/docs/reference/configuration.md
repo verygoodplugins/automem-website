@@ -336,7 +336,7 @@ Controls LLM-based memory classification fallback:
 |----------|------|----------|---------|-------------|
 | `CLASSIFICATION_MODEL` | string | No | `gpt-4o-mini` | OpenAI model for content classification |
 
-When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/classification/memory_classifier.py).
+When an explicit `type` is not provided in the request, or regex patterns fail to match, AutoMem uses the LLM classification model. This client is configured by `OPENAI_API_KEY` and also respects `OPENAI_BASE_URL` when you point classification at an OpenAI-compatible endpoint. The system prompt for classification is defined in `MemoryClassifier.SYSTEM_PROMPT` in [`automem/classification/memory_classifier.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/classification/memory_classifier.py).
 
 ### Memory Content Governance
 
