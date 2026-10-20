@@ -253,7 +253,7 @@ Benchmarking a memory system is harder than benchmarking retrieval. Temporal rea
 
 - **[Benchmarks](/benchmarks/)** — the public benchmark page curated from the experiment log and neutral AMB submission.
 - **[automem-evals](https://github.com/verygoodplugins/automem-evals)** — the standalone exploratory evaluation lab. It is useful for diagnostics, but official LoCoMo and LongMemEval claims live in the main `automem` repository.
-- **[docs/EVALS_CONTRACT.md](https://github.com/verygoodplugins/automem/blob/main/docs/EVALS_CONTRACT.md)** — the contract the server exposes to eval harnesses. Defines the endpoints, payload shapes, and determinism guarantees that make reproducible runs possible.
+- **[docs/EVALS_CONTRACT.md](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/docs/EVALS_CONTRACT.md)** — the contract for external eval repos. It sets the ownership boundary, the supported local surface, and the stable endpoints evals may rely on.
 - **Opt-in LoCoMo cat5 judge** — category 5 (adversarial temporal reasoning) questions are scored by an LLM judge behind a feature flag. Off by default to keep free/fast eval runs cheap; opt in when you need the full benchmark.
 
 The [blog post on benchmarking honesty](/blog/benchmarking-honesty/) walks through a real postmortem where this infrastructure caught an evaluator bug that had been inflating scores — the kind of failure that is cheap to find when the eval layer is accessible and expensive when it's buried inside the server.

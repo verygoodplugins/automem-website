@@ -14,9 +14,10 @@ const pages = [
   'research.md',
 ];
 
-// Short SHAs are matched too, so a 7-character pin cannot slip past.
+// Any ref is captured, so a branch, tag or short SHA fails the pin check
+// instead of slipping past the pattern.
 const SOURCE_LINK =
-  /https:\/\/github\.com\/verygoodplugins\/(automem|mcp-automem|automem-graph-viewer)\/(?:blob|tree)\/([0-9a-f]{7,40})\//gu;
+  /https:\/\/github\.com\/verygoodplugins\/(automem|mcp-automem|automem-graph-viewer)\/(?:blob|tree)\/([^/\s)#]+)/gu;
 
 // A `path:N` or `path:N-M` link label must name the lines its anchor opens.
 const LABELLED_ANCHOR =

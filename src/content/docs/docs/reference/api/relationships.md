@@ -8,11 +8,11 @@ sidebar:
 :::note[Source files]
 - [automem/api/memory.py#L1110-L1201](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py#L1110-L1201) — Flask blueprint `/associate` endpoint
 - [automem/api/memory.py#L158-L266](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py#L158-L266) — Batch `/associate` helper (`_create_association_batch`)
-- [automem/config.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/config.py) — `AUTHORABLE_RELATIONS` set
-- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/28eb916eae430f80ebee57d44f63b712b9d45398/automem/stores/graph_store.py) — FalkorDB edge operations
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `associate_memories` tool
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client
-- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/types.ts) — Relationship type definitions
+- [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — `AUTHORABLE_RELATIONS` set
+- [automem/stores/graph_store.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/graph_store.py) — FalkorDB edge operations
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP `associate_memories` tool
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP client
+- [src/types.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/types.ts) — Relationship type definitions
 :::
 
 The `/associate` endpoint creates typed relationships between memories to build a knowledge graph in FalkorDB. These associations enable graph traversal during recall, allowing multi-hop reasoning and discovery of related context beyond direct semantic similarity.

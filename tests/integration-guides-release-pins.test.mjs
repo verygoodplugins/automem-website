@@ -8,9 +8,10 @@ import { isPinnedSha } from './helpers/source-pins.mjs';
 // published AutoMem and mcp-automem releases, with line numbers re-derived there.
 const pages = ['best-practices/progressive-disclosure.md', 'development/structure.md'];
 
-// Short SHAs are matched too, so a 7-character pin cannot slip past.
+// Any ref is captured, so a branch, tag or short SHA fails the pin check
+// instead of slipping past the pattern.
 const SOURCE_LINK =
-  /https:\/\/github\.com\/verygoodplugins\/(automem|mcp-automem|automem-graph-viewer)\/(?:blob|tree)\/([0-9a-f]{7,40})\//gu;
+  /https:\/\/github\.com\/verygoodplugins\/(automem|mcp-automem|automem-graph-viewer)\/(?:blob|tree)\/([^/\s)#]+)/gu;
 
 // A `path:N-M` label, or "lines N-M" prose right after the link, must name the
 // lines its anchor opens.
