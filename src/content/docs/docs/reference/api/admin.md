@@ -6,13 +6,15 @@ sidebar:
 ---
 
 :::note[Source files]
-- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) — API-token exemptions and HTTP error responses
+- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L273-L289) — API-token exemptions
+- [app.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/app.py#L480-L489) — HTTP error responses
 - [automem/api/admin.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/admin.py#L61-L378) — Admin endpoints
 - [automem/api/enrichment.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/enrichment.py#L37-L67) — Enrichment endpoints
 - [automem/api/backup.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/backup.py#L39-L42) — `/backup` export endpoint
+- [automem/api/entity.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/entity.py#L316-L456) — Entity audit and merge endpoints
 :::
 
-Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing and embedding generation. These operations are intended for maintenance, debugging, and bulk data operations.
+Administrative endpoints require elevated privileges (`ADMIN_API_TOKEN`) for managing enrichment processing, embedding generation, and entity cleanup. These operations are intended for maintenance, debugging, and bulk data operations.
 
 For standard memory operations (store, recall, update, delete), see [Memory Operations](/docs/reference/api/memory-operations/). For consolidation scheduling, see [Consolidation Operations](/docs/reference/api/consolidation/).
 
@@ -48,6 +50,8 @@ graph TB
         Reembed["/admin/reembed"]
         Sync["/admin/sync"]
         Backup["/backup"]
+        EntityAudit["/entities/audit"]
+        EntityMerge["/entity/&lt;slug&gt;/merge"]
     end
 
     subgraph "Exempt from API-token guard"
@@ -64,10 +68,14 @@ graph TB
     Layer1-->Reprocess
     Layer1-->Reembed
     Layer1-->Sync
+    Layer1-->EntityAudit
+    Layer1-->EntityMerge
     Layer2-->Reprocess
     Layer2-->Reembed
     Layer2-->Sync
     Layer2-->Backup
+    Layer2-->EntityAudit
+    Layer2-->EntityMerge
 ```
 
 ### Error Responses
@@ -101,7 +109,12 @@ Authentication failures and other errors raised through Flask's HTTP exception p
   "inflight": 1,
   "max_attempts": 3,
   "stats": {},
-  "classification": {}
+  "classification": {},
+  "circuit": {
+    "open": false,
+    "circuit_open_skips": 0,
+    "recoveries": 0
+  }
 }
 ```
 
@@ -116,6 +129,9 @@ Authentication failures and other errors raised through Flask's HTTP exception p
 | `max_attempts` | integer | Maximum attempts for a forced job before giving up; non-forced jobs are not retried (from `ENRICHMENT_MAX_ATTEMPTS`) |
 | `stats` | object | Lifetime enrichment statistics (nested object with processing counters) |
 | `classification` | object | Classification service counters (LLM vs regex usage statistics) |
+| `circuit` | object | LLM quota circuit-breaker state: `open` (`true` while the cooldown is running), `circuit_open_skips` (LLM calls skipped because the circuit was open or a recovery probe was already running), and `recoveries` (recovery probes that succeeded and closed the circuit) |
+
+The circuit breaker covers the LLM calls made for memory classification and auto-summarization. A quota error from the LLM opens it, and those calls are skipped for `ENRICHMENT_CIRCUIT_COOLDOWN_SECONDS` (default `300`). After the cooldown one recovery probe call is allowed. A successful probe closes the circuit and increments `recoveries`; another quota error restarts the cooldown. A probe that fails with any other error, such as an unavailable OpenAI client, also closes the circuit but does not increment `recoveries`.
 
 ### Example Usage
 
@@ -244,7 +260,7 @@ The reprocessing operation performs these steps:
 |-----------|------|----------|-------------|
 | `batch_size` | integer | No | Memories per embedding-provider batch call. Default: `32`. Max: `100` |
 | `limit` | integer | No | Max memories to process. If omitted, processes all memories in database |
-| `force` | boolean | No | Re-embed memories even if embeddings already exist. Default: `false` |
+| `force` | boolean | No | Omits the `WHERE m.content IS NOT NULL` filter from the enumeration query. The endpoint never checks Qdrant for existing vectors, so every selected memory is re-embedded with or without `force`. Rows with null or empty content are still skipped, so without `limit` it selects the same memories as `false`. With `limit`, rows with null content count toward `limit` before they are skipped. Default: `false` |
 
 ### Example Request
 
@@ -273,7 +289,7 @@ graph TB
 
         UpdateQdrant["Qdrant: upsert()<br/>PointStruct with full payload<br/>(metadata_preserved=True)"]
 
-        IncrCount["processed_count += batch_size"]
+        IncrCount["processed += len(points)<br/>(a failed batch adds to failed instead)"]
     end
 
     Response["Return summary:<br/>status, processed, failed,<br/>total, batch_size,<br/>metadata_preserved<br/>[failed_ids if failed&gt;0]"]
@@ -434,6 +450,21 @@ The archive layout matches what the restore tooling expects, so a `/backup` expo
 
 A `dry_run` returns `{"status": "dry_run", "falkordb_count", "qdrant_count", "missing_count", "orphaned_count", "missing_sample", "orphaned_sample"}`, where each sample holds up to 10 IDs. When `dry_run` is false and nothing is missing from Qdrant, the endpoint returns `{"status": "already_synced", "falkordb_count", "qdrant_count", "synced": 0, "orphaned_count"}` instead. Both of these return before the embedding-provider check, so they work without a provider.
 
+When `dry_run` is false and memories are missing from Qdrant, the endpoint embeds them in batches and returns HTTP `200` with `{"status": "complete", "falkordb_count", "qdrant_count", "synced", "failed", "orphaned_count"}`. `synced` counts memories written to Qdrant, `failed` counts memories in batches that failed, and `qdrant_count` is the Qdrant count from before the run plus `synced`. `failed_ids` (up to 10 IDs) is present only when `failed > 0`, and `failed_ids_truncated` is `true` when more than 10 IDs failed. Missing memories with empty content are skipped without being counted in `synced` or `failed`, so those two can add up to less than the `missing_count` of a `dry_run`.
+
+```json
+{
+  "status": "complete",
+  "falkordb_count": 1200,
+  "qdrant_count": 1200,
+  "synced": 40,
+  "failed": 0,
+  "orphaned_count": 0
+}
+```
+
+A `503` is returned when Qdrant or FalkorDB is unavailable, or when memories need embedding and no batch-embedding callable is bound. See [Error Responses](#error-responses).
+
 ### Example Request
 
 ```bash
@@ -443,6 +474,100 @@ curl -X POST https://your-automem-instance/admin/sync \
   -H "Content-Type: application/json" \
   -d '{"batch_size": 32, "dry_run": false}'
 ```
+
+---
+
+## GET /entities/audit
+
+**Authentication:** API token + Admin token
+
+**Purpose:** Dry-run audit of entity cleanup. It reads the `entity:` tags on memories, reports which tags entity-tag validation accepts or rejects, and lists entity merge candidates. It changes no data, and the response always has `"dry_run": true`.
+
+The read routes `GET /entities`, `GET /entity/<slug>`, and `GET /entities/merge-candidates` need only the API token.
+
+### Request Schema
+
+All parameters are query parameters.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `summary` | boolean | No | `1`, `true`, or `yes` returns `accepted_sample` and `rejected_sample` in place of `accepted` and `rejected_entities`, and skips the merge-candidate search unless `include_merge_candidates` is also set |
+| `include_merge_candidates` | boolean | No | Same truthy values. Only matters when `summary` is set: with `summary` and without this flag, the merge-candidate search is skipped. When `summary` is not set, the search always runs |
+| `limit` | integer | No | Page size for the accepted and rejected lists. Default: `100`. Max: `500` |
+| `offset` | integer | No | Entries to skip in each list. Default: `0` |
+| `category` | string | No | Keep only entries in this entity category |
+| `reason` | string | No | Keep only rejected entries with this rejection reason; accepted entries are omitted |
+
+### Response Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `"success"` |
+| `dry_run` | boolean | Always `true` |
+| `accepted` | array[object] | Accepted entities, one per canonical tag and sorted by `id`, then paged by `limit` and `offset`. Each has `id`, `category`, `slug`, `name`, `source_tags`, `references`, and `confidence`. Returned as `accepted_sample` when `summary` is set |
+| `rejected_entities` | array[object] | Rejected tag occurrences, each with `tag`, `memory_id`, `category`, `slug`, and `reason`, paged the same way. Returned as `rejected_sample` when `summary` is set |
+| `merge_candidates` | array[object] | Entity pairs from the merge-candidate search, each with `entity_a`, `entity_b`, `canonical`, `alias`, `confidence`, `reason`, and `auto_merge`. Empty when `merge_candidates_skipped` is `true` |
+| `counts` | object | `accepted_entities`, `rejected_entities`, `accepted_total_unfiltered`, `rejected_total_unfiltered`, `merge_candidates`, `auto_merge_candidates`, and `review_merge_candidates` |
+| `counts_by_reason` | object | Rejected-tag counts keyed by rejection reason |
+| `counts_by_category` | object | `accepted` and `rejected` counts for each category |
+| `limit`, `offset` | integer | The paging values used; `limit` is capped at `500` |
+| `summary` | boolean | Whether summary mode was used |
+| `merge_candidates_skipped` | boolean | `true` when `summary` is set without `include_merge_candidates` |
+
+A `503` with the standard envelope is returned when FalkorDB is unavailable. Failures while auditing return HTTP `500` with `{"error": "Failed to audit entities", "details": "<exception text>"}` instead of the standard envelope. A non-integer `limit` or `offset` takes this path.
+
+```bash
+curl "https://your-automem-instance/entities/audit?summary=true&limit=20" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"
+```
+
+---
+
+## POST /entity/&lt;slug&gt;/merge
+
+**Authentication:** API token + Admin token
+
+**Purpose:** Merge one entity into another. `<slug>` in the path is the entity that gets merged away (the alias), and `merge_into` is the entity that is kept (the canonical). The merge moves the alias's `REFERENCED_IN` edges to the canonical entity, adds the alias slug and the alias's existing aliases to the canonical entity's `aliases`, and sets `merged_into` on the alias so it no longer appears in entity listings.
+
+### Request Schema
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `merge_into` | string (JSON body) | **Yes** | Slug of the entity to keep. Both slugs are matched exactly against entities that have not been merged; aliases are not resolved here, unlike `GET /entity/<slug>` |
+
+```bash
+curl -X POST https://your-automem-instance/entity/acme-inc/merge \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"merge_into": "acme"}'
+```
+
+### Response Schema
+
+The response is `{"status": "success", "merge": {...}}`, where `merge` has these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `canonical` | string | ID of the entity that was kept |
+| `alias` | string | ID of the entity that was merged away |
+| `alias_slug` | string | Slug of the entity that was merged away |
+| `edges_moved` | integer | Number of the alias's `REFERENCED_IN` edges moved, including edges to memories the canonical entity already referenced (no duplicate edge is created) |
+
+### Error Responses
+
+These use the standard error envelope:
+
+| Status Code | Message | Cause |
+|-------------|---------|-------|
+| `400` | `'merge_into' slug is required` | The JSON body has no `merge_into` |
+| `400` | `Source and target entity must be different` | Both slugs resolve to the same entity |
+| `404` | `Entity '<slug>' not found` | No unmerged entity has the path slug |
+| `404` | `Target entity '<merge_into>' not found` | No unmerged entity has the `merge_into` slug |
+| `503` | `FalkorDB is unavailable` | FalkorDB is unavailable |
+
+A failure during the merge itself returns HTTP `500` with `{"error": "Merge failed", "details": "<exception text>"}` instead of the standard envelope.
 
 ---
 
