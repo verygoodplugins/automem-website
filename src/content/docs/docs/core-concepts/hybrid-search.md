@@ -13,7 +13,7 @@ Key implementation files:
 - [automem/api/recall.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/recall.py) — Recall endpoint orchestration
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — Search weight and recall tuning configuration
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/scoring.py) — Score computation
-- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/graph.py) — Graph traversal utilities
+- [automem/utils/graph.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/graph.py) — Node serialization and relation summary helpers
 - [automem/utils/time.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/time.py) — Temporal expression parsing
 - [automem/utils/tags.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/tags.py) — Tag prefix utilities
 :::
@@ -72,7 +72,7 @@ graph TB
         Vector["Vector Similarity<br/>Qdrant cosine search<br/>Weight: 0.35"]
         Keyword["Keyword Match<br/>FalkorDB text search<br/>Weight: 0.35"]
         Metadata["Metadata Field Match<br/>match_type=metadata results<br/>Weight: 0.35"]
-        Tag["Tag Overlap<br/>Prefix/exact matching<br/>Weight: 0.20"]
+        Tag["Tag Overlap<br/>Query tokens vs tag/metadata terms<br/>Weight: 0.20"]
         Importance["Importance Score<br/>User-assigned value<br/>Weight: 0.10"]
         Confidence["Confidence Score<br/>Classification confidence<br/>Weight: 0.05"]
         Recency["Recency Score<br/>Age decay from timestamp<br/>Weight: 0.10"]
@@ -186,7 +186,7 @@ Importance, confidence, and recency contribute to the final score at the default
 
 **When a field is missing:**
 
-- Missing or non-numeric `importance` contributes 0.0. A memory stored without `importance` gets 0.5 at write time, so the 0.0 fallback applies when a stored record has no numeric `importance`.
+- Missing or non-numeric `importance` contributes 0.0. A memory stored without `importance` gets 0.5 at write time on `POST /memory` and `POST /memory/batch` (`PATCH /memory/{id}` applies no default), so the 0.0 fallback applies when a stored record has no numeric `importance`, such as one written outside those routes.
 - Missing or non-numeric `confidence` contributes 0.0. When a memory is created, `confidence` comes from the request when it supplies both `type` and `confidence`, is 0.9 when it supplies only `type`, and otherwise comes from the classifier.
 - A missing or unparseable `timestamp` scores 0.0 for recency.
 
@@ -224,11 +224,11 @@ After scoring, recall can add to `final_score` in two places. Entity expansion (
 | Vector | 35% | `SEARCH_WEIGHT_VECTOR` | Semantic similarity from Qdrant |
 | Keyword | 35% | `SEARCH_WEIGHT_KEYWORD` | Lexical matching score |
 | Metadata | 35% | `SEARCH_WEIGHT_METADATA` | Metadata field content match (non-zero when match_type=metadata) |
-| Tag | 20% | `SEARCH_WEIGHT_TAG` | Tag filter matching |
+| Tag | 20% | `SEARCH_WEIGHT_TAG` | Query-token hits against tag and metadata terms |
 | Importance | 10% | `SEARCH_WEIGHT_IMPORTANCE` | User-assigned priority |
 | Confidence | 5% | `SEARCH_WEIGHT_CONFIDENCE` | Classification certainty |
 | Recency | 10% | `SEARCH_WEIGHT_RECENCY` | Age decay from `timestamp` (linear over 180 days by default) |
-| Exact | 20% | `SEARCH_WEIGHT_EXACT` | Exact phrase match boost |
+| Exact | 20% | `SEARCH_WEIGHT_EXACT` | Whole-query exact match against metadata terms |
 | Relation | 25% | `SEARCH_WEIGHT_RELATION` | Graph relationship strength |
 | Relevance | 0% | `SEARCH_WEIGHT_RELEVANCE` | Stored `relevance_score` written by consolidation decay; weight 0.0 disables it |
 | Context bonus | unweighted | none | Context profile bonus added directly to the sum (see below) |
@@ -249,11 +249,11 @@ flowchart TD
     end
 
     subgraph metadata ["Metadata Sources"]
-        TagSrc["Query tags vs<br/>memory tags"]
+        TagSrc["Query tokens vs<br/>tag and metadata terms"]
         ImpSrc["memory.importance<br/>field"]
         ConfSrc["memory.confidence<br/>field"]
         RecSrc["memory.timestamp"]
-        ExSrc["Query phrase vs<br/>memory content"]
+        ExSrc["Whole query vs<br/>metadata terms"]
         RelSrc["memory.relevance_score<br/>from consolidation"]
         CtxSrc["Context profile<br/>(tags, types, IDs, hints)"]
     end
@@ -354,7 +354,7 @@ Entity expansion follows entity tags to find related memories. This enables quer
 
 - `expand_entities=true` — Enable entity expansion (default: false)
 - `entity_expansion=true` — Alias for `expand_entities`
-- Entity expansion respects original tag filters for context scoping
+- Entity expansion applies the original tag filters only with `expand_respect_tags=true`
 
 **Entity types extracted:**
 
@@ -376,7 +376,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 2. **Vector vs Keyword:** Vector search requires Qdrant; keyword search always available
 3. **Trending fallback:** If query is empty or `"*"`, use `_graph_trending_results()`
 4. **Expansion order:** Bridges first, then entity expansion
-5. **Filter application:** Seed results never filtered; expanded results respect min thresholds
+5. **Filter application:** Seed results go through the request filters (tags, time range, `exclude_tags`, `min_score`) and, by default, current-state filtering. Expanded results get the same filters except the tag scope, which applies only with `expand_respect_tags=true`; `expand_min_strength` and `expand_min_importance` filter relation-expanded results only
 
 ---
 
@@ -393,7 +393,7 @@ The recall endpoint orchestrates the entire hybrid search process:
 | `SEARCH_WEIGHT_IMPORTANCE` | 0.10 | Importance field contribution |
 | `SEARCH_WEIGHT_CONFIDENCE` | 0.05 | Confidence field contribution |
 | `SEARCH_WEIGHT_RECENCY` | 0.10 | Recency decay contribution (age decay from `timestamp`) |
-| `SEARCH_WEIGHT_EXACT` | 0.20 | Exact phrase match boost |
+| `SEARCH_WEIGHT_EXACT` | 0.20 | Whole-query exact match against metadata terms |
 | `SEARCH_WEIGHT_RELATION` | 0.25 | Graph relationship strength contribution |
 | `SEARCH_WEIGHT_RELEVANCE` | 0.0 | Consolidation decay `relevance_score` contribution (0.0 disables it) |
 

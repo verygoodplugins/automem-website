@@ -13,11 +13,11 @@ Key implementation files:
 - [automem/search/**](https://github.com/verygoodplugins/automem/tree/0720da2/automem/search) — Vector, keyword, and relation search
 :::
 
-AutoMem ships with a ranking pipeline that works well out of the box — every knob on this page defaults to *no behavior change* from prior releases. This guide is for operators who want to **tune** recall for a specific corpus: bias toward freshness, tighten a tag-scoped pool against off-topic memories, or adjust how much structured metadata and relationships contribute.
+AutoMem ships with a ranking pipeline that works well out of the box — apart from the metadata sidecar weight `SEARCH_WEIGHT_METADATA` (new in v0.16.0 and active by default), the v0.16.0 ranking knobs on this page default to *no behavior change* from prior releases, while the vector candidate pool and artifact-type exclusion added in v0.16.1 are on by default. This guide is for operators who want to **tune** recall for a specific corpus: bias toward freshness, tighten a tag-scoped pool against off-topic memories, or adjust how much structured metadata and relationships contribute.
 
 For *how* the score is computed (the 10 weighted components and the merge/rank flow), read [Hybrid Search](/docs/core-concepts/hybrid-search/) first — this page assumes that model. For the request-time parameters (`recency_bias`, `state_mode`, `min_score`), see [Recall Operations](/docs/reference/api/recall-operations/). For the full variable list with defaults, see [Configuration Reference](/docs/reference/configuration/).
 
-Introduced across AutoMem **v0.16.0**. All knobs are environment variables read at startup; several also expose a per-request override on `/recall`.
+Introduced across AutoMem **v0.16.0** and **v0.16.1**. All knobs are environment variables read at startup; several also expose a per-request override on `/recall`.
 
 ---
 
@@ -51,8 +51,8 @@ The base `final_score` is a weighted sum of ten components plus an unweighted co
 | `SEARCH_WEIGHT_KEYWORD` | `0.35` | Lexical match |
 | `SEARCH_WEIGHT_METADATA` | `0.35` | Structured metadata field match |
 | `SEARCH_WEIGHT_RELATION` | `0.25` | Graph relationship strength |
-| `SEARCH_WEIGHT_TAG` | `0.20` | Tag-filter overlap |
-| `SEARCH_WEIGHT_EXACT` | `0.20` | Exact-phrase boost |
+| `SEARCH_WEIGHT_TAG` | `0.20` | Query-token hits against tag and metadata terms |
+| `SEARCH_WEIGHT_EXACT` | `0.20` | Whole-query exact match against metadata terms |
 | `SEARCH_WEIGHT_RECENCY` | `0.10` | Age decay (see below) |
 | `SEARCH_WEIGHT_IMPORTANCE` | `0.10` | User-assigned importance |
 | `SEARCH_WEIGHT_CONFIDENCE` | `0.05` | Classification certainty |
@@ -96,7 +96,7 @@ The re-rank is **inert by default** — `SEARCH_WEIGHT_TEMPORAL` changes nothing
 
 `RECALL_RELEVANCE_GATE` (default `0.0` = disabled) addresses [issue #130](https://github.com/verygoodplugins/automem/issues/130): a high-importance but **off-topic** memory riding query-independent score (importance, confidence, recency, tag overlap, consolidation relevance) to the top of a tag-scoped pool.
 
-When the gate is set and a result's best query-topical evidence — the max of its vector, keyword, metadata, and exact-match components — falls **below** the threshold, the query-independent components are scaled by `evidence / gate`. This is a **linear ramp, not a cliff**: a barely-relevant result is dampened a little, a wholly off-topic one a lot. The context bonus is never gated, so `context_tags` remains the explicit soft-boost channel.
+When the gate is set and the query yields at least one keyword token, a result whose best query-topical evidence — the max of its vector, keyword, metadata, and exact-match components — falls **below** the threshold has its query-independent components scaled by `evidence / gate`. Words under three characters and common stopwords don't count as keyword tokens, so a tags-only or embedding-only request, or a query made only of such words, is never gated. This is a **linear ramp, not a cliff**: a barely-relevant result is dampened a little, a wholly off-topic one a lot. The context bonus is never gated, so `context_tags` remains the explicit soft-boost channel.
 
 - `0.0` — disabled; legacy scoring exactly.
 - `~0.15–0.25` — a gentle guard that keeps obviously off-topic memories out of the top of a scoped pool.
@@ -113,7 +113,7 @@ Vector search fetches more candidates than the response `limit` so hybrid re-ran
 | Variable | Default | Notes |
 | --- | --- | --- |
 | `RECALL_VECTOR_OVERFETCH` | `4` | Multiplier on `limit` for the vector fetch pool. `1` restores legacy 1× behavior. |
-| `RECALL_VECTOR_FETCH_CAP` | `200` | Hard ceiling on fetched vector candidates, kept separate from `RECALL_MAX_LIMIT`. |
+| `RECALL_VECTOR_FETCH_CAP` | `200` | Cap on the over-fetched candidate count, kept separate from `RECALL_MAX_LIMIT`. The fetch never drops below the per-query result limit (`limit`, or `per_query_limit` when set). |
 
 If recall misses high-importance exact-topic memories that vector search ranks just outside the top-K, try raising `RECALL_VECTOR_OVERFETCH` before changing score weights.
 
@@ -144,7 +144,7 @@ The background consolidation pass groups near-duplicate memories into clusters. 
 | `CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD` | `0.75` | Minimum cosine similarity for a memory to join a cluster. Higher = tighter, fewer clusters. |
 | `CONSOLIDATION_MIN_CLUSTER_SIZE` | `3` | Minimum members before a cluster is formed. |
 
-Raise the similarity threshold if unrelated memories are being clustered; lower `CONSOLIDATION_MIN_CLUSTER_SIZE` to consolidate more aggressively on smaller corpora. See [Consolidation & Decay](/docs/core-concepts/consolidation/) for the full lifecycle.
+Raise the similarity threshold if unrelated memories are being clustered. `CONSOLIDATION_MIN_CLUSTER_SIZE` only decides which groups are reported as clusters: a `MetaPattern` summary is written only when [`cluster["size"] >= 5`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/consolidation.py#L926-L927), a fixed threshold, so any value of 5 or less writes the same summaries, and lowering it from the default 3 only reports more clusters. See [Consolidation & Decay](/docs/core-concepts/consolidation/) for the full lifecycle.
 
 ---
 
