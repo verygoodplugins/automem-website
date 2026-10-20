@@ -382,7 +382,7 @@ graph TB
 **Worker responsibilities:**
 
 - **EnrichmentWorker**: Extracts entities (spaCy NER + regex), generates summaries, creates temporal/semantic links, detects patterns
-- **EmbeddingWorker**: Batches requests (20 items, 2-second timeout). A failed batch is not re-queued: the batch call falls back to per-item calls, and any item that still fails is stored with a placeholder vector
+- **EmbeddingWorker**: Batches requests (20 items, 2-second timeout) to reduce API costs by 40-50%. A failed batch is not re-queued: the batch call falls back to per-item calls, and any item that still fails is stored with a placeholder vector
 - **ConsolidationScheduler**: Runs five scheduled tasks on configurable intervals (Decay, Creative, Cluster, Forget, and Identity) using control node for persistence. Forget's interval defaults to 0, disabled, and Identity's interval defaults to 0, disabled, unless `IDENTITY_SYNTHESIS_ENABLED=true`
 - **SyncWorker**: Every `SYNC_CHECK_INTERVAL_SECONDS` (default one hour), compares memory IDs in FalkorDB and Qdrant, skipping memory types in `RECALL_EXCLUDED_TYPES`, and queues memories missing from Qdrant for embedding when they still have content. The 5% drift threshold belongs to the separate health monitor, not to this worker
 

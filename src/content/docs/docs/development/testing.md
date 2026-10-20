@@ -50,10 +50,10 @@ Tests are tagged with markers to control which tier runs:
 | Marker | Command | Requires | Purpose |
 |---|---|---|---|
 | `unit` | `pytest -m unit tests/` | No external services | Fast, isolated logic tests |
-| `integration` | `pytest -rs -m integration tests/` | Docker stack running | Full API + database flow |
-| `live` | `AUTOMEM_ALLOW_LIVE=1 pytest -m live tests/` | Railway deployment | Production smoke tests |
+| `integration` | `AUTOMEM_RUN_INTEGRATION_TESTS=1 pytest -rs -m integration tests/` | Docker stack running | Full API + database flow |
+| `live` | `pytest -m live tests/` | Benchmark setup | Benchmark suites under `tests/benchmarks/`, which are marked `live` automatically |
 
-`make test` runs the unit tests (`pytest -rs -m unit`), then the MCP bridge's Node tests through `make test-node`. `make test-integration` starts Docker Compose and runs integration tests.
+`make test` runs the unit tests (`pytest -rs -m unit`), then the MCP bridge's Node tests through `make test-node`. `make test-integration` starts Docker Compose and runs integration tests with `AUTOMEM_RUN_INTEGRATION_TESTS=1` and the test tokens set; without that variable the integration tests skip. `AUTOMEM_ALLOW_LIVE=1` is a separate switch that lets the integration tests run against a non-local `AUTOMEM_TEST_BASE_URL`.
 
 #### Coverage by Component
 
@@ -88,7 +88,7 @@ pytest -m unit tests/                            # Run unit tests (no external s
 pytest -m unit tests/ -v                         # Verbose output
 pytest tests/test_consolidation_engine.py        # Specific file
 pytest -m unit tests/ -k "test_relevance_score"  # Specific function
-pytest -rs -m integration tests/                 # Integration tests (requires Docker stack)
+AUTOMEM_RUN_INTEGRATION_TESTS=1 pytest -rs -m integration tests/  # Integration tests (requires Docker stack)
 ```
 
 **MCP bridge:** the bridge's tests use Node's built-in test runner. `make test-node` (or `npm test` inside `mcp-sse-server/`, which runs `node --test`) runs them, `make test` runs them after the unit tests, and AutoMem's CI `node-test` job runs them on Node 20. The three tests in `parity.test.js` skip unless `AUTOMEM_RUN_PARITY_TESTS=1` is set, and when enabled they need a live stack. `make test-parity` starts its own Docker stack on port 8011 and runs the bridge tests with that variable set, which diffs the remote bridge against the stdio `mcp-automem` transport.

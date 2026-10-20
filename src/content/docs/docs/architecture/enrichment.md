@@ -215,9 +215,9 @@ The enrichment pipeline automatically creates three types of relationships to bu
 
 ### Temporal Links (PRECEDED_BY)
 
-Connects memories to recently created or updated memories within a time window.
+Connects a memory to up to 5 earlier memories from the last 7 days.
 
-- Queries FalkorDB for memories created/updated within the configured time window
+- Queries FalkorDB for memories whose `timestamp` is earlier than this memory's and falls within the last 7 days (a fixed cutoff, not configurable), newest first, up to 5
 - Creates `PRECEDED_BY` edges from the new memory to those recent memories
 - Establishes chronological chains in the graph
 

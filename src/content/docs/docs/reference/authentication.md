@@ -119,6 +119,8 @@ graph LR
     APIKeyHeader --> RequireAPIToken
     QueryParam --> RequireAPIToken
 
+    RequireAPIToken -->|"OPTIONS, /viewer*, /health,<br/>or AUTOMEM_API_TOKEN unset"| ProcessRequest
+    RequireAPIToken -->|"/backup skips the API token"| ValidateAdmin
     RequireAPIToken --> ExtractToken
     ExtractToken --> ValidateToken
     ValidateToken -->|Valid| CheckLevel
