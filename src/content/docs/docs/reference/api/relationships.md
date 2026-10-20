@@ -136,11 +136,11 @@ curl -X POST https://your-automem-instance/associate \
 ```
 
 :::note[201 vs 207]
-Batch requests return **`201 Created`** when *every* item succeeds, and **`207 Multi-Status`** when one or more items fail validation or reference missing memories. Inspect `failed_count` and the `failed` array to see which associations did not land. Single-pair requests are unchanged and continue to return the single-association success/error responses documented above.
+Batch requests return **`201 Created`** when *every* item succeeds, and **`207 Multi-Status`** when one or more items fail validation or reference missing memories. Inspect `failed_count` and the `failed` array to see which associations did not land. A `strength` that is not a number or is outside 0.0–1.0 is the exception: in any item it rejects the whole request with the same `400` and `'importance'` messages as a single pair, before anything is written. Single-pair requests are unchanged and continue to return the single-association success/error responses documented above.
 :::
 
 :::caution[AutoMem service version requirement for batch mode]
-AutoMem services older than 0.16.0 have no `associations` branch in `POST /associate`. A valid batch request sent to an older service falls through to single-association validation and comes back as `'memory1_id' and 'memory2_id' are required` — which looks like a malformed client request rather than an outdated service. The MCP client (`src/automem-client.ts`) detects this pattern and re-states it as: *"Batch `associations` requires AutoMem 0.16.0 or newer; older services ignore the array and validate the payload as a single association. Upgrade the AutoMem service, or send the associations one per call."* If you see this error, upgrade the AutoMem backend to 0.16.0 or later.
+AutoMem services older than 0.16.0 have no `associations` branch in `POST /associate`. A valid batch request sent to an older service falls through to single-association validation and comes back as `'memory1_id' and 'memory2_id' are required` — which looks like a malformed client request rather than an outdated service. The MCP client (`src/automem-client.ts`) detects this pattern and re-states it as: *"Batch `associations` requires AutoMem 0.16.0 or newer; older services ignore the array and validate the payload as a single association. Upgrade the AutoMem service, or send the N association(s) one per call."* (`N` is the number of items in the batch.) If you see this error, upgrade the AutoMem backend to 0.16.0 or later.
 :::
 
 ---
@@ -219,7 +219,7 @@ Although all relationships are stored as directed edges in FalkorDB (`memory1_id
 
 ## Validation Rules
 
-The `/associate` endpoint enforces the following validation:
+The `/associate` endpoint enforces the following validation (the flow below shows the order the checks run in):
 
 1. **Memory Existence**: Both `memory1_id` and `memory2_id` must reference existing Memory nodes in FalkorDB
 2. **Relationship Type**: `type` must be one of the 11 authorable relation types in `AUTHORABLE_RELATIONS`
@@ -229,41 +229,55 @@ The `/associate` endpoint enforces the following validation:
 
 ### Validation Flow
 
+Single-pair checks run in the order shown, and the first failure ends the request. `strength` is checked before the IDs, and FalkorDB availability is checked before the memories are looked up.
+
 ```mermaid
 flowchart TD
     Request["POST /associate Request"]
     AuthCheck{"Valid API Token?"}
+    BodyCheck{"JSON object body?"}
+    StrengthCheck{"strength a number in 0.0-1.0?"}
     FieldCheck{"Required Fields Present?"}
+    UuidCheck{"Both IDs valid UUIDs?"}
     SelfCheck{"memory1_id == memory2_id?"}
     TypeCheck{"type in AUTHORABLE_RELATIONS?"}
-    StrengthCheck{"strength in 0.0-1.0?"}
-    MemoryCheck{"Both memories exist?"}
-    CreateEdge["Create FalkorDB Edge"]
+    GraphCheck{"FalkorDB available?"}
+    CreateEdge["Run MATCH and MERGE query"]
+    MemoryCheck{"Both memories matched?"}
     Success["Return 201 Success"]
 
     Err401["401 Unauthorized"]
+    Err400Body["400 JSON body is required"]
+    Err400Strength["400 Invalid Strength"]
     Err400Field["400 Missing Field"]
+    Err400Uuid["400 Invalid UUID"]
     Err400Self["400 Cannot self-associate"]
     Err400Type["400 Invalid Type"]
-    Err400Strength["400 Invalid Strength"]
-    Err404["404 One or both memories do not exist"]
     Err503["503 FalkorDB Unavailable"]
+    Err500["500 Failed to create association"]
+    Err404["404 One or both memories do not exist"]
 
     Request --> AuthCheck
     AuthCheck -->|No| Err401
-    AuthCheck -->|Yes| FieldCheck
+    AuthCheck -->|Yes| BodyCheck
+    BodyCheck -->|No| Err400Body
+    BodyCheck -->|Yes| StrengthCheck
+    StrengthCheck -->|No| Err400Strength
+    StrengthCheck -->|Yes| FieldCheck
     FieldCheck -->|No| Err400Field
-    FieldCheck -->|Yes| SelfCheck
+    FieldCheck -->|Yes| UuidCheck
+    UuidCheck -->|No| Err400Uuid
+    UuidCheck -->|Yes| SelfCheck
     SelfCheck -->|Yes| Err400Self
     SelfCheck -->|No| TypeCheck
     TypeCheck -->|No| Err400Type
-    TypeCheck -->|Yes| StrengthCheck
-    StrengthCheck -->|No| Err400Strength
-    StrengthCheck -->|Yes| MemoryCheck
+    TypeCheck -->|Yes| GraphCheck
+    GraphCheck -->|No| Err503
+    GraphCheck -->|Yes| CreateEdge
+    CreateEdge -->|Query error| Err500
+    CreateEdge -->|Query ran| MemoryCheck
     MemoryCheck -->|No| Err404
-    MemoryCheck -->|Yes| CreateEdge
-    CreateEdge -->|Success| Success
-    CreateEdge -->|DB Down| Err503
+    MemoryCheck -->|Yes| Success
 ```
 
 ---
@@ -322,6 +336,28 @@ Errors from `abort()` use the shared envelope, `{"status": "error", "code": <htt
   "status": "error",
   "code": 400,
   "message": "'memory1_id' and 'memory2_id' are required"
+}
+```
+
+**400 Bad Request** — `strength` is not a number or is outside 0.0–1.0 (the route reuses the memory `importance` validator, so the message names `importance`):
+
+```json
+{
+  "status": "error",
+  "code": 400,
+  "message": "'importance' must be between 0 and 1"
+}
+```
+
+A non-numeric `strength` returns `"'importance' must be a number"` instead.
+
+**400 Bad Request** — `memory1_id` or `memory2_id` is not a valid UUID:
+
+```json
+{
+  "status": "error",
+  "code": 400,
+  "message": "memory_id must be a valid UUID"
 }
 ```
 
@@ -483,9 +519,14 @@ The `associate_memories` MCP tool corresponds to `POST /associate`.
 | `memory2_id` | string | Yes | — | Target memory ID to link to |
 | `type` | string (enum) | Yes | 11 authorable types | Relationship type |
 | `strength` | number | Yes | 0.0–1.0 | Relationship strength. The MCP tool has no default |
+| `associations` | array of objects | Batch mode | 1–500 items | Batch of associations. Each item takes the same fields as a single call. Do not combine with the top-level pair fields |
 
 :::note[Strength is required over MCP]
 The tool's input schema has no top-level `required` list, but the mcp-automem client throws before it sends anything when `type` is missing, or when `strength` is missing or outside 0–1 (for example `associate_memories: single association strength is required`). Each item in a batch `associations` array needs the same four fields. The HTTP API behaves differently: `POST /associate` uses `strength` 0.5 and `type` `RELATES_TO` when you omit them.
+:::
+
+:::note[Batch mode]
+Pass `associations` instead of the top-level `memory1_id`, `memory2_id`, `type` and `strength` to create many relationships in one call; the four pair fields above are required only when `associations` is not an array. The client throws before it sends anything when `associations` is empty, has more than 500 items, or is combined with any top-level pair field, including the optional relation properties such as `reason`. It sends `{ associations }` to `POST /associate`, so the REST behavior in [Batch Associations](#batch-associations) applies, including the AutoMem 0.16.0 requirement. `success` is `false` when any item failed; `failed` lists each failed item with its `reason`.
 :::
 
 **Relationship type enum values (11 authorable):**
@@ -506,8 +547,8 @@ The following types are **system-generated** and cannot be created via `associat
 - `PRECEDED_BY` — Temporal predecessor (created by enrichment)
 - `DISCOVERED` — System-internal heuristic edge with `kind` property (created by consolidation; excluded from recall but may appear in `/graph/snapshot` and `/graph/neighbors`)
 
-:::note[Validation at MCP layer]
-The MCP server validates the enum at request time, ensuring invalid relationship types are rejected before reaching the backend.
+:::note[Relationship type validation]
+The enum is advertised in the tool's `inputSchema`, but the mcp-automem server does not check arguments against it: the client only requires `type` to be present and sends it as given. The AutoMem service upper-cases `type` and checks it against `AUTHORABLE_RELATIONS`, so a single-pair call with an unknown type fails with `400` (`Relation type must be one of [...]`), and in batch mode that item is listed in `failed` instead.
 :::
 
 
@@ -515,8 +556,13 @@ The MCP server validates the enum at request time, ensuring invalid relationship
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `success` | boolean | Yes | Whether association was created |
-| `message` | string | Yes | Confirmation message |
+| `success` | boolean | Yes | Whether every requested association was created; `false` for partial batch results |
+| `message` | string | Yes | Confirmation message (batch mode: the service summary) |
+| `created_count` | integer | No | Batch mode: number of associations created |
+| `failed_count` | integer | No | Batch mode: number of associations that failed |
+| `succeeded` | array | No | Batch mode: successful association records |
+| `failed` | array | No | Batch mode: failed association records with errors |
+| `summary` | string | No | Batch mode: service summary |
 
 The tool is annotated `idempotentHint: true` — creating the same relationship multiple times is safe (MERGE semantics).
 
@@ -525,8 +571,8 @@ The tool is annotated `idempotentHint: true` — creating the same relationship 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Flask["automem/api/memory.py<br/>POST /associate"]
-    participant Falkor["FalkorDB"]
+    participant Flask as automem/api/memory.py<br/>POST /associate
+    participant Falkor as FalkorDB
 
     Client->>Flask: POST /associate<br/>{memory1_id, memory2_id, type}
     Flask->>Flask: validate relationship type
