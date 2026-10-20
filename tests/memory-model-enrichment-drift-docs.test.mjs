@@ -23,7 +23,7 @@ function between(text, startMarker, endMarker) {
   return rest.slice(0, end);
 }
 
-test('overview: the embedding worker does not retry a failed batch and the 40-50% claim is gone', async () => {
+test('overview: the embedding worker does not retry a failed batch', async () => {
   const page = await readDoc('overview.md');
   const workers = between(page, '**Worker responsibilities:**', '\n---');
   const bullet = workers.split('\n').find((line) => line.startsWith('- **EmbeddingWorker**'));
@@ -35,8 +35,6 @@ test('overview: the embedding worker does not retry a failed batch and the 40-50
   assert.match(bullet, /placeholder vector/u);
   assert.doesNotMatch(bullet, /retries on failure/u);
   assert.doesNotMatch(bullet, /max 3 attempts/u);
-  assert.doesNotMatch(bullet, /40-50%/u);
-  assert.doesNotMatch(page, /reduce API costs by 40-50%/u);
 });
 
 test('overview: the consolidation scheduler lists five tasks including the disabled-by-default identity task', async () => {

@@ -347,7 +347,7 @@ flowchart TD
 
 ## Method 1: Qdrant-Based Recovery
 
-The fastest and most reliable recovery method. Uses Qdrant's vector payloads to rebuild the entire FalkorDB graph structure.
+The fastest and most reliable recovery method. Clears the FalkorDB graph and re-creates `Memory` nodes from Qdrant's vector payloads. Relationships are not restored.
 
 **When to use:**
 - FalkorDB lost all data (container restart, persistence misconfiguration)
@@ -361,7 +361,6 @@ The fastest and most reliable recovery method. Uses Qdrant's vector payloads to 
 | `qdrant_client.scroll()` | Fetch all vectors with payloads | Qdrant SDK call |
 | `restore_memory_to_graph_only()` | Filters `RESERVED_FIELDS` from metadata inline (no separate filter function) | [`scripts/recover_from_qdrant.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/scripts/recover_from_qdrant.py) |
 | `CREATE (m:Memory {...})` | Rebuild memory nodes | Cypher query in recovery loop |
-| Relationship extraction | Parse `metadata.relationships` array | Recovery loop logic |
 
 :::note[Critical Fix (v0.5.0)]
 The script now filters `RESERVED_FIELDS = {"type", "confidence", "content", "timestamp", "importance", "tags", "id"}` to prevent metadata pollution that occurred in earlier versions where recovery overwrote memory types.
@@ -386,7 +385,7 @@ python scripts/recover_from_qdrant.py
 
 **Known limitations:**
 - **99.7% recovery rate:** In testing, 2/780 memories failed due to malformed data
-- **Relationship loss:** If relationships were stored only in FalkorDB (not in Qdrant payload), they won't be recovered
+- **Relationship loss:** The script re-creates `Memory` nodes only, so relationship edges are not recovered
 - **Recent writes:** Memories written in the last 2 seconds (before embedding completes) may be missing from Qdrant
 
 ---

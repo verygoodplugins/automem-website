@@ -244,7 +244,7 @@ tests/
 └── benchmarks/
 ```
 
-Tests use pytest markers to separate execution tiers: `unit` (no external services, runs with `make test`), `integration` (requires Docker stack, runs with `make test-integration`), and `live` (runs against a deployed Railway instance).
+Tests use pytest markers to separate execution tiers: `unit` (no external services, runs with `make test`, which then runs the MCP bridge's Node tests through `make test-node`), `integration` (requires Docker stack, runs with `make test-integration`), and `live` (runs against a deployed Railway instance).
 
 **Mock objects** (defined in [`tests/test_consolidation_engine.py`](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_consolidation_engine.py) and `tests/support/`):
 
@@ -381,7 +381,7 @@ The [`src/types.ts`](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf7
 
 #### CLI Commands (`src/cli/`)
 
-Each CLI command is implemented as a separate module with a main `run*()` function. CLI handlers follow a consistent pattern: `--dry-run` flag for safe preview, `--verbose` flag for detailed logging, template rendering from `templates/` directory, filesystem operations with error handling, and user-friendly output with next-step instructions.
+Each CLI command is implemented as a separate module with a main `run*()` function. CLI handlers follow a consistent pattern: `--dry-run` flag for safe preview, template rendering from `templates/` directory, filesystem operations with error handling, and user-friendly output with next-step instructions.
 
 ### Templates Directory (`templates/`)
 

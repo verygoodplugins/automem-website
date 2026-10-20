@@ -45,7 +45,6 @@ AutoMem implements four background processing systems, each with distinct trigge
 graph TB
     subgraph write_ops["Write Operations"]
         PostMem["POST /memory<br/>api/memory.py"]
-        PatchMem["PATCH /memory/:id<br/>api/memory.py"]
     end
 
     subgraph queues["Queue Management"]
@@ -76,8 +75,6 @@ graph TB
 
     PostMem --> EnrichQueue
     PostMem --> EmbedQueue
-    PatchMem --> EnrichQueue
-    PatchMem -.->|"if content changed"| EmbedQueue
 
     EnrichQueue --> EnrichPending
     EmbedQueue --> EmbedPending
@@ -101,7 +98,6 @@ graph TB
 graph TB
     subgraph "HTTP Request Thread"
         PostMemory["POST /memory<br/>Route handler"]
-        PatchMemory["PATCH /memory/:id<br/>Route handler"]
     end
 
     subgraph "ServiceState Queues"
@@ -122,8 +118,6 @@ graph TB
 
     PostMemory -->|"queue.put(memory_id)"| EnrichQ
     PostMemory -->|"queue.put(memory_id)"| EmbedQ
-    PatchMemory -->|"queue.put(memory_id)"| EnrichQ
-    PatchMemory -.->|"if content changed"| EmbedQ
 
     EnrichQ --> EnrichPending
     EmbedQ --> EmbedPending

@@ -129,11 +129,11 @@ The AutoMem API endpoints called by `AutoMemClient` ([`src/automem-client.ts`](h
 
 | Method | Endpoint | Request Body | Response | Client Method |
 |---|---|---|---|---|
-| POST | `/memory` | `{content, tags, importance, embedding?, metadata?, timestamp?}` | `{memory_id, message}` | `storeMemory()` |
+| POST | `/memory` | `{content, tags, importance, embedding?, metadata?, timestamp?}` | `{status, memory_id, stored_at, type, confidence, qdrant, ...}` | `storeMemory()` |
 | GET | `/recall?query=...&tags=...&limit=...` | N/A (query params) | `{results[], count, dedup_removed?, ...}` | `recallMemory()` |
-| POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{success, message}` | `associateMemories()` |
-| PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{memory_id, message}` | `updateMemory()` |
-| DELETE | `/memory/:id` | N/A | `{memory_id, message}` | `deleteMemory()` |
+| POST | `/associate` | `{memory1_id, memory2_id, type, strength}` | `{status, message, relation_type, strength, ...}` | `associateMemories()` |
+| PATCH | `/memory/:id` | `{content?, tags?, importance?, metadata?, ...}` | `{status, memory_id}` | `updateMemory()` |
+| DELETE | `/memory/:id` | N/A | `{status, memory_id}` | `deleteMemory()` |
 | GET | `/memory/by-tag?tags=...&limit=...` | N/A | `{memories[], count}` | reached internally via `recallMemory({ tags, exhaustive: true })` — there is no separate public `searchByTag()` method |
 | GET | `/health` | N/A | `{status, falkordb, qdrant, graph, timestamp}` | `checkHealth()` |
 

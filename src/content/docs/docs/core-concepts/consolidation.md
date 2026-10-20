@@ -87,7 +87,7 @@ The `MemoryConsolidator` class implements the four core consolidation tasks plus
 | `base_decay_rate` | 0.01 | Daily exponential decay rate |
 | `reinforcement_bonus` | 0.2 | Strength added when memory accessed |
 | `relationship_preservation` | 0.3 | Extra weight for connected memories |
-| `min_cluster_size` | 3 | Minimum memories per cluster to create MetaMemory (`CONSOLIDATION_MIN_CLUSTER_SIZE`) |
+| `min_cluster_size` | 3 | Minimum memories for a group to be reported as a cluster (`CONSOLIDATION_MIN_CLUSTER_SIZE`); a MetaPattern summary is created only for clusters of 5 or more |
 | `similarity_threshold` | 0.75 | Cosine similarity for clustering (`CONSOLIDATION_CLUSTER_SIMILARITY_THRESHOLD`) |
 | `archive_threshold` | 0.0 | Archive below this relevance (disabled by default) |
 | `delete_threshold` | 0.0 | Delete below this relevance (disabled by default) |
