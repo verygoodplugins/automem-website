@@ -164,7 +164,7 @@ With dependencies running, start the Flask API:
 python app.py
 ```
 
-The Flask application binds to `0.0.0.0:8001` by default. The `PORT` environment variable controls the listening port.
+The Flask application binds to `::` (IPv6 dual-stack) on port `8001` by default. The `PORT` environment variable controls the listening port.
 
 **Verify startup:**
 
@@ -214,7 +214,7 @@ sequenceDiagram
     Flask->>Sched: "Initialize scheduler"
     Sched->>Sched: "Schedule decay (1d)\ncreative (7d)\ncluster (30d)\nforget disabled"
 
-    Flask->>Flask: "Bind to 0.0.0.0:8001"
+    Flask->>Flask: "Bind to [::]:8001"
     Flask-->>Dev: "Server ready"
 
     Dev->>Flask: "GET /health"

@@ -138,7 +138,7 @@ Background maintenance cycles that decay, cluster, and optionally forget low-val
 | `SEARCH_WEIGHT_IMPORTANCE` | No | `0.10` | User-assigned importance weight |
 | `SEARCH_WEIGHT_RECENCY` | No | `0.10` | Freshness boost weight |
 | `SEARCH_WEIGHT_CONFIDENCE` | No | `0.05` | Memory confidence weight |
-| `SEARCH_WEIGHT_EXACT` | No | `0.20` | Content token overlap weight |
+| `SEARCH_WEIGHT_EXACT` | No | `0.20` | Whole-query exact match against metadata terms |
 | `SEARCH_WEIGHT_RELATION` | No | `0.25` | Graph relation proximity boost |
 | `SEARCH_WEIGHT_RELEVANCE` | No | `0.0` | Weight on consolidation-decay `relevance_score` (access patterns + age); `0.0` disables it. |
 | `RECALL_RELATION_LIMIT` | No | `5` | Max related memories per result |
