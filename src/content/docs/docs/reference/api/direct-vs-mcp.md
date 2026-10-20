@@ -6,13 +6,13 @@ sidebar:
 ---
 
 :::note[Source files]
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/index.ts) — Entry point: mode detection, CLI routing, and stdio server startup
-- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/mcp-surface.ts) — MCP tool definitions, request handlers, and `createAutoMemMcpServer()`
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/9a0bbf754dd31db524da25638b0e97907e32ff37/src/automem-client.ts) — HTTP client, including the client-side argument checks for each tool mode
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
-- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/538721c/server.json) — MCP server manifest
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/index.ts) — Entry point: mode detection, CLI routing, and stdio server startup
+- [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/mcp-surface.ts) — MCP tool definitions, request handlers, and `createAutoMemMcpServer()`
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/automem-client.ts) — HTTP client, including the client-side argument checks for each tool mode
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
+- [server.json](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/server.json) — MCP server manifest
 
-Line numbers on this page refer to mcp-automem 0.16.0.
+Line numbers on this page refer to mcp-automem 0.17.0.
 :::
 
 The AutoMem system is accessible through two interfaces: the **HTTP API** (direct REST calls to the AutoMem server) and the **MCP tools** (JSON-RPC calls through the `mcp-automem` bridge). Both interfaces reach the same backend but differ in transport, parameter style, and what they expose to callers.
@@ -289,7 +289,7 @@ In batch mode the client only checks that each item's `content` is non-empty. Th
 | `queries` | array[string] | No | — | Multiple queries for broader recall |
 | `embedding` | array[number] | No | — | Optional embedding vector for direct similarity search |
 | `limit` | integer | No | 1–200 (schema default 5) | Max results to return. Ranked mode defaults to 5; enumeration without `limit` uses the server default of 20. Enumeration mode honors up to 200; in ranked mode the server enforces its own cap (default 100 via `RECALL_MAX_LIMIT`) |
-| `offset` | integer | No | ≥ 0 | Pagination offset |
+| `offset` | integer | No | ≥ 0 | Pagination offset (enumeration mode only; rejected with a validation error in ranked mode — raise `limit` instead) |
 | `tags` | array[string] | No | — | Filter by tags |
 | `tag_mode` | string | No | `"any"` \| `"all"` | Tag matching mode |
 | `tag_match` | string | No | `"exact"` \| `"prefix"` | Tag matching strategy |

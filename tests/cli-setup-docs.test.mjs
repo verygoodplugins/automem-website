@@ -15,7 +15,7 @@ async function readPage() {
   return readFile(pagePath, 'utf8');
 }
 
-test('cli setup docs match the audited 0.16.0 setup and config surfaces', async () => {
+test('cli setup docs match the audited 0.17.0 setup and config surfaces', async () => {
   const page = await readPage();
 
   assert.match(page, /npm run prebuild.*memory-policy.*template versions/si);
@@ -25,8 +25,10 @@ test('cli setup docs match the audited 0.16.0 setup and config surfaces', async 
   assert.match(page, /npx @verygoodplugins\/mcp-automem config --format=json/);
   assert.match(page, /human-readable output/);
   assert.match(page, /raw MCP configuration object/);
-  assert.match(page, /`setup` becomes an alias of `install` in the release after 0\.16\.0/);
-  assert.match(page, /older endpoint wizard/);
+  // As of 0.17.0 `setup` is an alias of `install` (src/index.ts); the old future-tense wording is removed
+  assert.match(page, /`setup` is an alias of `install` as of 0\.17\.0/);
+  // The older `setup`-specific flags are no longer accepted; the doc notes this
+  assert.match(page, /older `setup` flags/);
   assert.match(page, /Claude Code env export lines with the `your-auto-mem-api-key` placeholder/);
   assert.match(page, /Hermes `mcp_servers` YAML snippet/);
   assert.doesNotMatch(page, /does \*\*not\*\* call the AutoMem service during setup/);

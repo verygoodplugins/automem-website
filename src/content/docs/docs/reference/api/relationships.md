@@ -139,6 +139,10 @@ curl -X POST https://your-automem-instance/associate \
 Batch requests return **`201 Created`** when *every* item succeeds, and **`207 Multi-Status`** when one or more items fail validation or reference missing memories. Inspect `failed_count` and the `failed` array to see which associations did not land. Single-pair requests are unchanged and continue to return the single-association success/error responses documented above.
 :::
 
+:::caution[AutoMem service version requirement for batch mode]
+AutoMem services older than 0.16.0 have no `associations` branch in `POST /associate`. A valid batch request sent to an older service falls through to single-association validation and comes back as `'memory1_id' and 'memory2_id' are required` — which looks like a malformed client request rather than an outdated service. The MCP client (`src/automem-client.ts`) detects this pattern and re-states it as: *"Batch `associations` requires AutoMem 0.16.0 or newer; older services ignore the array and validate the payload as a single association. Upgrade the AutoMem service, or send the associations one per call."* If you see this error, upgrade the AutoMem backend to 0.16.0 or later.
+:::
+
 ---
 
 ## Relationship Types
