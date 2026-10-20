@@ -9,7 +9,7 @@ sidebar:
 - [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/index.ts) — Entry point: mode detection, CLI routing, and stdio server startup
 - [src/mcp-surface.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/mcp-surface.ts) — MCP tool definitions, request handlers, and `createAutoMemMcpServer()`
 - [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/automem-client.ts) — HTTP client, including the client-side argument checks for each tool mode
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/recall-memory.ts) — MCP recall response budgeting and summary-first formatting
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/recall-memory.ts) — MCP recall response budgeting and formatting
 - [server.json](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/server.json) — MCP server manifest
 
 Line numbers on this page refer to mcp-automem 0.17.0.
@@ -198,9 +198,9 @@ MCP tool annotations provide semantic hints to AI platforms about tool behavior:
 | Annotation | Type | Meaning | Applied To |
 |------------|------|---------|------------|
 | `readOnlyHint` | boolean | Tool only reads data | `recall_memory`, `check_database_health` |
-| `destructiveHint` | boolean | Tool permanently removes or modifies data | `delete_memory` only |
-| `idempotentHint` | boolean | Same args always produce same result | All except `store_memory` and `delete_memory` |
-| `openWorldHint` | boolean | Tool may access external resources | `false` for all tools |
+| `destructiveHint` | boolean | Tool may perform destructive updates (only meaningful when `readOnlyHint` is false) | `delete_memory` only |
+| `idempotentHint` | boolean | Repeated calls with the same arguments have no additional effect on the environment (only meaningful when `readOnlyHint` is false) | All except `store_memory` and `delete_memory` |
+| `openWorldHint` | boolean | Tool may interact with an open world of external entities, such as web search (a memory tool's domain is closed) | `false` for all tools |
 
 ---
 
@@ -325,7 +325,7 @@ The table above is a subset. The published `inputSchema` also carries `per_query
 
 The MCP bridge forwards recall arguments to the AutoMem backend and then formats the response for MCP clients. Hybrid scoring, tag filtering, deduplication, entity expansion, and `priority_ids` guarantees all live in AutoMem itself, so HTTP and MCP produce the same recall behavior when you pass the same arguments.
 
-**MCP response budgeting (v0.15+):** Budgeted formats (`text`, `items`, `detailed`) are summary-first to stay under MCP client tool-response caps (~25k tokens in Claude Code). When a memory has a server-generated `summary`, budgeted output shows that instead of a long `content` preview; relations collapse to compact stubs (max 3 per memory); metadata collapses to its key list. The default token budget is 18,000 estimated tokens (override with `AUTOMEM_RECALL_TOKEN_BUDGET`). `format: "json"` keeps raw per-field passthrough but the global budget still applies. ID fetches via `memory_id` are never truncated — use that mode to retrieve a full record.
+**MCP response budgeting (v0.15+; content previews since v0.16):** Budgeted formats (`text`, `items`, `detailed`) trim each memory to stay under MCP client tool-response caps (~25k tokens in Claude Code). Content longer than 400 characters is cut to a 400-character preview and flagged with `content_truncated` and `content_chars` (the full length). A server-generated `summary` is kept as an additional field; it only stands in for the preview in the text channel when `content` is empty. In `detailed`, relations collapse to compact stubs (max 3 per memory) and metadata collapses to its key list; `text` and `items` structured results leave both out. The default token budget is 18,000 estimated tokens (override with `AUTOMEM_RECALL_TOKEN_BUDGET`). `format: "json"` keeps raw per-field passthrough but the global budget still applies. ID fetches via `memory_id` are never truncated — use that mode to retrieve a full record.
 
 **HTTP API equivalent:**
 
@@ -365,7 +365,7 @@ Like `store_memory`, this tool has a single-pair mode and a batch mode. The inpu
 10. `DERIVED_FROM` — Implementation of a decision
 11. `PART_OF` — Component of a larger effort
 
-System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`.
+System-generated relations may still appear in recall results, but they are not valid inputs to `associate_memories`: `SIMILAR_TO`, `PRECEDED_BY`, and `DISCOVERED`. The tool description also lists `EXPLAINS`, `SHARES_THEME`, and `PARALLEL_CONTEXT` as non-inputs; the server normalizes those three legacy names to `DISCOVERED` with a matching `kind` when it returns relations.
 
 **MCP Tool Output:**
 
@@ -407,9 +407,10 @@ Batch mode sends `{"associations": [...]}` to the same `POST /associate` endpoin
 | `importance` | number | No | 0–1 | New importance score |
 | `metadata` | object | No | — | Metadata (replaces existing) |
 | `timestamp` | string | No | ISO format | Override creation timestamp |
+| `t_valid`, `t_invalid` | string | No | ISO 8601 | Validity window: when the memory becomes valid, and when it expires or was superseded |
 | `updated_at` | string | No | ISO format | Explicit update timestamp |
 | `last_accessed` | string | No | ISO format | Last access timestamp |
-| `type` | string | No | — | Memory type classification |
+| `type` | string | No | enum: `Decision`, `Pattern`, `Preference`, `Style`, `Habit`, `Insight`, `Context` | Memory type classification |
 | `confidence` | number | No | 0–1 | Confidence score |
 
 **MCP Tool Output:**
@@ -462,7 +463,7 @@ curl -X DELETE https://your-automem-instance/memory/a1b2c3d4-... \
 Bulk-by-tag mode calls `DELETE /memory/by-tag?tags=...` instead.
 
 :::caution[Permanent deletion]
-`delete_memory` permanently removes the memory from both FalkorDB and Qdrant. The `destructiveHint: true` annotation signals to AI platforms that this tool requires elevated confirmation before invocation.
+`delete_memory` permanently removes the memory from both FalkorDB and Qdrant. Its `destructiveHint: true` annotation is an advisory hint that the tool may perform destructive updates; MCP clients decide whether to ask for confirmation, and the annotation does not enforce one.
 :::
 
 ---
@@ -475,12 +476,12 @@ Bulk-by-tag mode calls `DELETE /memory/by-tag?tags=...` instead.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `status` | string | Yes | `"healthy"` or `"error"` |
+| `status` | string | Yes | `"healthy"`, `"degraded"` (the service is reachable but a backend or sync check needs attention), or `"error"` |
 | `backend` | string | Yes | Backend type (always `"automem"`) |
 | `statistics` | object | No | Database statistics (memory counts, etc.) |
 | `error` | string | No | Error message if `status` is `"error"` |
 
-**Difference from GET /health:** The `check_database_health` MCP tool returns a simplified status object suitable for AI platform consumption. The HTTP `/health` endpoint returns the full response with enrichment queue metrics, individual component statuses, and timestamps. Use the HTTP endpoint directly for detailed monitoring dashboards.
+**Difference from GET /health:** `check_database_health` calls `GET /health` and repackages the response rather than trimming it. The service fields (`falkordb`, `qdrant`, `graph`, `memory_count`, `vector_count`, `sync_status`, `vector_dimensions`, `enrichment` with its queue counters, and `timestamp`) move under `statistics`, and `backend` is added. Any status other than `healthy` or `degraded` becomes `error`, and a failed request returns `status: "error"` with the error message and an empty `statistics` object. The text block is a summary that leaves out the enrichment queue counters and vector dimensions. Call `/health` directly for monitoring dashboards that poll without an MCP client.
 
 **HTTP API equivalent:**
 
@@ -533,7 +534,7 @@ This dual format ensures:
 | Content size validation before storage | — | Built-in two-tier limits (single mode) |
 | Structured tool output for chat clients | Manual formatting | Built-in `content` + `structuredContent` |
 | Admin operations (reembed, reprocess) | Preferred — admin endpoints | Not available |
-| Health monitoring dashboards | Preferred — full response | Simplified output only |
+| Health monitoring dashboards | Preferred — full response | Same fields under `statistics`; the text block is a summary |
 | Process supervision (stable process title) | — | Supported via the `AUTOMEM_PROCESS_TAG` (or `MCP_PROCESS_TAG`) env var |
 
 :::tip[Prefer MCP for AI agents]
