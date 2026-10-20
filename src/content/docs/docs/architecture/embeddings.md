@@ -7,17 +7,17 @@ sidebar:
 
 :::note[Source files]
 Key GitHub sources:
-- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
-- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
-- [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/provider_init.py) — Provider factory and auto-selection logic
-- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/provider.py) — Abstract provider base class
-- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/voyage.py) — Voyage AI provider
-- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/openai.py) — OpenAI provider
-- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/fastembed.py) — FastEmbed local provider
-- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/ollama.py) — Ollama local provider
-- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/embedding/placeholder.py) — Deterministic fallback provider
+- [automem/embedding/runtime_pipeline.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/runtime_pipeline.py) — Embedding worker and batch processing logic
+- [automem/embedding/runtime_bindings.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/runtime_bindings.py) — Queue setup and worker startup
+- [automem/embedding/provider_init.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/provider_init.py) — Provider factory and auto-selection logic
+- [automem/embedding/provider.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/provider.py) — Abstract provider base class
+- [automem/embedding/voyage.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/voyage.py) — Voyage AI provider
+- [automem/embedding/openai.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/openai.py) — OpenAI provider
+- [automem/embedding/fastembed.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/fastembed.py) — FastEmbed local provider
+- [automem/embedding/ollama.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/ollama.py) — Ollama local provider
+- [automem/embedding/placeholder.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/embedding/placeholder.py) — Deterministic fallback provider
 - [automem/utils/validation.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/validation.py) — Dimension validation
-- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/tests/test_embedding_providers.py) — Provider tests
+- [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_embedding_providers.py) — Provider tests
 :::
 
 The embedding generation subsystem handles asynchronous vector embedding creation for memories using multiple backend providers. The system implements batching optimization to reduce API costs by 40-50%, improves `/memory` endpoint latency by 60% through non-blocking queue-based processing, and provides automatic provider selection with graceful fallback.
@@ -440,7 +440,7 @@ The embedding worker runs in a dedicated thread started during application initi
 
 ### Memory Storage Integration
 
-The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/ebcf5f16d8a0eecc9400957be1503efaf97fa530/automem/api/memory.py).
+The `POST /memory` endpoint integrates with the embedding queue via [automem/api/memory.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/api/memory.py).
 
 ### Enrichment Pipeline Coordination
 
