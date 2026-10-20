@@ -8,7 +8,7 @@ sidebar:
 This page covers installing the `@verygoodplugins/mcp-automem` package and running the guided installer to configure your connection to the AutoMem service. For information about deploying the AutoMem backend service itself, see [Prerequisites](#prerequisites). For detailed configuration options and environment variable resolution, see [Configuration Tools](/docs/cli/config-tools/).
 
 :::tip[The guided installer does all of this for you]
-`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0; until that publish it is still the older endpoint wizard. The [Quick Start](/docs/getting-started/quick-start/) walks through the installer prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces. Print config snippets with `npx @verygoodplugins/mcp-automem config`.
+`npx @verygoodplugins/mcp-automem install` (or `curl -fsSL get.automem.ai | sh`) runs an interactive installer that provisions a backend, verifies it, and wires the MCP server into each agent — reviewing every change first. `setup` is an alias of `install` as of 0.17.0. The [Quick Start](/docs/getting-started/quick-start/) walks through the installer prompt by prompt. The manual steps below are for building a setup by hand or scripting individual pieces. Print config snippets with `npx @verygoodplugins/mcp-automem config`.
 :::
 
 ## Prerequisites
@@ -252,16 +252,16 @@ node dist/index.js install
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.16.0 at `9a0bbf754dd31db524da25638b0e97907e32ff37`)
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.17.0 at [`1f9daefc`](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/scripts/sync-template-versions.mjs))
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
 
 ## Guided installer
 
-`install` is the installer on current npm. It asks where AutoMem runs, verifies the endpoint, writes `.env`, and configures the agents you select. Pass `--dry-run` to preview and `--yes` to apply without prompts. Host commands such as `claude-code` and `cursor` remain scriptable writers for one platform.
+`install` is the guided installer. It asks where AutoMem runs, verifies the endpoint, writes `.env`, and configures the agents you select. Pass `--dry-run` to preview and `--yes` to apply without prompts. Host commands such as `claude-code` and `cursor` remain scriptable writers for one platform.
 
-`setup` becomes an alias of `install` in the release after 0.16.0. Until that publish, `setup` is still the older endpoint wizard, and `--env`, `--claude-code`, `--claude-dir`, and `--claude-dry-run` still apply. After that release those flags error and point at `install`, `config`, or the host writer.
+`setup` is an alias of `install` as of 0.17.0. The older `setup` flags (`--env`, `--claude-code`, `--claude-dir`, `--claude-dry-run`) are no longer accepted; they error with a pointer to `install`, `config`, or the relevant host writer.
 
 The installer writes `.env` in the current directory after it verifies the endpoint:
 
@@ -320,7 +320,7 @@ your-project/
             └── package.json
 ```
 
-**Templates:** In the audited `mcp-automem` 0.16.0 release (`9a0bbf754dd31db524da25638b0e97907e32ff37`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
+**Templates:** In the audited `mcp-automem` 0.17.0 release (`1f9daefc758d6a66fe96711de815d5f2c3dbb601`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 

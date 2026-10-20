@@ -10,9 +10,9 @@ sidebar:
 - [automem/search/runtime_recall_helpers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/search/runtime_recall_helpers.py) — Vector/keyword/trending search helpers
 - [automem/utils/scoring.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/utils/scoring.py) — Scoring algorithm (`_compute_metadata_score`)
 - [automem/config.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/config.py) — Score weight and recall tuning configuration
-- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/index.ts) — MCP `recall_memory` tool
-- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/recall-memory.ts) — MCP recall response budgeting and formatting
-- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/538721c/src/automem-client.ts) — HTTP client and response normalization
+- [src/index.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/index.ts) — MCP `recall_memory` tool
+- [src/recall-memory.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/recall-memory.ts) — MCP recall response budgeting and formatting
+- [src/automem-client.ts](https://github.com/verygoodplugins/mcp-automem/blob/1f9daefc758d6a66fe96711de815d5f2c3dbb601/src/automem-client.ts) — HTTP client and response normalization
 :::
 
 The recall system provides a single unified endpoint that supports multiple search strategies. It combines 10 scoring components into a hybrid ranking system and supports both basic retrieval and advanced graph expansion. Authentication is required via `Authorization: Bearer <token>` header or `X-API-Key` header.
@@ -411,7 +411,7 @@ The MCP `recall_memory` tool (`src/automem-client.ts`) routes requests through t
 
 1. **ID fetch mode:** If `memory_id` is provided, short-circuits to `GET /memory/{id}` and returns immediately without evaluating other parameters.
 2. **Enumeration mode:** If `exhaustive: true` is set (with tags), routes to `GET /memory/by-tag`. The following ranked-only parameters are rejected with a validation error in this mode: `query`, `queries`, `embedding`, `time_query`, `start`, `end`, `exclude_tags`, `expand_relations`, `expand_entities`, `auto_decompose`, `expansion_limit`, `relation_limit`, `expand_min_importance`, `expand_min_strength`, `current_only`, `state_debug`, `state_mode`, `recency_bias`, `scope_fallback`, `expand_respect_tags`, `min_score`, `adaptive_floor`, `sort`, `context`, `language`, `active_path`, `context_tags`, `context_types`, `priority_ids`, and `per_query_limit`. Only `tags`, `limit`, `offset`, `tag_mode: "any"`, `tag_match: "exact"`, and `format` are accepted.
-3. **Ranked retrieval mode:** All other cases call `GET /recall` with URL parameters built from the tool arguments.
+3. **Ranked retrieval mode:** All other cases call `GET /recall` with URL parameters built from the tool arguments. `offset > 0` is rejected in this mode because `GET /recall` does not support pagination — raise `limit` instead.
 
 ---
 
@@ -715,11 +715,15 @@ Budgeted formats (`text`, `items`, `detailed`) are **summary-first** to stay und
 
 - Prefers each memory's server-generated `summary` over a long `content` preview when present
 - Truncates content previews to 400 characters when no summary is available
-- Collapses relations to compact stubs (max 3 per memory, 100-char summaries)
+- Collapses relations to compact stubs (max 3 per memory, 100-char summaries); stubs include `id`, `from` (the seed memory for expanded results or the suppressed memory for state replacements), `type`, `strength`, `kind`, and `summary`
 - Collapses metadata to its key list
-- Applies a global token budget (default 18,000 estimated tokens; override with `AUTOMEM_RECALL_TOKEN_BUDGET`)
+- Applies a global token budget (default 18,000 estimated tokens; override with `AUTOMEM_RECALL_TOKEN_BUDGET`); the budget bounds the **whole serialized response** (`structuredContent` plus every text block), not just the results array
 
-`format: "json"` keeps raw per-field passthrough but the global budget still applies. **ID fetches** via `memory_id` are never truncated — use that mode to retrieve a full record.
+`format: "json"` keeps raw per-field passthrough, including `t_valid`, `t_invalid`, and `archived` on each memory, but the global budget still applies. **ID fetches** via `memory_id` are never truncated and also include `t_valid`, `t_invalid`, and `archived` — use that mode to retrieve a full record.
+
+**Enumeration pages trimmed by the budget** still report `has_more: true` and advance `next_offset` so pagers can continue normally. If the record at the current offset is too large to fit in the budget at all, the tool returns an error rather than an empty page.
+
+**Recall errors** (API failures, validation errors, budget-too-small) are returned as `isError: true` tool results so the calling AI sees them as tool errors rather than empty responses.
 
 Each memory in budgeted `text` output is a numbered list item:
 

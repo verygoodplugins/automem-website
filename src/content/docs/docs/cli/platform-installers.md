@@ -16,7 +16,7 @@ Each platform installer generates and installs appropriate configuration files f
 | Command | Generated Files | Configuration Location |
 |---|---|---|
 | `copilot` | `.github/instructions/automem.instructions.md` + `.vscode/mcp.json` | Copilot Chat/VS Code MCP settings (manual) |
-| `cursor` | `.cursor/rules/automem.mdc` | `~/.cursor/mcp.json` (manual) |
+| `cursor` | `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc` + `.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json` | Automatic (all four written by the installer) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/` (SessionStart recall, PostToolUse store tracker; optional Stop nudge via `--profile nudged`) | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
@@ -69,7 +69,7 @@ If your MCP server key is not `memory`, update the pasted tool names to match Cl
 
 ## Cursor IDE
 
-The `cursor` command installs memory rules into the project's `.cursor/rules/` directory as a Cursor-compatible `.mdc` file.
+The `cursor` command writes all Cursor AutoMem components in one step: the global MCP server registration, the project memory rule file, and the session-start recall hook.
 
 ### Installation
 
@@ -77,11 +77,15 @@ The `cursor` command installs memory rules into the project's `.cursor/rules/` d
 npx @verygoodplugins/mcp-automem cursor
 ```
 
-This creates `.cursor/rules/automem.mdc` in the current directory with memory operation rules tailored for Cursor's AI features.
+This writes four files:
+- **`~/.cursor/mcp.json`** — global MCP server entry for AutoMem (merged or created)
+- **`.cursor/rules/automem.mdc`** — always-on project memory rule (storage triggers, tagging, recall guidance)
+- **`.cursor/hooks/automem-session-start.mjs`** — session-start script that emits a two-phase recall prompt at the start of each conversation
+- **`.cursor/hooks.json`** — registers the session-start hook in Cursor's hook system
 
 ### MCP Configuration
 
-Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem server entry:
+The installer writes the MCP server entry into `~/.cursor/mcp.json` automatically. The generated entry looks like:
 
 ```json
 {
@@ -90,20 +94,24 @@ Cursor's global MCP configuration lives at `~/.cursor/mcp.json`. Add the AutoMem
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
-        "AUTOMEM_API_URL": "http://127.0.0.1:8001"
+        "AUTOMEM_API_URL": "http://127.0.0.1:8001",
+        "AUTOMEM_API_KEY": "",
+        "AUTOMEM_API_TOKEN": ""
       }
     }
   }
 }
 ```
 
+The file is written with `600` permissions (owner-only read/write) to protect stored credentials.
+
 :::note
-Cursor can receive `AUTOMEM_API_URL` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the generated examples and deeplink flow assume the `env` block is present.
+Cursor can receive `AUTOMEM_API_URL` and `AUTOMEM_API_KEY` from the MCP config `env` block in `~/.cursor/mcp.json`. If you prefer, you can also provide them via the inherited process environment, but the installer writes the `env` block explicitly so the credentials are isolated to the AutoMem server process and do not need to be set in Cursor's own environment.
 :::
 
-### Project-Specific Rules
+### Project-Specific Rules and Hook
 
-The `.cursor/rules/automem.mdc` file installed by the `cursor` command contains instructions that tell Cursor's AI how to use AutoMem tools — when to store memories, how to structure recalls, and what context to preserve across sessions. Treat this project file as the source of truth for operational behavior; keep any global Cursor rules thin and cross-project.
+The `.cursor/rules/automem.mdc` rule (always applied via `alwaysApply: true`) tells Cursor's AI when to store memories, how to structure recalls, and what context to preserve. The session-start hook runs before the first response in each new conversation and injects a two-phase recall prompt — preferences recall and task-context recall — as `additional_context`. Treat the rule file as the source of truth for operational behavior; keep any global Cursor rules thin and cross-project.
 
 ## Claude Code
 

@@ -5,12 +5,13 @@ sidebar:
   order: 2
 ---
 
-Cursor IDE uses a **two-component** approach for AutoMem integration:
+Cursor IDE uses a **three-component** approach for AutoMem integration:
 
 1. **MCP server config** (`~/.cursor/mcp.json`) — connects Cursor to AutoMem via the Model Context Protocol
-2. **Rule file** (`.cursor/rules/automem.mdc`) — instructs Cursor's AI when and how to use memory tools
+2. **Rule file** (`.cursor/rules/automem.mdc`) — always-on rule that instructs Cursor's AI on storage triggers, tagging, and association guidance
+3. **Session-start hook** (`.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json`) — fires at the start of each conversation and emits a two-phase recall prompt so preferences and task context are loaded before the first user message
 
-Unlike automated hook systems, Cursor uses a **declarative rule-based approach**: the AI reads instructions from the `.mdc` file and decides when to invoke memory tools. This follows the philosophy: "Trust Claude + good instructions > automated hooks that guess significance."
+The session-start hook guides recall; the always-on rule supplies storage triggers and fallback recall guidance. Memory storage remains model-judged — hooks never write memories themselves.
 
 ---
 
@@ -27,12 +28,12 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=memory&config=eyJ...
 The base64-encoded config contains your endpoint and API key. Find the current deeplink in the [AutoMem README](https://github.com/verygoodplugins/mcp-automem).
 
 :::note
-The deeplink only configures `~/.cursor/mcp.json`. You still need to run the CLI installer to add the `.mdc` rule file.
+The deeplink only configures `~/.cursor/mcp.json`. You still need to run the CLI installer to add the `.mdc` rule file and session-start hook.
 :::
 
 ### Method 2: CLI Installer (Recommended)
 
-The CLI installer handles both the rule file and validates your MCP config:
+The CLI installer writes all three components in a single command — the MCP server config, the rule file, and the session-start hook:
 
 ```bash
 # Install with auto-detected project name
@@ -53,17 +54,24 @@ npx @verygoodplugins/mcp-automem cursor --yes
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--name <project>` | Project name for memory tags | Auto-detected from `package.json`, git remote, or directory name |
-| `--dir <path>` | Custom target directory | `.cursor/rules` |
+| `--dir <path>` | Custom target directory for the rule file | `.cursor/rules` |
+| `--endpoint <url>` | AutoMem service URL | From env, existing config, or default local URL |
+| `--api-key <key>` | AutoMem API key | From env or existing config |
 | `--dry-run` | Preview changes without writing files | Off |
 | `--yes` / `-y` | Skip interactive prompts | Off |
 | `--quiet` | Suppress output | Off |
 
 The installer:
 1. Detects project name from `package.json`, git remote, or directory name
-2. Checks version of any existing `.mdc` file and prompts for update if newer version available
+2. Checks version of any existing `.mdc` file and prompts for update if a newer version is available
 3. Detects your MCP server name from `~/.cursor/mcp.json` (looks for `memory`, `automem`, or any server with AutoMem signatures) and uses `memory` when it finds none
 4. Generates `.cursor/rules/automem.mdc` with your project name and correct tool prefix
-5. Creates a `.bak` backup before overwriting any existing file
+5. Generates `.cursor/hooks/automem-session-start.mjs` with the two-phase recall context for this project
+6. Writes `.cursor/hooks.json` to register the `automem-session-start.mjs` script as a Cursor `sessionStart` hook
+7. Writes or updates `~/.cursor/mcp.json` with the AutoMem server entry (`AUTOMEM_API_URL`, `AUTOMEM_API_KEY`; file is created with `600` permissions to protect credentials)
+8. Creates a `.bak` backup before overwriting any existing file
+
+If it finds an unrelated server entry under the AutoMem server name in `~/.cursor/mcp.json`, the installer refuses and prompts you to rename that server first.
 
 ---
 
