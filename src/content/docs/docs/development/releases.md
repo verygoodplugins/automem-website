@@ -49,10 +49,7 @@ graph TB
     RP_MERGE --> MCPB["build-extension Job"]
 
     PUBLISH --> NPM["npm publish\nTrusted Publishing (OIDC)"]
-    MCPB --> GH_REL["Upload .mcpb + checksum\nand verify downloaded assets"]
-    NPM --> VERIFY["Verify release publication"]
-    GH_REL --> VERIFY
-    VERIFY --> DOCS["Dispatch website docs update"]
+    MCPB --> GH_REL["Upload .mcpb to\nGitHub Release"]
 ```
 
 ## Conventional Commits
@@ -106,7 +103,6 @@ Comprehensive quality checks:
 |---|---|---|
 | Lint | `npm run lint` | Fails build |
 | Build | `npm run build` | Fails build |
-| Desktop bundle | `npm run build:extension` then `npm run test:extension` | Fails build |
 | Test | `npm test` | Fails build |
 | Coverage | `npm run test:coverage` | Continue on error |
 
@@ -159,23 +155,20 @@ sequenceDiagram
 
     par Parallel Publishing
         RP->>NPM: Job: npm-publish\nnpm ci, build, test, publish
-        RP->>GH: Job: build-extension\nbuild, test, upload bundle + checksum
+        RP->>GH: Job: build-extension\nnpm ci, build, mcpb pack
     end
 
     NPM-->>RP: Package published with provenance
-    GH-->>RP: Downloaded bundle checksum verified
-    RP->>RP: Verify both publication jobs succeeded
-    RP->>RP: Dispatch website docs update
+    GH-->>RP: .mcpb file uploaded to release
 ```
 
-### Release Jobs
+### Three-Job Structure
 
 | Job | Trigger | Purpose | Outputs |
 |---|---|---|---|
 | `release-please` | Every push to `main` | Analyze commits, manage Release PR | `release_created`, `tag_name` |
 | `npm-publish` | `release_created == true` | Publish to npm registry | Package on npm |
-| `build-extension` | `release_created == true` | Call reusable `desktop-extension.yml` with the release tag | Verified `.mcpb` and `.sha256` assets |
-| `docs-dispatch` | npm and verified extension publication succeeded | Request website documentation update | Documentation update request |
+| `build-extension` | `release_created == true` | Build and upload `.mcpb` file | Attachment on GitHub Release |
 
 ### Version Synchronization
 
@@ -219,33 +212,13 @@ The OIDC token proves the publish request originates from the authorized GitHub 
 
 ### Extension Building
 
-The `build-extension` job calls `.github/workflows/desktop-extension.yml` with the explicit release tag. The reusable workflow checks out that tag and runs the same commands used by CI and local development:
+The `build-extension` job creates the Claude Desktop `.mcpb` extension file:
 
-```bash
-npm ci
-npm run build:extension
-npm run test:extension
-```
+1. **Build phase**: Check out code, install dependencies (`npm ci`), compile TypeScript (`npm run build`)
+2. **Pack phase**: Run `npx @anthropic-ai/mcpb pack` — bundles compiled server code from `dist/`, `manifest.json`, `server.json`, and dependencies
+3. **Upload phase**: Attach all `*.mcpb` files to the GitHub Release identified by the `tag_name` output from the `release-please` job
 
-`build:extension` uses the pinned MCPB CLI and a clean staging directory with the compiled server, extension metadata/assets, and locked production dependencies. It writes `artifacts/mcp-automem.mcpb` and `artifacts/mcp-automem.mcpb.sha256`. Development dependencies and generated bundles from the checkout are excluded. Generated `.mcpb` files are not committed to git.
-
-`test:extension` extracts the archive outside the checkout and verifies version agreement, required files, and package contents. It starts the packaged stdio entry point against the fake AutoMem API, completes MCP initialization, lists all six tools, and exercises recall. This checks the bundle and protocol; it does not replace an installation check inside Claude Desktop.
-
-The workflow uploads those two explicit filenames to the existing GitHub Release, then downloads them and verifies the checksum. Docs dispatch waits for successful npm and extension publication, so a missing or broken bundle blocks the release documentation request.
-
-### Recovering Extension Publication
-
-If npm published successfully but the extension job failed, rerun the failed job. For a bundle-only rebuild or upload, dispatch the Desktop Extension workflow from the default branch and supply the exact existing release tag:
-
-```bash
-gh workflow run desktop-extension.yml \
-  --repo verygoodplugins/mcp-automem \
-  -f release_tag=mcp-automem-v<VERSION>
-```
-
-Replace `<VERSION>` with the affected release version. The workflow rebuilds from that tag and replaces its extension assets, then verifies the downloaded checksum. It does not republish npm or create a new release. Tags must include the packaging scripts to use this recovery path. For older tags, rerun their original extension job instead; do not move an existing release tag.
-
-Confirm both assets on the release and the download/checksum result before marking recovery complete. A bundle-only run does not dispatch website updates; rerun the release's failed verification/docs jobs afterward if needed.
+**Local testing:** Build the extension locally with `npm run build:extension`.
 
 ## Quality Gates Summary
 
@@ -256,8 +229,6 @@ Confirm both assets on the release and the download/checksum result before marki
 | ESLint passing | PR merge | CI workflow |
 | Build success | PR merge | CI workflow |
 | Tests passing | PR merge | CI workflow |
-| Packaged extension smoke test | PR merge | Required CI `test` job |
-| Published extension checksum | Release completion | Desktop Extension workflow |
 | No high-severity vulnerabilities | Main branch | Security workflow (warnings on PRs) |
 | CodeQL analysis | Main branch | Security workflow |
 
@@ -308,11 +279,9 @@ npm install -g @verygoodplugins/mcp-automem
 
 **Claude Desktop extension install:**
 
-1. Download the [latest `mcp-automem.mcpb`](https://github.com/verygoodplugins/mcp-automem/releases/latest/download/mcp-automem.mcpb).
-2. In Claude Desktop, open **Settings → Extensions → Advanced settings → Install Extension** and select the file.
-3. Configure the AutoMem API URL and key for the existing backend.
-
-GitHub downloads contain a fixed server version. Users must install a newer bundle manually; see [Updating AutoMem](/docs/platforms/claude-desktop/#updating-automem).
+1. Download `.mcpb` file from GitHub Release
+2. Double-click to install (macOS/Windows)
+3. Extension installed to Claude Desktop automatically
 
 ## Typical Release Timeline
 
@@ -330,10 +299,17 @@ Releases can be created as frequently as needed by merging the Release PR.
 | **PR blocked in CI** | semantic-pr-title fails | Edit PR title to use conventional format |
 | **Release PR not created** | No PR after pushing to `main` | Check commits — only `feat:`, `fix:`, `feat!:` trigger releases |
 | **npm publish fails** | Authentication error | Verify Trusted Publishing configured in npm package settings |
-| **Extension build fails** | `.mcpb` file not created | Run `npm run build:extension` and `npm run test:extension`; fix the failure before release |
-| **Extension upload fails** | npm published but bundle assets are missing | Rerun the extension job or dispatch bundle-only recovery for that release tag |
-| **Version out of sync** | Different versions across files | Check Release Please `extra-files` and regenerate the release PR; do not hand-bump version fields |
+| **Extension build fails** | `.mcpb` file not created | Check `manifest.json` and `server.json` exist and are valid JSON |
+| **Version out of sync** | Different versions across files | Manually update `.release-please-manifest.json`, delete Release PR, push again |
 
 ### Manual Intervention
 
-Release Please owns version changes, and npm publishing uses the release workflow's Trusted Publishing identity. Fix or rerun the failed automation rather than running `npm publish` locally. For extension-only failures, use the recovery workflow above. Verify the GitHub Release, npm version, and published bundle assets before calling a release complete.
+If automation fails, manual publishing is possible:
+
+```bash
+npm run build
+npm test
+npm publish --access public
+```
+
+However, this bypasses provenance attestation and version synchronization. Prefer fixing automation issues over manual releases.
