@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Maps source file patterns to doc page slugs. Use exact paths or '/**' suffix for subtrees.",
-    "last_updated": "2026-07-04",
+    "last_updated": "2026-10-22",
     "automem_repo": "verygoodplugins/automem",
     "mcp_repo": "verygoodplugins/mcp-automem",
     "graph_viewer_repo": "verygoodplugins/automem-graph-viewer"
@@ -131,10 +131,17 @@
     "src/cli/templates.ts": ["cli/config-tools"],
     "src/cli/migrate.ts": ["cli/config-tools"],
     "src/cli/uninstall.ts": ["cli/setup"],
-    "README.md": ["overview", "getting-started/introduction"],
-    "INSTALLATION.md": ["getting-started/quick-start", "cli/setup"],
-    "package.json": ["cli/setup", "getting-started/quick-start"],
+    "README.md": ["overview", "getting-started/introduction", "platforms/claude-desktop"],
+    "INSTALLATION.md": ["getting-started/quick-start", "cli/setup", "platforms/claude-desktop"],
+    "package.json": ["cli/setup", "getting-started/quick-start", "platforms/claude-desktop", "development/releases"],
     "env.example": ["reference/configuration", "getting-started/environment-variables"],
+    "manifest.json": ["platforms/claude-desktop", "development/releases"],
+    "scripts/build-desktop-extension.mjs": ["platforms/claude-desktop", "development/releases"],
+    "tests/extension/**": ["development/releases"],
+    "vitest.extension.config.ts": ["development/releases"],
+    ".github/workflows/desktop-extension.yml": ["platforms/claude-desktop", "development/releases"],
+    ".github/workflows/release-please.yml": ["platforms/claude-desktop", "development/releases"],
+    ".github/workflows/ci.yml": ["development/releases"],
     "plugins/**": ["best-practices/memory-rules", "platforms/claude-code"],
     "templates/**": ["cli/config-tools", "platforms/claude-code", "platforms/cursor", "platforms/codex", "platforms/openclaw"]
   },

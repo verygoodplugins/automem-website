@@ -53,16 +53,20 @@ graph TB
 
 ### Method 1: One-Click `.mcpb` Install
 
-Download the AutoMem Claude Desktop Extension and double-click it to install — no manual JSON editing required:
+Download the AutoMem Claude Desktop Extension, then open **Settings → Extensions → Advanced settings → Install Extension** in Claude Desktop and select the file:
 
 **[Download AutoMem for Claude Desktop (.mcpb)](https://github.com/verygoodplugins/mcp-automem/releases/latest/download/mcp-automem.mcpb)**
 
-After opening the file, Claude Desktop prompts you to:
+Claude Desktop prompts you to:
 1. Enter your **AutoMem API URL** (it defaults to `http://127.0.0.1:8001` for a local AutoMem; replace it with your Railway URL for cloud)
 2. Optionally enter your **API Key** (required for Railway/cloud deployments, skip for local)
 3. Click **Enable**
 
-This installs the same `@verygoodplugins/mcp-automem` server as Method 2 below. Use Method 2 if you need to run multiple server instances or prefer manual JSON configuration.
+The bundle includes a fixed version of the `@verygoodplugins/mcp-automem` server and its runtime dependencies. Claude Desktop supplies Node.js. Use Method 2 if you need to run multiple server instances or prefer manual JSON configuration.
+
+The AutoMem backend runs separately, either locally or in the cloud. Installing or updating the extension does not deploy or upgrade that backend.
+
+If migrating from Method 2, back up `claude_desktop_config.json` first. Remove only the old AutoMem entry under `mcpServers` for the same endpoint, preserving other servers and settings, then restart Claude Desktop. This prevents duplicate AutoMem tools.
 
 ### Method 2: Manual JSON Configuration
 
@@ -124,6 +128,19 @@ Edit (or create) the Claude Desktop config file for your platform:
 ```
 
 After editing the config, **restart Claude Desktop** for changes to take effect.
+
+---
+
+## Updating AutoMem
+
+**GitHub-downloaded extensions need manual updates.** Installing the `.mcpb` fixes the MCP server at that release's version. Restarting Claude Desktop or updating a global npm package does not replace it. Anthropic's directory-installed extensions update automatically by default; that does not apply to this GitHub download. See [Anthropic's extension guide](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop).
+
+1. Open **Settings → Extensions → AutoMem** and compare the installed extension's version with the [latest GitHub Release](https://github.com/verygoodplugins/mcp-automem/releases/latest).
+2. Download the latest release's [`mcp-automem.mcpb`](https://github.com/verygoodplugins/mcp-automem/releases/latest/download/mcp-automem.mcpb).
+3. Open **Settings → Extensions → Advanced settings → Install Extension** and select the new file. Review the API URL/key in the extension's settings.
+4. Restart Claude Desktop, check the installed version again, and run the [verification steps](#verification), including a recall to confirm authentication.
+
+Existing memories stay in the backend configured by the API URL. Update the backend separately using its own deployment process.
 
 ---
 
