@@ -136,13 +136,17 @@
     "package.json": ["cli/setup", "getting-started/quick-start", "platforms/claude-desktop", "development/releases"],
     "env.example": ["reference/configuration", "getting-started/environment-variables"],
     "manifest.json": ["platforms/claude-desktop", "development/releases"],
+    "server.json": ["development/releases"],
+    "release-please-config.json": ["development/releases"],
+    ".release-please-manifest.json": ["development/releases"],
+    ".claude-plugin/marketplace.json": ["platforms/claude-code", "development/releases"],
     "scripts/build-desktop-extension.mjs": ["platforms/claude-desktop", "development/releases"],
     "tests/extension/**": ["development/releases"],
     "vitest.extension.config.ts": ["development/releases"],
     ".github/workflows/desktop-extension.yml": ["platforms/claude-desktop", "development/releases"],
     ".github/workflows/release-please.yml": ["platforms/claude-desktop", "development/releases"],
     ".github/workflows/ci.yml": ["development/releases"],
-    "plugins/**": ["best-practices/memory-rules", "platforms/claude-code"],
+    "plugins/**": ["best-practices/memory-rules", "platforms/claude-code", "development/releases"],
     "templates/**": ["cli/config-tools", "platforms/claude-code", "platforms/cursor", "platforms/codex", "platforms/openclaw"]
   },
   "automem-graph-viewer": {
