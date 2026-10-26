@@ -67,6 +67,20 @@ body {
   border-right: 1px solid var(--sl-color-hairline-light);
 }
 
+/* Current-page chip, and the skip link that uses the same pair.
+   Starlight fills these with --sl-color-text-accent and labels them with
+   --sl-color-text-invert. text-accent is the readable accent ink, so the
+   light-mode chip is a brown block while Install on the same bar is gold
+   with ink text. In dark mode text-invert follows accent-low, an 18% gold
+   wash, so the label is gold on gold. Match .btn-lab-accent. */
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover,
+.sidebar-content a[aria-current="page"]:focus,
+a[href="#_top"]:focus {
+  background-color: rgb(var(--lab-accent));
+  color: #05080c;
+}
+
 /* Suppress Starlight's stock mobile theme picker — our ThemeToggle in the
    site Navigation owns theme state on every viewport. */
 .sidebar-content .mobile-preferences { display: none !important; }

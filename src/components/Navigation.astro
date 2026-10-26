@@ -54,9 +54,9 @@ const isActive = (href: string) => {
           <a
             href={link.href}
             class={`
-              rounded px-3 py-2 text-sm font-medium text-lab-muted no-underline transition-colors
+              rounded px-3 py-2 text-sm font-medium no-underline transition-colors
               hover:bg-lab-panel hover:text-lab-text
-              ${isActive(link.href) ? 'text-lab-accent-text' : ''}
+              ${isActive(link.href) ? 'text-lab-accent-text' : 'text-lab-muted'}
             `}
             target={link.target}
             rel={link.rel}
@@ -128,9 +128,9 @@ const isActive = (href: string) => {
         <a
           href={link.href}
           class={`
-            rounded px-3 py-2.5 text-base font-medium text-lab-muted no-underline transition-colors
+            rounded px-3 py-2.5 text-base font-medium no-underline transition-colors
             hover:bg-lab-panel hover:text-lab-text
-            ${isActive(link.href) ? 'text-lab-accent-text' : ''}
+            ${isActive(link.href) ? 'text-lab-accent-text' : 'text-lab-muted'}
           `}
           target={link.target}
           rel={link.rel}

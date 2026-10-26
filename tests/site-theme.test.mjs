@@ -55,6 +55,22 @@ test('global theme tokens support the refined dark surface and neutral light mod
 
   assert.match(starlightCss, /rgb\(var\(--lab-panel\)/);
   assert.match(starlightCss, /linear-gradient/);
+
+  // Current-page chip must be the gold fill + ink label, not text-accent
+  // (brown in light mode) with text-invert (18% gold in dark mode).
+  assert.match(
+    starlightCss,
+    /\.sidebar-content a\[aria-current="page"\][\s\S]*?background-color:\s*rgb\(var\(--lab-accent\)\);\s*color:\s*#05080c;/,
+  );
+  assert.match(starlightCss, /a\[href="#_top"\]:focus/);
+});
+
+test('active nav link does not also carry the muted text utility', async () => {
+  const navigation = await readSource('../src/components/Navigation.astro');
+  // text-lab-muted is generated after text-lab-accent-text, so stacking both
+  // on the active item leaves it gray.
+  assert.match(navigation, /isActive\(link\.href\) \? 'text-lab-accent-text' : 'text-lab-muted'/);
+  assert.doesNotMatch(navigation, /text-lab-muted no-underline[\s\S]{0,160}text-lab-accent-text/);
 });
 
 test('theme follows the OS preference unless the user explicitly pinned a choice', async () => {
