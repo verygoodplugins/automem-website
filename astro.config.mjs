@@ -114,7 +114,11 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/verygoodplugins/automem' },
       ],
-      customCss: ['./src/styles/global.css', './src/styles/starlight-custom.css'],
+      customCss: [
+        './src/styles/global.css',
+        './src/styles/starlight-custom.css',
+        './src/styles/first-memory.css',
+      ],
       // "Dark always" code blocks: a single dark theme means Expressive Code
       // applies it in both site themes and emits no theme-switch CSS, so docs
       // code stays on the brand terminal surface in light AND dark mode. All
@@ -189,8 +193,8 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
-            { label: 'Introduction', slug: 'docs/getting-started/introduction' },
-            { label: 'Quick Start', slug: 'docs/getting-started/quick-start' },
+            { label: 'Your first memory', slug: 'docs/getting-started/quick-start' },
+            { label: 'How AutoMem works', slug: 'docs/getting-started/introduction' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
             { label: 'Environment Variables', slug: 'docs/getting-started/environment-variables' },
           ],

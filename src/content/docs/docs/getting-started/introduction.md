@@ -2,19 +2,13 @@
 title: Introduction
 description: AutoMem is a persistent memory system for AI assistants. Deploy once, remember everywhere.
 sidebar:
-  order: 1
+  order: 2
 ---
 
-AutoMem gives AI assistants persistent memory that survives across sessions, devices, and platforms. When you tell Claude Desktop something important, AutoMem stores it. When you open Cursor the next day, that memory is still there — retrieved automatically and woven into context before your AI assistant even responds.
+AutoMem lets an agent save a detail in one chat and retrieve it in another. Agents connected to the same AutoMem service can use the same memories across devices and platforms.
 
-:::tip[Just want to install it?]
-One guided command sets up the backend and wires it into your agents:
-
-```bash
-curl -fsSL get.automem.ai | sh
-```
-
-See the [Quick Start](/docs/getting-started/quick-start/) for the full walk-through.
+:::tip[Set up your first agent]
+[Your first memory](/docs/getting-started/quick-start/) walks you through choosing a server and embedding provider, connecting an agent, and verifying a write and recall.
 :::
 
 ## What AutoMem Is
@@ -47,7 +41,7 @@ AutoMem consists of two separate components that work together:
 
 2. **The MCP client** (`verygoodplugins/mcp-automem`) — a TypeScript/Node.js package that translates Model Context Protocol calls from AI platforms into AutoMem HTTP API requests.
 
-The MCP client does not store memories itself. It is a bridge — it receives instructions from AI platforms (via the MCP protocol over stdio) and forwards them to the AutoMem server over HTTP.
+The MCP client receives instructions from the agent over MCP and forwards them to the AutoMem server over HTTP. An agent plugin can bundle the client and add hooks or rules. It still connects to a separate AutoMem service.
 
 ```mermaid
 graph TB
@@ -81,7 +75,8 @@ graph TB
         end
     end
 
-    AITools -->|"MCP Protocol"| FlaskAPI
+    AITools -->|"MCP over stdio"| LocalMCP["Local MCP client"]
+    LocalMCP -->|"HTTP"| FlaskAPI
     CloudAI -->|"SSE/HTTP"| MCPBridge
     DirectAPI -->|"HTTP REST"| FlaskAPI
 
@@ -211,7 +206,7 @@ The separation between server and client is intentional:
 **Optional enhancements** that improve functionality:
 
 - **OpenAI API key** — optional hosted embeddings. With no provider key, `EMBEDDING_PROVIDER=auto` uses a configured Ollama server or a local FastEmbed model
-- **Voyage API key** — alternative embedding provider with better performance
+- **Voyage API key** — optional hosted embeddings. Voyage takes priority when both keys are set and its provider initializes.
 - **Qdrant Cloud account** — enables vector search (AutoMem degrades gracefully without it)
 - **spaCy model** — richer entity extraction during enrichment (`python -m spacy download en_core_web_sm`)
 
@@ -258,7 +253,7 @@ Cloud AI platforms (ChatGPT, Claude Web/Mobile, ElevenLabs) connect via a Remote
 
 ## Next Steps
 
-- **Install in one command**: See [Quick Start](/docs/getting-started/quick-start/) — `curl -fsSL get.automem.ai | sh` sets up the server and connects your first agent.
+- [Your first memory](/docs/getting-started/quick-start/) takes you from setup to a successful recall.
 - **Platform-specific setup**: See the Platform Integrations section for Claude Desktop, Cursor, Claude Code, and others.
 - **Understand the memory model**: See Core Concepts for memory types, relationships, and hybrid search.
 - **API reference**: See the API Reference section for complete endpoint documentation.

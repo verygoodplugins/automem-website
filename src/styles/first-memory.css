@@ -1,0 +1,168 @@
+/* Getting Started only. Use the same ink, terminal, and accent as the docs. */
+.first-memory-guide {
+  --route-edge: rgb(var(--lab-accent) / 0.35);
+  --route-mono: var(--sl-font-mono);
+}
+
+.first-memory-guide .first-memory-route {
+  background:
+    linear-gradient(115deg, rgb(var(--lab-accent) / 0.1), transparent 70%),
+    rgb(var(--lab-panel));
+  border: 1px solid var(--route-edge);
+  border-radius: 0.75rem;
+  box-shadow: 3px 3px 0 rgb(var(--lab-accent) / 0.15);
+  padding: clamp(1rem, 3vw, 1.8rem);
+}
+
+.first-memory-guide .first-memory-label {
+  color: var(--sl-color-text-accent);
+  font: 650 0.72rem/1.45 var(--route-mono);
+  letter-spacing: 0.09em;
+  margin: 0;
+}
+
+.first-memory-guide .first-memory-lead {
+  font: 650 clamp(1.2rem, 2.6vw, 1.8rem)/1.3 var(--route-mono);
+  letter-spacing: -0.05em;
+  max-width: 29ch;
+  margin: 0.65rem 0;
+  text-wrap: balance;
+}
+
+.first-memory-route > p:not(.first-memory-label):not(.first-memory-lead) {
+  max-width: 54ch;
+}
+
+.first-memory-route ol {
+  border-block: 1px solid var(--route-edge);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 1.15rem 0;
+  padding: 0;
+}
+
+.first-memory-route li {
+  border-inline-start: 1px solid var(--route-edge);
+  margin: 0;
+}
+
+.first-memory-route li:first-child {
+  border-inline-start: 0;
+}
+
+.first-memory-route li a {
+  align-content: center;
+  color: var(--sl-color-text);
+  display: grid;
+  font: 600 0.78rem/1.35 var(--route-mono);
+  min-height: 3.8rem;
+  padding: 0.55rem 0.65rem;
+  text-decoration: none;
+}
+
+.first-memory-route li a span {
+  color: var(--sl-color-text-accent);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.first-memory-route li a:hover,
+.first-memory-route li a:focus-visible {
+  background-color: rgb(var(--lab-accent) / 0.13);
+}
+
+.first-memory-shortcut {
+  color: var(--sl-color-text-accent);
+  font-size: 0.83rem;
+  font-weight: 650;
+  text-underline-offset: 0.2em;
+}
+
+.first-memory-guide .first-memory-step {
+  border-inline-start: 1px solid var(--route-edge);
+  margin-block: 1.8rem 0;
+  margin-inline-start: 1.2rem;
+  padding: 0.45rem 0 1.1rem clamp(1.25rem, 3.5vw, 2.25rem);
+  position: relative;
+  min-width: 0;
+}
+
+.first-memory-step::before {
+  background: rgb(var(--lab-bg));
+  border: 1px solid var(--route-edge);
+  border-radius: 50%;
+  color: var(--sl-color-text-accent);
+  content: attr(data-step);
+  display: grid;
+  font: 650 0.68rem/1 var(--route-mono);
+  height: 1.95rem;
+  inset-block-start: 0.45rem;
+  inset-inline-start: -0.975rem;
+  place-items: center;
+  position: absolute;
+  width: 1.95rem;
+}
+
+.first-memory-step .sl-heading-wrapper:first-child,
+.first-memory-step .sl-heading-wrapper:first-child h2,
+.first-memory-step h2:first-child {
+  margin-top: 0;
+}
+
+.first-memory-step details {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.first-memory-step summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.first-memory-guide .first-memory-result {
+  align-items: center;
+  background: rgb(var(--lab-success) / 0.09);
+  border: 1px solid rgb(var(--lab-success) / 0.42);
+  border-radius: 0.6rem;
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+}
+
+.first-memory-result .first-memory-result-icon {
+  align-self: flex-start;
+  background: rgb(var(--lab-success));
+  border-radius: 50%;
+  color: #061b15;
+  display: grid;
+  flex: none;
+  font-weight: 800;
+  height: 1.8rem;
+  place-items: center;
+  width: 1.8rem;
+}
+
+.first-memory-result p {
+  margin-block: 0.3rem 0;
+}
+
+@media (max-width: 35rem) {
+  .first-memory-route ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .first-memory-route li:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .first-memory-route li:nth-child(n + 3) {
+    border-block-start: 1px solid var(--route-edge);
+  }
+
+  .first-memory-guide .first-memory-step {
+    margin-inline-start: 0.95rem;
+    padding-inline-start: 1.35rem;
+  }
+}

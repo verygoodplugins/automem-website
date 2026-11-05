@@ -5,7 +5,9 @@ sidebar:
   order: 3
 ---
 
-AutoMem provides two local development paths: Docker Compose (recommended) for a complete self-contained stack, and bare Python for lightweight API-only development against external database instances.
+Docker Compose runs the complete AutoMem service stack on your machine. Bare Python is useful for developing the API against existing database instances. To connect an agent once the server is running, start with the [existing endpoint shortcut](/docs/getting-started/quick-start/#existing-endpoint).
+
+Choose an embedding provider before writing your first memory. Docker places the service on your machine. [Embedding settings](/docs/architecture/embeddings/) separately determine whether the model runs on your infrastructure or via a hosted API.
 
 ---
 

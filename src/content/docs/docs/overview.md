@@ -3,7 +3,7 @@ title: Overview
 description: "What AutoMem is, how it works at a high level, and why it exists."
 ---
 
-This document introduces AutoMem, a production-grade long-term memory system for AI assistants, and explains its high-level architecture, dual-storage approach, and graceful degradation design. For installation instructions, see [Getting Started](/docs/getting-started/introduction/). For detailed API documentation, see [API Reference](/docs/reference/api/memory-operations/). For operational guides, see [Operations](/docs/operations/health/).
+This document introduces AutoMem, a production-grade long-term memory system for AI assistants, and explains its high-level architecture, dual-storage approach, and graceful degradation design. To set up an agent and verify recall, follow [Your first memory](/docs/getting-started/quick-start/). For detailed API documentation, see [API Reference](/docs/reference/api/memory-operations/). For operational guides, see [Operations](/docs/operations/health/).
 
 ## What is AutoMem?
 
