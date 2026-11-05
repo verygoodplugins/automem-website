@@ -12,7 +12,7 @@ const paths = [
     title: 'Hosted Cloud',
     label: 'recommended',
     detail:
-      'Deploy on InstaPods or Railway, paste the generated HTTPS endpoint and token, then let the wizard wire your local agents.',
+      'Paste the HTTPS endpoint and token from InstaPods, or let the installer capture them from a fresh guided Railway deployment.',
     command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=cloud sh',
   },
   {
@@ -36,7 +36,7 @@ const installerSteps = [
   {
     number: '1',
     title: 'Detect environment',
-    detail: 'Identifies OS, Docker/K8s, and available resources.',
+    detail: 'Checks the operating system, Docker, Git, and agent directories.',
   },
   {
     number: '2',
@@ -80,8 +80,9 @@ const installerSteps = [
 
           <div class="mt-10 flex flex-wrap gap-4">
             <a href="#run" class="btn-lab-accent shadow-hard">INSTALL_AUTOMEM.sh</a>
-            <a href="#paths" class="btn-lab">CHOOSE_PATH</a>
+            <a href="/docs/getting-started/quick-start/" class="btn-lab">FIRST_MEMORY</a>
           </div>
+          <p class="mt-4 text-sm text-lab-muted">Already have a URL and key? <a class="text-lab-accent-text underline underline-offset-4" href="/docs/getting-started/quick-start/#existing-endpoint">Connect an existing endpoint</a>.</p>
         </div>
 
         <div id="run" class="bg-lab-surface border-2 border-lab-text rounded-lg shadow-hard overflow-hidden">
@@ -115,7 +116,7 @@ const installerSteps = [
       <div class="max-w-6xl mx-auto">
         <h2 class="text-3xl md:text-4xl font-bold mb-4">What the installer does</h2>
         <p class="text-lab-muted leading-relaxed max-w-2xl mb-10">
-          Four steps from a single command to connected agents.
+          Four installer steps get you to a connected agent. Then <a class="text-lab-accent-text underline underline-offset-4" href="/docs/getting-started/quick-start/#try-it-end-to-end">store and recall a test memory</a> in two chats.
         </p>
         <div class="grid gap-6 lg:grid-cols-4 lg:gap-0">
           {installerSteps.map((step, index) => (
