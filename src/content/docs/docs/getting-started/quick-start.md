@@ -179,6 +179,7 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 | `--api-key` | `AUTOMEM_API_KEY` | Bearer token for authenticated deployments |
 | `--local-dir` | `AUTOMEM_LOCAL_DIR` | Local backend checkout path (default `~/.automem/server`) |
 | `--claude-code-mode` | `AUTOMEM_CLAUDE_CODE_MODE` | `plugin` (default) or `settings` |
+| `--cursor-mode` | `AUTOMEM_CURSOR_MODE` | `plugin` (default) or `files` |
 | `--hermes-mode` | `AUTOMEM_HERMES_MODE` | `mcp` (default), `provider`, or `both` |
 | `--yes` / `-y` | `AUTOMEM_YES=1` | Apply the reviewed plan without prompting |
 | `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan, write nothing |

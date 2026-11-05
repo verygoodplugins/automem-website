@@ -11,6 +11,11 @@
   "verygoodplugins/mcp-automem": {
     "releases": [
       {
+        "version": "0.18.0",
+        "tag": "mcp-automem-v0.18.0",
+        "sha": "0990a43a90186fd07c5fe521af85fe843ad1cfa5"
+      },
+      {
         "version": "0.17.0",
         "tag": "mcp-automem-v0.17.0",
         "sha": "1f9daefc758d6a66fe96711de815d5f2c3dbb601"

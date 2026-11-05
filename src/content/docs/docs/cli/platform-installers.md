@@ -16,7 +16,7 @@ Each platform installer generates and installs appropriate configuration files f
 | Command | Generated Files | Configuration Location |
 |---|---|---|
 | `copilot` | `.github/instructions/automem.instructions.md` + `.vscode/mcp.json` | Copilot Chat/VS Code MCP settings (manual) |
-| `cursor` | `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc` + `.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json` | Automatic (all four written by the installer) |
+| `cursor` (files mode) | `~/.cursor/mcp.json` + `.cursor/rules/automem.mdc` + `.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json` | Automatic (all four written by the installer); guided `install` defaults to plugin mode (`~/.cursor/plugins/local/automem`) |
 | `claude-code` | Hook scripts in `~/.claude/hooks/` (SessionStart recall, PostToolUse store tracker; optional Stop nudge via `--profile nudged`) | Merges `~/.claude/settings.json` (CLAUDE.md must be appended manually) |
 | `codex` | `AGENTS.md` updates | `~/.codex/config.toml` (manual) |
 | `openclaw` | `<workspace>/skills/automem/SKILL.md` + `<workspace>/config/mcporter.json` (MCP mode); plugin entry in `openclaw.json` (plugin mode) | `~/.openclaw/openclaw.json` (automatic) |
@@ -69,9 +69,27 @@ If your MCP server key is not `memory`, update the pasted tool names to match Cl
 
 ## Cursor IDE
 
-The `cursor` command writes all Cursor AutoMem components in one step: the global MCP server registration, the project memory rule file, and the session-start recall hook.
+Cursor supports two AutoMem integration modes. The guided `install` command defaults to **plugin mode**; the standalone `cursor` command always uses **files mode**.
 
-### Installation
+### Plugin Mode (Default via Guided Installer)
+
+The guided installer defaults to `--cursor-mode plugin`, which copies the bundled AutoMem plugin into `~/.cursor/plugins/local/automem`:
+
+```bash
+npx @verygoodplugins/mcp-automem install
+```
+
+Select Cursor during the agent-picker step. The plugin bundles the MCP server, a Cursor-native `sessionStart` recall hook, and the always-on rule file — no `mcp.json` entry is written. After installation, fully restart Cursor, then open **Customize → Automem → Configure** and enter your AutoMem REST API URL and API key. The plugin exposes five tools: `recall_memory`, `store_memory`, `associate_memories`, `update_memory`, and `check_database_health`.
+
+To use plugin mode directly without the guided installer, pass `--cursor-mode plugin` to the install command:
+
+```bash
+npx @verygoodplugins/mcp-automem install --cursor-mode plugin --clients cursor
+```
+
+### Files Mode (Standalone `cursor` Command)
+
+The `cursor` command writes all file-mode components in one step: the global MCP server registration, the project memory rule file, and the session-start recall hook.
 
 ```bash
 npx @verygoodplugins/mcp-automem cursor
@@ -83,9 +101,9 @@ This writes four files:
 - **`.cursor/hooks/automem-session-start.mjs`** — session-start script that emits a two-phase recall prompt at the start of each conversation
 - **`.cursor/hooks.json`** — registers the session-start hook in Cursor's hook system
 
-### MCP Configuration
+### MCP Configuration (Files Mode)
 
-The installer writes the MCP server entry into `~/.cursor/mcp.json` automatically. The generated entry looks like:
+The `cursor` command writes the MCP server entry into `~/.cursor/mcp.json` automatically. The generated entry looks like:
 
 ```json
 {
