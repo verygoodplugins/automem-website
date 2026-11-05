@@ -5,35 +5,48 @@ sidebar:
   order: 2
 ---
 
-Cursor IDE uses a **three-component** approach for AutoMem integration:
+Cursor IDE supports two AutoMem integration modes:
 
-1. **MCP server config** (`~/.cursor/mcp.json`) — connects Cursor to AutoMem via the Model Context Protocol
-2. **Rule file** (`.cursor/rules/automem.mdc`) — always-on rule that instructs Cursor's AI on storage triggers, tagging, and association guidance
-3. **Session-start hook** (`.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json`) — fires at the start of each conversation and emits a two-phase recall prompt so preferences and task context are loaded before the first user message
+- **Plugin mode** (default via the guided installer) — copies the AutoMem plugin into `~/.cursor/plugins/local/automem`. Cursor's native plugin system bundles the MCP server, a Cursor-native `sessionStart` recall hook, and the always-on rule. Configuration is done through Cursor's UI rather than `mcp.json`.
+- **Files mode** (via `npx @verygoodplugins/mcp-automem cursor`) — the classic three-component approach: MCP server config (`~/.cursor/mcp.json`), rule file (`.cursor/rules/automem.mdc`), and session-start hook (`.cursor/hooks/automem-session-start.mjs` + `.cursor/hooks.json`).
 
-The session-start hook guides recall; the always-on rule supplies storage triggers and fallback recall guidance. Memory storage remains model-judged — hooks never write memories themselves.
+Memory storage remains model-judged in both modes — hooks never write memories themselves.
 
 ---
 
 ## Installation
 
-### Method 1: One-Click Deeplink
+### Method 1: Guided Installer — Plugin Mode (Recommended)
 
-Use Cursor's deeplink URL scheme to install the MCP server in one click:
+The guided installer defaults to `--cursor-mode plugin`, which copies the bundled AutoMem plugin into `~/.cursor/plugins/local/automem`:
 
+```bash
+npx @verygoodplugins/mcp-automem install
 ```
-cursor://anysphere.cursor-deeplink/mcp/install?name=memory&config=eyJ...
-```
 
-The base64-encoded config contains your endpoint and API key. Find the current deeplink in the [AutoMem README](https://github.com/verygoodplugins/mcp-automem).
+Select Cursor when the agent picker appears. The installer copies the plugin (MCP server, Cursor-native `sessionStart` recall hook, and always-on rule) from `plugins/automem/`. Re-running the installer replaces the plugin with the current release. The installer refuses to replace a symlink at that path, or a directory there that is not the AutoMem plugin.
 
-:::note
-The deeplink only configures `~/.cursor/mcp.json`. You still need to run the CLI installer to add the `.mdc` rule file and session-start hook.
+After installation, **fully restart Cursor**, then open **Customize → Automem → Configure** and enter your AutoMem REST API URL and API key. The URL must be the AutoMem backend base URL (e.g. `http://127.0.0.1:8001`), not the remote MCP `/mcp` path.
+
+The plugin exposes five tools: `recall_memory`, `store_memory`, `associate_memories`, `update_memory`, and `check_database_health`. `delete_memory` is excluded from the plugin's default tool list.
+
+:::note[Avoiding double-registration]
+If the installer finds a file-mode install alongside the plugin (an AutoMem entry in `~/.cursor/mcp.json` or the marked `.cursor/rules/automem.mdc`), it offers to remove the file install to avoid loading AutoMem twice. In a `--yes` run it prints a warning with the uninstall command instead. Remove a project-level `.cursor/mcp.json` AutoMem entry by hand — no installer writes it.
 :::
 
-### Method 2: CLI Installer (Recommended)
+### Method 2: Guided Installer — Files Mode
 
-The CLI installer writes all three components in a single command — the MCP server config, the rule file, and the session-start hook:
+Pass `--cursor-mode files` to use the classic file-based approach instead:
+
+```bash
+npx @verygoodplugins/mcp-automem install --cursor-mode files
+```
+
+This writes the same files as the standalone `cursor` command (see below). If the AutoMem plugin is already installed, an interactive run offers to remove it; a `--yes` run leaves it and warns.
+
+### Method 3: Standalone CLI Installer — Files Mode
+
+The `cursor` command installs all three file-mode components directly for the current project:
 
 ```bash
 # Install with auto-detected project name
@@ -72,6 +85,20 @@ The installer:
 8. Creates a `.bak` backup before overwriting any existing file
 
 If it finds an unrelated server entry under the AutoMem server name in `~/.cursor/mcp.json`, the installer refuses and prompts you to rename that server first.
+
+### Method 4: One-Click Deeplink (MCP server only)
+
+Use Cursor's deeplink URL scheme to install the MCP server in one click:
+
+```
+cursor://anysphere.cursor-deeplink/mcp/install?name=memory&config=eyJ...
+```
+
+The base64-encoded config contains your endpoint and API key. Find the current deeplink in the [AutoMem README](https://github.com/verygoodplugins/mcp-automem).
+
+:::note
+The deeplink only configures `~/.cursor/mcp.json`. You still need to run the CLI installer (Methods 2–3) to add the `.mdc` rule file and session-start hook.
+:::
 
 ---
 
