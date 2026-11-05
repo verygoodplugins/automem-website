@@ -13,14 +13,12 @@ AutoMem provides two local development paths: Docker Compose (recommended) for a
 
 | Feature | Docker Compose | Bare Metal |
 |---------|---------------|-----------|
-| Setup Time | 5 minutes | 2 minutes |
 | External Access | Ports published on all host interfaces by default ([see below](#restricting-network-exposure)) | `app.py` listens on all interfaces |
 | Data Persistence | Named volumes (manual backup) | External DB dependent |
-| Cost | Free | Free |
 | Use Case | Full-stack development | API development only |
 | Services Included | `app.py`, FalkorDB, Qdrant | `app.py` only |
 
-**Prerequisites for all local methods:**
+**Prerequisites for bare Python:**
 
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
@@ -75,8 +73,27 @@ graph TB
 
 - Docker 20.10+
 - Docker Compose 2.0+
+- Git
 
 ### Starting the Stack
+
+Clone the server repository and open its directory.
+
+```bash
+git clone https://github.com/verygoodplugins/automem.git
+cd automem
+```
+
+Set the provider in the repository's `.env` before starting the stack. For on-server embeddings, use:
+
+```dotenv
+EMBEDDING_PROVIDER=local
+VECTOR_SIZE=1024
+```
+
+This selects FastEmbed with BGE Large for a new 1024-dimension collection. For Ollama or a hosted embedding API, use the corresponding settings in [Embedding Generation](/docs/architecture/embeddings/#provider-specific-configuration).
+
+Compose publishes the API and database ports on all host interfaces by default. On a shared network, [restrict port exposure](#restricting-network-exposure) and set your own API and admin tokens before startup.
 
 **Method 1 — Makefile (recommended):**
 
@@ -91,6 +108,8 @@ This runs `docker compose up --build` and rebuilds the Flask API image if `Docke
 ```bash
 docker compose up --build
 ```
+
+Confirm the API is reachable with `curl http://localhost:8001/health`, then [connect your agent to the existing endpoint](/docs/getting-started/quick-start/#connect-your-agent). When prompted, enter the API URL and the value of the server's `AUTOMEM_API_TOKEN`.
 
 ### Service Details
 

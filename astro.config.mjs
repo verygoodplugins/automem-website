@@ -142,6 +142,7 @@ export default defineConfig({
         Header: './src/components/starlight/Header.astro',
         ThemeProvider: './src/components/starlight/ThemeProvider.astro',
         Footer: './src/components/starlight/Footer.astro',
+        MarkdownContent: './src/components/starlight/MarkdownContent.astro',
       },
       editLink: {
         baseUrl: 'https://github.com/verygoodplugins/automem-website/edit/main/',
@@ -189,8 +190,8 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
+            { label: 'Choose your setup', slug: 'docs/getting-started/quick-start' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
-            { label: 'Quick Start', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
             { label: 'Environment Variables', slug: 'docs/getting-started/environment-variables' },
           ],

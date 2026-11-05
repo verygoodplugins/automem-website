@@ -1,0 +1,297 @@
+---
+import CopyButton from './CopyButton.astro';
+import { INSTALL_COMMANDS } from '../lib/install-commands';
+
+const routes = [
+  {
+    id: 'local',
+    label: 'Local Docker',
+    location: 'YOUR MACHINE',
+    summary: 'Run the server and databases on hardware you control.',
+    requires: 'Docker Compose and Git',
+    responsibility: 'You keep the machine running and back up its volumes.',
+    path: 'M3 4h18v13H3z M8 21h8 M12 17v4 M7 8l2 2-2 2 M12 12h4',
+    action: 'Follow the Docker guide',
+    href: '/docs/getting-started/docker/#starting-the-stack',
+  },
+  {
+    id: 'cloud',
+    label: 'Hosted Cloud',
+    location: 'REMOTE SERVER',
+    summary: 'Use the same memory from more than one machine.',
+    requires: 'An InstaPods or Railway account',
+    responsibility: 'The provider runs the infrastructure. You manage the deployment and credentials.',
+    path: 'M6 18a4 4 0 1 1 .5-8 5.5 5.5 0 0 1 10.5-1 4.5 4.5 0 1 1 1 9z',
+    action: 'See guided cloud setup',
+    href: '/docs/cli/guided-cloud-setup/',
+  },
+  {
+    id: 'existing',
+    label: 'Existing Endpoint',
+    location: 'YOUR INSTANCE',
+    summary: 'Connect another agent to a server that is already running.',
+    requires: 'The AutoMem API URL and its token, if required',
+    responsibility: 'The current deployment keeps its storage and embedding settings.',
+    path: 'm10 13 4-4 M8 15l-1 1a3 3 0 0 1-4-4l4-4a3 3 0 0 1 4 0m2 2 1-1a3 3 0 0 1 4 4l-4 4a3 3 0 0 1-4 0',
+    action: 'Check your connection',
+    href: '#verify-it-worked',
+  },
+];
+
+const sequence = [
+  { title: 'Run the service', detail: 'Local, hosted, or already running.', symbol: 'M3 4h18v6H3z M3 14h18v6H3z M7 7h1 M7 17h1 M13 7h4 M13 17h4' },
+  { title: 'Choose embeddings', detail: 'Run a model on your hardware or use a hosted API.', symbol: 'M5 6l7 5 7-5 M5 18l7-5 7 5 M12 4v16 M3 4h4v4H3z M17 4h4v4h-4z M3 16h4v4H3z M17 16h4v4h-4z' },
+  { title: 'Connect an agent', detail: 'Use the same endpoint from each client.', symbol: 'M4 4h16v14H9l-5 3z M8 9h2 M14 9h2 M9 13h6' },
+];
+---
+
+<div class="setup-picker not-content" id="setup-paths">
+  <p class="intro">AutoMem runs as a separate service. Choose where it runs, set how it creates embeddings, then connect the agents you use.</p>
+
+  <fieldset class="routes">
+    <legend class="eyebrow"><span>01</span> · WHERE SHOULD AUTOMEM RUN?</legend>
+    <div class="route-options">
+      {routes.map((route) => (
+        <label class="route-option">
+          <input type="radio" name="automem-setup-route" value={route.id} checked={route.id === 'local'} aria-controls={`route-${route.id}`} />
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d={route.path} /></svg>
+          <span class="location">{route.location}</span>
+          <span class="route-name">{route.label}</span>
+          <span class="summary">{route.summary}</span>
+        </label>
+      ))}
+    </div>
+
+    {routes.map((route) => {
+      const command = `${INSTALL_COMMANDS.npm} --target ${route.id}`;
+      return (
+        <section class="route-detail" id={`route-${route.id}`} aria-label={`${route.label} setup`}>
+          <div class="detail-copy">
+            <p><strong>Bring</strong> {route.requires}.</p>
+            <p>{route.responsibility}</p>
+            {route.id === 'cloud' && (
+              <p class="providers"><a href="/docs/deployment/instapods/">InstaPods</a> or <a href="/docs/deployment/railway/">Railway</a></p>
+            )}
+            <a class="route-link" href={route.href}>{route.action} <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="route-command">
+            <p class="eyebrow">{route.id === 'local' ? 'GUIDED INSTALL · NODE + NPM' : 'RUN THE INSTALLER · NODE + NPM'}</p>
+            <div class="command-line">
+              <code>{command}</code>
+              <CopyButton text={command} label={`Copy ${route.label} command`} class="command-copy" />
+            </div>
+            {route.id === 'local' && <p class="command-note">To set a provider before startup, use the Docker guide.</p>}
+            {route.id === 'cloud' && <p class="command-note">The installer prompts for a hosting provider.</p>}
+            {route.id === 'existing' && <p class="command-note">Enter the URL and token when prompted.</p>}
+          </div>
+        </section>
+      );
+    })}
+  </fieldset>
+
+  <ol class="setup-flow" aria-label="How AutoMem fits together">
+    {sequence.map((step, i) => (
+      <li>
+        <div class="step-icon">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d={step.symbol} /></svg>
+        </div>
+        <div>
+          <span class="eyebrow">0{i + 1}</span>
+          <strong>{step.title}</strong>
+          <p>{step.detail}</p>
+        </div>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .setup-picker {
+    --picker-gold: rgb(var(--lab-accent-text));
+    --picker-border: rgb(var(--lab-border));
+    --picker-muted: rgb(var(--lab-muted));
+    --picker-surface: rgb(var(--lab-surface));
+    color: rgb(var(--lab-text));
+    margin-bottom: 2.5rem;
+    container-type: inline-size;
+  }
+
+  .intro {
+    color: var(--picker-muted);
+    font-size: 1.06rem;
+    max-width: 61ch;
+    margin: 0 0 1.55rem;
+  }
+
+  .routes { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+
+  .eyebrow, .location, .route-name, .route-link, .setup-flow strong {
+    font-family: var(--sl-font-mono);
+    font-weight: 650;
+  }
+
+  .eyebrow, .location {
+    font-size: .69rem;
+    letter-spacing: .07em;
+  }
+
+  .eyebrow { color: var(--picker-muted); }
+  .eyebrow span { color: var(--picker-gold); }
+  legend { margin-bottom: .65rem; }
+
+  .route-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+    margin-bottom: .75rem;
+  }
+
+  .route-option {
+    display: grid;
+    position: relative;
+    grid-template-columns: 1fr auto;
+    align-content: start;
+    gap: .4rem .6rem;
+    padding: .9rem;
+    border: 1px solid var(--picker-border);
+    border-radius: .55rem;
+    background: var(--picker-surface);
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease;
+  }
+
+  .route-option input {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    justify-self: end;
+    width: 1rem;
+    height: 1rem;
+    margin: .08rem 0 0;
+    accent-color: var(--picker-gold);
+  }
+
+  .route-option svg { grid-row: 1; color: var(--picker-gold); margin-bottom: .45rem; }
+  .route-option span { grid-column: 1 / -1; }
+  .location { color: var(--picker-gold); }
+  .route-name { font-size: .96rem; line-height: 1.35; }
+  .summary { color: var(--picker-muted); font-size: .86rem; line-height: 1.45; }
+
+  .route-option:hover { border-color: var(--picker-gold); }
+  .route-option:has(:checked) {
+    border-color: var(--picker-gold);
+    background: linear-gradient(140deg, rgb(var(--lab-accent) / .12), var(--picker-surface) 72%);
+    box-shadow: 0 2px 0 rgb(var(--lab-accent-text) / .65);
+  }
+  .route-option:has(:focus-visible) { outline: 2px solid var(--picker-gold); outline-offset: 3px; }
+
+  .route-detail {
+    display: none;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem;
+    border: 1px solid var(--picker-border);
+    border-radius: .55rem;
+    background: var(--picker-surface);
+  }
+
+  .routes:has([value="local"]:checked) #route-local,
+  .routes:has([value="cloud"]:checked) #route-cloud,
+  .routes:has([value="existing"]:checked) #route-existing { display: grid; }
+
+  .detail-copy, .command-note {
+    color: var(--picker-muted);
+    font-size: .86rem;
+    line-height: 1.5;
+  }
+
+  .detail-copy p + p { margin-top: .25rem; }
+  .detail-copy strong { color: rgb(var(--lab-text)); }
+  .route-detail a { color: var(--picker-gold); text-underline-offset: .18em; }
+  .route-link { display: inline-block; font-size: .78rem; margin-top: .55rem; }
+  .route-link:hover { color: rgb(var(--lab-text)); }
+
+  .route-command .eyebrow { margin-bottom: .35rem; }
+  .command-line {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+    background: rgb(var(--lab-bg));
+    border: 1px solid var(--picker-border);
+    border-radius: .4rem;
+    padding: .5rem .55rem;
+  }
+
+  .command-line code {
+    flex: 1;
+    min-width: 0;
+    color: rgb(var(--lab-text));
+    background: none;
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+    padding: 0;
+  }
+
+  .command-line :global(.command-copy) {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--picker-border);
+    border-radius: .3rem;
+    color: var(--picker-gold);
+    background: var(--picker-surface);
+    cursor: pointer;
+  }
+
+  .command-note { margin-top: .35rem; font-size: .76rem; }
+
+  .setup-flow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    list-style: none;
+    gap: .85rem;
+    margin: 1.1rem 0 0;
+    padding: .8rem 0;
+    border-block: 1px solid var(--picker-border);
+  }
+
+  .setup-flow li { display: flex; gap: .6rem; }
+  .step-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    border: 1px solid var(--picker-border);
+    border-radius: .4rem;
+    color: var(--picker-gold);
+    background: var(--picker-surface);
+  }
+  .setup-flow strong { display: block; font-size: .8rem; line-height: 1.35; }
+  .setup-flow p { color: var(--picker-muted); font-size: .76rem; line-height: 1.45; margin-top: .25rem; }
+
+  @container (max-width: 35rem) {
+    .route-options, .route-detail, .setup-flow { grid-template-columns: 1fr; }
+    .route-option {
+      grid-template-columns: 1.5rem 1fr auto;
+      padding: .7rem .8rem;
+      align-items: center;
+      column-gap: .75rem;
+      row-gap: .1rem;
+    }
+    .route-option input { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin: 0; }
+    .route-option svg { grid-row: 1 / span 2; margin-bottom: 0; }
+    .route-option span { grid-column: 2; }
+    .route-option .summary { grid-column: 2 / -1; }
+    .setup-flow .eyebrow { display: inline; margin-right: .35rem; }
+    .setup-flow strong { display: inline; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .route-option { transition: none; }
+  }
+</style>
