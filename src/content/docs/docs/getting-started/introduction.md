@@ -5,17 +5,9 @@ sidebar:
   order: 1
 ---
 
-AutoMem gives AI assistants persistent memory that survives across sessions, devices, and platforms. When you tell Claude Desktop something important, AutoMem stores it. When you open Cursor the next day, that memory is still there — retrieved automatically and woven into context before your AI assistant even responds.
+AutoMem gives AI assistants persistent memory across sessions, devices, and platforms. When one connected agent stores a memory, another agent using the same AutoMem service can recall it later.
 
-:::tip[Just want to install it?]
-One guided command sets up the backend and wires it into your agents:
-
-```bash
-curl -fsSL get.automem.ai | sh
-```
-
-See the [Quick Start](/docs/getting-started/quick-start/) for the full walk-through.
-:::
+[Follow a memory](/docs/getting-started/) to see how the agent, service, embedding model, and stores fit together. If you're ready to set up the service and connect your first agent, use the [Quick Start](/docs/getting-started/quick-start/).
 
 ## What AutoMem Is
 
@@ -49,58 +41,7 @@ AutoMem consists of two separate components that work together:
 
 The MCP client does not store memories itself. It is a bridge — it receives instructions from AI platforms (via the MCP protocol over stdio) and forwards them to the AutoMem server over HTTP.
 
-```mermaid
-graph TB
-    subgraph clients["External Clients"]
-        AITools["AI Tools<br/>Claude Desktop, Cursor"]
-        CloudAI["Cloud AI Platforms<br/>ChatGPT, Claude.ai"]
-        DirectAPI["Direct API Clients<br/>HTTP/REST"]
-    end
-
-    subgraph core["AutoMem Core Services"]
-        direction TB
-
-        subgraph bridge["MCP Bridge Layer"]
-            MCPBridge["mcp-sse-server<br/>Node.js :8080<br/>Protocol Translation"]
-        end
-
-        subgraph app_layer["Application Layer"]
-            FlaskAPI["Flask API<br/>app.py<br/>Flask :8001"]
-
-            subgraph workers["Background Workers"]
-                EnrichWorker["EnrichmentWorker<br/>Entity extraction<br/>Pattern detection"]
-                EmbedWorker["EmbeddingWorker<br/>Batch generation"]
-                ConsolWorker["ConsolidationScheduler<br/>Decay/Creative/Cluster/Forget"]
-                SyncWorker["SyncWorker<br/>Drift repair"]
-            end
-        end
-
-        subgraph storage["Storage Layer"]
-            FalkorDB[("FalkorDB<br/>Graph Database :6379<br/>Canonical Memory Records")]
-            Qdrant[("Qdrant<br/>Vector Database :6333<br/>Semantic Search<br/>Optional")]
-        end
-    end
-
-    AITools -->|"MCP Protocol"| FlaskAPI
-    CloudAI -->|"SSE/HTTP"| MCPBridge
-    DirectAPI -->|"HTTP REST"| FlaskAPI
-
-    MCPBridge -->|"Internal HTTP"| FlaskAPI
-
-    FlaskAPI -->|"Graph Queries"| FalkorDB
-    FlaskAPI -.->|"Vector Search"| Qdrant
-
-    EnrichWorker --> FalkorDB
-    EnrichWorker -.-> Qdrant
-    EmbedWorker --> Qdrant
-    ConsolWorker --> FalkorDB
-    ConsolWorker -.-> Qdrant
-    SyncWorker --> FalkorDB
-    SyncWorker --> Qdrant
-
-    style FalkorDB fill:#f9f9f9,stroke:#333
-    style Qdrant fill:#f9f9f9,stroke:#333,stroke-dasharray: 5 5
-```
+For the full service and worker diagram, see [Architecture Overview](/docs/architecture/overview/).
 
 ### The AutoMem Server
 
@@ -211,7 +152,7 @@ The separation between server and client is intentional:
 **Optional enhancements** that improve functionality:
 
 - **OpenAI API key** — optional hosted embeddings. With no provider key, `EMBEDDING_PROVIDER=auto` uses a configured Ollama server or a local FastEmbed model
-- **Voyage API key** — alternative embedding provider with better performance
+- **Voyage API key** — optional hosted embeddings
 - **Qdrant Cloud account** — enables vector search (AutoMem degrades gracefully without it)
 - **spaCy model** — richer entity extraction during enrichment (`python -m spacy download en_core_web_sm`)
 

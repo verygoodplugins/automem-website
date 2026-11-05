@@ -20,7 +20,7 @@ Key GitHub sources:
 - [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_embedding_providers.py) — Provider tests
 :::
 
-The embedding generation subsystem handles asynchronous vector embedding creation for memories using multiple backend providers. The system implements batching optimization to reduce API costs by 40-50%, improves `/memory` endpoint latency by 60% through non-blocking queue-based processing, and provides automatic provider selection with graceful fallback.
+Embedding models turn text into vectors that AutoMem uses for semantic search. AutoMem queues ordinary memory embeddings in the background and can batch them across multiple writes. [Follow a memory](/docs/getting-started/) for a visual overview of what the embedding model receives and what AutoMem stores.
 
 **Key features:**
 - **Multi-provider support:** Voyage AI, OpenAI, FastEmbed (local), Ollama, or deterministic placeholder vectors
@@ -43,9 +43,11 @@ When a memory is stored via `POST /memory`, the endpoint immediately writes to F
 
 ## Provider Selection System
 
-AutoMem uses a sophisticated provider selection system that automatically chooses the best available embedding backend based on configuration and API key availability.
+Choose a provider and model before your first write. The server and embedding model are separate deployment choices. FastEmbed runs inside the AutoMem service, including when the service is hosted in the cloud. Voyage and OpenAI process the memory or query text that AutoMem sends to their APIs. Local inference uses compute, memory, and disk without per-call embedding API charges.
 
 ### Auto-Selection Priority Chain
+
+At initialization, `auto` tries Voyage → OpenAI → configured Ollama → FastEmbed → placeholder. On a fresh default 1024-dimension collection with no earlier provider available, FastEmbed selects `BAAI/bge-large-en-v1.5`. Placeholder vectors are a fallback for unavailable models and carry no semantic information.
 
 ```mermaid
 flowchart TD
@@ -411,13 +413,8 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 - `EMBEDDING_BATCH_SIZE=5`, `EMBEDDING_BATCH_TIMEOUT_SECONDS=0.5`
 - Reduces embedding delay, maintains some batching benefit
 
-**Real-time requirements:**
-- `EMBEDDING_PROVIDER=local`, `EMBEDDING_BATCH_SIZE=1`
-- Minimizes latency with local inference, sacrifices batching efficiency
-
-**Cost-optimized (free tier):**
-- `EMBEDDING_PROVIDER=voyage`, `EMBEDDING_BATCH_SIZE=50`
-- Voyage generous free tier + lite model for best cost/performance
+**Immediate dispatch:**
+- `EMBEDDING_BATCH_SIZE=1` dispatches each job as it arrives, trading batching efficiency for less time waiting in the queue
 
 **Development/testing:**
 - `EMBEDDING_PROVIDER=placeholder`
@@ -483,4 +480,6 @@ The `/admin/reembed` endpoint allows batch re-embedding of existing memories:
 - Fixing corrupted embeddings
 - Changing from one provider to another
 
-When switching embedding models or providers, the `VECTOR_SIZE` must match the new provider's output dimensions and the Qdrant collection must be recreated with the new dimensions (or a new collection name used).
+Changing providers or models usually requires re-embedding existing memories. Even models with the same dimension can represent meanings differently. If the dimension changes, create a collection with the new dimension or choose a new collection name, and set `VECTOR_SIZE` to match.
+
+Since AutoMem 0.16.2, newly created Qdrant collections use on-disk vectors, HNSW indexes, and payloads. Moving an existing collection to disk is a separate storage migration.

@@ -189,6 +189,7 @@ export default defineConfig({
         {
           label: 'Getting Started',
           items: [
+            { label: 'Follow a Memory', slug: 'docs/getting-started' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
             { label: 'Quick Start', slug: 'docs/getting-started/quick-start' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },

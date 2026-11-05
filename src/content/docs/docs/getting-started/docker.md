@@ -5,7 +5,9 @@ sidebar:
   order: 3
 ---
 
-AutoMem provides two local development paths: Docker Compose (recommended) for a complete self-contained stack, and bare Python for lightweight API-only development against external database instances.
+Use Docker Compose to run the complete AutoMem service on your machine. Bare Python runs the API and workers against external databases. After the service is running, connect your agent to it using the [Quick Start](/docs/getting-started/quick-start/).
+
+Choose [how embeddings run](/docs/getting-started/#decide-where-things-run) separately. Docker can run FastEmbed in the AutoMem container or send memory and query text to a hosted embedding API. Choose the provider and model before your first write.
 
 ---
 
@@ -16,7 +18,6 @@ AutoMem provides two local development paths: Docker Compose (recommended) for a
 | Setup Time | 5 minutes | 2 minutes |
 | External Access | Ports published on all host interfaces by default ([see below](#restricting-network-exposure)) | `app.py` listens on all interfaces |
 | Data Persistence | Named volumes (manual backup) | External DB dependent |
-| Cost | Free | Free |
 | Use Case | Full-stack development | API development only |
 | Services Included | `app.py`, FalkorDB, Qdrant | `app.py` only |
 
