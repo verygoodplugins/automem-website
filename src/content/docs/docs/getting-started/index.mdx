@@ -1,0 +1,35 @@
+---
+title: Getting Started
+description: Follow a memory from your agent to AutoMem, see where embeddings run, and connect your first agent.
+tableOfContents: false
+---
+
+import MemoryTrace from '../../../../components/MemoryTrace.astro';
+
+## Follow a memory
+
+Tell your agent you prefer TypeScript for new projects. A week later, ask another connected agent what language to use. Both can draw on the same memory.
+
+The plugin connects your agent to a separate **AutoMem service**. AutoMem saves the original record, then an embedding model turns the text into a list of numbers called a *vector*. That index helps your next agent find the memory even when it asks in different words.
+
+<MemoryTrace />
+
+## Decide where things run
+
+**The AutoMem service** can run on your own machine with Docker, on a cloud host, or at an endpoint you already have. Connect each agent to the same service to share its memories.
+
+**The embedding model** can run beside AutoMem, including on a cloud server you operate, or at a hosted API such as Voyage or OpenAI. You can also run AutoMem on your laptop and use a hosted embedding API. A local model uses your server's compute, memory, and disk with no per-call embedding API fee. A hosted API processes the memory and query text you send it, with usage subject to the provider's terms.
+
+Choose your provider and model **before your first write**. Switching later usually means re-embedding your existing memories, even when both models return the same number of dimensions. The [embedding guide](/docs/architecture/embeddings/#provider-selection-system) covers the defaults, configuration, and migration.
+
+## Install and connect an agent
+
+Run the guided installer with Node.js and npm available. It can set up a new service or connect to a running one.
+
+```bash
+curl -fsSL get.automem.ai | sh
+```
+
+- [Quick Start](/docs/getting-started/quick-start/) walks through the installer and the first store and recall.
+- [Docker & Local Dev](/docs/getting-started/docker/) covers running the complete stack yourself.
+- [Install options](/install/) includes the npm command and copyable commands for each deployment path.

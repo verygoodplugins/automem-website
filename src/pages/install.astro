@@ -17,7 +17,7 @@ const paths = [
   },
   {
     title: 'Local Docker',
-    label: 'private',
+    label: 'your machine',
     detail:
       'Clone AutoMem into ~/.automem/server, generate local tokens, start Docker Compose, verify /health, then install agent rules.',
     command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=local sh',
@@ -36,7 +36,7 @@ const installerSteps = [
   {
     number: '1',
     title: 'Detect environment',
-    detail: 'Identifies OS, Docker/K8s, and available resources.',
+    detail: 'Checks for Node, npm, Docker, Git, and supported agents.',
   },
   {
     number: '2',
@@ -76,6 +76,11 @@ const installerSteps = [
             One guided installer detects your machine, offers local or cloud setup,
             verifies AutoMem, then reviews every Codex, Claude Code, Cursor,
             OpenClaw, and Hermes write before installing.
+          </p>
+
+          <p class="mt-5 text-sm leading-relaxed text-lab-muted">
+            The installer connects your agents to a separate AutoMem service.
+            <a href="/docs/getting-started/" class="text-lab-accent-text underline underline-offset-4">Follow a memory to see where the service and embedding model run.</a>
           </p>
 
           <div class="mt-10 flex flex-wrap gap-4">

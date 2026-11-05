@@ -5,23 +5,33 @@ sidebar:
   order: 2
 ---
 
-One command sets up AutoMem and connects it to your agents:
+Deploy the AutoMem service and connect your agent with the guided installer. The agent plugin sends memory requests to this service. If you are new to the setup, [follow a memory](/docs/getting-started/) to see what gets stored and where embeddings run.
+
+## Choose where AutoMem runs
+
+| Installer choice | What you get |
+|---|---|
+| **Hosted Cloud** | Deploy through [InstaPods](https://instapods.com/apps/automem/?ref=jack) or [Railway](/docs/deployment/railway/) for a service your agents can reach across machines. |
+| **Local Docker** | Start the AutoMem service, FalkorDB, and Qdrant on this machine. Install Docker and Git first. |
+| **Existing Endpoint** | Connect your agent to a running AutoMem service using its URL and token, if required. |
+
+Choose an [embedding provider and model](/docs/architecture/embeddings/#provider-selection-system) before storing your first memory. You can use a local model on a cloud server or a hosted embedding API from your Docker setup.
+
+## Run the installer
+
+You need Node.js 20.19+, 22.13+, or 24+ and npm.
 
 ```bash
 curl -fsSL get.automem.ai | sh
 ```
 
-That launches the **guided installer**. It detects your machine, helps you stand up a memory backend (hosted or local), verifies it, and wires the connection into the AI agents you already use — showing you every change and backing up every file before it writes. No decision tree, no hand-edited config, no copy-pasting tokens between four terminals.
-
-:::tip[Prefer npm?]
-If you already have Node 20.19+ installed, the launcher just runs an npm package — you can call it directly:
+If you prefer npm, this runs the same installer:
 
 ```bash
 npx @verygoodplugins/mcp-automem install
 ```
 
-Both commands run the exact same guided installer.
-:::
+Choose your service location and the agents to connect. Review the endpoint and config changes when prompted. The installer verifies the endpoint and backs up existing config files before editing them.
 
 ## What the installer does
 
@@ -49,6 +59,61 @@ The launcher checks for Node and npm first and stops with a clear message if eit
 
 ---
 
+## Verify it worked
+
+Once the installer finishes, confirm the backend is healthy:
+
+```bash
+# Local Docker
+curl http://localhost:8001/health
+
+# Hosted / existing endpoint
+curl https://your-automem-url/health
+```
+
+A healthy response looks like this:
+
+```json
+{
+  "status": "healthy",
+  "falkordb": "connected",
+  "qdrant": "connected",
+  "memory_count": 0,
+  "enrichment": { "status": "running", "queue_depth": 0 },
+  "graph": "memories"
+}
+```
+
+| Field | Description |
+|---|---|
+| `status` | Overall health: `"healthy"` or `"degraded"` |
+| `falkordb` | Graph store connection: `"connected"` or `"disconnected"` |
+| `qdrant` | Vector store connection: `"connected"` or `"disconnected"` |
+| `memory_count` | Total memories in the graph |
+| `enrichment.status` | Background worker state: `"running"` or `"stopped"` |
+| `graph` | FalkorDB graph name (default `memories`) |
+
+`/health` skips the API token check, so a healthy response does not prove that your key is accepted. For a hosted endpoint, confirm the key with a request to an endpoint that checks it. A `401 Unauthorized` response means the key was rejected:
+
+```bash
+curl -i "https://your-automem-url/recall?limit=1" \
+  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
+```
+
+:::note
+`"qdrant": "disconnected"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
+:::
+
+### Try it end to end
+
+Restart the agent you connected (quit and reopen — don't just close the window), then:
+
+1. Ask it to **check AutoMem health** — this calls the `check_database_health` tool.
+2. Ask it to **remember something**: *"Remember that I prefer TypeScript for new projects."*
+3. In a fresh chat, ask **"What language should I start my new project with?"** — the memory should come back, retrieved via hybrid search.
+
+---
+
 ## Walk-through: the installer, prompt by prompt
 
 Here is exactly what you'll see, and what each choice means.
@@ -69,7 +134,7 @@ After a brief AutoMem splash, the first question picks your backend:
 | Option | Choose it when | What happens |
 |---|---|---|
 | **Hosted Cloud** *(default)* | You want always-on memory across devices and machines | The installer guides a cloud deploy and captures the endpoint + token for you |
-| **Local Docker** | You want everything on your own machine, no cloud, no cost | Clones AutoMem into `~/.automem/server`, generates local tokens, runs `docker compose up`, and waits for `/health` |
+| **Local Docker** | You want to operate the AutoMem service on this machine | Clones AutoMem into `~/.automem/server`, generates local tokens, runs `docker compose up`, and waits for `/health` |
 | **Existing Endpoint** | You already run AutoMem somewhere | Paste the URL (and key); the installer verifies it before touching any agent config |
 
 ### Hosted Cloud → pick a provider
@@ -83,8 +148,8 @@ Choosing **Hosted Cloud** asks how to stand it up:
    Other — I already have a URL + key   already deployed somewhere; just paste your endpoint + token
 ```
 
-- **InstaPods** — opens the [InstaPods setup page](https://instapods.com/apps/automem/?ref=jack) (it deploys AutoMem and emails your API URL + key, Grow plan ~$15/mo flat), then you paste them back.
-- **Railway (guided)** — signs in via the `railway` CLI and deploys the AutoMem template straight from the terminal (usage-based, ~$1–5/mo), auto-capturing the endpoint + token. Falls back to a browser deploy if the CLI can't finish.
+- **InstaPods** — opens the [InstaPods setup page](https://instapods.com/apps/automem/?ref=jack) (it deploys AutoMem and emails your API URL and key), then you paste them back.
+- **Railway (guided)** — signs in via the `railway` CLI and deploys the AutoMem template straight from the terminal, auto-capturing the endpoint + token. Falls back to a browser deploy if the CLI can't finish.
 - **Other** — you already have an endpoint; paste the URL + token and skip provisioning.
 
 :::tip[Going deeper on hosted setup?]
@@ -191,73 +256,18 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 
 ---
 
-## Verify it worked
-
-Once the installer finishes, confirm the backend is healthy:
-
-```bash
-# Local Docker
-curl http://localhost:8001/health
-
-# Hosted / existing endpoint
-curl https://your-automem-url/health
-```
-
-A healthy response looks like this:
-
-```json
-{
-  "status": "healthy",
-  "falkordb": "connected",
-  "qdrant": "connected",
-  "memory_count": 0,
-  "enrichment": { "status": "running", "queue_depth": 0 },
-  "graph": "memories"
-}
-```
-
-| Field | Description |
-|---|---|
-| `status` | Overall health: `"healthy"` or `"degraded"` |
-| `falkordb` | Graph store connection: `"connected"` or `"disconnected"` |
-| `qdrant` | Vector store connection: `"connected"` or `"disconnected"` |
-| `memory_count` | Total memories in the graph |
-| `enrichment.status` | Background worker state: `"running"` or `"stopped"` |
-| `graph` | FalkorDB graph name (default `memories`) |
-
-`/health` skips the API token check, so a healthy response does not prove that your key is accepted. For a hosted endpoint, confirm the key with a request to an endpoint that checks it. A `401 Unauthorized` response means the key was rejected:
-
-```bash
-curl -i "https://your-automem-url/recall?limit=1" \
-  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
-```
-
-:::note
-`"qdrant": "disconnected"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
-:::
-
-### Try it end to end
-
-Restart the agent you connected (quit and reopen — don't just close the window), then:
-
-1. Ask it to **check AutoMem health** — this calls the `check_database_health` tool.
-2. Ask it to **remember something**: *"Remember that I prefer TypeScript over JavaScript for new projects."*
-3. In a fresh chat, ask **"What are my language preferences?"** — the memory should come back, retrieved via hybrid search.
-
----
-
 ## Manual & advanced setup
 
 Prefer to run the backend yourself, or wire an agent by hand? Everything the installer automates, you can also do manually.
 
 ### Deploy the AutoMem server yourself
 
-| Method | Setup time | Best for |
-|---|---|---|
-| [InstaPods Hosted](/docs/deployment/instapods/) | ~30 seconds | Fastest hosted AutoMem, flat $15/mo, generated MCP config |
-| [Railway](/docs/deployment/railway/) | ~60 seconds | Production, multi-device, HTTPS, usage-based billing |
-| [Docker Compose](/docs/getting-started/docker/) | ~5 minutes | Full local stack, no cloud cost |
-| Bare-metal Python | ~2 minutes | An existing FalkorDB and direct debugging |
+| Method | Best for |
+|---|---|
+| [InstaPods Hosted](/docs/deployment/instapods/) | Hosted AutoMem with generated MCP config |
+| [Railway](/docs/deployment/railway/) | A cloud deployment with HTTPS and usage-based billing |
+| [Docker Compose](/docs/getting-started/docker/) | A self-managed stack with persistent volumes |
+| Bare-metal Python | An existing FalkorDB and direct debugging |
 
 **Docker Compose** is the quickest manual local stack:
 
@@ -286,7 +296,7 @@ For a manual MCP entry — for example Claude Desktop's `claude_desktop_config.j
 ```json
 {
   "mcpServers": {
-    "mcp-automem": {
+    "memory": {
       "command": "npx",
       "args": ["-y", "@verygoodplugins/mcp-automem"],
       "env": {
