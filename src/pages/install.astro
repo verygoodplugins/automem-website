@@ -10,21 +10,21 @@ const clients = ['codex', 'claude-code', 'cursor', 'openclaw', 'hermes'];
 const paths = [
   {
     title: 'Hosted Cloud',
-    label: 'recommended',
+    label: 'remote server',
     detail:
-      'Deploy on InstaPods or Railway, paste the generated HTTPS endpoint and token, then let the wizard wire your local agents.',
+      'Deploy on InstaPods or Railway. Use the resulting API URL and token to connect your agents.',
     command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=cloud sh',
   },
   {
     title: 'Local Docker',
-    label: 'private',
+    label: 'your machine',
     detail:
-      'Clone AutoMem into ~/.automem/server, generate local tokens, start Docker Compose, verify /health, then install agent rules.',
+      'Run the API, graph database, and vector store with Docker Compose on your machine.',
     command: 'curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=local sh',
   },
   {
     title: 'Existing Endpoint',
-    label: 'fast path',
+    label: 'your instance',
     detail:
       'Use a running AutoMem instance you already control. The wizard verifies it before touching agent configuration.',
     command:
@@ -36,7 +36,7 @@ const installerSteps = [
   {
     number: '1',
     title: 'Detect environment',
-    detail: 'Identifies OS, Docker/K8s, and available resources.',
+    detail: 'Checks for Node, npm, Docker, Git, and supported agents.',
   },
   {
     number: '2',
@@ -46,7 +46,7 @@ const installerSteps = [
   {
     number: '3',
     title: 'Provision AutoMem',
-    detail: 'Pulls images, starts services, and runs health checks.',
+    detail: 'Starts the local or hosted service, or checks the endpoint you provide.',
   },
   {
     number: '4',
@@ -73,9 +73,9 @@ const installerSteps = [
             <span class="text-lab-accent-text">where your agents live.</span>
           </h1>
           <p class="text-lg md:text-xl text-lab-muted leading-relaxed max-w-2xl border-l-4 border-lab-secondary pl-6">
-            One guided installer detects your machine, offers local or cloud setup,
-            verifies AutoMem, then reviews every Codex, Claude Code, Cursor,
-            OpenClaw, and Hermes write before installing.
+            Run the AutoMem service where you want it, then connect Codex, Claude Code,
+            Cursor, OpenClaw, and Hermes to that endpoint. The installer checks
+            the service and shows the agent configuration before writing it.
           </p>
 
           <div class="mt-10 flex flex-wrap gap-4">
@@ -133,6 +133,11 @@ const installerSteps = [
     <section id="paths" class="px-4 md:px-12 py-20 border-b border-lab-border bg-lab-bg/50">
       <div class="comment-header">:: SETUP_PATHS</div>
       <div class="max-w-6xl mx-auto">
+        <p class="mb-8 max-w-3xl text-lab-muted leading-relaxed">
+          Choose where the service runs and where it computes embeddings.
+          The <a href="/docs/getting-started/quick-start/" class="text-lab-accent-text underline underline-offset-4">setup guide</a>
+          covers both decisions before you store your first memory.
+        </p>
         <div class="grid md:grid-cols-3 gap-6">
           {paths.map((pathOption) => (
             <div class="bg-lab-bg border-2 border-lab-text rounded-lg shadow-hard p-6 relative">

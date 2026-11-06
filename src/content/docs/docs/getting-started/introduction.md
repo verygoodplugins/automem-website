@@ -7,19 +7,13 @@ sidebar:
 
 AutoMem gives AI assistants persistent memory that survives across sessions, devices, and platforms. When you tell Claude Desktop something important, AutoMem stores it. When you open Cursor the next day, that memory is still there — retrieved automatically and woven into context before your AI assistant even responds.
 
-:::tip[Just want to install it?]
-One guided command sets up the backend and wires it into your agents:
-
-```bash
-curl -fsSL get.automem.ai | sh
-```
-
-See the [Quick Start](/docs/getting-started/quick-start/) for the full walk-through.
+:::tip[Ready to get started?]
+[Choose your setup](/docs/getting-started/quick-start/) to run AutoMem with Docker, deploy it to a hosted provider, or connect to an existing service. You can choose where embeddings run independently of where you deploy the server.
 :::
 
 ## What AutoMem Is
 
-AutoMem is a self-hosted memory backend for AI assistants. It stores, enriches, and retrieves memories using a combination of graph and vector databases, enabling AI tools to remember facts, decisions, preferences, and patterns across any number of sessions or platforms.
+AutoMem is a memory backend for AI assistants that you can run yourself or deploy with a hosting provider. It stores, enriches, and retrieves memories using a combination of graph and vector databases, enabling AI tools to remember facts, decisions, preferences, and patterns across any number of sessions or platforms.
 
 Unlike context windows that reset with every conversation, AutoMem maintains a persistent knowledge graph that grows over time. Memories are enriched in the background with entity extraction, embeddings, and relationship mapping — then recalled via hybrid search that combines semantic similarity with graph traversal.
 
@@ -47,7 +41,7 @@ AutoMem consists of two separate components that work together:
 
 2. **The MCP client** (`verygoodplugins/mcp-automem`) — a TypeScript/Node.js package that translates Model Context Protocol calls from AI platforms into AutoMem HTTP API requests.
 
-The MCP client does not store memories itself. It is a bridge — it receives instructions from AI platforms (via the MCP protocol over stdio) and forwards them to the AutoMem server over HTTP.
+The MCP client is a bridge. It receives instructions from AI platforms over MCP and forwards them to the AutoMem server over HTTP. The Claude Code plugin bundles that client and connects to the same separate service.
 
 ```mermaid
 graph TB

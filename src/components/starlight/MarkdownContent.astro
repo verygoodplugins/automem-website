@@ -1,0 +1,11 @@
+---
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+import SetupPicker from '../SetupPicker.astro';
+
+const isQuickStart = Astro.locals.starlightRoute.entry.id === 'docs/getting-started/quick-start';
+---
+
+<Default>
+  {isQuickStart && <SetupPicker />}
+  <slot />
+</Default>

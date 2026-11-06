@@ -20,11 +20,11 @@ Key GitHub sources:
 - [tests/test_embedding_providers.py](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/tests/test_embedding_providers.py) — Provider tests
 :::
 
-The embedding generation subsystem handles asynchronous vector embedding creation for memories using multiple backend providers. The system implements batching optimization to reduce API costs by 40-50%, improves `/memory` endpoint latency by 60% through non-blocking queue-based processing, and provides automatic provider selection with graceful fallback.
+AutoMem generates vectors for stored memories in a background worker. The embedding provider is a server setting, independent of where the AutoMem service is deployed. See [Choose your setup](/docs/getting-started/quick-start/#choose-how-embeddings-run) for the choices to make before storing your first memory.
 
 **Key features:**
 - **Multi-provider support:** Voyage AI, OpenAI, FastEmbed (local), Ollama, or deterministic placeholder vectors
-- **Auto-selection priority chain:** Voyage → OpenAI → Ollama → FastEmbed → Placeholder
+- **Auto-selection at initialization:** Voyage → OpenAI → configured Ollama → FastEmbed → Placeholder
 - **Batch processing:** Up to 20 memories per API call with 2-second timeout
 - **Dimension flexibility:** Supports common sizes such as 256d, 384d, 512d, 768d, 1024d, 2048d, 3072d — plus Ollama (variable by model) and Placeholder (any configurable size)
 - **Graceful degradation:** Falls back to placeholder vectors if all providers fail
@@ -43,13 +43,13 @@ When a memory is stored via `POST /memory`, the endpoint immediately writes to F
 
 ## Provider Selection System
 
-AutoMem uses a sophisticated provider selection system that automatically chooses the best available embedding backend based on configuration and API key availability.
+Set `EMBEDDING_PROVIDER` to choose a provider explicitly. The default, `auto`, tries the following providers at initialization based on the server environment.
 
 ### Auto-Selection Priority Chain
 
 ```mermaid
 flowchart TD
-    Request["Embedding Request<br/>EmbeddingProvider.get_instance()"]
+    Request["Initialize embedding provider"]
 
     Request --> CheckConfig{"EMBEDDING_PROVIDER<br/>config?"}
 
@@ -70,7 +70,7 @@ flowchart TD
     Try3 -->|Yes| Ollama["OllamaEmbeddingProvider<br/>Local server"]
     Try3 -->|No| Try4{"FastEmbed<br/>available?"}
 
-    Try4 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-base-en-v1.5: 768d"]
+    Try4 -->|Yes| FastEmbed["FastEmbedProvider<br/>BAAI/bge-large-en-v1.5 at 1024d"]
     Try4 -->|No| Placeholder["PlaceholderEmbeddingProvider<br/>No semantic meaning"]
 
     Voyage --> Validate["Validate dimension<br/>matches VECTOR_SIZE"]
@@ -90,21 +90,17 @@ flowchart TD
 
 ### Provider Capabilities Matrix
 
-| Provider | Dimensions Supported | API Key Required | Network Required | Cost | Quality |
-|---|---|---|---|---|---|
-| **Voyage** | 256, 512, 1024, 2048 | `VOYAGE_API_KEY` | Yes (HTTPS) | Paid/Free tier | Highest |
-| **OpenAI** | 768, 1536, 3072 | `OPENAI_API_KEY` | Yes (HTTPS) | Paid | High |
-| **FastEmbed** | 384, 768, 1024 | No | No (local ONNX) | Free | Medium |
-| **Ollama** | Variable by model | No | Yes (local HTTP) | Free | Medium |
-| **Placeholder** | Any (configurable) | No | No | Free | Deterministic only |
+| Provider | Dimensions | API Key | Where inference runs |
+|---|---|---|---|
+| **Voyage** | 256, 512, 1024, 2048 | `VOYAGE_API_KEY` | Hosted API |
+| **OpenAI** | Depends on the model and endpoint | `OPENAI_API_KEY` | Hosted or OpenAI-compatible API |
+| **FastEmbed** | 384, 768, 1024 | None | Inside the AutoMem service |
+| **Ollama** | Depends on the model | None | On the configured Ollama server |
+| **Placeholder** | Any configured size | None | Inside AutoMem, using deterministic hashes |
 
-**Selection priority rationale:**
+FastEmbed and self-hosted Ollama have no embedding API fees. Plan for the hardware running the model and, for FastEmbed, the initial model download. Hosted embedding APIs receive the memory and query text they embed. Check the provider's terms and usage rates.
 
-1. **Voyage first:** Best quality embeddings, generous free tier, shared embedding space across model sizes
-2. **OpenAI second:** High quality, widely available, compatible with OpenRouter/LiteLLM
-3. **Ollama third:** Local inference, flexible models, selected when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is configured (server reachability is not checked at selection time — connectivity errors surface only when embeddings are actually generated, during background worker jobs)
-4. **FastEmbed fourth:** Local ONNX inference, no API costs, good quality for 768d
-5. **Placeholder last:** Deterministic fallback, no semantic meaning but consistent
+In `auto`, Ollama is considered when `OLLAMA_BASE_URL` or `OLLAMA_MODEL` is set. The server does not check Ollama reachability when selecting the provider. Connection errors surface when it generates embeddings. When earlier providers are unavailable, FastEmbed uses BGE Large at the default 1024 dimensions for new collections. If it cannot load, `auto` uses deterministic placeholder vectors, which carry no semantic meaning.
 
 ### Dimension Validation
 
@@ -337,26 +333,11 @@ FalkorDB writes always succeed regardless of embedding or Qdrant status. This en
 
 ### Latency Impact
 
-**Before batching optimization (v0.5.0):**
-- `/memory` POST: 250-400ms (synchronous embedding generation)
-- Each memory triggered an individual OpenAI API call
-
-**After batching optimization (v0.6.0):**
-- `/memory` POST: 100-150ms (60% faster)
-- Embeddings generated in background
-- Batch processing reduces API overhead
+Ordinary stores queue embedding work after writing the memory record to FalkorDB. Vectors become searchable after the worker processes the queue. Recall queries that use semantic search may need an embedding during the request, so their latency depends on the provider and network.
 
 ### Cost Reduction
 
-**Batching efficiency:**
-- Reduces OpenAI API calls by 40-50%
-- Single API request handles up to 20 memories
-- Estimated savings: $8-15/year at 1000 memories/day
-
-**Example calculation:**
-- Without batching: 1000 API calls/day = 365,000/year
-- With batching (20x): ~50 API calls/day = ~18,250/year
-- Reduction: ~95% of calls eliminated through batching
+Batching reduces the number of provider requests for queued memories. Hosted providers may bill based on tokens or another usage unit, so fewer requests do not imply a proportional change in cost.
 
 ---
 
@@ -483,4 +464,8 @@ The `/admin/reembed` endpoint allows batch re-embedding of existing memories:
 - Fixing corrupted embeddings
 - Changing from one provider to another
 
-When switching embedding models or providers, the `VECTOR_SIZE` must match the new provider's output dimensions and the Qdrant collection must be recreated with the new dimensions (or a new collection name used).
+Choose an explicit provider and model before your first memory write. If you change the provider or model later, plan to re-embed the existing corpus when the embedding space changes. Matching vector lengths alone do not make two models compatible.
+
+If the output dimension changes, create a collection at the new dimension or rebuild the existing one. The new provider's output must match the effective collection dimension. See [the re-embedding API](/docs/reference/api/admin/#post-adminreembed) for the rebuild operation and [Backup & Recovery](/docs/operations/backup/) before migrating a collection.
+
+Starting in AutoMem 0.16.2, [new Qdrant collections use on-disk vectors, indexes, and payloads](https://github.com/verygoodplugins/automem/blob/5df0b83eb37a34b1206f89bf5d52190fe5a6ccdb/automem/stores/runtime_clients.py#L147-L162). Existing collections retain their layout until migrated separately.
