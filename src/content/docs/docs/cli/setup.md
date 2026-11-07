@@ -252,7 +252,7 @@ node dist/index.js install
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.18.0 at [`0990a43a`](https://github.com/verygoodplugins/mcp-automem/blob/0990a43a90186fd07c5fe521af85fe843ad1cfa5/scripts/sync-template-versions.mjs))
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.19.0 at [`241b441`](https://github.com/verygoodplugins/mcp-automem/blob/241b44159172fb93e30499337659c39203559954/scripts/sync-template-versions.mjs))
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -294,6 +294,34 @@ npx @verygoodplugins/mcp-automem config --format=json
 
 That JSON mode emits the raw MCP configuration object. It is useful for scripting. The default text output is the human-readable snippets.
 
+## Welcome Conversation
+
+After a successful interactive install, the installer offers an optional welcome conversation. Choose an installed assistant or **Not now** to skip it. The welcome message helps the assistant learn your work style while demonstrating the actual memory tool calls and relationship operations live.
+
+- **Cursor** — opens with the message prefilled for your review before you send it
+- **Claude Code, Codex, Grok, OpenClaw** — starts an interactive conversation when the CLI is on your PATH
+- **Any other host** — copies the prompt to your clipboard (or prints it) so you can paste it in yourself
+
+To start the welcome conversation later, run:
+
+```bash
+npx @verygoodplugins/mcp-automem@latest welcome
+```
+
+Use `--print` to print the prompt to stdout without launching an assistant (useful for piping or pasting into any tool):
+
+```bash
+npx @verygoodplugins/mcp-automem@latest welcome --print
+```
+
+Pass `--client <name>` to target a specific agent (`codex`, `claude-code`, `cursor`, `openclaw`, `hermes`, `grok`):
+
+```bash
+npx @verygoodplugins/mcp-automem@latest welcome --client cursor
+```
+
+To skip the welcome offer during install, pass `--no-welcome` or set `AUTOMEM_NO_WELCOME=1`. Dry runs, non-interactive runs, and `--yes` never launch the welcome conversation.
+
 ## Post-Installation File Structure
 
 After the guided installer writes `.env`, your directory contains:
@@ -320,7 +348,7 @@ your-project/
             └── package.json
 ```
 
-**Templates:** In the audited `mcp-automem` 0.18.0 release (`0990a43a90186fd07c5fe521af85fe843ad1cfa5`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
+**Templates:** In the audited `mcp-automem` 0.19.0 release (`241b44159172fb93e30499337659c39203559954`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 
