@@ -193,7 +193,6 @@ export default defineConfig({
             { label: 'Quick Start', slug: 'docs/getting-started/quick-start' },
             { label: 'Introduction', slug: 'docs/getting-started/introduction' },
             { label: 'Docker & Local Dev', slug: 'docs/getting-started/docker' },
-            { label: 'Environment Variables', slug: 'docs/getting-started/environment-variables' },
           ],
         },
         {
@@ -259,6 +258,7 @@ export default defineConfig({
         {
           label: 'Configuration',
           items: [
+            { label: 'Environment Variables', slug: 'docs/getting-started/environment-variables' },
             { label: 'Configuration Reference', slug: 'docs/reference/configuration' },
             { label: 'Authentication', slug: 'docs/reference/authentication' },
           ],
