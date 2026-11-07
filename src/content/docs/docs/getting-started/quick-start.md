@@ -11,7 +11,7 @@ Run the command for your selected route above. You need [Node.js](https://nodejs
 
 For a prebuilt Docker setup, enter `http://localhost:8001` and your `AUTOMEM_API_TOKEN` using **Existing Endpoint**. Hosted users can choose [InstaPods](https://instapods.com/apps/automem/?ref=jack) or [Railway](/docs/deployment/railway/).
 
-Fully quit and reopen your agent after installation. Need help with a prompt? See the [installer walkthrough](/docs/cli/setup/#walk-through-the-installer-prompt-by-prompt).
+The optional [welcome conversation](/docs/cli/setup/#welcome-conversation) can demonstrate the first memory tool calls. Fully quit and reopen your agent after installation. Need help with a prompt? See the [installer walkthrough](/docs/cli/setup/#walk-through-the-installer-prompt-by-prompt).
 
 ## Verify it worked
 
