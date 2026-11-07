@@ -5,7 +5,47 @@ sidebar:
   order: 3
 ---
 
-AutoMem provides two local development paths: Docker Compose (recommended) for a complete self-contained stack, and bare Python for lightweight API-only development against external database instances.
+For a local setup, use the published Docker image below. If you want to change the server code, use the [source checkout](#starting-the-stack).
+
+## Prebuilt image
+
+The [published AutoMem image](https://github.com/verygoodplugins/automem/pkgs/container/automem) supports Intel/AMD and Apple Silicon. The downloadable Compose file runs it alongside FalkorDB and Qdrant, with persistent volumes. You need a running Docker engine and Docker Compose.
+
+### Download the stack
+
+In a new directory, download [compose.yaml](/downloads/compose.yaml). With a macOS or Linux terminal, you can run:
+
+```bash
+mkdir automem-local
+cd automem-local
+curl -fsSLO https://automem.ai/downloads/compose.yaml
+```
+
+Create a file named `.env` beside it. Give the two tokens distinct random values. For example, run `openssl rand -hex 32` twice and paste one result for each token.
+
+```dotenv
+AUTOMEM_API_TOKEN=replace-with-your-first-random-token
+ADMIN_API_TOKEN=replace-with-your-second-random-token
+EMBEDDING_PROVIDER=local
+VECTOR_SIZE=768
+```
+
+This example selects FastEmbed's BGE Base model. Its first startup downloads the model and uses your machine's RAM and CPU. For a smaller local model, choose `VECTOR_SIZE=384` **before creating the collection**. For a hosted embedding API, set its key, provider, and matching dimension using the [embedding guide](/docs/architecture/embeddings/#provider-specific-configuration).
+
+### Start and connect
+
+```bash
+docker compose up -d
+curl http://localhost:8001/health
+npx @verygoodplugins/mcp-automem install --target existing
+```
+
+The last command needs Node.js and npm. Enter `http://localhost:8001` and the value of `AUTOMEM_API_TOKEN`. Then [store and recall your first memory](/docs/getting-started/quick-start/#try-it-end-to-end).
+
+The API is bound to localhost and database ports stay inside the Compose network. This differs from the source-development Compose file described below. Keep the directory and volumes between restarts. `docker compose down` stops the stack while retaining its data. Inspect startup with `docker compose logs automem` if the health check cannot connect yet.
+
+To update, back up your data, run `docker compose pull`, then `docker compose up -d`. Keep an existing model and dimension unless you are following a [re-embedding migration](/docs/architecture/embeddings/#manual-re-embedding).
+
 
 ---
 

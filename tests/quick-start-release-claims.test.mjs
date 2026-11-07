@@ -4,7 +4,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const pagePath = fileURLToPath(
-  new URL('../src/content/docs/docs/getting-started/quick-start.md', import.meta.url),
+  new URL('../src/content/docs/docs/cli/setup.md', import.meta.url),
 );
 
 // Claims audited against automem@e147c352b100ebbf29e6555453fdde5152066138
@@ -13,7 +13,7 @@ async function readPage() {
   return readFile(pagePath, 'utf8');
 }
 
-test('quick start retains only release-validated installation and health claims', async () => {
+test('installer reference retains release-validated installation and health claims', async () => {
   const page = await readPage();
 
   assert.match(page, /X-API-Key: YOUR_TOKEN/u);

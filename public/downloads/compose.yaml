@@ -1,0 +1,54 @@
+# AutoMem local stack using the published image.
+# Create .env as described at https://automem.ai/docs/getting-started/docker/#prebuilt-image
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    environment:
+      FALKORDB_DATA_PATH: /data
+      REDIS_ARGS: --save 60 1 --appendonly yes --appendfsync everysec
+    volumes:
+      - falkordb_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.11.3
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  automem:
+    image: ghcr.io/verygoodplugins/automem:stable
+    ports:
+      - "127.0.0.1:${AUTOMEM_API_HOST_PORT:-8001}:8001"
+    environment:
+      PORT: "8001"
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      QDRANT_URL: http://qdrant:6333
+      AUTOMEM_API_TOKEN: ${AUTOMEM_API_TOKEN:?Set AUTOMEM_API_TOKEN in .env}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Set ADMIN_API_TOKEN in .env}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+      VECTOR_SIZE: ${VECTOR_SIZE:-768}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      VOYAGE_MODEL: ${VOYAGE_MODEL:-voyage-4}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      AUTOMEM_MODELS_DIR: /root/.config/automem/models
+    volumes:
+      - fastembed_models:/root/.config/automem/models
+    depends_on:
+      falkordb:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  falkordb_data:
+  qdrant_data:
+  fastembed_models:

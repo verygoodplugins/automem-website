@@ -1,11 +1,29 @@
 ---
 import Default from '@astrojs/starlight/components/MarkdownContent.astro';
 import SetupPicker from '../SetupPicker.astro';
+import MemoryTrace from '../MemoryTrace.astro';
 
 const isQuickStart = Astro.locals.starlightRoute.entry.id === 'docs/getting-started/quick-start';
 ---
 
 <Default>
-  {isQuickStart && <SetupPicker />}
+  {isQuickStart && <>
+    <SetupPicker />
+    <aside id="choose-how-embeddings-run" class="embedding-note not-content" aria-label="Embedding resources">
+      <p>A local embedding model uses the server’s RAM, CPU, and disk. A hosted embedding API receives the memory and query text it processes. <a href="/docs/architecture/embeddings/#provider-specific-configuration">Choose your embedding setup</a> before your first write. With no provider key, the default can load the larger FastEmbed model.</p>
+      <details>
+        <summary>See where your text goes</summary>
+        <MemoryTrace />
+      </details>
+    </aside>
+  </>}
   <slot />
 </Default>
+
+<style>
+  .embedding-note { border: 1px solid var(--sl-color-gray-5); border-radius: .6rem; padding: 1rem; font-size: .9rem; margin-bottom: 2rem; }
+  .embedding-note p { margin: 0; }
+  .embedding-note summary { cursor: pointer; font-weight: 600; margin-block: .75rem; }
+  :global(.first-recall-success) { padding: 1rem 1.25rem; border: 1px solid rgb(var(--lab-success) / .5); border-radius: .6rem; background: rgb(var(--lab-success) / .08); margin-block: 1.5rem; }
+  :global(.first-recall-success p) { margin: 0; }
+</style>
