@@ -65,7 +65,7 @@ test('token tests use an authenticated recall probe and say /health does not che
     'best-practices/context-engineering.md': /Authorization: Bearer \$AUTOMEM_API_KEY" "\$AUTOMEM_API_URL\/recall\?limit=1"/u,
     'cli/guided-cloud-setup.md': /curl -i "https:\/\/your-automem-url\/recall\?limit=1" \\\n\s*-H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"/u,
     'deployment/instapods.md': /curl -i "https:\/\/your-instapods-automem-url\/recall\?limit=1" \\\n\s*-H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"/u,
-    'getting-started/quick-start.md': /curl -i "https:\/\/your-automem-url\/recall\?limit=1" \\\n\s*-H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"/u,
+    'cli/setup.md': /curl -i "https:\/\/your-automem-url\/recall\?limit=1" \\\n\s*-H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"/u,
     'operations/troubleshooting.md': /curl -i -H "Authorization: Bearer your-token" \\\n\s*"https:\/\/your-service\.up\.railway\.app\/recall\?limit=1"/u,
     'platforms/antigravity.md': /curl -i -H "Authorization: Bearer \$KEY" "\$ENDPOINT\/recall\?limit=1"/u,
     'platforms/chatgpt.md': /curl -i -H "Authorization: Bearer \$TOKEN" "https:\/\/your-automem\.up\.railway\.app\/recall\?limit=1"/u,
@@ -82,9 +82,9 @@ test('token tests use an authenticated recall probe and say /health does not che
   }
 });
 
-test('quick start verify section keeps /health as a reachability check and probes the key with /recall', async () => {
-  const page = await readDoc('getting-started/quick-start.md');
-  const verify = page.match(/## Verify it worked\n([\s\S]*?)\n### Try it end to end/u);
+test('installer reference keeps /health as a reachability check and probes the key with /recall', async () => {
+  const page = await readDoc('cli/setup.md');
+  const verify = page.match(/## Verify it worked\n([\s\S]*)/u);
 
   assert.ok(verify, 'expected the Verify it worked section');
   assert.match(verify[1], /curl https:\/\/your-automem-url\/health\n```/u);
@@ -716,9 +716,9 @@ test('16c: no page says AutoMem defaults to a port other than 8001', async () =>
   const railway = await readDoc('deployment/railway.md');
   assert.match(railway, /`PORT=8001` is \*\*required\*\*/u);
   assert.match(railway, /Must be set to 8001 on Railway/u);
-  const quickStart = await readDoc('getting-started/quick-start.md');
-  assert.match(quickStart, /AutoMem defaults to port `8001`\./u);
-  assert.match(quickStart, /pin `PORT=8001` on `memory-service`/u);
+  const installer = await readDoc('cli/setup.md');
+  assert.match(installer, /AutoMem defaults to port `8001`\./u);
+  assert.match(installer, /pin `PORT=8001` on `memory-service`/u);
 });
 
 test('16d: installer pages use the memory key and Hermes uses automem', async () => {
@@ -841,10 +841,9 @@ test('memory operations scopes the platform and date tag ban to the hosts that s
   assert.doesNotMatch(page, /The shipped memory policy forbids platform and date-stamped tags/u);
 });
 
-// Fix round 1: the Authentication examples on the quick start still target /health because
-// tests/quick-start-release-claims.test.mjs asserts the Bearer line, so the page says what they show.
-test('quick start Authentication block says /health does not check the token', async () => {
-  const page = await readDoc('getting-started/quick-start.md');
+// Authentication examples moved to the CLI reference when Quick Start was shortened.
+test('installer Authentication block says /health does not check the token', async () => {
+  const page = await readDoc('cli/setup.md');
   const auth = page.match(/## Authentication\n([\s\S]*?)\n---/u);
 
   assert.ok(auth, 'expected the Authentication section');

@@ -1,352 +1,40 @@
 ---
-title: Choose your setup
-description: Compare local Docker, hosted AutoMem, and an existing endpoint. Set embeddings and connect your first agent.
+title: Quick Start
+description: Choose where AutoMem runs, connect an agent, and recall your first memory in a fresh chat.
 sidebar:
-  order: 2
+  order: 1
 ---
-
-## Choose how embeddings run
-
-AutoMem uses embeddings to find memories by meaning. The server and the embedding model are separate choices. For example, an AutoMem server on Railway can compute embeddings on that server with FastEmbed, and a Docker install on your laptop can call Voyage or OpenAI.
-
-| Where embeddings run | Set on the AutoMem server | What to plan for |
-|---|---|---|
-| **On the server** | `EMBEDDING_PROVIDER=local` uses FastEmbed. At 1024 dimensions it loads `BAAI/bge-large-en-v1.5`. | No embedding API fee. The server needs CPU, memory, and disk for inference and the model. |
-| **On an Ollama server you operate** | `EMBEDDING_PROVIDER=ollama`, with a reachable `OLLAMA_BASE_URL`, an embedding model, and a matching `VECTOR_SIZE`. | Text goes to the Ollama server. Its hardware runs the model. |
-| **Via a hosted API** | `EMBEDDING_PROVIDER=voyage` or `openai`, with the matching key and model settings. | Memory and search-query text used for embeddings goes to the provider. Provider usage and network requests apply. |
-
-Choose an explicit provider before your first memory write. Set it in the server's environment, or ask the operator of an existing endpoint which model it uses. The MCP client takes the AutoMem endpoint and token. Provider keys belong on the server.
-
-With `EMBEDDING_PROVIDER=auto`, AutoMem tries Voyage, OpenAI, configured Ollama, then FastEmbed during initialization. For a fresh collection the default is 1024 dimensions, so FastEmbed loads BGE Large when it is the first available option. If FastEmbed cannot load in `auto`, placeholder vectors are the last resort and have no semantic meaning.
-
-Changing a model or provider on an existing endpoint usually requires re-embedding, even when both models return the same number of dimensions. See [Embedding Generation](/docs/architecture/embeddings/#manual-re-embedding) for the migration steps.
 
 ## Connect your agent
 
-Run the command from your setup route above or use the guided launcher:
+Run the command for your selected route above. You need [Node.js](https://nodejs.org/) 20.19+, 22.13+, or 24+ and npm. The installer asks for your endpoint, lets you select agents, then shows a plan before applying it.
 
-```bash
-curl -fsSL get.automem.ai | sh
-```
+For a prebuilt Docker setup, enter `http://localhost:8001` and your `AUTOMEM_API_TOKEN` using **Existing Endpoint**. Hosted users can choose [InstaPods](https://instapods.com/apps/automem/?ref=jack) or [Railway](/docs/deployment/railway/).
 
-Choose your endpoint, select agents, then review the configuration plan. Use **Existing Endpoint** if you started AutoMem manually. The Claude Code plugin and other MCP clients connect to that separate service with its API URL and, for authenticated endpoints, a token.
+The optional [welcome conversation](/docs/cli/setup/#welcome-conversation) can demonstrate the first memory tool calls. Fully quit and reopen your agent after installation. Need help with a prompt? See the [installer walkthrough](/docs/cli/setup/#walk-through-the-installer-prompt-by-prompt).
 
 ## Verify it worked
 
-Once the installer finishes, confirm the backend is healthy:
-
-```bash
-# Local Docker
-curl http://localhost:8001/health
-
-# Hosted / existing endpoint
-curl https://your-automem-url/health
-```
-
-A healthy response looks like this:
-
-```json
-{
-  "status": "healthy",
-  "falkordb": "connected",
-  "qdrant": "connected",
-  "memory_count": 0,
-  "enrichment": { "status": "running", "queue_depth": 0 },
-  "graph": "memories"
-}
-```
-
-| Field | Description |
-|---|---|
-| `status` | Overall health: `"healthy"` or `"degraded"` |
-| `falkordb` | Graph store connection: `"connected"` or `"disconnected"` |
-| `qdrant` | Vector store connection: `"connected"` or `"disconnected"` |
-| `memory_count` | Total memories in the graph |
-| `enrichment.status` | Background worker state: `"running"` or `"stopped"` |
-| `graph` | FalkorDB graph name (default `memories`) |
-
-`/health` skips the API token check, so a healthy response does not prove that your key is accepted. For a hosted endpoint, confirm the key with a request to an endpoint that checks it. A `401 Unauthorized` response means the key was rejected:
-
-```bash
-curl -i "https://your-automem-url/recall?limit=1" \
-  -H "Authorization: Bearer YOUR_AUTOMEM_API_TOKEN"
-```
-
-:::note
-`"qdrant": "disconnected"` is **expected** if you haven't configured Qdrant. AutoMem degrades gracefully to graph-only mode — everything else keeps working. Set `QDRANT_URL` and restart to enable vector search.
-:::
-
 ### Try it end to end
 
-Restart the agent you connected (quit and reopen — don't just close the window), then:
+In your connected agent, send:
 
-1. Ask it to **check AutoMem health** — this calls the `check_database_health` tool.
-2. Ask it to **remember something**: *"Remember that I prefer TypeScript over JavaScript for new projects."*
-3. In a fresh chat, ask **"What are my language preferences?"** — the memory should come back, retrieved via hybrid search.
-
----
-
-## What the installer does
-
-```mermaid
-graph LR
-    A["1 · Detect<br/>OS, Node, Docker,<br/>Git, agent roots"] --> B["2 · Choose<br/>Hosted, Local,<br/>or Existing"]
-    B --> C["3 · Provision<br/>Deploy + health-check<br/>your AutoMem server"]
-    C --> D["4 · Wire agents<br/>Review the plan,<br/>then connect Codex,<br/>Claude Code, Cursor…"]
+```text title="Chat 1 · Save a memory"
+Use AutoMem to remember that my demo workspace is called Lantern.
 ```
 
-It is safe to run, and safe to re-run:
+Look for a successful `store_memory` call. Then open a **fresh chat** and send:
 
-- **Nothing is written until you approve a plan.** The installer prints a full review — endpoint, API key status, and every file it will touch — and waits for a yes.
-- **Every changed file keeps a `.bak` copy**, so you can always roll back.
-- **Re-running is idempotent.** Local server tokens are reused (not rotated), so a second run never invalidates agents you already connected.
-
-### Prerequisites
-
-| Tool | When it's needed |
-|---|---|
-| **Node.js** 20.19+, 22.13+, or 24+ and **npm** | Always (the installer and the MCP bridge run on it) |
-| **Docker** + **Git** | Only if you choose the **Local Docker** path |
-
-The launcher checks for Node and npm first and stops with a clear message if either is missing — it never dumps a stack trace at you.
-
----
-
-## Walk-through: the installer, prompt by prompt
-
-Here is exactly what you'll see, and what each choice means.
-
-![The AutoMem guided installer asking "Where should AutoMem run?" with Hosted Cloud, Local Docker, and Existing Endpoint options](/img/docs/installer-target-select.png)
-
-### Splash → "Where should AutoMem run?"
-
-After a brief AutoMem splash, the first question picks your backend:
-
-```text
-?  Where should AutoMem run?
-❯  Hosted Cloud      InstaPods or Railway — guided deploy
-   Local Docker      Clone AutoMem and start Docker Compose on this machine
-   Existing Endpoint Use an AutoMem URL you already have
+```text title="Chat 2 · Recall it"
+Use AutoMem to look up the name of my demo workspace.
 ```
 
-| Option | Choose it when | What happens |
-|---|---|---|
-| **Hosted Cloud** *(default)* | You want one remote server for agents on multiple machines | InstaPods asks you to paste the URL and token. Guided Railway reads them after deployment. |
-| **Local Docker** | You want to operate the server on your own machine | Clones AutoMem into `~/.automem/server`, generates local tokens, runs `docker compose up`, and waits for `/health` |
-| **Existing Endpoint** | You already run AutoMem somewhere | Paste the URL (and key); the installer verifies it before touching any agent config |
+<div class="first-recall-success">
 
-### Hosted Cloud → pick a provider
+**✓ First memory recalled.** You're connected when `recall_memory` returns **Lantern** in the new chat.
 
-Choosing **Hosted Cloud** asks how to stand it up:
+</div>
 
-```text
-?  How should we stand up your hosted AutoMem?
-❯  InstaPods                      open the setup page — it deploys AutoMem and emails your URL + key
-   Railway (guided)              sign in with the railway CLI, deploy from the terminal, then auto-capture keys
-   Other — I already have a URL + key   already deployed somewhere; just paste your endpoint + token
-```
+If the result is empty, give background indexing a moment and retry. Check that both chats use the same endpoint. For connection errors, see [health and token checks](/docs/cli/setup/#verify-it-worked) or your agent's [platform guide](/docs/platforms/claude-desktop/).
 
-- **InstaPods** — opens the [InstaPods setup page](https://instapods.com/apps/automem/?ref=jack) so you can deploy the pod, then asks you to paste the API URL and key you receive.
-- **Railway (guided)** — signs in via the `railway` CLI and deploys the AutoMem template straight from the terminal, then reads the endpoint and token. It falls back to a browser deploy if the CLI can't finish.
-- **Other** — you already have an endpoint; paste the URL + token and skip provisioning.
-
-:::tip[Going deeper on hosted setup?]
-The [Guided Cloud Setup](/docs/cli/guided-cloud-setup/) guide covers each provider flow in detail — InstaPods email-back, the Railway CLI/browser deploy, reusing an existing deployment, and scripting it in CI.
-:::
-
-For **Existing Endpoint** (or **Other**), you'll be prompted for the URL and a masked API key:
-
-```text
-?  AutoMem API URL  ›  https://your-automem.example
-?  AutoMem API key (leave blank if this endpoint does not require one)  ›  ••••••••
-```
-
-### "Install AutoMem into which agents?"
-
-Next, choose which agents get wired up. **Agents already detected on your machine are pre-checked** — press space to toggle, enter to confirm:
-
-![The AutoMem installer's agent picker — Codex, Claude Code, and Cursor detected and checked, with OpenClaw and Hermes available to add](/img/docs/installer-agent-select.png)
-
-```text
-?  Install AutoMem into which agents?  (space to toggle, enter to confirm)
-❯ ◉ Codex        detected on this machine
-  ◉ Claude Code  detected on this machine
-  ◉ Cursor       detected on this machine
-  ◯ OpenClaw     not detected, still installable
-  ◯ Hermes       not detected, still installable
-  ◯ Grok         not detected, still installable
-```
-
-Detection looks for `~/.codex`, `~/.claude`, `~/.cursor`, `~/.openclaw`, `~/.hermes` (override with `$HERMES_HOME`), and `~/.grok` (override with `$GROK_HOME`). Anything not detected is still installable — just check it.
-
-If you select **Claude Code**, it asks how to integrate:
-
-```text
-?  How should AutoMem integrate with Claude Code?
-❯  Plugin (recommended)     bundles the MCP server + hooks, prompts for your endpoint, auto-updates
-   Settings-level install   writes ~/.claude hooks + permissions directly; no auto-update
-```
-
-- **Plugin** *(recommended)* — adds the AutoMem marketplace and installs the plugin, which bundles the MCP server, hooks, and skill and **auto-updates**. If the `claude` binary is on your PATH the installer runs `claude plugin install` for you; otherwise it prints the two `/plugin` commands to run inside Claude Code.
-- **Settings-level** — writes `~/.claude` hooks and permissions directly. Scriptable, but you update it yourself.
-
-Selecting **Hermes** asks for a mode: **Native memory provider** (recommended — replaces Hermes' built-in provider), **MCP tools only** (portable tools, no replacement), or **Both**.
-
-### Review the plan, then approve
-
-Before changing anything, the installer prints the full plan and waits for a yes:
-
-![The installer's review plan: mode, endpoint, redacted API key, and a numbered list of stages — verify, write, and per-agent installs — ending with "Dry run only. No files were changed."](/img/docs/installer-review-plan.png)
-
-The plan lists the **mode** and **endpoint**, whether an **API key** is set (always shown redacted), and every **stage** it will run — verify the endpoint, write `.env`, and configure each agent — with the exact file paths it will touch. Every changed file keeps a `.bak` copy. (The screenshot above is a `--dry-run`, which prints the plan and stops without writing anything.)
-
-Approve, and a live checklist ticks through each step — verify endpoint, write `.env`, configure each agent — finishing with a success card and your endpoint. If an individual agent needs a manual step (for example the OpenClaw CLI isn't installed), that one is flagged with a copy-paste fix and the rest still complete.
-
-:::note[What gets written]
-The installer writes `AUTOMEM_API_URL` (and `AUTOMEM_API_KEY`, if your endpoint needs one) to a `.env` in the **current directory**, then delegates to each agent's installer to register the MCP server. Agent config files are backed up first.
-:::
-
----
-
-## Customize the install
-
-The installer is fully scriptable. Every prompt has a flag and an environment variable, so you can pre-answer some questions, automate the whole thing in CI, or preview a run without touching disk. Set environment variables before the pipe, or pass flags when calling the npm package directly.
-
-```bash
-# Hosted cloud, fully interactive (default)
-curl -fsSL get.automem.ai | sh
-
-# Local Docker, no questions asked
-curl -fsSL get.automem.ai | AUTOMEM_INSTALL_TARGET=local AUTOMEM_YES=1 sh
-
-# Point at an endpoint you already run, only wire Codex + Cursor
-curl -fsSL get.automem.ai | \
-  AUTOMEM_INSTALL_TARGET=existing \
-  AUTOMEM_API_URL=https://memory.example \
-  AUTOMEM_API_KEY=sk-... \
-  AUTOMEM_CLIENTS=codex,cursor \
-  AUTOMEM_YES=1 sh
-
-# Preview the plan without changing anything
-curl -fsSL get.automem.ai | AUTOMEM_DRY_RUN=1 sh
-```
-
-The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem install --target existing --endpoint https://memory.example --clients codex,cursor --yes`.
-
-| Flag | Environment variable | Purpose |
-|---|---|---|
-| `--target` | `AUTOMEM_INSTALL_TARGET` | `local`, `cloud`, or `existing` |
-| `--cloud-provider` | `AUTOMEM_CLOUD_PROVIDER` | `instapods`, `railway`, or `other` |
-| `--clients` | `AUTOMEM_CLIENTS` | Comma-separated agents: `codex,claude-code,cursor,openclaw,hermes,grok` |
-| `--endpoint` | `AUTOMEM_API_URL` | AutoMem HTTP API endpoint |
-| `--api-key` | `AUTOMEM_API_KEY` | Bearer token for authenticated deployments |
-| `--local-dir` | `AUTOMEM_LOCAL_DIR` | Local backend checkout path (default `~/.automem/server`) |
-| `--claude-code-mode` | `AUTOMEM_CLAUDE_CODE_MODE` | `plugin` (default) or `settings` |
-| `--cursor-mode` | `AUTOMEM_CURSOR_MODE` | `plugin` (default) or `files` |
-| `--hermes-mode` | `AUTOMEM_HERMES_MODE` | `mcp` (default), `provider`, or `both` |
-| `--yes` / `-y` | `AUTOMEM_YES=1` | Apply the reviewed plan without prompting |
-| `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan, write nothing |
-| `--no-agent-install` | `AUTOMEM_NO_AGENT_INSTALL=1` | Set up the endpoint only; skip agents |
-| `--no-welcome` | `AUTOMEM_NO_WELCOME=1` | Skip the optional welcome conversation after install |
-
-:::note[Headless and CI]
-`CI`, `CODEX`, and `CLAUDE_CODE` suppress animation only; they do not approve the plan. Without a TTY, the installer prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`, so an unattended pipe can never make unreviewed changes.
-:::
-
----
-
-## Manual & advanced setup
-
-Prefer to run the backend yourself, or wire an agent by hand? Everything the installer automates, you can also do manually.
-
-### Deploy the AutoMem server yourself
-
-- [InstaPods](/docs/deployment/instapods/) creates a hosted pod and generates MCP configuration.
-- [Railway](/docs/deployment/railway/) runs the AutoMem template and provides a public HTTPS domain.
-- [Docker Compose](/docs/getting-started/docker/#starting-the-stack) starts the API, FalkorDB, and Qdrant on your machine. The same guide covers bare Python for API development.
-
-:::caution[Railway: pin `PORT=8001`]
-AutoMem defaults to port `8001`. A platform-set non-`8001` `PORT` can conflict with callers still using `:8001`, so pin `PORT=8001` on `memory-service`. The [Railway template](/docs/deployment/railway/) sets this for you.
-:::
-
-### Connect an agent by hand
-
-The guided installer can connect to a server you deployed manually. On npm 0.16.0, use `install`. `setup` becomes an alias of `install` in the release after 0.16.0:
-
-```bash
-npx @verygoodplugins/mcp-automem install --target existing
-```
-
-For a manual MCP entry — for example Claude Desktop's `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "mcp-automem": {
-      "command": "npx",
-      "args": ["-y", "@verygoodplugins/mcp-automem"],
-      "env": {
-        "AUTOMEM_API_URL": "http://localhost:8001"
-      }
-    }
-  }
-}
-```
-
-Add `"AUTOMEM_API_KEY": "your-token"` for authenticated (hosted) endpoints. Per-platform paths and snippets live in the [Platform Guides](/docs/platforms/claude-desktop/).
-
-:::caution
-Provide the API key as-is — no `Bearer` prefix. The client adds `Bearer ` to the `Authorization` header for you. And verify your JSON has no trailing commas: one syntax error stops a client from loading any MCP server.
-:::
-
----
-
-## Authentication
-
-AutoMem accepts a token three ways, in order of preference:
-
-```bash
-# 1. Bearer token (recommended)
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8001/health
-
-# 2. Custom header
-curl -H "X-API-Key: YOUR_TOKEN" http://localhost:8001/health
-
-# 3. Query parameter (discouraged — tokens land in logs)
-curl "http://localhost:8001/health?api_key=YOUR_TOKEN"
-```
-
-These examples show the header and query forms only. `/health` accepts any token or none, so a `200` from it does not mean the token is valid. To check a token, send it to an endpoint that requires one, such as `/recall?limit=1` (see [Verify it worked](#verify-it-worked)).
-
-Admin operations need an extra header:
-
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-     -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
-     http://localhost:8001/admin/...
-```
-
----
-
-## Troubleshooting
-
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `node is required` from the launcher | Node/npm not installed | Install Node 20.19+ (`nvm install 20`), then re-run |
-| Installer says the package has no `install` | Old npm cache | The guided installer ships in `@verygoodplugins/mcp-automem` 0.15.0+; clear the npx cache or pin `@latest` |
-| Local server won't start | Port in use (`:8001`, `:6379`, `:6333`) | Stop the conflicting container (`docker ps`) or free the port, then re-run |
-| `503 Service Unavailable` | FalkorDB unreachable | Check `FALKORDB_HOST` / `FALKORDB_PORT` |
-| `"qdrant": "disconnected"` | Qdrant not configured | Expected — set `QDRANT_URL` to enable vector search |
-| `401 Unauthorized` | Wrong/missing token | Verify `AUTOMEM_API_KEY`; provide it without a `Bearer` prefix |
-| `ECONNREFUSED` on Railway | A platform set a non-`8001` `PORT` while callers use `:8001` | Pin `PORT=8001` on `memory-service` |
-| Tools don't appear in your agent | Client not reloaded | Fully quit and reopen the agent (don't just close the window) |
-| One agent flagged "needs a manual step" | That agent's CLI was missing | Run the printed fix command; the rest of the install still succeeded |
-
----
-
-## Next steps
-
-- **Connect more platforms** — [Platform Guides](/docs/platforms/claude-desktop/) for Claude Desktop, Claude Code, Cursor, Codex, and remote MCP.
-- **Configuration reference** — [Environment Variables](/docs/getting-started/environment-variables/) and [Configuration](/docs/reference/configuration/) for every setting and embedding provider.
-- **Use memory well** — [Memory Operations](/docs/reference/api/memory-operations/) for tagging, importance, recall, and relationships.
-- **Production hardening** — [Railway](/docs/deployment/railway/) and [Docker](/docs/getting-started/docker/) for monitoring, backups, and scaling.
+Add more agents whenever you like. Connect them to the same AutoMem endpoint to share memories.
