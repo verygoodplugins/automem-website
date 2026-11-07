@@ -247,6 +247,7 @@ The equivalent flags work on the npm package: `npx @verygoodplugins/mcp-automem 
 | `--yes` / `-y` | `AUTOMEM_YES=1` | Apply the reviewed plan without prompting |
 | `--dry-run` | `AUTOMEM_DRY_RUN=1` | Print the plan, write nothing |
 | `--no-agent-install` | `AUTOMEM_NO_AGENT_INSTALL=1` | Set up the endpoint only; skip agents |
+| `--no-welcome` | `AUTOMEM_NO_WELCOME=1` | Skip the optional welcome conversation after install |
 
 :::note[Headless and CI]
 `CI`, `CODEX`, and `CLAUDE_CODE` suppress animation only; they do not approve the plan. Without a TTY, the installer prints the plan and stops unless you explicitly pass `--yes` or set `AUTOMEM_YES=1`, so an unattended pipe can never make unreviewed changes.
