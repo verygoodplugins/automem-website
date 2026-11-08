@@ -252,7 +252,7 @@ node dist/index.js install
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.19.1 at [`66c7eed`](https://github.com/verygoodplugins/mcp-automem/blob/66c7eed5942ec44f205ca0869cae1ef84aa457b0/scripts/sync-template-versions.mjs))
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.19.2 at [`e1c6295`](https://github.com/verygoodplugins/mcp-automem/blob/e1c62958950dd24ae7d1ac3c50dbf5519ee7ea09/scripts/sync-template-versions.mjs))
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -348,7 +348,7 @@ your-project/
             └── package.json
 ```
 
-**Templates:** In the audited `mcp-automem` 0.19.1 release (`66c7eed5942ec44f205ca0869cae1ef84aa457b0`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
+**Templates:** In the audited `mcp-automem` 0.19.2 release (`e1c62958950dd24ae7d1ac3c50dbf5519ee7ea09`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 
@@ -419,7 +419,8 @@ AUTOMEM_LOG_LEVEL=debug npx @verygoodplugins/mcp-automem
 
 **Symptom**: Local AutoMem service fails to start on port 8001
 
-**Solution**:
+The installer (0.19.2+) automatically detects Docker port collisions and retries with a different port — it will warn "Port X became unavailable while Docker was starting" and try up to 5 times before giving up. If it still can't start:
+
 1. Check what's using the port: `lsof -i :8001` (macOS/Linux) or `netstat -ano | findstr :8001` (Windows)
 2. Stop conflicting service or reconfigure AutoMem to use different port
 3. Update `AUTOMEM_API_URL` accordingly
@@ -680,7 +681,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 |---|---|---|
 | `node is required` from the launcher | Node/npm not installed | Install Node 20.19+ (`nvm install 20`), then re-run |
 | Installer says the package has no `install` | Old npm cache | The guided installer ships in `@verygoodplugins/mcp-automem` 0.15.0+; clear the npx cache or pin `@latest` |
-| Local server won't start | Port in use (`:8001`, `:6379`, `:6333`) | Stop the conflicting container (`docker ps`) or free the port, then re-run |
+| Local server won't start | Port in use (`:8001`, `:6379`, `:6333`) | The installer retries automatically on port collisions during Docker startup (0.19.2+). If it fails after retries, stop the conflicting container (`docker ps`) or free the port, then re-run |
 | `503 Service Unavailable` | FalkorDB unreachable | Check `FALKORDB_HOST` / `FALKORDB_PORT` |
 | `"qdrant": "disconnected"` | Qdrant not configured | Expected — set `QDRANT_URL` to enable vector search |
 | `401 Unauthorized` | Wrong/missing token | Verify `AUTOMEM_API_KEY`; provide it without a `Bearer` prefix |
