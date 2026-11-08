@@ -252,7 +252,7 @@ node dist/index.js install
 The built server is available at `dist/index.js`.
 
 **Build process:**
-- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.19.2 at [`e1c6295`](https://github.com/verygoodplugins/mcp-automem/blob/e1c62958950dd24ae7d1ac3c50dbf5519ee7ea09/scripts/sync-template-versions.mjs))
+- `npm run prebuild` — Regenerates the memory-policy artifacts first, then syncs template versions (audited against `mcp-automem` 0.19.3 at [`da55f06`](https://github.com/verygoodplugins/mcp-automem/blob/da55f06c1d10b063ee688f6c715770cd04edb945/scripts/sync-template-versions.mjs))
 - `npm run build` — Compiles TypeScript from `src/` to `dist/`
 - `npm run postbuild` — Builds the OpenClaw plugin package (`node scripts/build-openclaw-plugin-package.mjs`; the script sets the executable bit on `dist/index.js` via Node, not a shell `chmod`)
 - `npm run dev` — Runs the TypeScript source directly via `tsx watch src/index.ts` for development
@@ -348,7 +348,7 @@ your-project/
             └── package.json
 ```
 
-**Templates:** In the audited `mcp-automem` 0.19.2 release (`e1c62958950dd24ae7d1ac3c50dbf5519ee7ea09`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
+**Templates:** In the audited `mcp-automem` 0.19.3 release (`da55f06c1d10b063ee688f6c715770cd04edb945`), the published `templates/` package surface includes `antigravity`, `claude-code`, `codex`, `copilot`, `cursor`, `grok`, `hermes`, and `openclaw`. See [Platform Installers](/docs/cli/platform-installers/) for how each template is used.
 
 ## Verification
 
